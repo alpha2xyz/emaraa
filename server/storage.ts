@@ -123,7 +123,8 @@ export class MemStorage implements IStorage {
   }
 
   async deleteServiceRequestsByProperty(propertyId: string): Promise<void> {
-    for (const [id, request] of this.serviceRequests) {
+    const entries = Array.from(this.serviceRequests.entries());
+    for (const [id, request] of entries) {
       if (request.propertyId === propertyId) {
         this.serviceRequests.delete(id);
       }

@@ -190,8 +190,11 @@ export default function PropertyForm() {
                         type="number"
                         min={1}
                         data-testid="input-property-units"
-                        {...field}
+                        value={field.value ?? 1}
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormDescription>
