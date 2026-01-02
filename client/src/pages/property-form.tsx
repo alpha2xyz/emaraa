@@ -1,226 +1,253 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { Building2, ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState } from "react";
+import { useLang } from "@/hooks/use-lang";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { insertPropertySchema, type InsertProperty } from "@shared/schema";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
-import { z } from "zod";
+  Building2,
+  Home,
+  Building,
+  Store,
+  ArrowLeft,
+  Check,
+} from "lucide-react";
+import { useLocation } from "wouter";
 
-const formSchema = insertPropertySchema.extend({
-  name: z.string().min(1, "Property name is required"),
-  address: z.string().min(1, "Address is required"),
-  type: z.string().min(1, "Property type is required"),
-});
-
-const propertyTypes = [
-  { value: "apartment", label: "Apartment" },
-  { value: "house", label: "House" },
-  { value: "condo", label: "Condo" },
-  { value: "commercial", label: "Commercial" },
-  { value: "townhouse", label: "Townhouse" },
-  { value: "other", label: "Other" },
+const BUILDING_TYPES = [
+  {
+    id: "villa",
+    icon: Home,
+    color: "bg-blue-100 text-blue-600 border-blue-300",
+  },
+  {
+    id: "apartment",
+    icon: Building,
+    color: "bg-green-100 text-green-600 border-green-300",
+  },
+  {
+    id: "building",
+    icon: Building2,
+    color: "bg-purple-100 text-purple-600 border-purple-300",
+  },
+  {
+    id: "commercial",
+    icon: Store,
+    color: "bg-orange-100 text-orange-600 border-orange-300",
+  },
+  {
+    id: "mosque",
+    icon: Building2,
+    color: "bg-teal-100 text-teal-600 border-teal-300",
+  },
+  {
+    id: "other",
+    icon: Building2,
+    color: "bg-gray-100 text-gray-600 border-gray-300",
+  },
 ];
 
 export default function PropertyForm() {
+  const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-
-  const form = useForm<InsertProperty>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      address: "",
-      type: "",
-      units: 1,
-    },
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    type: "",
+    otherType: "",
+    floors: "1",
   });
 
-  const mutation = useMutation({
-    mutationFn: async (data: InsertProperty) => {
-      const response = await apiRequest("POST", "/api/properties", data);
-      return response.json();
+  const content = {
+    ar: {
+      title: "إضافة عقار جديد",
+      subtitle: "أضف تفاصيل العقار الخاص بك",
+      nameLabel: "اسم العقار",
+      namePlaceholder: "مثال: فيلا الرياض",
+      addressLabel: "العنوان",
+      addressPlaceholder: "الحي، المدينة",
+      typeLabel: "نوع المبنى",
+      otherTypeLabel: "حدد نوع المبنى",
+      otherTypePlaceholder: "مثال: مدرسة، مستشفى...",
+      floorsLabel: "عدد الطوابق",
+      back: "رجوع",
+      save: "حفظ العقار",
+      types: {
+        villa: "فيلا",
+        apartment: "شقة",
+        building: "عمارة سكنية",
+        commercial: "تجاري",
+        mosque: "مسجد",
+        other: "أخرى",
+      },
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-      toast({
-        title: "Property added",
-        description: "The property has been successfully added.",
-      });
-      setLocation("/properties");
+    en: {
+      title: "Add New Property",
+      subtitle: "Enter your property details",
+      nameLabel: "Property Name",
+      namePlaceholder: "e.g., Riyadh Villa",
+      addressLabel: "Address",
+      addressPlaceholder: "District, City",
+      typeLabel: "Building Type",
+      otherTypeLabel: "Specify Building Type",
+      otherTypePlaceholder: "e.g., School, Hospital...",
+      floorsLabel: "Number of Floors",
+      back: "Back",
+      save: "Save Property",
+      types: {
+        villa: "Villa",
+        apartment: "Apartment",
+        building: "Residential Building",
+        commercial: "Commercial",
+        mosque: "Mosque",
+        other: "Other",
+      },
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to add property. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  };
 
-  const onSubmit = (data: InsertProperty) => {
-    mutation.mutate(data);
+  const t = content[lang];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Send to backend
+    console.log("Property data:", formData);
+    setLocation("/properties");
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Link href="/properties">
-          <Button variant="ghost" size="sm" className="gap-2 mb-4" data-testid="button-back-properties">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Properties
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight" data-testid="text-add-property-title">Add Property</h1>
-        <p className="text-muted-foreground mt-2">
-          Add a new property to your portfolio. You can create service requests for it once added.
-        </p>
-      </div>
-
+    <div
+      className="container mx-auto p-6 max-w-3xl"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle>Property Details</CardTitle>
-              <CardDescription>Enter the details for your new property</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-2xl">{t.title}</CardTitle>
+          <CardDescription>{t.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Property Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Sunset Apartments"
-                        data-testid="input-property-name"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      A friendly name to identify this property
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Property Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">{t.nameLabel}</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder={t.namePlaceholder}
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
               />
+            </div>
 
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="123 Main Street, City, State 12345"
-                        className="min-h-20 resize-none"
-                        data-testid="input-property-address"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            {/* Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address">{t.addressLabel}</Label>
+              <Input
+                id="address"
+                type="text"
+                placeholder={t.addressPlaceholder}
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                required
               />
+            </div>
 
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Property Type *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-property-type">
-                          <SelectValue placeholder="Select property type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {propertyTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Building Type */}
+            <div className="space-y-3">
+              <Label>{t.typeLabel}</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {BUILDING_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  const isSelected = formData.type === type.id;
 
-              <FormField
-                control={form.control}
-                name="units"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Units</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        data-testid="input-property-units"
-                        value={field.value ?? 1}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      For multi-unit properties like apartments
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex flex-wrap gap-3 pt-4 border-t">
-                <Button
-                  type="submit"
-                  disabled={mutation.isPending}
-                  data-testid="button-submit-property"
-                >
-                  {mutation.isPending ? "Adding..." : "Add Property"}
-                </Button>
-                <Link href="/properties">
-                  <Button type="button" variant="outline" data-testid="button-cancel-property">
-                    Cancel
-                  </Button>
-                </Link>
+                  return (
+                    <div
+                      key={type.id}
+                      onClick={() =>
+                        setFormData({ ...formData, type: type.id })
+                      }
+                      className={`
+                        relative border-2 rounded-lg p-4 cursor-pointer transition-all
+                        ${isSelected ? type.color + " border-2" : "border-gray-200 hover:border-gray-300"}
+                      `}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
+                          <Check className="h-3 w-3" />
+                        </div>
+                      )}
+                      <div className="flex flex-col items-center gap-2">
+                        <Icon className="h-8 w-8" />
+                        <span className="text-sm font-medium text-center">
+                          {t.types[type.id as keyof typeof t.types]}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </form>
-          </Form>
+            </div>
+
+            {/* Other Type (if selected) */}
+            {formData.type === "other" && (
+              <div className="space-y-2">
+                <Label htmlFor="otherType">{t.otherTypeLabel}</Label>
+                <Input
+                  id="otherType"
+                  type="text"
+                  placeholder={t.otherTypePlaceholder}
+                  value={formData.otherType}
+                  onChange={(e) =>
+                    setFormData({ ...formData, otherType: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            )}
+
+            {/* Floors */}
+            <div className="space-y-2">
+              <Label htmlFor="floors">{t.floorsLabel}</Label>
+              <Input
+                id="floors"
+                type="number"
+                min="1"
+                value={formData.floors}
+                onChange={(e) =>
+                  setFormData({ ...formData, floors: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setLocation("/properties")}
+                className="flex-1"
+              >
+                <ArrowLeft
+                  className={`h-4 w-4 ${lang === "ar" ? "ml-2 rotate-180" : "mr-2"}`}
+                />
+                {t.back}
+              </Button>
+              <Button type="submit" className="flex-1">
+                {t.save}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>

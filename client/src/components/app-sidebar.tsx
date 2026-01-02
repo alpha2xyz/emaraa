@@ -1,5 +1,6 @@
-import { Link, useLocation } from "wouter";
-import { Home, Building2, Wrench, Plus } from "lucide-react";
+import { Home, Building2, FileText, LogOut, User } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
+import { useLocation } from "wouter";
 import {
   Sidebar,
   SidebarContent,
@@ -12,71 +13,114 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-
-const navItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "Properties",
-    url: "/properties",
-    icon: Building2,
-  },
-  {
-    title: "Service Requests",
-    url: "/requests",
-    icon: Wrench,
-  },
-];
 
 export function AppSidebar() {
-  const [location] = useLocation();
+  const { lang } = useLang();
+  const [location, setLocation] = useLocation();
+
+  const content = {
+    ar: {
+      title: "عمارة",
+      subtitle: "بوابة إدارة العقارات",
+      navigation: "التنقل",
+      dashboard: "لوحة التحكم",
+      properties: "العقارات",
+      requests: "طلبات الخدمة",
+      profile: "الملف الشخصي",
+      logout: "تسجيل الخروج",
+    },
+    en: {
+      title: "EMARA",
+      subtitle: "Property Management Portal",
+      navigation: "Navigation",
+      dashboard: "Dashboard",
+      properties: "Properties",
+      requests: "Service Requests",
+      profile: "Profile",
+      logout: "Logout",
+    },
+  };
+
+  const t = content[lang];
+  const isRTL = lang === "ar";
+
+  const menuItems = [
+    { icon: Home, label: t.dashboard, path: "/dashboard" },
+    { icon: Building2, label: t.properties, path: "/properties" },
+    { icon: FileText, label: t.requests, path: "/requests" },
+  ];
+
+  const handleLogout = () => {
+    setLocation("/");
+  };
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Building2 className="h-5 w-5" />
+    <Sidebar dir={isRTL ? "rtl" : "ltr"} side={isRTL ? "right" : "left"}>
+      <SidebarHeader className="border-b p-4">
+        <div
+          className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+        >
+          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+            <Building2 className="h-5 w-5 text-white" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm" data-testid="text-app-name">PropertyHub</span>
-            <span className="text-xs text-muted-foreground">Management Portal</span>
+          <div className={isRTL ? "text-right" : "text-left"}>
+            <h2 className="text-lg font-bold">{t.title}</h2>
+            <p className="text-xs text-gray-600">{t.subtitle}</p>
           </div>
         </div>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className={isRTL ? "text-right" : "text-left"}>
+            {t.navigation}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location === item.url}
-                  >
-                    <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      onClick={() => setLocation(item.path)}
+                      isActive={isActive}
+                      className={isRTL ? "flex-row-reverse" : ""}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <Link href="/requests/new">
-          <Button className="w-full gap-2" data-testid="button-new-request-sidebar">
-            <Plus className="h-4 w-4" />
-            New Request
-          </Button>
-        </Link>
+
+      <SidebarFooter className="border-t p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => setLocation("/profile")}
+              className={isRTL ? "flex-row-reverse" : ""}
+            >
+              <User className="h-4 w-4" />
+              <span>{t.profile}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              className={`${isRTL ? "flex-row-reverse" : ""} text-red-600 hover:text-red-700 hover:bg-red-50`}
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{t.logout}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,204 +1,169 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Building2, Plus, MapPin, Home, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { useLang } from "@/hooks/use-lang";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Building2, MapPin, Plus, Edit, Trash2 } from "lucide-react";
 import { Link } from "wouter";
-import type { Property, ServiceRequest } from "@shared/schema";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
-function getPropertyIcon(type: string) {
-  switch (type) {
-    case "apartment":
-      return Building2;
-    case "house":
-      return Home;
-    case "commercial":
-      return Building2;
-    default:
-      return Building2;
-  }
-}
+// بيانات تجريبية
+const mockProperties = [
+  {
+    id: 1,
+    name: { ar: "فيلا المروج", en: "Al-Muroj Villa" },
+    address: { ar: "حي النسيم، الرياض", en: "Al Nakheel, Riyadh" },
+    type: "villa",
+    floors: 2,
+    images: 3,
+  },
+  {
+    id: 2,
+    name: { ar: "عمارة سكنية", en: "Residential Building" },
+    address: { ar: "حي الملقا، الرياض", en: "Al Malqa, Riyadh" },
+    type: "apartment",
+    floors: 5,
+    images: 8,
+  },
+];
 
 export default function Properties() {
-  const { toast } = useToast();
+  const { lang } = useLang();
+  const [properties] = useState(mockProperties);
 
-  const { data: properties = [], isLoading } = useQuery<Property[]>({
-    queryKey: ["/api/properties"],
-  });
-
-  const { data: requests = [] } = useQuery<ServiceRequest[]>({
-    queryKey: ["/api/requests"],
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/properties/${id}`);
+  const content = {
+    ar: {
+      title: "عقاراتي",
+      addNew: "إضافة عقار جديد",
+      noProperties: "لا توجد عقارات مسجلة",
+      noPropertiesDesc: "ابدأ بإضافة عقارك الأول",
+      floors: "طابق",
+      floorsPlural: "طوابق",
+      images: "صورة",
+      imagesPlural: "صور",
+      edit: "تعديل",
+      delete: "حذف",
+      types: {
+        villa: "فيلا",
+        apartment: "شقة",
+        building: "عمارة",
+        commercial: "تجاري",
+        mosque: "مسجد",
+        other: "أخرى",
+      },
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-      toast({
-        title: "Property deleted",
-        description: "The property has been successfully removed.",
-      });
+    en: {
+      title: "My Properties",
+      addNew: "Add New Property",
+      noProperties: "No Properties Found",
+      noPropertiesDesc: "Start by adding your first property",
+      floors: "Floor",
+      floorsPlural: "Floors",
+      images: "Image",
+      imagesPlural: "Images",
+      edit: "Edit",
+      delete: "Delete",
+      types: {
+        villa: "Villa",
+        apartment: "Apartment",
+        building: "Building",
+        commercial: "Commercial",
+        mosque: "Mosque",
+        other: "Other",
+      },
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete property. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  };
 
-  const getOpenRequestsCount = (propertyId: string) => {
-    return requests.filter(
-      (r) => r.propertyId === propertyId && r.status !== "completed"
-    ).length;
+  const t = content[lang];
+
+  const getFloorText = (count: number) => {
+    return `${count} ${count === 1 ? t.floors : t.floorsPlural}`;
+  };
+
+  const getImageText = (count: number) => {
+    return `${count} ${count === 1 ? t.images : t.imagesPlural}`;
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight" data-testid="text-properties-title">Properties</h1>
-          <p className="text-muted-foreground">
-            Manage your properties and track their service requests.
-          </p>
-        </div>
+    <div className="container mx-auto p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">{t.title}</h1>
         <Link href="/properties/new">
-          <Button className="gap-2" data-testid="button-add-property">
-            <Plus className="h-4 w-4" />
-            Add Property
+          <Button size="lg">
+            <Plus className={lang === "ar" ? "ml-2" : "mr-2"} />
+            {t.addNew}
           </Button>
         </Link>
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
+      {/* Properties Grid */}
+      {properties.length === 0 ? (
+        <Card className="p-12">
+          <div className="text-center">
+            <Building2 className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">{t.noProperties}</h3>
+            <p className="text-gray-600 mb-6">{t.noPropertiesDesc}</p>
+            <Link href="/properties/new">
+              <Button>
+                <Plus className={lang === "ar" ? "ml-2" : "mr-2"} />
+                {t.addNew}
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {properties.map((property) => (
+            <Card
+              key={property.id}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardHeader>
-                <Skeleton className="h-6 w-32" />
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-xl">
+                      {property.name[lang]}
+                    </CardTitle>
+                  </div>
+                  <Badge variant="secondary">
+                    {t.types[property.type as keyof typeof t.types]}
+                  </Badge>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-24" />
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Address */}
+                  <div className="flex items-start gap-2 text-gray-600">
+                    <MapPin className="h-4 w-4 mt-1 shrink-0" />
+                    <span className="text-sm">{property.address[lang]}</span>
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex gap-4 text-sm text-gray-600">
+                    <span>🏢 {getFloorText(property.floors)}</span>
+                    <span>📷 {getImageText(property.images)}</span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Edit
+                        className={`h-4 w-4 ${lang === "ar" ? "ml-2" : "mr-2"}`}
+                      />
+                      {t.edit}
+                    </Button>
+                    <Button variant="destructive" size="sm" className="flex-1">
+                      <Trash2
+                        className={`h-4 w-4 ${lang === "ar" ? "ml-2" : "mr-2"}`}
+                      />
+                      {t.delete}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}
-        </div>
-      ) : properties.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Building2 className="h-16 w-16 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No properties yet</h3>
-            <p className="text-muted-foreground text-center mb-4 max-w-sm">
-              Get started by adding your first property. You can then create service requests for it.
-            </p>
-            <Link href="/properties/new">
-              <Button className="gap-2" data-testid="button-add-first-property">
-                <Plus className="h-4 w-4" />
-                Add Your First Property
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => {
-            const Icon = getPropertyIcon(property.type);
-            const openRequests = getOpenRequestsCount(property.id);
-            return (
-              <Card key={property.id} className="group" data-testid={`card-property-${property.id}`}>
-                <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base" data-testid={`text-property-name-${property.id}`}>
-                        {property.name}
-                      </CardTitle>
-                      <Badge variant="outline" className="mt-1 capitalize">
-                        {property.type}
-                      </Badge>
-                    </div>
-                  </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        data-testid={`button-delete-property-${property.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Property</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete "{property.name}"? This action cannot be undone.
-                          All associated service requests will also be removed.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteMutation.mutate(property.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                    <span data-testid={`text-property-address-${property.id}`}>{property.address}</span>
-                  </div>
-                  {property.units && property.units > 1 && (
-                    <p className="text-sm text-muted-foreground">
-                      {property.units} units
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">
-                      {openRequests > 0 ? (
-                        <span>
-                          <span className="font-medium text-foreground">{openRequests}</span> open request{openRequests > 1 ? "s" : ""}
-                        </span>
-                      ) : (
-                        "No open requests"
-                      )}
-                    </span>
-                    <Link href={`/requests/new?propertyId=${property.id}`}>
-                      <Button variant="ghost" size="sm" data-testid={`button-new-request-${property.id}`}>
-                        New Request
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
         </div>
       )}
     </div>

@@ -1,328 +1,349 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocation, useSearch } from "wouter";
-import { Wrench, ArrowLeft, Building2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useMemo } from "react";
+import { useLang } from "@/hooks/use-lang";
+import {
+  SERVICES,
+  getServiceText,
+  getServicesByCategory,
+} from "@/data/services";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { insertServiceRequestSchema, type InsertServiceRequest, type Property } from "@shared/schema";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
-import { z } from "zod";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check, ArrowLeft, Building2 } from "lucide-react";
+import { useLocation } from "wouter";
 
-const formSchema = insertServiceRequestSchema.extend({
-  propertyId: z.string().min(1, "Please select a property"),
-  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
-  description: z.string().min(10, "Please provide more details (at least 10 characters)"),
-  category: z.string().min(1, "Please select a category"),
-  priority: z.string().min(1, "Please select a priority"),
-});
-
-const categories = [
-  { value: "plumbing", label: "Plumbing" },
-  { value: "electrical", label: "Electrical" },
-  { value: "hvac", label: "HVAC / Heating & Cooling" },
-  { value: "appliance", label: "Appliance Repair" },
-  { value: "structural", label: "Structural / Building" },
-  { value: "pest", label: "Pest Control" },
-  { value: "general", label: "General Maintenance" },
-  { value: "other", label: "Other" },
-];
-
-const priorities = [
-  { value: "low", label: "Low", description: "Can wait a few weeks" },
-  { value: "medium", label: "Medium", description: "Should be addressed within a week" },
-  { value: "high", label: "High", description: "Needs attention within 24-48 hours" },
-  { value: "urgent", label: "Urgent", description: "Emergency - immediate attention required" },
+const mockProperties = [
+  { id: 1, name: { ar: "فيلا الرياض", en: "Riyadh Villa" } },
+  { id: 2, name: { ar: "عمارة سكنية", en: "Residential Building" } },
 ];
 
 export default function RequestForm() {
+  const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const search = useSearch();
-  const { toast } = useToast();
+  const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
 
-  const searchParams = new URLSearchParams(search);
-  const preselectedPropertyId = searchParams.get("propertyId") || "";
+  const basicServiceIds = useMemo(() => {
+    return SERVICES.filter((s) => s.tier === "basic").map((s) => s.id);
+  }, []);
 
-  const { data: properties = [], isLoading: propertiesLoading } = useQuery<Property[]>({
-    queryKey: ["/api/properties"],
-  });
+  const [selectedServices, setSelectedServices] =
+    useState<string[]>(basicServiceIds);
 
-  const form = useForm<InsertServiceRequest>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      propertyId: preselectedPropertyId,
-      title: "",
-      description: "",
-      category: "",
-      priority: "medium",
-      status: "open",
+  const maintenanceServices = getServicesByCategory("maintenance");
+  const cleaningServices = getServicesByCategory("cleaning");
+
+  const content = {
+    ar: {
+      title: "طلب خدمة جديد",
+      subtitle: "اختر العقار والخدمات المطلوبة",
+      selectProperty: "اختر العقار",
+      selectServices: "اختر الخدمات",
+      maintenance: "خدمات الصيانة",
+      cleaning: "خدمات النظافة",
+      selectedCount: "خدمة محددة",
+      selectedCountPlural: "خدمات محددة",
+      noProperty: "يرجى اختيار عقار أولاً",
+      noServices: "يرجى اختيار خدمة واحدة على الأقل",
+      back: "رجوع",
+      submit: "إنشاء الطلب",
+      basic: "أساسية",
+      additional: "إضافية",
     },
-  });
-
-  const mutation = useMutation({
-    mutationFn: async (data: InsertServiceRequest) => {
-      const response = await apiRequest("POST", "/api/requests", data);
-      return response.json();
+    en: {
+      title: "New Service Request",
+      subtitle: "Select property and required services",
+      selectProperty: "Select Property",
+      selectServices: "Select Services",
+      maintenance: "Maintenance Services",
+      cleaning: "Cleaning Services",
+      selectedCount: "Service Selected",
+      selectedCountPlural: "Services Selected",
+      noProperty: "Please select a property first",
+      noServices: "Please select at least one service",
+      back: "Back",
+      submit: "Create Request",
+      basic: "Basic",
+      additional: "Additional",
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
-      toast({
-        title: "Request submitted",
-        description: "Your service request has been submitted successfully.",
-      });
-      setLocation("/requests");
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to submit request. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: InsertServiceRequest) => {
-    mutation.mutate(data);
   };
 
-  if (propertiesLoading) {
-    return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-48" />
-          <div className="h-4 bg-muted rounded w-72" />
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="h-10 bg-muted rounded" />
-              <div className="h-10 bg-muted rounded" />
-              <div className="h-32 bg-muted rounded" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  const t = content[lang];
+  const isRTL = lang === "ar";
 
-  if (properties.length === 0) {
-    return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <div className="mb-6">
-          <Link href="/requests">
-            <Button variant="ghost" size="sm" className="gap-2 mb-4" data-testid="button-back-requests">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Requests
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">New Service Request</h1>
-        </div>
-
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Building2 className="h-16 w-16 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Properties Available</h3>
-            <p className="text-muted-foreground text-center mb-4 max-w-sm">
-              You need to add a property before creating a service request.
-            </p>
-            <Link href="/properties/new">
-              <Button className="gap-2" data-testid="button-add-property-first">
-                Add Your First Property
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+  const toggleService = (serviceId: string) => {
+    setSelectedServices((prev) =>
+      prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId],
     );
-  }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProperty) {
+      alert(t.noProperty);
+      return;
+    }
+    if (selectedServices.length === 0) {
+      alert(t.noServices);
+      return;
+    }
+    console.log("Request data:", {
+      propertyId: selectedProperty,
+      services: selectedServices,
+    });
+    setLocation("/requests");
+  };
+
+  const getSelectedText = (count: number) => {
+    return `${count} ${count === 1 ? t.selectedCount : t.selectedCountPlural}`;
+  };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Link href="/requests">
-          <Button variant="ghost" size="sm" className="gap-2 mb-4" data-testid="button-back-requests">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Requests
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight" data-testid="text-new-request-title">New Service Request</h1>
-        <p className="text-muted-foreground mt-2">
-          Submit a service request for maintenance or repairs at your property.
-        </p>
-      </div>
-
+    <div
+      className="container mx-auto p-6 max-w-5xl"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Wrench className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle>Request Details</CardTitle>
-              <CardDescription>Provide details about the issue or service needed</CardDescription>
-            </div>
-          </div>
+          <CardTitle
+            className="text-3xl font-bold"
+            style={{ textAlign: isRTL ? "right" : "left" }}
+          >
+            {t.title}
+          </CardTitle>
+          <CardDescription
+            className="text-base"
+            style={{ textAlign: isRTL ? "right" : "left" }}
+          >
+            {t.subtitle}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="propertyId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Property *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-request-property">
-                          <SelectValue placeholder="Select a property" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {properties.map((property) => (
-                          <SelectItem key={property.id} value={property.id}>
-                            {property.name} - {property.address}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Select Property */}
+            <div className="space-y-3">
+              <Label
+                className="text-xl font-bold block"
+                style={{ textAlign: isRTL ? "right" : "left" }}
+              >
+                {t.selectProperty}
+              </Label>
+              <div className="grid md:grid-cols-2 gap-3">
+                {mockProperties.map((property) => {
+                  const isSelected = selectedProperty === property.id;
+                  return (
+                    <button
+                      key={property.id}
+                      type="button"
+                      onClick={() => setSelectedProperty(property.id)}
+                      className={`
+                        border-2 rounded-lg p-4 transition-all
+                        ${isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}
+                      `}
+                      style={{ textAlign: isRTL ? "right" : "left" }}
+                    >
+                      <div
+                        className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                      >
+                        <Building2 className="h-5 w-5" />
+                        <span className="font-semibold">
+                          {property.name[lang]}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Leaking faucet in kitchen"
-                        data-testid="input-request-title"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Brief summary of the issue or service needed
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Select Services */}
+            <div className="space-y-4">
+              <Label
+                className="text-xl font-bold block"
+                style={{ textAlign: isRTL ? "right" : "left" }}
+              >
+                {t.selectServices}
+              </Label>
 
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-request-category">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Cleaning Services - الآن أولاً */}
+              <Card>
+                <CardHeader>
+                  <CardTitle
+                    className={`text-xl font-bold flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+                  >
+                    <span>🧹</span>
+                    <span>{t.cleaning}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {cleaningServices.map((service) => {
+                      const text = getServiceText(service, lang);
+                      const isSelected = selectedServices.includes(service.id);
 
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-request-priority">
-                          <SelectValue placeholder="Select priority level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {priorities.map((priority) => (
-                          <SelectItem key={priority.value} value={priority.value}>
-                            <div className="flex flex-col">
-                              <span>{priority.label}</span>
+                      return (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() => toggleService(service.id)}
+                          className={`
+                            border rounded-lg p-3 transition-all
+                            ${isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}
+                          `}
+                          style={{ textAlign: isRTL ? "right" : "left" }}
+                        >
+                          <div
+                            className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <div
+                              className={`
+                              w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 mt-0.5
+                              ${isSelected ? "bg-primary border-primary" : "border-gray-300"}
+                            `}
+                            >
+                              {isSelected && (
+                                <Check className="h-3 w-3 text-white" />
+                              )}
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {priorities.find((p) => p.value === field.value)?.description}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            <div className="flex-1">
+                              <p className="font-bold text-sm">{text.name}</p>
+                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                {text.description}
+                              </p>
+                              <div
+                                className={`flex gap-2 mt-2 flex-wrap ${isRTL ? "justify-end" : "justify-start"}`}
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs font-semibold"
+                                >
+                                  {text.scope}
+                                </Badge>
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs font-semibold"
+                                >
+                                  {service.tier === "basic"
+                                    ? t.basic
+                                    : t.additional}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Please describe the issue in detail. Include location, when it started, and any other relevant information..."
-                        className="min-h-32 resize-none"
-                        data-testid="input-request-description"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The more details you provide, the better we can assist you
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Maintenance Services - الآن ثانياً */}
+              <Card>
+                <CardHeader>
+                  <CardTitle
+                    className={`text-xl font-bold flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+                  >
+                    <span>🔧</span>
+                    <span>{t.maintenance}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {maintenanceServices.map((service) => {
+                      const text = getServiceText(service, lang);
+                      const isSelected = selectedServices.includes(service.id);
 
-              <div className="flex flex-wrap gap-3 pt-4 border-t">
+                      return (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() => toggleService(service.id)}
+                          className={`
+                            border rounded-lg p-3 transition-all
+                            ${isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}
+                          `}
+                          style={{ textAlign: isRTL ? "right" : "left" }}
+                        >
+                          <div
+                            className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <div
+                              className={`
+                              w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 mt-0.5
+                              ${isSelected ? "bg-primary border-primary" : "border-gray-300"}
+                            `}
+                            >
+                              {isSelected && (
+                                <Check className="h-3 w-3 text-white" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-bold text-sm">{text.name}</p>
+                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                {text.description}
+                              </p>
+                              <div
+                                className={`flex gap-2 mt-2 flex-wrap ${isRTL ? "justify-end" : "justify-start"}`}
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs font-semibold"
+                                >
+                                  {text.scope}
+                                </Badge>
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs font-semibold"
+                                >
+                                  {service.tier === "basic"
+                                    ? t.basic
+                                    : t.additional}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Summary & Actions */}
+            <div
+              className={`flex items-center justify-between pt-4 border-t ${isRTL ? "flex-row-reverse" : ""}`}
+            >
+              <p className="text-sm font-semibold text-gray-700">
+                {getSelectedText(selectedServices.length)}
+              </p>
+              <div className={`flex gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setLocation("/requests")}
+                >
+                  <ArrowLeft
+                    className={`h-4 w-4 ${isRTL ? "ml-2 rotate-180" : "mr-2"}`}
+                  />
+                  {t.back}
+                </Button>
                 <Button
                   type="submit"
-                  disabled={mutation.isPending}
-                  data-testid="button-submit-request"
+                  disabled={!selectedProperty || selectedServices.length === 0}
                 >
-                  {mutation.isPending ? "Submitting..." : "Submit Request"}
+                  {t.submit}
                 </Button>
-                <Link href="/requests">
-                  <Button type="button" variant="outline" data-testid="button-cancel-request">
-                    Cancel
-                  </Button>
-                </Link>
               </div>
-            </form>
-          </Form>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
