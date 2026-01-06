@@ -1,180 +1,264 @@
-import { useState } from "react";
-import { useLang } from "@/hooks/use-lang";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Building2, Calendar, Eye } from "lucide-react";
-import { Link } from "wouter";
-
-// بيانات تجريبية
-const mockRequests = [
-  {
-    id: 1,
-    propertyName: { ar: "فيلا الرياض", en: "Riyadh Villa" },
-    services: [
-      { ar: "تنظيف المداخل والممرات", en: "Entrance & Corridor Cleaning" },
-      { ar: "فحص الميكانيك والكهرباء", en: "Mechanical & Electrical Inspection" }
-    ],
-    status: "pending",
-    date: "2025-12-27",
-  },
-  {
-    id: 2,
-    propertyName: { ar: "عمارة سكنية", en: "Residential Building" },
-    services: [
-      { ar: "صيانة المولدات الاحتياطية", en: "Backup Generator Maintenance" }
-    ],
-    status: "in-progress",
-    date: "2025-12-25",
-  },
-];
+import { FileText, Plus, Eye, Building2, Calendar } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
+import { supabase } from "../lib/supabase";
+import { getServicesByCategory } from "@/lib/services";
 
 export default function Requests() {
   const { lang } = useLang();
-  const [requests] = useState(mockRequests);
+  const [, setLocation] = useLocation();
 
   const content = {
     ar: {
       title: "طلبات الخدمة",
-      addNew: "طلب خدمة جديد",
-      noRequests: "لا توجد طلبات",
-      noRequestsDesc: "ابدأ بإنشاء طلب خدمة جديد",
+      newRequest: "طلب خدمة جديد",
       property: "العقار",
-      services: "الخدمات",
+      services: "خدمات",
       service: "خدمة",
-      servicesCount: "خدمات",
       date: "التاريخ",
-      status: "الحالة",
       viewDetails: "عرض التفاصيل",
-      statuses: {
-        pending: "قيد الانتظار",
-        "in-progress": "جاري التنفيذ",
-        completed: "مكتمل",
-        cancelled: "ملغي",
-      }
+      noRequests: "لا توجد طلبات حالياً",
+      createFirst: "أنشئ طلبك الأول",
+      pending: "قيد الانتظار",
+      in_progress: "جاري التنفيذ",
+      completed: "مكتمل",
+      cancelled: "ملغي",
     },
     en: {
       title: "Service Requests",
-      addNew: "New Service Request",
-      noRequests: "No Requests Found",
-      noRequestsDesc: "Start by creating a new service request",
+      newRequest: "New Request",
       property: "Property",
-      services: "Services",
-      service: "Service",
-      servicesCount: "Services",
+      services: "services",
+      service: "service",
       date: "Date",
-      status: "Status",
       viewDetails: "View Details",
-      statuses: {
-        pending: "Pending",
-        "in-progress": "In Progress",
-        completed: "Completed",
-        cancelled: "Cancelled",
-      }
-    }
+      noRequests: "No requests yet",
+      createFirst: "Create your first request",
+      pending: "Pending",
+      in_progress: "In Progress",
+      completed: "Completed",
+      cancelled: "Cancelled",
+    },
   };
 
   const t = content[lang];
 
+  // جلب طلبات المستخدم
+  const { data: requests, isLoading } = useQuery({
+    queryKey: ["/api/requests"],
+    queryFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) throw new Error("Not logged in");
+
+      const { data: user } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .single();
+
+      if (!user) throw new Error("User not found");
+
+      const { data, error } = await supabase
+        .from("requests")
+        .select(
+          `
+          *,
+          properties (
+            id,
+            name,
+            city
+          )
+        `,
+        )
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const getStatusColor = (status: string) => {
-    const colors = {
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      "in-progress": "bg-blue-100 text-blue-800 border-blue-300",
-      completed: "bg-green-100 text-green-800 border-green-300",
-      cancelled: "bg-red-100 text-red-800 border-red-300",
-    };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 border-blue-300";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-300";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-300";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
-  const getServicesText = (count: number) => {
-    return `${count} ${count === 1 ? t.service : t.servicesCount}`;
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "pending":
+        return t.pending;
+      case "in_progress":
+        return t.in_progress;
+      case "completed":
+        return t.completed;
+      case "cancelled":
+        return t.cancelled;
+      default:
+        return status;
+    }
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
+  // Get service names
+  const getServiceNames = (serviceIds: string[], category: string) => {
+    const services = getServicesByCategory(category);
+    return serviceIds
+      .map((id) => {
+        const service = services.find((s) => s.id === id);
+        return service ? service.name[lang] : "";
+      })
+      .filter(Boolean);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <Link href="/requests/new">
-          <Button size="lg">
-            <Plus className={lang === 'ar' ? 'ml-2' : 'mr-2'} />
-            {t.addNew}
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="w-8 h-8 text-blue-600" />
+            {t.title}
+          </h1>
+          <Button
+            onClick={() => setLocation("/requests/new")}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {t.newRequest}
           </Button>
-        </Link>
-      </div>
+        </div>
 
-      {/* Requests List */}
-      {requests.length === 0 ? (
-        <Card className="p-12">
-          <div className="text-center">
-            <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">{t.noRequests}</h3>
-            <p className="text-gray-600 mb-6">{t.noRequestsDesc}</p>
-            <Link href="/requests/new">
-              <Button>
-                <Plus className={lang === 'ar' ? 'ml-2' : 'mr-2'} />
-                {t.addNew}
+        {/* Requests List */}
+        {!requests || requests.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h2 className="text-xl font-bold mb-2 text-gray-900">
+                {t.noRequests}
+              </h2>
+              <p className="text-gray-600 mb-4">{t.createFirst}</p>
+              <Button onClick={() => setLocation("/requests/new")}>
+                <Plus className="w-4 h-4 mr-2" />
+                {t.newRequest}
               </Button>
-            </Link>
-          </div>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {requests.map((request) => (
-            <Card key={request.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <FileText className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">
-                        {t.property}: {request.propertyName[lang]}
-                      </CardTitle>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                        <Calendar className="h-4 w-4" />
-                        {request.date}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {requests.map((request) => {
+              const serviceNames = getServiceNames(
+                request.service_ids,
+                request.service_category,
+              );
+
+              return (
+                <Card
+                  key={request.id}
+                  className="hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      {/* Left Section */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Badge className={getStatusColor(request.status)}>
+                            {getStatusText(request.status)}
+                          </Badge>
+                        </div>
+
+                        <div className="space-y-2">
+                          {/* Property */}
+                          <div className="flex items-center gap-2 text-gray-900">
+                            <Building2 className="w-5 h-5 text-blue-600" />
+                            <span className="font-semibold">{t.property}:</span>
+                            <span>{request.properties?.name || "N/A"}</span>
+                          </div>
+
+                          {/* Date */}
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="w-5 h-5" />
+                            <span>{formatDate(request.created_at)}</span>
+                          </div>
+
+                          {/* Services Count */}
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <FileText className="w-5 h-5" />
+                            <span>
+                              {serviceNames.length}{" "}
+                              {serviceNames.length === 1
+                                ? t.service
+                                : t.services}
+                            </span>
+                          </div>
+
+                          {/* Service Names Preview */}
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {serviceNames.slice(0, 2).map((name, index) => (
+                              <span
+                                key={index}
+                                className="text-sm text-gray-700"
+                              >
+                                {name}
+                                {index < Math.min(1, serviceNames.length - 1) &&
+                                  ","}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Section - Actions */}
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/requests/${request.id}`)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          {t.viewDetails}
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                  <Badge className={getStatusColor(request.status)}>
-                    {t.statuses[request.status as keyof typeof t.statuses]}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {/* Services */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Building2 className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm font-medium text-gray-700">
-                        {getServicesText(request.services.length)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {request.services.map((service, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {service[lang]}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="pt-3 border-t">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Eye className={`h-4 w-4 ${lang === 'ar' ? 'ml-2' : 'mr-2'}`} />
-                      {t.viewDetails}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

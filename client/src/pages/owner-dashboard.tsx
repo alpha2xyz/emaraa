@@ -63,17 +63,12 @@ export default function OwnerDashboard() {
   const content = t[lang];
 
   return (
-    <div
-      className="min-h-screen bg-gray-50"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
+    <div className="min-h-screen bg-gray-50" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header مع زر اللغة */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {content.title}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{content.title}</h1>
             <p className="text-gray-600 mt-1">{content.subtitle}</p>
           </div>
           <Button

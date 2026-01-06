@@ -10,13 +10,20 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowLeft } from "lucide-react";
+import { Building2, ArrowLeft, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { supabase } from "../lib/supabase";
 
 export default function AuthPage() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({
     name: "",
     phone: "",
   });
@@ -46,6 +53,12 @@ export default function AuthPage() {
       back: "رجوع للصفحة الرئيسية",
       namePlaceholder: "أدخل اسمك الكامل",
       phonePlaceholder: "05xxxxxxxx",
+      phoneExists: "رقم الجوال مسجل مسبقاً",
+      phoneNotFound: "رقم الجوال غير مسجل",
+      registrationSuccess: "تم التسجيل بنجاح!",
+      loginSuccess: "تم تسجيل الدخول بنجاح!",
+      phoneInvalid: "رقم جوال سعودي فقط (يبدأ بـ 05 ويتكون من 10 أرقام)",
+      nameInvalid: "الاسم يجب أن يكون عربي أو إنجليزي فقط (حد أقصى 25 حرف)",
     },
     en: {
       ownerRegisterTitle: "Create Property Owner Account",
@@ -63,15 +76,124 @@ export default function AuthPage() {
       back: "Back to Home",
       namePlaceholder: "Enter your full name",
       phonePlaceholder: "05xxxxxxxx",
+      phoneExists: "Phone number already registered",
+      phoneNotFound: "Phone number not found",
+      registrationSuccess: "Registration successful!",
+      loginSuccess: "Login successful!",
+      phoneInvalid: "Saudi phone number only (starts with 05 and 10 digits)",
+      nameInvalid: "Name must be Arabic or English only (max 25 characters)",
     },
   };
 
   const t = content[lang];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ Validate Saudi phone number
+  const validatePhone = (phone: string): boolean => {
+    const saudiPhoneRegex = /^05\d{8}$/;
+    return saudiPhoneRegex.test(phone);
+  };
+
+  // ✅ Validate name (Arabic or English only, max 25 chars)
+  const validateName = (name: string): boolean => {
+    const nameRegex = /^[\u0600-\u06FFa-zA-Z\s]{1,25}$/;
+    return nameRegex.test(name.trim());
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", { role, mode, ...formData });
-    setLocation("/dashboard");
+    setError("");
+    setValidationErrors({ name: "", phone: "" });
+    setLoading(true);
+
+    // ✅ Validation
+    let hasErrors = false;
+    const newErrors = { name: "", phone: "" };
+
+    // Validate phone
+    if (!validatePhone(formData.phone)) {
+      newErrors.phone = t.phoneInvalid;
+      hasErrors = true;
+    }
+
+    // Validate name (only for register)
+    if (mode === "register" && !validateName(formData.name)) {
+      newErrors.name = t.nameInvalid;
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setValidationErrors(newErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (mode === "register") {
+        // التسجيل
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("phone")
+          .eq("phone", formData.phone)
+          .single();
+
+        if (existingUser) {
+          setError(t.phoneExists);
+          setLoading(false);
+          return;
+        }
+
+        const { error: insertError } = await supabase.from("users").insert([
+          {
+            phone: formData.phone,
+            name: formData.name.trim(),
+            role: role,
+          },
+        ]);
+
+        if (insertError) throw insertError;
+
+        // حفظ رقم الجوال والـ role في localStorage
+        localStorage.setItem("userPhone", formData.phone);
+        localStorage.setItem("userRole", role);
+
+        // التوجيه بعد التسجيل
+        if (role === "owner") {
+          setLocation("/properties/new");
+        } else if (role === "provider") {
+          setLocation("/provider-profile");
+        }
+      } else {
+        // تسجيل الدخول
+        const { data: user, error: loginError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("phone", formData.phone)
+          .eq("role", role)
+          .single();
+
+        if (loginError || !user) {
+          setError(t.phoneNotFound);
+          setLoading(false);
+          return;
+        }
+
+        // حفظ رقم الجوال والـ role في localStorage
+        localStorage.setItem("userPhone", formData.phone);
+        localStorage.setItem("userRole", role);
+
+        // تسجيل الدخول → توجيه للداشبورد
+        if (role === "owner") {
+          setLocation("/dashboard/owner");
+        } else if (role === "provider") {
+          setLocation("/dashboard/provider");
+        }
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError("حدث خطأ، حاول مرة أخرى");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getTitle = () => {
@@ -86,98 +208,112 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white shadow-xl border border-gray-200">
-        <CardHeader>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation("/")}
-            className="mb-4 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t.back}
-          </Button>
-          <div className="text-center">
-            <div
-              className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                role === "provider" ? "bg-green-100" : "bg-blue-100"
-              }`}
-            >
-              <Building2
-                className={`w-8 h-8 ${
-                  role === "provider" ? "text-green-600" : "text-blue-600"
-                }`}
-              />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => setLocation("/")}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {t.back}
+        </Button>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <Building2 className="w-8 h-8 text-blue-600" />
+              <CardTitle>{getTitle()}</CardTitle>
             </div>
-            <CardTitle className="text-2xl text-gray-900 mb-2">
-              {getTitle()}
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              {getDescription()}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "register" && (
+            <CardDescription>{getDescription()}</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name Field - only for register */}
+              {mode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="name">{t.nameLabel}</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder={t.namePlaceholder}
+                    value={formData.name}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setValidationErrors({ ...validationErrors, name: "" });
+                    }}
+                    maxLength={25}
+                    required
+                    className={validationErrors.name ? "border-red-500" : ""}
+                  />
+                  {validationErrors.name && (
+                    <div className="flex items-center gap-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.name}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Phone Field */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-900">
-                  {t.nameLabel}
-                </Label>
+                <Label htmlFor="phone">{t.phoneLabel}</Label>
                 <Input
-                  id="name"
-                  type="text"
-                  placeholder={t.namePlaceholder}
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  id="phone"
+                  type="tel"
+                  placeholder={t.phonePlaceholder}
+                  value={formData.phone}
+                  onChange={(e) => {
+                    setFormData({ ...formData, phone: e.target.value });
+                    setValidationErrors({ ...validationErrors, phone: "" });
+                  }}
+                  maxLength={10}
                   required
-                  className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+                  className={validationErrors.phone ? "border-red-500" : ""}
                 />
+                {validationErrors.phone && (
+                  <div className="flex items-center gap-2 text-red-600 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    {validationErrors.phone}
+                  </div>
+                )}
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-900">
-                {t.phoneLabel}
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder={t.phonePlaceholder}
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                required
-                className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <Button
-              type="submit"
-              className={`w-full text-white ${
-                role === "provider"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-              size="lg"
-            >
-              {mode === "login" ? t.loginButton : t.registerButton}
-            </Button>
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => setMode(mode === "login" ? "register" : "login")}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                {mode === "login" ? t.switchToRegister : t.switchToLogin}
+
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  {error}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading
+                  ? "جاري التحميل..."
+                  : mode === "login"
+                    ? t.loginButton
+                    : t.registerButton}
               </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+
+              {/* Switch Mode */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMode(mode === "login" ? "register" : "login")
+                  }
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {mode === "login" ? t.switchToRegister : t.switchToLogin}
+                </button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

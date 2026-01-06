@@ -1,255 +1,154 @@
 import { useState } from "react";
-import { useLang } from "@/hooks/use-lang";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  Building2,
-  Home,
-  Building,
-  Store,
-  ArrowLeft,
-  Check,
-} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Building2, Save, Loader2, ArrowLeft } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
+import { supabase } from "../lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import { getServicesByCategory } from "@/lib/services";
 
-const BUILDING_TYPES = [
-  {
-    id: "villa",
-    icon: Home,
-    color: "bg-blue-100 text-blue-600 border-blue-300",
-  },
-  {
-    id: "apartment",
-    icon: Building,
-    color: "bg-green-100 text-green-600 border-green-300",
-  },
-  {
-    id: "building",
-    icon: Building2,
-    color: "bg-purple-100 text-purple-600 border-purple-300",
-  },
-  {
-    id: "commercial",
-    icon: Store,
-    color: "bg-orange-100 text-orange-600 border-orange-300",
-  },
-  {
-    id: "mosque",
-    icon: Building2,
-    color: "bg-teal-100 text-teal-600 border-teal-300",
-  },
-  {
-    id: "other",
-    icon: Building2,
-    color: "bg-gray-100 text-gray-600 border-gray-300",
-  },
-];
-
-export default function PropertyForm() {
+export default function RequestForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    type: "",
-    otherType: "",
-    floors: "1",
+    property_id: "",
+    service_ids: [] as string[],
+    description: "",
   });
 
   const content = {
     ar: {
-      title: "إضافة عقار جديد",
-      subtitle: "أضف تفاصيل العقار الخاص بك",
-      nameLabel: "اسم العقار",
-      namePlaceholder: "مثال: فيلا الرياض",
-      addressLabel: "العنوان",
-      addressPlaceholder: "الحي، المدينة",
-      typeLabel: "نوع المبنى",
-      otherTypeLabel: "حدد نوع المبنى",
-      otherTypePlaceholder: "مثال: مدرسة، مستشفى...",
-      floorsLabel: "عدد الطوابق",
-      back: "رجوع",
-      save: "حفظ العقار",
-      types: {
-        villa: "فيلا",
-        apartment: "شقة",
-        building: "عمارة سكنية",
-        commercial: "تجاري",
-        mosque: "مسجد",
-        other: "أخرى",
-      },
+      title: "طلب خدمة جديد",
+      subtitle: "اختر العقار والخدمات المطلوبة",
+      selectProperty: "اختر العقار",
+      propertyPlaceholder: "اختر العقار",
+      cleaning: "خدمات النظافة",
+      maintenance: "خدمات الصيانة",
+      description: "تفاصيل إضافية",
+      descriptionPlaceholder: "اكتب أي ملاحظات إضافية...",
+      submit: "إرسال الطلب",
+      submitting: "جاري الإرسال...",
+      cancel: "إلغاء",
     },
     en: {
-      title: "Add New Property",
-      subtitle: "Enter your property details",
-      nameLabel: "Property Name",
-      namePlaceholder: "e.g., Riyadh Villa",
-      addressLabel: "Address",
-      addressPlaceholder: "District, City",
-      typeLabel: "Building Type",
-      otherTypeLabel: "Specify Building Type",
-      otherTypePlaceholder: "e.g., School, Hospital...",
-      floorsLabel: "Number of Floors",
-      back: "Back",
-      save: "Save Property",
-      types: {
-        villa: "Villa",
-        apartment: "Apartment",
-        building: "Residential Building",
-        commercial: "Commercial",
-        mosque: "Mosque",
-        other: "Other",
-      },
-    },
+      title: "New Request",
+      subtitle: "Select property and services",
+      selectProperty: "Property",
+      propertyPlaceholder: "Select property",
+      cleaning: "Cleaning",
+      maintenance: "Maintenance",
+      description: "Details",
+      descriptionPlaceholder: "Notes...",
+      submit: "Submit",
+      submitting: "Sending...",
+      cancel: "Cancel",
+    }
   };
 
   const t = content[lang];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Send to backend
-    console.log("Property data:", formData);
-    setLocation("/properties");
+  const { data: properties } = useQuery({
+    queryKey: ["/api/properties"],
+    queryFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      const { data, error } = await supabase.from("properties").select("*").eq("owner_phone", phone);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const phone = localStorage.getItem("userPhone");
+      const { error } = await supabase.from("maintenance_requests").insert([
+        {
+          property_id: data.property_id,
+          service_ids: data.service_ids,
+          description: data.description,
+          status: "pending",
+          owner_phone: phone, // ✅ الربط برقم الجوال
+        },
+      ]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      toast({ title: lang === "ar" ? "تم الإرسال بنجاح" : "Sent successfully" });
+      setLocation("/requests");
+    }
+  });
+
+  const handleServiceToggle = (serviceId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      service_ids: prev.service_ids.includes(serviceId)
+        ? prev.service_ids.filter(id => id !== serviceId)
+        : [...prev.service_ids, serviceId]
+    }));
   };
 
   return (
-    <div
-      className="container mx-auto p-6 max-w-3xl"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">{t.title}</CardTitle>
-          <CardDescription>{t.subtitle}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Property Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">{t.nameLabel}</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder={t.namePlaceholder}
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            {/* Address */}
-            <div className="space-y-2">
-              <Label htmlFor="address">{t.addressLabel}</Label>
-              <Input
-                id="address"
-                type="text"
-                placeholder={t.addressPlaceholder}
-                value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            {/* Building Type */}
-            <div className="space-y-3">
-              <Label>{t.typeLabel}</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {BUILDING_TYPES.map((type) => {
-                  const Icon = type.icon;
-                  const isSelected = formData.type === type.id;
-
-                  return (
-                    <div
-                      key={type.id}
-                      onClick={() =>
-                        setFormData({ ...formData, type: type.id })
-                      }
-                      className={`
-                        relative border-2 rounded-lg p-4 cursor-pointer transition-all
-                        ${isSelected ? type.color + " border-2" : "border-gray-200 hover:border-gray-300"}
-                      `}
-                    >
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
-                          <Check className="h-3 w-3" />
-                        </div>
-                      )}
-                      <div className="flex flex-col items-center gap-2">
-                        <Icon className="h-8 w-8" />
-                        <span className="text-sm font-medium text-center">
-                          {t.types[type.id as keyof typeof t.types]}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Other Type (if selected) */}
-            {formData.type === "other" && (
-              <div className="space-y-2">
-                <Label htmlFor="otherType">{t.otherTypeLabel}</Label>
-                <Input
-                  id="otherType"
-                  type="text"
-                  placeholder={t.otherTypePlaceholder}
-                  value={formData.otherType}
-                  onChange={(e) =>
-                    setFormData({ ...formData, otherType: e.target.value })
-                  }
-                  required
-                />
-              </div>
-            )}
-
-            {/* Floors */}
-            <div className="space-y-2">
-              <Label htmlFor="floors">{t.floorsLabel}</Label>
-              <Input
-                id="floors"
-                type="number"
-                min="1"
-                value={formData.floors}
-                onChange={(e) =>
-                  setFormData({ ...formData, floors: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setLocation("/properties")}
-                className="flex-1"
-              >
-                <ArrowLeft
-                  className={`h-4 w-4 ${lang === "ar" ? "ml-2 rotate-180" : "mr-2"}`}
-                />
-                {t.back}
-              </Button>
-              <Button type="submit" className="flex-1">
-                {t.save}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="icon" onClick={() => setLocation("/requests")}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">{t.title}</h1>
+          <p className="text-gray-500">{t.subtitle}</p>
+        </div>
+      </div>
+      <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(formData); }} className="space-y-6">
+        <Card>
+          <CardHeader><CardTitle className="text-lg"><Building2 className="inline ml-2" />{t.selectProperty}</CardTitle></CardHeader>
+          <CardContent>
+            <Select value={formData.property_id} onValueChange={(v) => setFormData({...formData, property_id: v})}>
+              <SelectTrigger><SelectValue placeholder={t.propertyPlaceholder}/></SelectTrigger>
+              <SelectContent>{properties?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader><CardTitle>{t.cleaning}</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {getServicesByCategory("cleaning").map(s => (
+                <div key={s.id} className="flex items-center gap-3">
+                  <Checkbox id={s.id} checked={formData.service_ids.includes(s.id)} onCheckedChange={() => handleServiceToggle(s.id)} />
+                  <Label htmlFor={s.id}>{s.name[lang]}</Label>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>{t.maintenance}</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {getServicesByCategory("maintenance").map(s => (
+                <div key={s.id} className="flex items-center gap-3">
+                  <Checkbox id={s.id} checked={formData.service_ids.includes(s.id)} onCheckedChange={() => handleServiceToggle(s.id)} />
+                  <Label htmlFor={s.id}>{s.name[lang]}</Label>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+        <Card>
+          <CardHeader><CardTitle>{t.description}</CardTitle></CardHeader>
+          <CardContent><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder={t.descriptionPlaceholder}/></CardContent>
+        </Card>
+        <Button type="submit" className="w-full bg-blue-600 h-12" disabled={mutation.isPending}>
+          {mutation.isPending ? <Loader2 className="animate-spin" /> : t.submit}
+        </Button>
+      </form>
     </div>
   );
 }

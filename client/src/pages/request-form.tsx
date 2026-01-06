@@ -1,351 +1,368 @@
-import { useState, useMemo } from "react";
-import { useLang } from "@/hooks/use-lang";
-import {
-  SERVICES,
-  getServiceText,
-  getServicesByCategory,
-} from "@/data/services";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, ArrowLeft, Building2 } from "lucide-react";
-import { useLocation } from "wouter";
-
-const mockProperties = [
-  { id: 1, name: { ar: "فيلا الرياض", en: "Riyadh Villa" } },
-  { id: 2, name: { ar: "عمارة سكنية", en: "Residential Building" } },
-];
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileText, Building2, Save, Loader2, ArrowLeft } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
+import { supabase } from "../lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import { getServicesByCategory } from "@/lib/services";
 
 export default function RequestForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
+  const { toast } = useToast();
 
-  const basicServiceIds = useMemo(() => {
-    return SERVICES.filter((s) => s.tier === "basic").map((s) => s.id);
-  }, []);
-
-  const [selectedServices, setSelectedServices] =
-    useState<string[]>(basicServiceIds);
-
-  const maintenanceServices = getServicesByCategory("maintenance");
-  const cleaningServices = getServicesByCategory("cleaning");
+  const [formData, setFormData] = useState({
+    property_id: "",
+    service_ids: [] as string[],
+    description: "",
+  });
 
   const content = {
     ar: {
       title: "طلب خدمة جديد",
       subtitle: "اختر العقار والخدمات المطلوبة",
       selectProperty: "اختر العقار",
-      selectServices: "اختر الخدمات",
-      maintenance: "خدمات الصيانة",
+      propertyPlaceholder: "اختر العقار",
       cleaning: "خدمات النظافة",
-      selectedCount: "خدمة محددة",
-      selectedCountPlural: "خدمات محددة",
-      noProperty: "يرجى اختيار عقار أولاً",
-      noServices: "يرجى اختيار خدمة واحدة على الأقل",
-      back: "رجوع",
-      submit: "إنشاء الطلب",
-      basic: "أساسية",
-      additional: "إضافية",
+      maintenance: "خدمات الصيانة",
+      description: "تفاصيل إضافية",
+      descriptionPlaceholder: "اكتب أي تفاصيل أو ملاحظات إضافية...",
+      submit: "إرسال الطلب",
+      submitting: "جاري الإرسال...",
+      cancel: "إلغاء",
+      success: "تم إرسال الطلب بنجاح!",
+      error: "حدث خطأ، حاول مرة أخرى",
+      noProperties: "لا توجد عقارات! أضف عقاراً أولاً",
+      addProperty: "إضافة عقار",
     },
     en: {
       title: "New Service Request",
       subtitle: "Select property and required services",
       selectProperty: "Select Property",
-      selectServices: "Select Services",
-      maintenance: "Maintenance Services",
+      propertyPlaceholder: "Select property",
       cleaning: "Cleaning Services",
-      selectedCount: "Service Selected",
-      selectedCountPlural: "Services Selected",
-      noProperty: "Please select a property first",
-      noServices: "Please select at least one service",
-      back: "Back",
-      submit: "Create Request",
-      basic: "Basic",
-      additional: "Additional",
+      maintenance: "Maintenance Services",
+      description: "Additional Details",
+      descriptionPlaceholder: "Write any additional details or notes...",
+      submit: "Submit Request",
+      submitting: "Submitting...",
+      cancel: "Cancel",
+      success: "Request submitted successfully!",
+      error: "An error occurred, please try again",
+      noProperties: "No properties! Add a property first",
+      addProperty: "Add Property",
     },
   };
 
   const t = content[lang];
-  const isRTL = lang === "ar";
 
-  const toggleService = (serviceId: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(serviceId)
-        ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId],
-    );
+  // جلب عقارات المستخدم
+  const { data: properties } = useQuery({
+    queryKey: ["/api/properties"],
+    queryFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) throw new Error("Not logged in");
+
+      const { data: user } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .single();
+
+      if (!user) throw new Error("User not found");
+
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // التعامل مع اختيار الخدمات
+  const handleServiceToggle = (serviceId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      service_ids: prev.service_ids.includes(serviceId)
+        ? prev.service_ids.filter((id) => id !== serviceId)
+        : [...prev.service_ids, serviceId],
+    }));
   };
+
+  // إرسال الطلب
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) throw new Error("Not logged in");
+
+      const { data: user } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .single();
+
+      if (!user) throw new Error("User not found");
+
+      // تحديد الفئة تلقائياً بناءً على الخدمات المختارة
+      const cleaningServices = getServicesByCategory("cleaning").map(s => s.id);
+      const hasCleaningService = formData.service_ids.some(id => cleaningServices.includes(id));
+
+      const { error } = await supabase.from("requests").insert([
+        {
+          owner_id: user.id,
+          property_id: formData.property_id,
+          service_category: hasCleaningService ? "cleaning" : "maintenance",
+          service_ids: formData.service_ids,
+          description: formData.description || null,
+        },
+      ]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: t.success,
+        variant: "default",
+      });
+      setLocation("/requests");
+    },
+    onError: (error) => {
+      console.error("Error:", error);
+      toast({
+        title: t.error,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProperty) {
-      alert(t.noProperty);
-      return;
-    }
-    if (selectedServices.length === 0) {
-      alert(t.noServices);
-      return;
-    }
-    console.log("Request data:", {
-      propertyId: selectedProperty,
-      services: selectedServices,
-    });
-    setLocation("/requests");
+    mutation.mutate();
   };
 
-  const getSelectedText = (count: number) => {
-    return `${count} ${count === 1 ? t.selectedCount : t.selectedCountPlural}`;
-  };
+  // إذا ما في عقارات
+  if (properties && properties.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-bold mb-2">{t.noProperties}</h2>
+            <Button
+              onClick={() => setLocation("/properties/new")}
+              className="mt-4"
+            >
+              {t.addProperty}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="container mx-auto p-6 max-w-5xl"
-      dir={isRTL ? "rtl" : "ltr"}
-    >
-      <Card>
-        <CardHeader>
-          <CardTitle
-            className="text-3xl font-bold"
-            style={{ textAlign: isRTL ? "right" : "left" }}
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation("/requests")}
+            className="mb-4"
           >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t.cancel}
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="w-8 h-8 text-blue-600" />
             {t.title}
-          </CardTitle>
-          <CardDescription
-            className="text-base"
-            style={{ textAlign: isRTL ? "right" : "left" }}
-          >
-            {t.subtitle}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Select Property */}
-            <div className="space-y-3">
-              <Label
-                className="text-xl font-bold block"
-                style={{ textAlign: isRTL ? "right" : "left" }}
-              >
+          </h1>
+          <p className="text-gray-600 mt-1">{t.subtitle}</p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* اختيار العقار */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
                 {t.selectProperty}
-              </Label>
-              <div className="grid md:grid-cols-2 gap-3">
-                {mockProperties.map((property) => {
-                  const isSelected = selectedProperty === property.id;
-                  return (
-                    <button
-                      key={property.id}
-                      type="button"
-                      onClick={() => setSelectedProperty(property.id)}
-                      className={`
-                        border-2 rounded-lg p-4 transition-all
-                        ${isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}
-                      `}
-                      style={{ textAlign: isRTL ? "right" : "left" }}
-                    >
-                      <div
-                        className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                      >
-                        <Building2 className="h-5 w-5" />
-                        <span className="font-semibold">
-                          {property.name[lang]}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Select Services */}
-            <div className="space-y-4">
-              <Label
-                className="text-xl font-bold block"
-                style={{ textAlign: isRTL ? "right" : "left" }}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={formData.property_id}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, property_id: value })
+                }
+                required
               >
-                {t.selectServices}
-              </Label>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.propertyPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  {properties?.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.name} - {property.city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
-              {/* Cleaning Services - الآن أولاً */}
-              <Card>
-                <CardHeader>
-                  <CardTitle
-                    className={`text-xl font-bold flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+          {/* خدمات النظافة */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                🧹 {t.cleaning}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getServicesByCategory("cleaning").map((service) => (
+                  <div
+                    key={service.id}
+                    className={`relative border-2 rounded-lg p-4 transition-all ${
+                      formData.service_ids.includes(service.id)
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
                   >
-                    <span>🧹</span>
-                    <span>{t.cleaning}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {cleaningServices.map((service) => {
-                      const text = getServiceText(service, lang);
-                      const isSelected = selectedServices.includes(service.id);
-
-                      return (
-                        <button
-                          key={service.id}
-                          type="button"
-                          onClick={() => toggleService(service.id)}
-                          className={`
-                            border rounded-lg p-3 transition-all
-                            ${isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}
-                          `}
-                          style={{ textAlign: isRTL ? "right" : "left" }}
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={service.id}
+                        checked={formData.service_ids.includes(service.id)}
+                        onCheckedChange={() => handleServiceToggle(service.id)}
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={service.id}
+                          className="font-semibold cursor-pointer block mb-1"
                         >
-                          <div
-                            className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
-                          >
-                            <div
-                              className={`
-                              w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 mt-0.5
-                              ${isSelected ? "bg-primary border-primary" : "border-gray-300"}
-                            `}
-                            >
-                              {isSelected && (
-                                <Check className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-bold text-sm">{text.name}</p>
-                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                                {text.description}
-                              </p>
-                              <div
-                                className={`flex gap-2 mt-2 flex-wrap ${isRTL ? "justify-end" : "justify-start"}`}
-                              >
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs font-semibold"
-                                >
-                                  {text.scope}
-                                </Badge>
-                                <Badge
-                                  variant="secondary"
-                                  className="text-xs font-semibold"
-                                >
-                                  {service.tier === "basic"
-                                    ? t.basic
-                                    : t.additional}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                          {service.name[lang]}
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          {service.description[lang]}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Maintenance Services - الآن ثانياً */}
-              <Card>
-                <CardHeader>
-                  <CardTitle
-                    className={`text-xl font-bold flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
-                  >
-                    <span>🔧</span>
-                    <span>{t.maintenance}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {maintenanceServices.map((service) => {
-                      const text = getServiceText(service, lang);
-                      const isSelected = selectedServices.includes(service.id);
-
-                      return (
-                        <button
-                          key={service.id}
-                          type="button"
-                          onClick={() => toggleService(service.id)}
-                          className={`
-                            border rounded-lg p-3 transition-all
-                            ${isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}
-                          `}
-                          style={{ textAlign: isRTL ? "right" : "left" }}
-                        >
-                          <div
-                            className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
-                          >
-                            <div
-                              className={`
-                              w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 mt-0.5
-                              ${isSelected ? "bg-primary border-primary" : "border-gray-300"}
-                            `}
-                            >
-                              {isSelected && (
-                                <Check className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-bold text-sm">{text.name}</p>
-                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                                {text.description}
-                              </p>
-                              <div
-                                className={`flex gap-2 mt-2 flex-wrap ${isRTL ? "justify-end" : "justify-start"}`}
-                              >
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs font-semibold"
-                                >
-                                  {text.scope}
-                                </Badge>
-                                <Badge
-                                  variant="secondary"
-                                  className="text-xs font-semibold"
-                                >
-                                  {service.tier === "basic"
-                                    ? t.basic
-                                    : t.additional}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Summary & Actions */}
-            <div
-              className={`flex items-center justify-between pt-4 border-t ${isRTL ? "flex-row-reverse" : ""}`}
-            >
-              <p className="text-sm font-semibold text-gray-700">
-                {getSelectedText(selectedServices.length)}
-              </p>
-              <div className={`flex gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setLocation("/requests")}
-                >
-                  <ArrowLeft
-                    className={`h-4 w-4 ${isRTL ? "ml-2 rotate-180" : "mr-2"}`}
-                  />
-                  {t.back}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={!selectedProperty || selectedServices.length === 0}
-                >
-                  {t.submit}
-                </Button>
+                ))}
               </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* خدمات الصيانة */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                🔧 {t.maintenance}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getServicesByCategory("maintenance").map((service) => (
+                  <div
+                    key={service.id}
+                    className={`relative border-2 rounded-lg p-4 transition-all ${
+                      formData.service_ids.includes(service.id)
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={service.id}
+                        checked={formData.service_ids.includes(service.id)}
+                        onCheckedChange={() => handleServiceToggle(service.id)}
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={service.id}
+                          className="font-semibold cursor-pointer block mb-1"
+                        >
+                          {service.name[lang]}
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          {service.description[lang]}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* التفاصيل */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.description}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder={t.descriptionPlaceholder}
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                rows={4}
+              />
+            </CardContent>
+          </Card>
+
+          {/* أزرار */}
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              disabled={
+                mutation.isPending ||
+                !formData.property_id ||
+                formData.service_ids.length === 0
+              }
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {t.submitting}
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  {t.submit}
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLocation("/requests")}
+            >
+              {t.cancel}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
