@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Building2, MapPin, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, Save, Loader2 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,6 @@ export default function PropertyForm() {
     mapurl: "",
   });
 
-  // إضافة state للأخطاء
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const content = {
@@ -55,16 +54,16 @@ export default function PropertyForm() {
       unitsCount: "عدد الوحدات",
       unitsPlaceholder: "مثال: 50",
       mapUrl: "رابط الموقع (خرائط جوجل)",
-      mapUrlPlaceholder: "https://maps.app.goo.gl/...",
+      mapUrlPlaceholder: "https://maps.google.com/...",
       mapUrlHelper: "افتح خرائط جوجل، اضغط على مشاركة، والصق الرابط هنا",
       save: "حفظ العقار",
       cancel: "إلغاء",
       saving: "جاري الحفظ...",
       successAdd: "تم إضافة العقار بنجاح!",
       successEdit: "تم تحديث العقار بنجاح!",
-      error: "حدث خطأ، حاول مرة أخرى",
       requiredField: "هذا الحقل مطلوب",
-      invalidUnits: "يجب أن يكون عدد الوحدات رقم صحيح",
+      invalidUnits: "يجب أن يكون عدد الوحدات رقماً صحيحاً",
+      loginRequired: "يرجى تسجيل الدخول أولاً",
     },
     en: {
       addTitle: "Add New Property",
@@ -75,32 +74,32 @@ export default function PropertyForm() {
       residential: "Residential",
       commercial: "Commercial",
       mixed: "Mixed",
-      selectType: "Select property type",
+      selectType: "Select type",
       address: "Address",
       addressPlaceholder: "Example: King Fahd Road",
       city: "City",
       cityPlaceholder: "Example: Riyadh",
       unitsCount: "Number of Units",
-      unitsPlaceholder: "Example: 50",
-      mapUrl: "Location Link (Google Maps)",
-      mapUrlPlaceholder: "https://maps.app.goo.gl/...",
-      mapUrlHelper: "Open Google Maps, tap Share, and paste the link here",
-      save: "Save Property",
+      unitsPlaceholder: "50",
+      mapUrl: "Map Link",
+      mapUrlPlaceholder: "https://maps.google.com/...",
+      mapUrlHelper: "Copy link from Google Maps",
+      save: "Save",
       cancel: "Cancel",
       saving: "Saving...",
-      successAdd: "Property added successfully!",
-      successEdit: "Property updated successfully!",
-      error: "An error occurred, please try again",
-      requiredField: "This field is required",
-      invalidUnits: "Units count must be a valid number",
+      successAdd: "Added successfully!",
+      successEdit: "Updated successfully!",
+      requiredField: "Required",
+      invalidUnits: "Must be a number",
+      loginRequired: "Please login",
     },
   };
 
-  const t = content[lang];
+  const t = content[lang as keyof typeof content] || content.ar;
 
-  // جلب بيانات العقار للتعديل
+  // جلب بيانات العقار في حال التعديل
   const { data: property } = useQuery({
-    queryKey: ["/api/properties", propertyId],
+    queryKey: ["properties", propertyId],
     enabled: !!propertyId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -108,7 +107,6 @@ export default function PropertyForm() {
         .select("*")
         .eq("id", propertyId)
         .single();
-
       if (error) throw error;
       return data;
     },
@@ -127,29 +125,14 @@ export default function PropertyForm() {
     }
   }, [property]);
 
-  // دالة التحقق من صحة البيانات
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = t.requiredField;
-    }
-    if (!formData.buildingtype) {
-      newErrors.buildingtype = t.requiredField;
-    }
-    if (!formData.address.trim()) {
-      newErrors.address = t.requiredField;
-    }
-    if (!formData.city.trim()) {
-      newErrors.city = t.requiredField;
-    }
-    if (
-      !formData.unitscount ||
-      isNaN(Number(formData.unitscount)) ||
-      Number(formData.unitscount) < 0
-    ) {
+    if (!formData.name.trim()) newErrors.name = t.requiredField;
+    if (!formData.buildingtype) newErrors.buildingtype = t.requiredField;
+    if (!formData.address.trim()) newErrors.address = t.requiredField;
+    if (!formData.city.trim()) newErrors.city = t.requiredField;
+    if (isNaN(Number(formData.unitscount)))
       newErrors.unitscount = t.invalidUnits;
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -157,96 +140,74 @@ export default function PropertyForm() {
 
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      // استخدام الطريقة الصحيحة للحصول على المستخدم
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) throw new Error(t.loginRequired);
 
-      if (authError || !user) {
-        throw new Error("Please login first");
-      }
+      // 1. جلب ID المستخدم من رقم الجوال
+      const { data: user, error: userErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .maybeSingle();
 
-      const propertyData = {
+      if (userErr || !user) throw new Error("حساب المستخدم غير موجود");
+
+      // 2. تجهيز البيانات للحفظ
+      const payload = {
         name: data.name,
         buildingtype: data.buildingtype,
         address: data.address,
         city: data.city,
-        owner_id: user.id, // استخدام user.id مباشرة
+        owner_id: user.id,
         units_count: parseInt(data.unitscount) || 0,
         map_url: data.mapurl || null,
       };
 
-      if (propertyId) {
-        const { data: result, error } = await supabase
-          .from("properties")
-          .update(propertyData)
-          .eq("id", propertyId)
-          .select();
+      // 3. تنفيذ الإضافة أو التحديث
+      const { error } = propertyId
+        ? await supabase.from("properties").update(payload).eq("id", propertyId)
+        : await supabase.from("properties").insert([payload]);
 
-        if (error) throw error;
-        return result;
-      } else {
-        const { data: result, error } = await supabase
-          .from("properties")
-          .insert([propertyData])
-          .select();
-
-        if (error) throw error;
-        return result;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-      toast({
-        title: propertyId ? t.successEdit : t.successAdd,
-        variant: "default",
-      });
-      setLocation("/properties");
+      // تحديث بيانات الداشبورد فوراً بعد الحفظ
+      queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+
+      toast({ title: propertyId ? t.successEdit : t.successAdd });
+      setLocation("/dashboard/owner");
     },
     onError: (error: any) => {
-      console.error("Mutation error:", error);
       toast({
-        title: t.error,
+        title: "خطأ في الحفظ",
+        description: error.message,
         variant: "destructive",
-        description: error?.message || "Unknown error",
       });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // التحقق من صحة البيانات قبل الإرسال
-    if (!validateForm()) {
-      toast({
-        title: t.error,
-        variant: "destructive",
-        description: t.requiredField,
-      });
-      return;
+    if (validateForm()) {
+      mutation.mutate(formData);
     }
-
-    mutation.mutate(formData);
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // مسح الخطأ عند التعديل
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 ${lang === "ar" ? "rtl" : "ltr"}`}
+      className={`min-h-screen bg-gray-50 p-4 ${lang === "ar" ? "rtl" : "ltr"}`}
     >
       <div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
-          onClick={() => setLocation("/properties")}
-          className={`mb-4 ${lang === "ar" ? "flex-row-reverse" : ""}`}
+          onClick={() => setLocation("/dashboard/owner")}
+          className="mb-4"
         >
           <ArrowLeft
             className={`h-4 w-4 ${lang === "ar" ? "ml-2 rotate-180" : "mr-2"}`}
@@ -254,38 +215,30 @@ export default function PropertyForm() {
           {t.cancel}
         </Button>
 
-        <Card>
+        <Card className="shadow-lg border-t-4 border-t-blue-600">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-6 w-6" />
+              <Building2 className="h-6 w-6 text-blue-600" />
               {propertyId ? t.editTitle : t.addTitle}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* اسم العقار */}
               <div className="space-y-2">
-                <Label htmlFor="name">{t.name}</Label>
+                <Label>{t.name}</Label>
                 <Input
-                  id="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder={t.namePlaceholder}
                   className={errors.name ? "border-red-500" : ""}
                 />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name}</p>
-                )}
               </div>
 
-              {/* نوع العقار */}
               <div className="space-y-2">
-                <Label htmlFor="buildingtype">{t.buildingType}</Label>
+                <Label>{t.buildingType}</Label>
                 <Select
                   value={formData.buildingtype}
-                  onValueChange={(value) =>
-                    handleInputChange("buildingtype", value)
-                  }
+                  onValueChange={(v) => handleInputChange("buildingtype", v)}
                 >
                   <SelectTrigger
                     className={errors.buildingtype ? "border-red-500" : ""}
@@ -298,100 +251,65 @@ export default function PropertyForm() {
                     <SelectItem value="mixed">{t.mixed}</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.buildingtype && (
-                  <p className="text-sm text-red-500">{errors.buildingtype}</p>
-                )}
               </div>
 
-              {/* العنوان */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t.city}</Label>
+                  <Input
+                    value={formData.city}
+                    onChange={(e) => handleInputChange("city", e.target.value)}
+                    placeholder={t.cityPlaceholder}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.unitsCount}</Label>
+                  <Input
+                    type="number"
+                    value={formData.unitscount}
+                    onChange={(e) =>
+                      handleInputChange("unitscount", e.target.value)
+                    }
+                    placeholder={t.unitsPlaceholder}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="address">{t.address}</Label>
+                <Label>{t.address}</Label>
                 <Input
-                  id="address"
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
                   placeholder={t.addressPlaceholder}
-                  className={errors.address ? "border-red-500" : ""}
                 />
-                {errors.address && (
-                  <p className="text-sm text-red-500">{errors.address}</p>
-                )}
               </div>
 
-              {/* المدينة */}
               <div className="space-y-2">
-                <Label htmlFor="city">{t.city}</Label>
+                <Label>{t.mapUrl}</Label>
                 <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                  placeholder={t.cityPlaceholder}
-                  className={errors.city ? "border-red-500" : ""}
-                />
-                {errors.city && (
-                  <p className="text-sm text-red-500">{errors.city}</p>
-                )}
-              </div>
-
-              {/* عدد الوحدات */}
-              <div className="space-y-2">
-                <Label htmlFor="unitscount">{t.unitsCount}</Label>
-                <Input
-                  id="unitscount"
-                  type="number"
-                  min="0"
-                  value={formData.unitscount}
-                  onChange={(e) =>
-                    handleInputChange("unitscount", e.target.value)
-                  }
-                  placeholder={t.unitsPlaceholder}
-                  className={errors.unitscount ? "border-red-500" : ""}
-                />
-                {errors.unitscount && (
-                  <p className="text-sm text-red-500">{errors.unitscount}</p>
-                )}
-              </div>
-
-              {/* رابط الخريطة */}
-              <div className="space-y-2">
-                <Label htmlFor="mapurl">{t.mapUrl}</Label>
-                <Input
-                  id="mapurl"
                   value={formData.mapurl}
                   onChange={(e) => handleInputChange("mapurl", e.target.value)}
                   placeholder={t.mapUrlPlaceholder}
                 />
-                <p className="text-sm text-gray-500">{t.mapUrlHelper}</p>
               </div>
 
-              {/* أزرار الحفظ والإلغاء */}
               <div className="flex gap-2 pt-4">
                 <Button
                   type="submit"
                   disabled={mutation.isPending}
-                  className="flex-1"
+                  className="flex-1 bg-blue-600"
                 >
                   {mutation.isPending ? (
-                    <>
-                      <Loader2
-                        className={`h-4 w-4 animate-spin ${lang === "ar" ? "ml-2" : "mr-2"}`}
-                      />
-                      {t.saving}
-                    </>
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <>
-                      <Save
-                        className={`h-4 w-4 ${lang === "ar" ? "ml-2" : "mr-2"}`}
-                      />
-                      {t.save}
-                    </>
+                    <Save className="h-4 w-4 ml-2" />
                   )}
+                  {t.save}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setLocation("/properties")}
-                  disabled={mutation.isPending}
+                  onClick={() => setLocation("/dashboard/owner")}
                 >
                   {t.cancel}
                 </Button>
