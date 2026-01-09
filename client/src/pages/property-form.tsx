@@ -97,7 +97,6 @@ export default function PropertyForm() {
 
   const t = content[lang as keyof typeof content] || content.ar;
 
-  // جلب بيانات العقار في حال التعديل
   const { data: property } = useQuery({
     queryKey: ["properties", propertyId],
     enabled: !!propertyId,
@@ -116,7 +115,7 @@ export default function PropertyForm() {
     if (property) {
       setFormData({
         name: property.name || "",
-        buildingtype: property.buildingtype || "",
+        buildingtype: property.building_type || "",
         address: property.address || "",
         city: property.city || "",
         unitscount: property.units_count?.toString() || "",
@@ -143,7 +142,6 @@ export default function PropertyForm() {
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error(t.loginRequired);
 
-      // 1. جلب ID المستخدم من رقم الجوال
       const { data: user, error: userErr } = await supabase
         .from("users")
         .select("id")
@@ -152,10 +150,9 @@ export default function PropertyForm() {
 
       if (userErr || !user) throw new Error("حساب المستخدم غير موجود");
 
-      // 2. تجهيز البيانات للحفظ
       const payload = {
         name: data.name,
-        buildingtype: data.buildingtype,
+        building_type: data.buildingtype,
         address: data.address,
         city: data.city,
         owner_id: user.id,
@@ -163,7 +160,6 @@ export default function PropertyForm() {
         map_url: data.mapurl || null,
       };
 
-      // 3. تنفيذ الإضافة أو التحديث
       const { error } = propertyId
         ? await supabase.from("properties").update(payload).eq("id", propertyId)
         : await supabase.from("properties").insert([payload]);
@@ -171,10 +167,8 @@ export default function PropertyForm() {
       if (error) throw error;
     },
     onSuccess: () => {
-      // تحديث بيانات الداشبورد فوراً بعد الحفظ
       queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-
       toast({ title: propertyId ? t.successEdit : t.successAdd });
       setLocation("/dashboard/owner");
     },
