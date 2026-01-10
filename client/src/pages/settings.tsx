@@ -303,6 +303,18 @@ export default function Settings() {
                       }
                     />
                   </div>
+
+                  {/* زر إكمال ملف الشركة */}
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={() => setLocation("/dashboard/provider/profile")}
+                  >
+                    <Building2 className="w-4 h-4 mr-2" />
+                    {lang === "ar"
+                      ? "إكمال ملف الشركة"
+                      : "Complete Company Profile"}
+                  </Button>
                 </>
               )}
 

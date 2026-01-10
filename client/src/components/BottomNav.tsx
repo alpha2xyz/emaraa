@@ -1,56 +1,82 @@
 import { Link, useLocation } from "wouter";
-import { Building2, FileText, LayoutDashboard, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Building2,
+  FileText,
+  User,
+  Package,
+} from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
 
 export function BottomNav() {
   const [location] = useLocation();
+  const { lang } = useLang();
+  const userRole = localStorage.getItem("userRole");
+
+  const navItems = userRole === "owner" 
+    ? [
+        {
+          href: "/dashboard/owner",
+          icon: LayoutDashboard,
+          label: { ar: "الرئيسية", en: "Dashboard" },
+        },
+        {
+          href: "/dashboard/owner/properties",
+          icon: Building2,
+          label: { ar: "العقارات", en: "Properties" },
+        },
+        {
+          href: "/dashboard/owner/requests",
+          icon: FileText,
+          label: { ar: "الطلبات", en: "Requests" },
+        },
+      ]
+    : [
+        {
+          href: "/dashboard/provider",
+          icon: LayoutDashboard,
+          label: { ar: "الرئيسية", en: "Dashboard" },
+        },
+        {
+          href: "/dashboard/provider/requests",
+          icon: Package,
+          label: { ar: "الطلبات", en: "Requests" },
+        },
+        {
+          href: "/dashboard/provider/profile",
+          icon: User,
+          label: { ar: "الملف", en: "Profile" },
+        },
+      ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-white/95 backdrop-blur-sm px-4 py-2 flex justify-around items-center z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-      <TabItem
-        href="/dashboard/owner"
-        icon={<LayoutDashboard size={20} />}
-        label="الرئيسية"
-        active={location === "/dashboard/owner"}
-      />
-      <TabItem
-        href="/properties"
-        icon={<Building2 size={20} />}
-        label="عقاراتي"
-        active={location === "/properties"}
-      />
-      <TabItem
-        href="/requests"
-        icon={<FileText size={20} />}
-        label="طلباتي"
-        active={location === "/requests"}
-      />
-      <TabItem
-        href="/settings"
-        icon={<Settings size={20} />}
-        label="إعدادات"
-        active={location === "/settings"}
-      />
-    </div>
-  );
-}
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <div className="flex items-center justify-around h-16">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location === item.href;
 
-function TabItem({ href, icon, label, active }: any) {
-  return (
-    <Link href={href}>
-      <a
-        className={`flex flex-col items-center justify-center transition-colors ${
-          active ? "text-blue-600" : "text-gray-400"
-        }`}
-      >
-        <div
-          className={`${active ? "scale-110" : "scale-100"} transition-transform`}
-        >
-          {icon}
-        </div>
-        <span className="text-[10px] md:text-xs font-medium mt-1 leading-none">
-          {label}
-        </span>
-      </a>
-    </Link>
+          return (
+            <Link key={item.href} href={item.href}>
+              <a
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className={`h-5 w-5 ${isActive ? "fill-primary" : ""}`} />
+                <span className="text-xs font-medium">
+                  {item.label[lang]}
+                </span>
+              </a>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
