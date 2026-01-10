@@ -41,8 +41,7 @@ export default function LandingPage() {
       step2Desc: "مقدمو الخدمات المؤهلون يقدمون عروضهم على طلباتك",
       step3Title: "قارن واختر",
       step3Desc: "راجع العروض واختر أفضل مزود خدمة مناسب لك",
-      step4Title: "وقع وابدأ",
-      step4Desc: "وقع العقود إلكترونياً واحصل على خدمة المبنى",
+
       providerCTATitle: "هل أنت مزود خدمة؟",
       providerCTADesc:
         "انضم إلى عمارة للعثور على عملاء جدد، والمزايدة على المشاريع، وتنمية عملك. احصل على عقود إدارة عقارات ثابتة.",
@@ -52,8 +51,8 @@ export default function LandingPage() {
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
       joinAsProvider: "انضم كمزود",
-      contactEmail: "support@emara.com",
-      contactPhone: "+966 11 1234 5678",
+      contactEmail: "support@emaraa.com",
+      contactPhone: "+966 543 9776 79",
       contactLocation: "الرياض، المملكة العربية السعودية",
       followUs: "تابعنا",
       stayUpdated: "ابق على اطلاع بآخر الأخبار",
@@ -61,13 +60,13 @@ export default function LandingPage() {
       footerCopyright: "© 2025 عمارة. جميع الحقوق محفوظة.",
     },
     en: {
-      siteName: "EMARA",
+      siteName: "EMARAA",
       login: "Login",
       registerOwner: "Register as Owner",
       heroTitle: "Your Building,",
       heroHighlight: "Perfectly Managed",
       heroDesc:
-        "EMARA connects property owners with trusted cleaning and maintenance providers. Post your needs, receive competitive bids, and hire the best - all in one place.",
+        "EMARAA connects property owners with trusted cleaning and maintenance providers. Post your needs, receive competitive bids, and hire the best - all in one place.",
       getStarted: "Get Started Free",
       learnMore: "Learn More",
       howItWorksTitle: "How It Works",
@@ -79,24 +78,23 @@ export default function LandingPage() {
       step2Desc: "Qualified service providers bid on your requests",
       step3Title: "Compare & Choose",
       step3Desc: "Review bids and select the best provider for you",
-      step4Title: "Sign & Start",
-      step4Desc: "E-sign contracts and get your building serviced",
+
       providerCTATitle: "Are You a Service Provider?",
       providerCTADesc:
-        "Join EMARA to find new clients, bid on projects, and grow your business. Access a steady stream of property management contracts.",
+        "Join EMARAA to find new clients, bid on projects, and grow your business. Access a steady stream of property management contracts.",
       joinProvider: "Join as Service Provider",
       providerLogin: "Provider Login",
       footerTagline: "EMARA - Your Building, Perfectly Managed",
       quickLinks: "Quick Links",
       contactUs: "Contact Us",
       joinAsProvider: "Join as Provider",
-      contactEmail: "support@emara.com",
-      contactPhone: "+966 11 1234 5678",
+      contactEmail: "support@emaraa.com",
+      contactPhone: "+966 543 9776 799",
       contactLocation: "Riyadh, Saudi Arabia",
       followUs: "Follow Us",
       stayUpdated: "Stay updated with latest news",
       adminLogin: "Admin Login",
-      footerCopyright: "© 2025 EMARA. All rights reserved.",
+      footerCopyright: "© 2025 EMARAA. All rights reserved.",
     },
   };
 
@@ -249,25 +247,6 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-600">{t.step3Desc}</p>
               </CardContent>
             </Card>
-
-            {/* Step 4 */}
-            <Card className="relative pt-6 bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-blue-500 group overflow-visible">
-              <div className="absolute -top-4 left-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
-                4
-              </div>
-              <CardContent className="text-center p-6 pt-2 bg-white">
-                <div className="mx-auto w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                  <CheckCircle2
-                    className="w-10 h-10 text-blue-600"
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <h3 className="text-lg font-bold mb-2 text-gray-900">
-                  {t.step4Title}
-                </h3>
-                <p className="text-sm text-gray-600">{t.step4Desc}</p>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
@@ -360,16 +339,17 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Column 4 */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">{t.followUs}</h4>
-              <p className="text-sm text-gray-600 mb-3">{t.stayUpdated}</p>
-              <div className="flex gap-3">
-                <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
-                <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
-                <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
-              </div>
-            </div>
+            {/* Column 4 - مخفي مؤقتاً
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">{t.followUs}</h4>
+                      <p className="text-sm text-gray-600 mb-3">{t.stayUpdated}</p>
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
+                        <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
+                        <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
+                      </div>
+                    </div>
+                    */}
           </div>
 
           <div className="border-t border-gray-300 pt-6 text-center">
