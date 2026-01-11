@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,8 @@ export default function RequestForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
+  const [match, params] = useRoute("/dashboard/owner/requests/:id/edit");
+  const requestId = params?.id;
   const [formData, setFormData] = useState({
     property_id: "",
     service_ids: [] as string[],
@@ -94,6 +95,32 @@ export default function RequestForm() {
       return data;
     },
   });
+  // بعد استعلام properties
+  const { data: existingRequest } = useQuery({
+    queryKey: ["request", requestId],
+    enabled: !!requestId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // تحميل البيانات في النموذج
+  useEffect(() => {
+    if (existingRequest) {
+      setFormData({
+        propertyid: existingRequest.propertyid || "",
+        serviceids: existingRequest.serviceids || [],
+        description: existingRequest.description || "",
+      });
+    }
+  }, [existingRequest]);
 
   // التعامل مع اختيار الخدمات
   const handleServiceToggle = (serviceId: string) => {
@@ -104,7 +131,6 @@ export default function RequestForm() {
         : [...prev.service_ids, serviceId],
     }));
   };
-
   // إرسال الطلب
   const mutation = useMutation({
     mutationFn: async () => {
@@ -119,30 +145,35 @@ export default function RequestForm() {
 
       if (!user) throw new Error("User not found");
 
-      // تحديد الفئة تلقائياً بناءً على الخدمات المختارة
-      const cleaningServices = getServicesByCategory("cleaning").map(s => s.id);
-      const hasCleaningService = formData.service_ids.some(id => cleaningServices.includes(id));
+      const cleaningServices = getServicesByCategory("cleaning").map(
+        (s) => s.id,
+      );
+      const hasCleaningService = formData.serviceids.some((id) =>
+        cleaningServices.includes(id),
+      );
 
-      const { error } = await supabase.from("requests").insert([
-        {
-          owner_id: user.id,
-          property_id: formData.property_id,
-          service_category: hasCleaningService ? "cleaning" : "maintenance",
-          service_ids: formData.service_ids,
-          description: formData.description || null,
-        },
-      ]);
+      const payload = {
+        ownerid: user.id,
+        propertyid: formData.propertyid,
+        servicecategory: hasCleaningService ? "cleaning" : "maintenance",
+        serviceids: formData.serviceids,
+        description: formData.description || null,
+      };
+
+      const { error } = requestId
+        ? await supabase.from("requests").update(payload).eq("id", requestId)
+        : await supabase.from("requests").insert(payload);
 
       if (error) throw error;
     },
     onSuccess: () => {
       toast({
-        title: t.success,
+        title: requestId ? "تم التحديث بنجاح!" : t.success,
         variant: "default",
       });
-      setLocation("/requests");
+      setLocation("/dashboard/owner/requests");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error:", error);
       toast({
         title: t.error,
@@ -156,26 +187,6 @@ export default function RequestForm() {
     mutation.mutate();
   };
 
-  // إذا ما في عقارات
-  if (properties && properties.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-xl font-bold mb-2">{t.noProperties}</h2>
-            <Button
-              onClick={() => setLocation("/properties/new")}
-              className="mt-4"
-            >
-              {t.addProperty}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto">
@@ -184,7 +195,7 @@ export default function RequestForm() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation("/requests")}
+            onClick={() => setLocation("/dashboard/owner/requests")}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

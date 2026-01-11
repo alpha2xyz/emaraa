@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function PropertyForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const [match, params] = useRoute("/properties/:id/edit");
+  const [match, params] = useRoute("/dashboard/owner/properties/:id/edit");
   const propertyId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -170,7 +170,7 @@ export default function PropertyForm() {
       queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       toast({ title: propertyId ? t.successEdit : t.successAdd });
-      setLocation("/dashboard/owner");
+      setLocation("/dashboard/owner/properties");
     },
     onError: (error: any) => {
       toast({
@@ -200,7 +200,7 @@ export default function PropertyForm() {
       <div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
-          onClick={() => setLocation("/dashboard/owner")}
+          onClick={() => setLocation("/dashboard/owner/properties")}
           className="mb-4"
         >
           <ArrowLeft

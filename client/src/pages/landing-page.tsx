@@ -51,7 +51,7 @@ export default function LandingPage() {
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
       joinAsProvider: "انضم كمزود",
-      contactEmail: "support@emaraa.com",
+      contactEmail: "alpha2xyz+admin@gmail.com",
       contactPhone: "+966 543 9776 79",
       contactLocation: "الرياض، المملكة العربية السعودية",
       followUs: "تابعنا",
@@ -88,7 +88,7 @@ export default function LandingPage() {
       quickLinks: "Quick Links",
       contactUs: "Contact Us",
       joinAsProvider: "Join as Provider",
-      contactEmail: "support@emaraa.com",
+      contactEmail: "alpha2xyz+admin@gmail.com",
       contactPhone: "+966 543 9776 799",
       contactLocation: "Riyadh, Saudi Arabia",
       followUs: "Follow Us",
@@ -190,7 +190,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {/* Step 1 */}
             <Card className="relative pt-6 bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-blue-500 group overflow-visible">
               <div className="absolute -top-4 left-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">

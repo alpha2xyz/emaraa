@@ -175,7 +175,7 @@ export default function Properties() {
             </h1>
             <p className="text-gray-600 mt-2">{t.subtitle}</p>
           </div>
-          <Link href="/properties/new">
+          <Link href="/dashboard/owner/properties/new">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-5 h-5 mr-2" />
               {t.addNew}
@@ -199,7 +199,7 @@ export default function Properties() {
                 {t.noProperties}
               </h3>
               <p className="text-gray-600 mb-6">{t.noPropertiesDesc}</p>
-              <Link href="/properties/new">
+              <Link href="/dashboard/owner/properties/new">
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-5 h-5 mr-2" />
                   {t.addNew}

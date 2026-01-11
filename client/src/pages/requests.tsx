@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Eye, Building2, Calendar } from "lucide-react";
+import { FileText, Plus, Edit, Building2, Calendar } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { getServicesByCategory } from "@/lib/services";
@@ -153,7 +153,7 @@ export default function Requests() {
             {t.title}
           </h1>
           <Button
-            onClick={() => setLocation("/requests/new")}
+            onClick={() => setLocation("/dashboard/owner/requests/new")}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -170,7 +170,9 @@ export default function Requests() {
                 {t.noRequests}
               </h2>
               <p className="text-gray-600 mb-4">{t.createFirst}</p>
-              <Button onClick={() => setLocation("/requests/new")}>
+              <Button
+                onClick={() => setLocation("/dashboard/owner/requests/new")}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 {t.newRequest}
               </Button>
@@ -245,10 +247,14 @@ export default function Requests() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setLocation(`/requests/${request.id}`)}
+                          onClick={() =>
+                            setLocation(
+                              `/dashboard/owner/requests/${request.id}/edit`,
+                            )
+                          }
                         >
-                          <Eye className="w-4 h-4 mr-2" />
-                          {t.viewDetails}
+                          <Edit className="w-4 h-4 mr-2" />
+                          {lang === "ar" ? "تعديل" : "Edit"}
                         </Button>
                       </div>
                     </div>

@@ -29,7 +29,10 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const isRTL = lang === "ar";
 
   return (
-    <div className={`min-h-screen bg-background ${isRTL ? "rtl" : "ltr"}`} dir={isRTL ? "rtl" : "ltr"}>
+    <div
+      className={`min-h-screen bg-background ${isRTL ? "rtl" : "ltr"}`}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <Navbar />
       <main className="pb-20">{children}</main>
       <BottomNav />
@@ -76,6 +79,7 @@ function App() {
                 </DashboardLayout>
               )}
             </Route>
+
             <Route path="/dashboard/owner/requests">
               {() => (
                 <DashboardLayout>
@@ -83,6 +87,7 @@ function App() {
                 </DashboardLayout>
               )}
             </Route>
+
             <Route path="/dashboard/owner/requests/new">
               {() => (
                 <DashboardLayout>
@@ -90,6 +95,15 @@ function App() {
                 </DashboardLayout>
               )}
             </Route>
+
+            <Route path="/dashboard/owner/requests/:id/edit">
+              {() => (
+                <DashboardLayout>
+                  <RequestForm />
+                </DashboardLayout>
+              )}
+            </Route>
+
             <Route path="/dashboard/owner/settings">
               {() => (
                 <DashboardLayout>

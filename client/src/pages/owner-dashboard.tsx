@@ -126,13 +126,13 @@ export default function OwnerDashboard() {
         </div>
 
         <div className="flex gap-4">
-          <Link href="/properties/new">
+          <Link href="/dashboard/owner/properties/new">
             <Button className="bg-blue-600">
               <Plus className="w-4 h-4 ml-2" />
               {content.addProperty}
             </Button>
           </Link>
-          <Link href="/requests/new">
+          <Link href="/dashboard/owner/requests/new">
             <Button variant="outline" className="border-blue-600 text-blue-600">
               {content.createRequest}
             </Button>
@@ -143,7 +143,7 @@ export default function OwnerDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{content.myProperties}</CardTitle>
-            <Link href="/properties">
+            <Link href="/dashboard/owner/properties">
               <Button variant="ghost" size="sm">
                 {content.viewAll}
               </Button>
