@@ -185,7 +185,7 @@ export default function AuthPage() {
         if (role === "owner") {
           setLocation("/dashboard/owner");
         } else if (role === "provider") {
-          setLocation("/dashboard/provider");
+          setLocation("/dashboard/provider/profile");
         }
       }
     } catch (err) {

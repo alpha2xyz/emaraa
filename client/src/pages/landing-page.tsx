@@ -56,7 +56,7 @@ export default function LandingPage() {
       contactLocation: "الرياض، المملكة العربية السعودية",
       followUs: "تابعنا",
       stayUpdated: "ابق على اطلاع بآخر الأخبار",
-      adminLogin: "تسجيل دخول الإدارة",
+      adminLogin: "دخول آدمن",
       footerCopyright: "© 2025 عمارة. جميع الحقوق محفوظة.",
     },
     en: {
