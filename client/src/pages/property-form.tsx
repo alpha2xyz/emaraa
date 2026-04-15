@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,170 +12,206 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Building2, Save, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  FileText,
+  Building2,
+  Save,
+  Loader2,
+  ArrowLeft,
+  AlertCircle,
+} from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { getServicesByCategory } from "@/lib/services";
 
-export default function PropertyForm() {
+export default function RequestForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const [match, params] = useRoute("/dashboard/owner/properties/:id/edit");
-  const propertyId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [match, params] = useRoute("/dashboard/owner/requests/:id/edit");
+  const requestId = params?.id;
 
   const [formData, setFormData] = useState({
-    name: "",
-    buildingtype: "",
-    address: "",
-    city: "",
-    unitscount: "",
-    mapurl: "",
+    property_id: "",
+    service_ids: [] as string[],
+    description: "",
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showValidation, setShowValidation] = useState(false);
 
   const content = {
     ar: {
-      addTitle: "إضافة عقار جديد",
-      editTitle: "تعديل العقار",
-      name: "اسم العقار",
-      namePlaceholder: "مثال: برج الخليج",
-      buildingType: "نوع العقار",
-      residential: "سكني",
-      commercial: "تجاري",
-      mixed: "مختلط",
-      selectType: "اختر نوع العقار",
-      address: "العنوان",
-      addressPlaceholder: "مثال: شارع الملك فهد",
-      city: "المدينة",
-      cityPlaceholder: "مثال: الرياض",
-      unitsCount: "عدد الوحدات",
-      unitsPlaceholder: "مثال: 50",
-      mapUrl: "رابط الموقع (خرائط جوجل)",
-      mapUrlPlaceholder: "https://maps.google.com/...",
-      mapUrlHelper: "افتح خرائط جوجل، اضغط على مشاركة، والصق الرابط هنا",
-      save: "حفظ العقار",
+      title: "طلب خدمة جديد",
+      subtitle: "اختر العقار والخدمات المطلوبة",
+      selectProperty: "اختر العقار",
+      propertyPlaceholder: "اختر العقار",
+      cleaning: "خدمات النظافة",
+      maintenance: "خدمات الصيانة",
+      description: "تفاصيل إضافية",
+      descriptionPlaceholder: "اكتب أي تفاصيل أو ملاحظات إضافية...",
+      submit: "إرسال الطلب",
+      submitting: "جاري الإرسال...",
       cancel: "إلغاء",
-      saving: "جاري الحفظ...",
-      successAdd: "تم إضافة العقار بنجاح!",
-      successEdit: "تم تحديث العقار بنجاح!",
-      requiredField: "هذا الحقل مطلوب",
-      invalidUnits: "يجب أن يكون عدد الوحدات رقماً صحيحاً",
-      loginRequired: "يرجى تسجيل الدخول أولاً",
+      success: "تم إرسال الطلب بنجاح!",
+      error: "حدث خطأ، حاول مرة أخرى",
+      noProperties: "لا توجد عقارات! أضف عقاراً أولاً",
+      addProperty: "إضافة عقار",
+      propertyRequired: "يرجى اختيار العقار",
+      servicesRequired: "يرجى اختيار خدمة واحدة على الأقل",
     },
     en: {
-      addTitle: "Add New Property",
-      editTitle: "Edit Property",
-      name: "Property Name",
-      namePlaceholder: "Example: Gulf Tower",
-      buildingType: "Property Type",
-      residential: "Residential",
-      commercial: "Commercial",
-      mixed: "Mixed",
-      selectType: "Select type",
-      address: "Address",
-      addressPlaceholder: "Example: King Fahd Road",
-      city: "City",
-      cityPlaceholder: "Example: Riyadh",
-      unitsCount: "Number of Units",
-      unitsPlaceholder: "50",
-      mapUrl: "Map Link",
-      mapUrlPlaceholder: "https://maps.google.com/...",
-      mapUrlHelper: "Copy link from Google Maps",
-      save: "Save",
+      title: "New Service Request",
+      subtitle: "Select property and required services",
+      selectProperty: "Select Property",
+      propertyPlaceholder: "Select property",
+      cleaning: "Cleaning Services",
+      maintenance: "Maintenance Services",
+      description: "Additional Details",
+      descriptionPlaceholder: "Write any additional details or notes...",
+      submit: "Submit Request",
+      submitting: "Submitting...",
       cancel: "Cancel",
-      saving: "Saving...",
-      successAdd: "Added successfully!",
-      successEdit: "Updated successfully!",
-      requiredField: "Required",
-      invalidUnits: "Must be a number",
-      loginRequired: "Please login",
+      success: "Request submitted successfully!",
+      error: "An error occurred, please try again",
+      noProperties: "No properties! Add a property first",
+      addProperty: "Add Property",
+      propertyRequired: "Please select a property",
+      servicesRequired: "Please select at least one service",
     },
   };
 
-  const t = content[lang as keyof typeof content] || content.ar;
+  const t = content[lang];
 
-  const { data: property } = useQuery({
-    queryKey: ["properties", propertyId],
-    enabled: !!propertyId,
+  // جلب عقارات المستخدم
+  const { data: properties, isLoading: propertiesLoading } = useQuery({
+    queryKey: ["/api/properties"],
     queryFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) throw new Error("Not logged in");
+
+      const { data: user } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .single();
+
+      if (!user) throw new Error("User not found");
+
       const { data, error } = await supabase
         .from("properties")
         .select("*")
-        .eq("id", propertyId)
-        .single();
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
       return data;
     },
   });
 
+  // جلب الطلب الموجود (للتعديل)
+  const { data: existingRequest } = useQuery({
+    queryKey: ["request", requestId],
+    enabled: !!requestId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // تحميل البيانات في النموذج
   useEffect(() => {
-    if (property) {
+    if (existingRequest) {
       setFormData({
-        name: property.name || "",
-        buildingtype: property.building_type || "",
-        address: property.address || "",
-        city: property.city || "",
-        unitscount: property.units_count?.toString() || "",
-        mapurl: property.map_url || "",
+        property_id: existingRequest.property_id || "",
+        service_ids: existingRequest.service_ids || [],
+        description: existingRequest.description || "",
       });
     }
-  }, [property]);
+  }, [existingRequest]);
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = t.requiredField;
-    if (!formData.buildingtype) newErrors.buildingtype = t.requiredField;
-    if (!formData.address.trim()) newErrors.address = t.requiredField;
-    if (!formData.city.trim()) newErrors.city = t.requiredField;
-    if (isNaN(Number(formData.unitscount)))
-      newErrors.unitscount = t.invalidUnits;
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // التعامل مع اختيار الخدمات
+  const handleServiceToggle = (serviceId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      service_ids: prev.service_ids.includes(serviceId)
+        ? prev.service_ids.filter((id) => id !== serviceId)
+        : [...prev.service_ids, serviceId],
+    }));
   };
 
-  const mutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error(t.loginRequired);
+  const isPropertyValid = formData.property_id !== "";
+  const isServicesValid = formData.service_ids.length > 0;
+  const isFormValid = isPropertyValid && isServicesValid;
 
-      const { data: user, error: userErr } = await supabase
+  // إرسال الطلب
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) throw new Error("Not logged in");
+
+      const { data: user } = await supabase
         .from("users")
         .select("id")
         .eq("phone", phone)
-        .maybeSingle();
+        .single();
 
-      if (userErr || !user) throw new Error("حساب المستخدم غير موجود");
+      if (!user) throw new Error("User not found");
+
+      // تحديد الفئة بناءً على الخدمات المختارة
+      const cleaningServices = getServicesByCategory("cleaning").map(
+        (s) => s.id,
+      );
+      const hasCleaningService = formData.service_ids.some((id) =>
+        cleaningServices.includes(id),
+      );
 
       const payload = {
-        name: data.name,
-        building_type: data.buildingtype,
-        address: data.address,
-        city: data.city,
         owner_id: user.id,
-        units_count: parseInt(data.unitscount) || 0,
-        map_url: data.mapurl || null,
+        property_id: formData.property_id,
+        service_category: hasCleaningService ? "cleaning" : "maintenance",
+        service_ids: formData.service_ids,
+        description: formData.description || null,
+        status: "pending",
       };
 
-      const { error } = propertyId
-        ? await supabase.from("properties").update(payload).eq("id", propertyId)
-        : await supabase.from("properties").insert([payload]);
+      console.log("Submitting payload:", payload); // للتشخيص
 
-      if (error) throw error;
+      if (requestId) {
+        // تحديث طلب موجود
+        const { error } = await supabase
+          .from("requests")
+          .update(payload)
+          .eq("id", requestId);
+
+        if (error) throw error;
+      } else {
+        // إنشاء طلب جديد
+        const { error } = await supabase.from("requests").insert([payload]);
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["properties"] });
-      toast({ title: propertyId ? t.successEdit : t.successAdd });
-      setLocation("/dashboard/owner/properties");
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      toast({
+        title: requestId ? "تم التحديث بنجاح!" : t.success,
+        variant: "default",
+      });
+      setLocation("/dashboard/owner/requests");
     },
     onError: (error: any) => {
+      console.error("Error submitting request:", error);
       toast({
-        title: "خطأ في الحفظ",
-        description: error.message,
+        title: t.error,
+        description: error.message || "Unknown error",
         variant: "destructive",
       });
     },
@@ -183,134 +219,256 @@ export default function PropertyForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      mutation.mutate(formData);
-    }
-  };
+    setShowValidation(true);
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+    if (!isFormValid) {
+      toast({
+        title: !isPropertyValid ? t.propertyRequired : t.servicesRequired,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    mutation.mutate();
   };
 
   return (
     <div
-      className={`min-h-screen bg-gray-50 p-4 ${lang === "ar" ? "rtl" : "ltr"}`}
+      className="min-h-screen bg-gray-50 p-6"
+      dir={lang === "ar" ? "rtl" : "ltr"}
     >
-      <div className="max-w-2xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation("/dashboard/owner/properties")}
-          className="mb-4"
-        >
-          <ArrowLeft
-            className={`h-4 w-4 ${lang === "ar" ? "ml-2 rotate-180" : "mr-2"}`}
-          />
-          {t.cancel}
-        </Button>
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation("/dashboard/owner/requests")}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t.cancel}
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="w-8 h-8 text-blue-600" />
+            {t.title}
+          </h1>
+          <p className="text-gray-600 mt-1">{t.subtitle}</p>
+        </div>
 
-        <Card className="shadow-lg border-t-4 border-t-blue-600">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-blue-600" />
-              {propertyId ? t.editTitle : t.addTitle}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t.name}</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder={t.namePlaceholder}
-                  className={errors.name ? "border-red-500" : ""}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>{t.buildingType}</Label>
-                <Select
-                  value={formData.buildingtype}
-                  onValueChange={(v) => handleInputChange("buildingtype", v)}
-                >
-                  <SelectTrigger
-                    className={errors.buildingtype ? "border-red-500" : ""}
-                  >
-                    <SelectValue placeholder={t.selectType} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="residential">{t.residential}</SelectItem>
-                    <SelectItem value="commercial">{t.commercial}</SelectItem>
-                    <SelectItem value="mixed">{t.mixed}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t.city}</Label>
-                  <Input
-                    value={formData.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                    placeholder={t.cityPlaceholder}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t.unitsCount}</Label>
-                  <Input
-                    type="number"
-                    value={formData.unitscount}
-                    onChange={(e) =>
-                      handleInputChange("unitscount", e.target.value)
+        {/* No Properties Warning */}
+        {!propertiesLoading && (!properties || properties.length === 0) && (
+          <Card className="mb-6 border-orange-200 bg-orange-50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="h-8 w-8 text-orange-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-orange-900 mb-1">
+                    {t.noProperties}
+                  </h3>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      setLocation("/dashboard/owner/properties/new")
                     }
-                    placeholder={t.unitsPlaceholder}
-                  />
+                    className="bg-orange-600 hover:bg-orange-700 mt-2"
+                  >
+                    {t.addProperty}
+                  </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
 
-              <div className="space-y-2">
-                <Label>{t.address}</Label>
-                <Input
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  placeholder={t.addressPlaceholder}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>{t.mapUrl}</Label>
-                <Input
-                  value={formData.mapurl}
-                  onChange={(e) => handleInputChange("mapurl", e.target.value)}
-                  placeholder={t.mapUrlPlaceholder}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  type="submit"
-                  disabled={mutation.isPending}
-                  className="flex-1 bg-blue-600"
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* اختيار العقار */}
+          <Card
+            className={
+              showValidation && !isPropertyValid ? "border-red-500" : ""
+            }
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
+                {t.selectProperty}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={formData.property_id}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, property_id: value })
+                }
+              >
+                <SelectTrigger
+                  className={
+                    showValidation && !isPropertyValid ? "border-red-500" : ""
+                  }
                 >
-                  {mutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 ml-2" />
-                  )}
-                  {t.save}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setLocation("/dashboard/owner")}
-                >
-                  {t.cancel}
-                </Button>
+                  <SelectValue placeholder={t.propertyPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  {properties?.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.name} - {property.city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {showValidation && !isPropertyValid && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {t.propertyRequired}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* خدمات النظافة */}
+          <Card
+            className={
+              showValidation && !isServicesValid ? "border-red-500" : ""
+            }
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                🧹 {t.cleaning}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getServicesByCategory("cleaning").map((service) => (
+                  <div
+                    key={service.id}
+                    className={`relative border-2 rounded-lg p-4 transition-all ${
+                      formData.service_ids.includes(service.id)
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={service.id}
+                        checked={formData.service_ids.includes(service.id)}
+                        onCheckedChange={() => handleServiceToggle(service.id)}
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={service.id}
+                          className="font-semibold cursor-pointer block mb-1"
+                        >
+                          {service.name[lang]}
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          {service.description[lang]}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* خدمات الصيانة */}
+          <Card
+            className={
+              showValidation && !isServicesValid ? "border-red-500" : ""
+            }
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                🔧 {t.maintenance}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getServicesByCategory("maintenance").map((service) => (
+                  <div
+                    key={service.id}
+                    className={`relative border-2 rounded-lg p-4 transition-all ${
+                      formData.service_ids.includes(service.id)
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={service.id}
+                        checked={formData.service_ids.includes(service.id)}
+                        onCheckedChange={() => handleServiceToggle(service.id)}
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={service.id}
+                          className="font-semibold cursor-pointer block mb-1"
+                        >
+                          {service.name[lang]}
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          {service.description[lang]}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {showValidation && !isServicesValid && (
+                <p className="text-red-500 text-sm mt-4 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {t.servicesRequired}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* التفاصيل */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.description}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder={t.descriptionPlaceholder}
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                rows={4}
+              />
+            </CardContent>
+          </Card>
+
+          {/* أزرار */}
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {t.submitting}
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  {t.submit}
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLocation("/dashboard/owner/requests")}
+            >
+              {t.cancel}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -1,78 +1,43 @@
 import { Link, useLocation } from "wouter";
-import {
-  LayoutDashboard,
-  Building2,
-  FileText,
-  User,
-  Package,
-} from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
+import { Home, Building2, FileText, Settings, User } from "lucide-react";
 
 export function BottomNav() {
   const [location] = useLocation();
   const { lang } = useLang();
-  const userRole = localStorage.getItem("userRole");
 
-  const navItems = userRole === "owner" 
-    ? [
-        {
-          href: "/dashboard/owner",
-          icon: LayoutDashboard,
-          label: { ar: "الرئيسية", en: "Dashboard" },
-        },
-        {
-          href: "/dashboard/owner/properties",
-          icon: Building2,
-          label: { ar: "العقارات", en: "Properties" },
-        },
-        {
-          href: "/dashboard/owner/requests",
-          icon: FileText,
-          label: { ar: "الطلبات", en: "Requests" },
-        },
-      ]
-    : [
-        {
-          href: "/dashboard/provider",
-          icon: LayoutDashboard,
-          label: { ar: "الرئيسية", en: "Dashboard" },
-        },
-        {
-          href: "/dashboard/provider/requests",
-          icon: Package,
-          label: { ar: "الطلبات", en: "Requests" },
-        },
-        {
-          href: "/dashboard/provider/profile",
-          icon: User,
-          label: { ar: "الملف", en: "Profile" },
-        },
-      ];
+  if (location === "/" || location === "/auth" || location === "/contact" || location.startsWith("/admin")) return null;
+
+  const isOwner = location.startsWith("/dashboard/owner");
+  const isProvider = location.startsWith("/dashboard/provider");
+
+  const ownerLinks = [
+    { href: "/dashboard/owner", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
+    { href: "/dashboard/owner/properties", icon: Building2, labelAr: "عقاراتي", labelEn: "Properties" },
+    { href: "/dashboard/owner/requests", icon: FileText, labelAr: "طلباتي", labelEn: "Requests" },
+    { href: "/dashboard/owner/settings", icon: Settings, labelAr: "الإعدادات", labelEn: "Settings" },
+  ];
+
+  const providerLinks = [
+    { href: "/dashboard/provider", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
+    { href: "/dashboard/provider/requests", icon: FileText, labelAr: "الطلبات", labelEn: "Requests" },
+    { href: "/dashboard/provider/profile", icon: User, labelAr: "الملف", labelEn: "Profile" },
+    { href: "/dashboard/provider/settings", icon: Settings, labelAr: "الإعدادات", labelEn: "Settings" },
+  ];
+
+  const links = isOwner ? ownerLinks : isProvider ? providerLinks : [];
+  if (!links.length) return null;
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background">
       <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location === item.href;
-
+        {links.map(({ href, icon: Icon, labelAr, labelEn }) => {
+          const active = location === href;
           return (
-            <Link key={item.href} href={item.href}>
-              <a
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className={`h-5 w-5 ${isActive ? "fill-primary" : ""}`} />
-                <span className="text-xs font-medium">
-                  {item.label[lang]}
-                </span>
-              </a>
+            <Link key={href} href={href}
+              className={`flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}>
+              <Icon size={20} />
+              <span>{lang === "ar" ? labelAr : labelEn}</span>
             </Link>
           );
         })}

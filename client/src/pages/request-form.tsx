@@ -1,7 +1,5 @@
-"use client"
 
-import type React from "react"
-
+import type React from 'react'
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useLocation, useRoute } from "wouter"

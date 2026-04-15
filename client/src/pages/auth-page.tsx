@@ -158,7 +158,7 @@ export default function AuthPage() {
 
         // التوجيه بعد التسجيل
         if (role === "owner") {
-          setLocation("/properties/new");
+          setLocation("/dashboard/owner/properties/new");
         } else if (role === "provider") {
           setLocation("/provider-profile");
         }

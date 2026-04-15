@@ -250,7 +250,7 @@ export default function Properties() {
                   {/* Actions */}
                   <div className="flex gap-2 pt-3 border-t">
                     <Link
-                      href={`/properties/${property.id}/edit`}
+                      href={`/dashboard/owner/properties/${property.id}/edit`}
                       className="flex-1"
                     >
                       <Button variant="outline" className="w-full" size="sm">

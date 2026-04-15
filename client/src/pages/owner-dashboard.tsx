@@ -165,7 +165,8 @@ export default function OwnerDashboard() {
                       <p className="font-bold">{p.name}</p>
                       <p className="text-xs text-gray-500">{p.city}</p>
                     </div>
-                    <Link href={`/properties/edit/${p.id}`}>
+
+                    <Link href={`/dashboard/owner/properties/${p.id}/edit`}>
                       <Button
                         variant="ghost"
                         size="sm"
