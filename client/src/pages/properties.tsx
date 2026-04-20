@@ -162,22 +162,22 @@ export default function Properties() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 p-6"
+      className="min-h-screen bg-gray-50 p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-blue-600" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
               {t.title}
             </h1>
             <p className="text-gray-600 mt-2">{t.subtitle}</p>
           </div>
           <Link href="/dashboard/owner/properties/new">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus className="w-5 h-5 me-2" />
               {t.addNew}
             </Button>
           </Link>
@@ -201,7 +201,7 @@ export default function Properties() {
               <p className="text-gray-600 mb-6">{t.noPropertiesDesc}</p>
               <Link href="/dashboard/owner/properties/new">
                 <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus className="w-5 h-5 me-2" />
                   {t.addNew}
                 </Button>
               </Link>
@@ -254,7 +254,7 @@ export default function Properties() {
                       className="flex-1"
                     >
                       <Button variant="outline" className="w-full" size="sm">
-                        <Edit className="w-4 h-4 mr-2" />
+                        <Edit className="w-4 h-4 me-2" />
                         {t.edit}
                       </Button>
                     </Link>

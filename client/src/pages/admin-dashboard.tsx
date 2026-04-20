@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { Users, Building2, FileText, LogOut, CheckCircle2, XCircle, Clock, Shield } from 'lucide-react';
+import { Users, Building2, FileText, LogOut, CheckCircle2, XCircle, Clock, Shield, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('providers')
-        .select('id, companyname, city, created_at, userid, users(name, phone)')
+        .select('id, company_name, city, created_at, user_id, commercial_register_url, company_profile_url, users(name, phone)')
         .eq('approved', false)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('requests')
-        .select('id, servicecategory, status, created_at, properties(name, city)')
+        .select('id, service_category, status, created_at, properties(name, city)')
         .order('created_at', { ascending: false })
         .limit(8);
       if (error) throw error;
@@ -64,6 +64,12 @@ export default function AdminDashboard() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
   });
+
+  function getDocumentUrl(path: string | null) {
+    if (!path) return null;
+    const { data } = supabase.storage.from('provider-documents').getPublicUrl(path);
+    return data?.publicUrl ?? null;
+  }
 
   function handleLogout() {
     localStorage.removeItem('userRole');
@@ -124,22 +130,48 @@ export default function AdminDashboard() {
               {isLoading ? <p className="text-muted-foreground text-center py-4">{t.loading}</p>
                 : !pendingProviders?.length ? <p className="text-muted-foreground text-center py-4">{t.noProviders}</p>
                 : <div className="space-y-3">
-                  {pendingProviders.map((p: any) => (
-                    <div key={p.id} className="flex items-center justify-between p-3 border rounded-lg bg-white">
-                      <div>
-                        <p className="font-medium">{p.companyname}</p>
-                        <p className="text-sm text-muted-foreground">{p.city} · {(p.users as any)?.name} · {(p.users as any)?.phone}</p>
+                  {pendingProviders.map((p: any) => {
+                    const crUrl = getDocumentUrl(p.commercial_register_url);
+                    const cpUrl = getDocumentUrl(p.company_profile_url);
+                    return (
+                    <div key={p.id} className="flex flex-col gap-3 p-3 border rounded-lg bg-white">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium">{p.company_name}</p>
+                          <p className="text-sm text-muted-foreground">{p.city} · {(p.users as any)?.name} · {(p.users as any)?.phone}</p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" onClick={() => approveMutation.mutate({ id: p.id, approved: true })}>
+                            <CheckCircle2 className="h-3 w-3 me-1" />{t.approve}
+                          </Button>
+                          <Button size="sm" variant="destructive" className="h-8" onClick={() => approveMutation.mutate({ id: p.id, approved: false })}>
+                            <XCircle className="h-3 w-3 me-1" />{t.reject}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" onClick={() => approveMutation.mutate({ id: p.id, approved: true })}>
-                          <CheckCircle2 className="h-3 w-3 me-1" />{t.approve}
-                        </Button>
-                        <Button size="sm" variant="destructive" className="h-8" onClick={() => approveMutation.mutate({ id: p.id, approved: false })}>
-                          <XCircle className="h-3 w-3 me-1" />{t.reject}
-                        </Button>
-                      </div>
+                      {(crUrl || cpUrl) && (
+                        <div className="flex gap-2 flex-wrap">
+                          {crUrl && (
+                            <a href={crUrl} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                {lang === 'ar' ? 'السجل التجاري' : 'Commercial Register'}
+                              </Button>
+                            </a>
+                          )}
+                          {cpUrl && (
+                            <a href={cpUrl} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                {lang === 'ar' ? 'بروفايل الشركة' : 'Company Profile'}
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>}
             </CardContent>
           </Card>
@@ -153,7 +185,7 @@ export default function AdminDashboard() {
                   <div key={r.id} className="flex items-center justify-between p-2 border rounded bg-white">
                     <div>
                       <p className="text-sm font-medium">{(r.properties as any)?.name}</p>
-                      <p className="text-xs text-muted-foreground">{(r.properties as any)?.city} · {r.servicecategory}</p>
+                      <p className="text-xs text-muted-foreground">{(r.properties as any)?.city} · {r.service_category}</p>
                     </div>
                     <Badge variant={r.status === 'completed' ? 'default' : r.status === 'pending' ? 'secondary' : 'outline'}>
                       {t.status[r.status as keyof typeof t.status] ?? r.status}

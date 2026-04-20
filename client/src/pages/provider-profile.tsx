@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building2, Save, Loader2, Upload, FileText } from "lucide-react";
+import { Building2, Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { SERVICES, getServicesByCategory } from "@/lib/services";
 import { supabase } from "../lib/supabase";
@@ -106,22 +106,33 @@ export default function ProviderProfile() {
 
   const t = content[lang];
 
-  // جلب بيانات المستخدم
+  // جلب بيانات المستخدم والشركة الموجودة
+  const { data: existingProvider } = useQuery({
+    queryKey: ["/api/provider/profile/edit"],
+    queryFn: async () => {
+      const phone = localStorage.getItem("userPhone");
+      if (!phone) return null;
+      const { data: user } = await supabase.from("users").select("id, name, phone").eq("phone", phone).single();
+      if (!user) return null;
+      setUserData({ name: user.name || "", phone: user.phone });
+      const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
+      return { user, provider };
+    },
+  });
+
   useEffect(() => {
-    const phone = localStorage.getItem("userPhone");
-    if (phone) {
-      supabase
-        .from("users")
-        .select("name, phone")
-        .eq("phone", phone)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            setUserData({ name: data.name, phone: data.phone });
-          }
-        });
+    if (existingProvider?.provider) {
+      const p = existingProvider.provider;
+      setFormData({
+        company_name: p.company_name || "",
+        email: p.email || "",
+        city: p.city || "",
+        description: p.description || "",
+        services: p.services || [],
+        other_services: p.other_services || "",
+      });
     }
-  }, []);
+  }, [existingProvider]);
 
   // خدمات النظافة والصيانة
   const cleaningServices = getServicesByCategory("cleaning");
@@ -158,8 +169,9 @@ export default function ProviderProfile() {
   // حفظ البيانات
   const mutation = useMutation({
     mutationFn: async () => {
-      // التحقق من المستندات
-      if (!files.commercial_register || !files.company_profile) {
+      // التحقق من المستندات — مطلوبة فقط عند التسجيل الأول
+      const isNew = !existingProvider?.provider?.id;
+      if (isNew && (!files.commercial_register || !files.company_profile)) {
         throw new Error("documents_required");
       }
 
@@ -192,31 +204,36 @@ export default function ProviderProfile() {
         return data.path;
       };
 
-      const commercialRegisterPath = await uploadFile(
-        files.commercial_register,
-        "commercial-registers",
-      );
-      const companyProfilePath = await uploadFile(
-        files.company_profile,
-        "company-profiles",
-      );
+      const commercialRegisterPath = files.commercial_register
+        ? await uploadFile(files.commercial_register, "commercial-registers")
+        : existingProvider?.provider?.commercial_register_url || null;
+      const companyProfilePath = files.company_profile
+        ? await uploadFile(files.company_profile, "company-profiles")
+        : existingProvider?.provider?.company_profile_url || null;
 
-      // حفظ البيانات في قاعدة البيانات
-      const { error } = await supabase.from("providers").insert([
-        {
-          user_id: user.id,
-          company_name: formData.company_name,
-          email: formData.email || null,
-          city: formData.city,
-          description: formData.description,
-          services: formData.services,
-          other_services: formData.other_services || null,
-          commercial_register_url: commercialRegisterPath,
-          company_profile_url: companyProfilePath,
-        },
-      ]);
+      const profilePayload: any = {
+        user_id: user.id,
+        company_name: formData.company_name,
+        email: formData.email || null,
+        city: formData.city,
+        description: formData.description,
+        services: formData.services,
+        other_services: formData.other_services || null,
+        commercial_register_url: commercialRegisterPath,
+        company_profile_url: companyProfilePath,
+      };
 
-      if (error) throw error;
+      const existingId = existingProvider?.provider?.id;
+      let dbError;
+      if (existingId) {
+        const { error } = await supabase.from("providers").update(profilePayload).eq("id", existingId);
+        dbError = error;
+      } else {
+        const { error } = await supabase.from("providers").insert([profilePayload]);
+        dbError = error;
+      }
+
+      if (dbError) throw dbError;
     },
     onSuccess: () => {
       toast({
@@ -249,7 +266,7 @@ export default function ProviderProfile() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 p-6"
+      className="min-h-screen bg-gray-50 p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-4xl mx-auto">
@@ -258,9 +275,42 @@ export default function ProviderProfile() {
           <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <Building2 className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {existingProvider?.provider
+              ? (lang === "ar" ? "تعديل ملف الشركة" : "Edit Company Profile")
+              : t.title}
+          </h1>
           <p className="text-gray-600 mt-2">{t.subtitle}</p>
         </div>
+
+        {/* Approval Status Banner */}
+        {existingProvider?.provider && (
+          existingProvider.provider.approved ? (
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 px-4 py-3 text-green-800 dark:text-green-200 mb-6">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+              <div>
+                <p className="font-semibold">
+                  {lang === "ar" ? "تم قبول حسابك ✓" : "Your account is approved ✓"}
+                </p>
+                <p className="text-sm opacity-75">
+                  {lang === "ar" ? "يمكنك الآن تصفح الطلبات وتقديم عروضك" : "You can now browse requests and submit offers"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3 text-yellow-800 dark:text-yellow-200 mb-6">
+              <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
+              <div>
+                <p className="font-semibold">
+                  {lang === "ar" ? "طلبك قيد المراجعة" : "Your registration is under review"}
+                </p>
+                <p className="text-sm opacity-75">
+                  {lang === "ar" ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة" : "You will be notified once your account is approved by admin"}
+                </p>
+              </div>
+            </div>
+          )
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* المعلومات الشخصية */}
@@ -516,12 +566,12 @@ export default function ProviderProfile() {
             >
               {mutation.isPending ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="w-5 h-5 me-2 animate-spin" />
                   {t.saving}
                 </>
               ) : (
                 <>
-                  <Save className="w-5 h-5 mr-2" />
+                  <Save className="w-5 h-5 me-2" />
                   {t.save}
                 </>
               )}

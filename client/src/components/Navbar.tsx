@@ -1,20 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
 
 export function Navbar() {
   const { lang, setLang } = useLang();
-  const [location] = useLocation();
-  const [user, setUser] = useState<any>(null);
+  const [location, setLocation] = useLocation();
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
-  }, []);
-
-  const isRTL = lang === "ar";
+  const isLoggedIn = !!localStorage.getItem("userPhone");
   const isAdmin = location.startsWith("/admin");
   if (location === "/" || location === "/auth" || location === "/contact" || isAdmin) return null;
+
+  function handleLogout() {
+    localStorage.removeItem("userPhone");
+    localStorage.removeItem("userRole");
+    setLocation("/");
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -29,9 +28,9 @@ export function Navbar() {
           >
             {lang === "ar" ? "EN" : "عربي"}
           </button>
-          {user && (
+          {isLoggedIn && (
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={handleLogout}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {lang === "ar" ? "خروج" : "Sign out"}

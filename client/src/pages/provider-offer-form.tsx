@@ -96,17 +96,21 @@ export default function ProviderOfferForm() {
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error("Not logged in");
 
-      const { data: user } = await supabase
+      const { data: user, error: userError } = await supabase
         .from("users")
         .select("id")
         .eq("phone", phone)
         .single();
 
-      const { data: provider } = await supabase
+      if (userError || !user) throw new Error("user_not_found");
+
+      const { data: provider, error: providerError } = await supabase
         .from("providers")
         .select("*")
         .eq("user_id", user.id)
         .single();
+
+      if (providerError || !provider) throw new Error("profile_incomplete");
 
       return { user, provider };
     },
@@ -173,8 +177,12 @@ export default function ProviderOfferForm() {
         throw new Error("no_file");
       }
 
-      if (!providerData?.provider?.id) {
+      if (!providerData?.user || !providerData?.provider?.id) {
         throw new Error("provider_not_found");
+      }
+
+      if (!providerData.provider.approved) {
+        throw new Error(lang === "ar" ? "حسابك لم يتم قبوله بعد من قِبل الإدارة" : "Your account has not been approved by admin yet");
       }
 
       // رفع الملف إلى Supabase Storage
@@ -219,11 +227,16 @@ export default function ProviderOfferForm() {
     },
 
     onError: (error: any) => {
-      console.error("Error:", error);
+      console.error("Offer submission error:", error);
       let errorMessage = t.error;
 
-      if (error.message === "no_file") {
-        errorMessage = t.errorFile;
+      if (error.message === "no_file") errorMessage = t.errorFile;
+      else if (error.message === "provider_not_found" || error.message === "profile_incomplete") {
+        errorMessage = lang === "ar" ? "يرجى إكمال ملف شركتك أولاً" : "Please complete your company profile first";
+      } else if (error.message === "user_not_found") {
+        errorMessage = lang === "ar" ? "لم يتم التعرف على حسابك، حاول تسجيل الدخول مجدداً" : "Account not recognized, please log in again";
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
 
       toast({
@@ -289,6 +302,17 @@ export default function ProviderOfferForm() {
         <h1 className="text-3xl font-bold">{t.title}</h1>
         <p className="text-muted-foreground mt-2">{t.subtitle}</p>
       </div>
+
+      {providerData?.provider?.company_name && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 px-4 py-3 text-sm text-blue-800 dark:text-blue-200">
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span>
+            {lang === "ar"
+              ? `سيُقدَّم هذا العرض باسم: ${providerData.provider.company_name}`
+              : `This offer will be submitted as: ${providerData.provider.company_name}`}
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* تفاصيل الطلب */}

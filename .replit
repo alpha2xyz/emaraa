@@ -11,6 +11,8 @@ externalPort = 80
 
 [env]
 PORT = "5000"
+VITE_SUPABASE_URL = "https://txzbzpnrclkdodosbndy.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4emJ6cG5yY2xrZG9kb3NibmR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0Mjc0OTksImV4cCI6MjA4MzAwMzQ5OX0.aRrQQxjoEaLFv2pY4wpLpt-CCdg6884JOToxHLISuFU"
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -38,8 +40,5 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
-[userenv]
 
-[userenv.shared]
-VITE_SUPABASE_URL = "VITE_SUPABASE_ANON_KEY"
 

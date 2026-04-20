@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useLang } from "@/hooks/use-lang";
-import { Home, Building2, FileText, Settings, User } from "lucide-react";
+import { Home, Building2, FileText, Settings, User, Send } from "lucide-react";
 
 export function BottomNav() {
   const [location] = useLocation();
@@ -19,10 +19,10 @@ export function BottomNav() {
   ];
 
   const providerLinks = [
-    { href: "/dashboard/provider", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
+    { href: "/dashboard/provider", icon: Home, labelAr: "لوحة التحكم", labelEn: "Dashboard" },
     { href: "/dashboard/provider/requests", icon: FileText, labelAr: "الطلبات", labelEn: "Requests" },
+    { href: "/dashboard/provider/offers", icon: Send, labelAr: "عروضي", labelEn: "My Offers" },
     { href: "/dashboard/provider/profile", icon: User, labelAr: "الملف", labelEn: "Profile" },
-    { href: "/dashboard/provider/settings", icon: Settings, labelAr: "الإعدادات", labelEn: "Settings" },
   ];
 
   const links = isOwner ? ownerLinks : isProvider ? providerLinks : [];
@@ -32,7 +32,9 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background">
       <div className="flex items-center justify-around h-16">
         {links.map(({ href, icon: Icon, labelAr, labelEn }) => {
-          const active = location === href;
+          const active = href === "/dashboard/owner" || href === "/dashboard/provider"
+            ? location === href
+            : location.startsWith(href);
           return (
             <Link key={href} href={href}
               className={`flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}>

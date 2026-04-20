@@ -42,6 +42,7 @@ export default function RequestForm() {
       submitting: "جاري الإرسال...",
       cancel: "إلغاء",
       success: "تم إرسال الطلب بنجاح!",
+      updateSuccess: "تم التحديث بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
       noProperties: "لا توجد عقارات! أضف عقاراً أولاً",
       addProperty: "إضافة عقار",
@@ -61,6 +62,7 @@ export default function RequestForm() {
       submitting: "Submitting...",
       cancel: "Cancel",
       success: "Request submitted successfully!",
+      updateSuccess: "Updated successfully!",
       error: "An error occurred, please try again",
       noProperties: "No properties! Add a property first",
       addProperty: "Add Property",
@@ -108,8 +110,8 @@ export default function RequestForm() {
   useEffect(() => {
     if (existingRequest) {
       setFormData({
-        property_id: existingRequest.propertyid || "",
-        service_ids: existingRequest.serviceids || [],
+        property_id: existingRequest.property_id || "",
+        service_ids: existingRequest.service_ids || [],
         description: existingRequest.description || "",
       })
     }
@@ -143,10 +145,10 @@ export default function RequestForm() {
       const hasCleaningService = formData.service_ids.some((id) => cleaningServices.includes(id))
 
       const payload = {
-        ownerid: user.id,
-        propertyid: formData.property_id,
-        servicecategory: hasCleaningService ? "cleaning" : "maintenance",
-        serviceids: formData.service_ids,
+        owner_id: user.id,
+        property_id: formData.property_id,
+        service_category: hasCleaningService ? "cleaning" : "maintenance",
+        service_ids: formData.service_ids,
         description: formData.description || null,
       }
 
@@ -158,7 +160,7 @@ export default function RequestForm() {
     },
     onSuccess: () => {
       toast({
-        title: requestId ? "تم التحديث بنجاح!" : t.success,
+        title: requestId ? t.updateSuccess : t.success,
         variant: "default",
       })
       setLocation("/dashboard/owner/requests")
@@ -184,12 +186,12 @@ export default function RequestForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/owner/requests")} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4 me-2" />
             {t.cancel}
           </Button>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -330,12 +332,12 @@ export default function RequestForm() {
             <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={mutation.isPending}>
               {mutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 me-2 animate-spin" />
                   {t.submitting}
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save className="w-4 h-4 me-2" />
                   {t.submit}
                 </>
               )}

@@ -6,7 +6,6 @@ import {
   Building2,
   Users,
   FileText,
-  Shield,
   Globe,
   ClipboardList,
   Search,
@@ -52,7 +51,7 @@ export default function LandingPage() {
       contactUs: "اتصل بنا",
       joinAsProvider: "انضم كمزود",
       contactEmail: "alpha2xyz+admin@gmail.com",
-      contactPhone: "+966 543 9776 79",
+      contactPhone: "+966 543 9776 799",
       contactLocation: "الرياض، المملكة العربية السعودية",
       followUs: "تابعنا",
       stayUpdated: "ابق على اطلاع بآخر الأخبار",
@@ -142,14 +141,13 @@ export default function LandingPage() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-relaxed">
             {t.heroTitle}
             <br />
-            <div className="h-4"></div>
-            <span className="text-blue-600">{t.heroHighlight}</span>
+            <span className="text-blue-600 mt-4 inline-block">{t.heroHighlight}</span>
           </h1>
           <p className="text-base md:text-lg text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
             {t.heroDesc}
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Link href="/auth">
+            <Link href="/auth?role=owner">
               <Button
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8"
@@ -193,7 +191,7 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {/* Step 1 */}
             <Card className="relative pt-6 bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-blue-500 group overflow-visible">
-              <div className="absolute -top-4 left-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
+              <div className="absolute -top-4 start-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
                 1
               </div>
               <CardContent className="text-center p-6 pt-2 bg-white">
@@ -212,7 +210,7 @@ export default function LandingPage() {
 
             {/* Step 2 */}
             <Card className="relative pt-6 bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-blue-500 group overflow-visible">
-              <div className="absolute -top-4 left-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
+              <div className="absolute -top-4 start-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
                 2
               </div>
               <CardContent className="text-center p-6 pt-2 bg-white">
@@ -231,7 +229,7 @@ export default function LandingPage() {
 
             {/* Step 3 */}
             <Card className="relative pt-6 bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-blue-500 group overflow-visible">
-              <div className="absolute -top-4 left-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
+              <div className="absolute -top-4 start-6 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
                 3
               </div>
               <CardContent className="text-center p-6 pt-2 bg-white">
@@ -270,7 +268,7 @@ export default function LandingPage() {
                   size="lg"
                   className="bg-green-600 hover:bg-green-700 text-white border-0 px-10 shadow-lg"
                 >
-                  <Users className="h-5 w-5 mr-2" />
+                  <Users className="h-5 w-5 me-2" />
                   {t.joinProvider}
                 </Button>
               </Link>
@@ -306,14 +304,11 @@ export default function LandingPage() {
                 {t.quickLinks}
               </h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="hover:text-blue-600 cursor-pointer">
-                  {t.contactUs}
+                <li className="hover:text-blue-600 cursor-pointer transition-colors">
+                  <Link href="/contact">{t.contactUs}</Link>
                 </li>
                 <li className="hover:text-blue-600 cursor-pointer">
                   <Link href="/auth?role=provider">{t.joinAsProvider}</Link>
-                </li>
-                <li className="hover:text-blue-600 cursor-pointer transition-colors">
-                  <Link href="/admin">{t.adminLogin}</Link>
                 </li>
               </ul>
             </div>

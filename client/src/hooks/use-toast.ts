@@ -47,6 +47,7 @@ export function toast(props: Omit<ToastProps, "id">) {
   const id = genId()
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
   dispatch({ type: "ADD_TOAST", toast: { ...props, id, open: true, onOpenChange: (open) => { if (!open) { addToRemoveQueue(id); dismiss() } } } })
+  setTimeout(() => { dismiss(); addToRemoveQueue(id) }, props.variant === "destructive" ? 5000 : 3500)
   return { id, dismiss, update: (p: Omit<ToastProps, "id">) => dispatch({ type: "UPDATE_TOAST", toast: { ...p, id } }) }
 }
 

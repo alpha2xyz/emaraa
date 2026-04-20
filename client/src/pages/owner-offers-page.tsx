@@ -26,9 +26,9 @@ export default function OwnerOffersPage() {
     enabled: !!requestId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('provideroffers')
-        .select('id, offerfileurl, notes, status, created_at, providers(id, companyname, city)')
-        .eq('requestid', requestId!)
+        .from('provider_offers')
+        .select('id, offer_file_url, notes, status, created_at, providers(id, company_name, city)')
+        .eq('request_id', requestId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -37,11 +37,11 @@ export default function OwnerOffersPage() {
 
   const statusMutation = useMutation({
     mutationFn: async ({ offerId, status }: { offerId: string; status: 'accepted' | 'rejected' }) => {
-      const { error } = await supabase.from('provideroffers').update({ status }).eq('id', offerId);
+      const { error } = await supabase.from('provider_offers').update({ status }).eq('id', offerId);
       if (error) throw error;
       if (status === 'accepted') {
-        await supabase.from('requests').update({ status: 'inprogress' }).eq('id', requestId!);
-        await supabase.from('provideroffers').update({ status: 'rejected' }).eq('requestid', requestId!).neq('id', offerId);
+        await supabase.from('requests').update({ status: 'in_progress' }).eq('id', requestId!);
+        await supabase.from('provider_offers').update({ status: 'rejected' }).eq('request_id', requestId!).neq('id', offerId);
       }
     },
     onSuccess: (_, { status }) => {
@@ -59,7 +59,7 @@ export default function OwnerOffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-4xl mx-auto">
         <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard/owner/requests')} className="mb-4">
           <ArrowLeft className="w-4 h-4 me-2" />{t.back}
@@ -85,7 +85,7 @@ export default function OwnerOffersPage() {
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Building2 className="w-5 h-5 text-blue-600" />
-                      {offer.providers?.companyname}
+                      {offer.providers?.company_name}
                     </CardTitle>
                     {statusBadge(offer.status)}
                   </div>
@@ -99,11 +99,13 @@ export default function OwnerOffersPage() {
                     </div>
                   )}
                   <div className="flex gap-3 flex-wrap">
-                    <a href={offer.offerfileurl} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm">
-                        <FileText className="w-4 h-4 me-2" />{t.viewOffer}
-                      </Button>
-                    </a>
+                    {offer.offer_file_url && (
+                      <a href={offer.offer_file_url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm">
+                          <FileText className="w-4 h-4 me-2" />{t.viewOffer}
+                        </Button>
+                      </a>
+                    )}
                     {offer.status === 'pending' && (
                       <>
                         <Button size="sm" className="bg-green-600 hover:bg-green-700" disabled={statusMutation.isPending} onClick={() => statusMutation.mutate({ offerId: offer.id, status: 'accepted' })}>

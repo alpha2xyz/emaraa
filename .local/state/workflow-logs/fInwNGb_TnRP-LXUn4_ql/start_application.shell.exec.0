@@ -1,0 +1,54 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K9:25:50 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:26:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/Navbar.tsx, /src/pages/requests.tsx, /src/pages/owner-dashboard.tsx, /src/pages/admin-dashboard.tsx, /src/pages/provider-requests.tsx, /src/pages/request-form.tsx, /src/pages/provider-profile.tsx, /src/pages/property-form.tsx, /src/pages/provider-dashboard.tsx, /src/pages/auth-page.tsx, /src/pages/settings.tsx, /src/pages/provider-offer-form.tsx, /src/pages/owner-offers-page.tsx, /src/pages/properties.tsx, /src/pages/admin-login-page.tsx[22m

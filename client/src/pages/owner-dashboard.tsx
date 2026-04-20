@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useLang } from "@/hooks/use-lang";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { supabase } from "../lib/supabase";
 
 export default function OwnerDashboard() {
+  useAuthGuard("owner");
   const { lang, toggleLang } = useLang();
   const phone = localStorage.getItem("userPhone");
 
@@ -60,6 +62,10 @@ export default function OwnerDashboard() {
       noProperties: "لا توجد عقارات",
       noRequests: "لا توجد طلبات",
       viewAll: "عرض الكل",
+      edit: "تعديل",
+      offers: "العروض",
+      cleaning: "خدمات النظافة",
+      maintenance: "خدمات الصيانة",
     },
     en: {
       title: "Dashboard",
@@ -70,6 +76,10 @@ export default function OwnerDashboard() {
       noProperties: "No properties",
       noRequests: "No requests",
       viewAll: "View All",
+      edit: "Edit",
+      offers: "Offers",
+      cleaning: "Cleaning",
+      maintenance: "Maintenance",
     },
   };
 
@@ -96,7 +106,7 @@ export default function OwnerDashboard() {
         </Button>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* كرت العقارات */}
           <Card className="border-t-4 border-t-blue-600">
@@ -128,7 +138,7 @@ export default function OwnerDashboard() {
         <div className="flex gap-4">
           <Link href="/dashboard/owner/properties/new">
             <Button className="bg-blue-600">
-              <Plus className="w-4 h-4 ml-2" />
+              <Plus className="w-4 h-4 me-2" />
               {content.addProperty}
             </Button>
           </Link>
@@ -165,14 +175,51 @@ export default function OwnerDashboard() {
                       <p className="font-bold">{p.name}</p>
                       <p className="text-xs text-gray-500">{p.city}</p>
                     </div>
-
                     <Link href={`/dashboard/owner/properties/${p.id}/edit`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600"
-                      >
-                        تعديل
+                      <Button variant="ghost" size="sm" className="text-blue-600">
+                        {content.edit}
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* قائمة الطلبات الأخيرة */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{content.myRequests}</CardTitle>
+            <Link href="/dashboard/owner/requests">
+              <Button variant="ghost" size="sm">
+                {content.viewAll}
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {requests.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">
+                {content.noRequests}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {requests.slice(0, 3).map((r: any) => (
+                  <div
+                    key={r.id}
+                    className="p-3 border rounded-lg flex justify-between items-center bg-white shadow-sm"
+                  >
+                    <div>
+                      <p className="font-bold text-sm">
+                        {r.service_category === "cleaning" ? content.cleaning : content.maintenance}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(r.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}
+                      </p>
+                    </div>
+                    <Link href={`/dashboard/owner/requests/${r.id}/offers`}>
+                      <Button variant="ghost" size="sm" className="text-blue-600">
+                        {content.offers}
                       </Button>
                     </Link>
                   </div>

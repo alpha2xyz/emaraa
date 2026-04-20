@@ -28,6 +28,7 @@ import ProviderDashboard from "@/pages/provider-dashboard";
 import ProviderRequests  from "@/pages/provider-requests";
 import ProviderOfferForm from "@/pages/provider-offer-form";
 import ProviderProfile   from "@/pages/provider-profile";
+import ProviderOffers    from "@/pages/provider-offers";
 
 // Shared
 import Settings          from "@/pages/settings";
@@ -112,9 +113,10 @@ function Router() {
       <Route path="/dashboard/provider/profile">
         <DashboardLayout><ProviderProfile /></DashboardLayout>
       </Route>
-      <Route path="/dashboard/provider/settings">
-        <DashboardLayout><Settings /></DashboardLayout>
+      <Route path="/dashboard/provider/offers">
+        <DashboardLayout><ProviderOffers /></DashboardLayout>
       </Route>
+
 
       {/* ── 404 ─────────────────────────────────────────────────────── */}
       <Route component={NotFound} />

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Edit, Building2, Calendar } from "lucide-react";
+import { FileText, Plus, Edit, Building2, Calendar, Eye } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { getServicesByCategory } from "@/lib/services";
@@ -144,19 +144,19 @@ export default function Requests() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-blue-600" />
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
             {t.title}
           </h1>
           <Button
             onClick={() => setLocation("/dashboard/owner/requests/new")}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 me-2" />
             {t.newRequest}
           </Button>
         </div>
@@ -173,7 +173,7 @@ export default function Requests() {
               <Button
                 onClick={() => setLocation("/dashboard/owner/requests/new")}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 me-2" />
                 {t.newRequest}
               </Button>
             </CardContent>
@@ -192,7 +192,7 @@ export default function Requests() {
                   className="hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                       {/* Left Section */}
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
@@ -245,6 +245,18 @@ export default function Requests() {
                       {/* Right Section - Actions */}
                       <div className="flex flex-col gap-2">
                         <Button
+                          size="sm"
+                          onClick={() =>
+                            setLocation(
+                              `/dashboard/owner/requests/${request.id}/offers`,
+                            )
+                          }
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Eye className="w-4 h-4 me-2" />
+                          {lang === "ar" ? "عرض العروض" : "View Offers"}
+                        </Button>
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={() =>
@@ -253,7 +265,7 @@ export default function Requests() {
                             )
                           }
                         >
-                          <Edit className="w-4 h-4 mr-2" />
+                          <Edit className="w-4 h-4 me-2" />
                           {lang === "ar" ? "تعديل" : "Edit"}
                         </Button>
                       </div>

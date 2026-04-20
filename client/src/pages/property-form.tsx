@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,146 +12,107 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  FileText,
-  Building2,
-  Save,
-  Loader2,
-  ArrowLeft,
-  AlertCircle,
-} from "lucide-react";
+import { Building2, Save, Loader2, ArrowLeft } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { getServicesByCategory } from "@/lib/services";
 
-export default function RequestForm() {
+export default function PropertyForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [match, params] = useRoute("/dashboard/owner/requests/:id/edit");
-  const requestId = params?.id;
+  const [, params] = useRoute("/dashboard/owner/properties/:id/edit");
+  const propertyId = params?.id;
+  const isEdit = !!propertyId;
 
   const [formData, setFormData] = useState({
-    property_id: "",
-    service_ids: [] as string[],
-    description: "",
+    name: "",
+    address: "",
+    city: "",
+    building_type: "residential",
+    units_count: "",
+    map_url: "",
   });
-  const [showValidation, setShowValidation] = useState(false);
 
   const content = {
     ar: {
-      title: "طلب خدمة جديد",
-      subtitle: "اختر العقار والخدمات المطلوبة",
-      selectProperty: "اختر العقار",
-      propertyPlaceholder: "اختر العقار",
-      cleaning: "خدمات النظافة",
-      maintenance: "خدمات الصيانة",
-      description: "تفاصيل إضافية",
-      descriptionPlaceholder: "اكتب أي تفاصيل أو ملاحظات إضافية...",
-      submit: "إرسال الطلب",
-      submitting: "جاري الإرسال...",
-      cancel: "إلغاء",
-      success: "تم إرسال الطلب بنجاح!",
+      titleAdd: "إضافة عقار جديد",
+      titleEdit: "تعديل العقار",
+      name: "اسم العقار",
+      namePlaceholder: "مثال: برج الياسمين",
+      address: "العنوان",
+      addressPlaceholder: "العنوان التفصيلي للعقار",
+      city: "المدينة",
+      cityPlaceholder: "مثال: الرياض",
+      buildingType: "نوع المبنى",
+      residential: "سكني",
+      commercial: "تجاري",
+      unitsCount: "عدد الوحدات",
+      unitsPlaceholder: "مثال: 24",
+      mapUrl: "رابط الموقع على الخريطة (اختياري)",
+      mapPlaceholder: "https://maps.google.com/...",
+      save: "حفظ",
+      saving: "جاري الحفظ...",
+      back: "رجوع",
+      success: "تم حفظ العقار بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
-      noProperties: "لا توجد عقارات! أضف عقاراً أولاً",
-      addProperty: "إضافة عقار",
-      propertyRequired: "يرجى اختيار العقار",
-      servicesRequired: "يرجى اختيار خدمة واحدة على الأقل",
     },
     en: {
-      title: "New Service Request",
-      subtitle: "Select property and required services",
-      selectProperty: "Select Property",
-      propertyPlaceholder: "Select property",
-      cleaning: "Cleaning Services",
-      maintenance: "Maintenance Services",
-      description: "Additional Details",
-      descriptionPlaceholder: "Write any additional details or notes...",
-      submit: "Submit Request",
-      submitting: "Submitting...",
-      cancel: "Cancel",
-      success: "Request submitted successfully!",
+      titleAdd: "Add New Property",
+      titleEdit: "Edit Property",
+      name: "Property Name",
+      namePlaceholder: "e.g. Yasmine Tower",
+      address: "Address",
+      addressPlaceholder: "Detailed property address",
+      city: "City",
+      cityPlaceholder: "e.g. Riyadh",
+      buildingType: "Building Type",
+      residential: "Residential",
+      commercial: "Commercial",
+      unitsCount: "Number of Units",
+      unitsPlaceholder: "e.g. 24",
+      mapUrl: "Map URL (optional)",
+      mapPlaceholder: "https://maps.google.com/...",
+      save: "Save",
+      saving: "Saving...",
+      back: "Back",
+      success: "Property saved successfully!",
       error: "An error occurred, please try again",
-      noProperties: "No properties! Add a property first",
-      addProperty: "Add Property",
-      propertyRequired: "Please select a property",
-      servicesRequired: "Please select at least one service",
     },
   };
 
   const t = content[lang];
 
-  // جلب عقارات المستخدم
-  const { data: properties, isLoading: propertiesLoading } = useQuery({
-    queryKey: ["/api/properties"],
+  // Load existing property for edit mode
+  const { data: existingProperty } = useQuery({
+    queryKey: ["/api/property", propertyId],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-
-      if (!user) throw new Error("User not found");
-
+      if (!propertyId) return null;
       const { data, error } = await supabase
         .from("properties")
         .select("*")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // جلب الطلب الموجود (للتعديل)
-  const { data: existingRequest } = useQuery({
-    queryKey: ["request", requestId],
-    enabled: !!requestId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("requests")
-        .select("*")
-        .eq("id", requestId)
+        .eq("id", propertyId)
         .single();
-
       if (error) throw error;
       return data;
     },
+    enabled: isEdit,
   });
 
-  // تحميل البيانات في النموذج
   useEffect(() => {
-    if (existingRequest) {
+    if (existingProperty) {
       setFormData({
-        property_id: existingRequest.property_id || "",
-        service_ids: existingRequest.service_ids || [],
-        description: existingRequest.description || "",
+        name: existingProperty.name || "",
+        address: existingProperty.address || "",
+        city: existingProperty.city || "",
+        building_type: existingProperty.building_type || "residential",
+        units_count: existingProperty.units_count?.toString() || "",
+        map_url: existingProperty.map_url || "",
       });
     }
-  }, [existingRequest]);
+  }, [existingProperty]);
 
-  // التعامل مع اختيار الخدمات
-  const handleServiceToggle = (serviceId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      service_ids: prev.service_ids.includes(serviceId)
-        ? prev.service_ids.filter((id) => id !== serviceId)
-        : [...prev.service_ids, serviceId],
-    }));
-  };
-
-  const isPropertyValid = formData.property_id !== "";
-  const isServicesValid = formData.service_ids.length > 0;
-  const isFormValid = isPropertyValid && isServicesValid;
-
-  // إرسال الطلب
   const mutation = useMutation({
     mutationFn: async () => {
       const phone = localStorage.getItem("userPhone");
@@ -165,311 +126,165 @@ export default function RequestForm() {
 
       if (!user) throw new Error("User not found");
 
-      // تحديد الفئة بناءً على الخدمات المختارة
-      const cleaningServices = getServicesByCategory("cleaning").map(
-        (s) => s.id,
-      );
-      const hasCleaningService = formData.service_ids.some((id) =>
-        cleaningServices.includes(id),
-      );
-
       const payload = {
         owner_id: user.id,
-        property_id: formData.property_id,
-        service_category: hasCleaningService ? "cleaning" : "maintenance",
-        service_ids: formData.service_ids,
-        description: formData.description || null,
-        status: "pending",
+        name: formData.name,
+        address: formData.address,
+        city: formData.city,
+        building_type: formData.building_type,
+        units_count: formData.units_count ? parseInt(formData.units_count) : null,
+        map_url: formData.map_url || null,
       };
 
-      console.log("Submitting payload:", payload); // للتشخيص
-
-      if (requestId) {
-        // تحديث طلب موجود
+      if (isEdit) {
         const { error } = await supabase
-          .from("requests")
+          .from("properties")
           .update(payload)
-          .eq("id", requestId);
-
+          .eq("id", propertyId);
         if (error) throw error;
       } else {
-        // إنشاء طلب جديد
-        const { error } = await supabase.from("requests").insert([payload]);
-
+        const { error } = await supabase
+          .from("properties")
+          .insert([payload]);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
-      toast({
-        title: requestId ? "تم التحديث بنجاح!" : t.success,
-        variant: "default",
-      });
-      setLocation("/dashboard/owner/requests");
+      toast({ title: t.success });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      setLocation("/dashboard/owner/properties");
     },
-    onError: (error: any) => {
-      console.error("Error submitting request:", error);
-      toast({
-        title: t.error,
-        description: error.message || "Unknown error",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: t.error, variant: "destructive" });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowValidation(true);
-
-    if (!isFormValid) {
-      toast({
-        title: !isPropertyValid ? t.propertyRequired : t.servicesRequired,
-        variant: "destructive",
-      });
-      return;
-    }
-
     mutation.mutate();
   };
 
   return (
     <div
-      className="min-h-screen bg-gray-50 p-6"
+      className="container mx-auto p-4 max-w-2xl"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation("/dashboard/owner/requests")}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t.cancel}
-          </Button>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-blue-600" />
-            {t.title}
-          </h1>
-          <p className="text-gray-600 mt-1">{t.subtitle}</p>
+      <Button
+        variant="ghost"
+        onClick={() => setLocation("/dashboard/owner/properties")}
+        className="mb-4"
+      >
+        <ArrowLeft className="h-4 w-4 me-2" />
+        {t.back}
+      </Button>
+
+      <div className="mb-6 flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <Building2 className="w-6 h-6 text-primary" />
         </div>
+        <h1 className="text-2xl font-bold">{isEdit ? t.titleEdit : t.titleAdd}</h1>
+      </div>
 
-        {/* No Properties Warning */}
-        {!propertiesLoading && (!properties || properties.length === 0) && (
-          <Card className="mb-6 border-orange-200 bg-orange-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="h-8 w-8 text-orange-500 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-orange-900 mb-1">
-                    {t.noProperties}
-                  </h3>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setLocation("/dashboard/owner/properties/new")
-                    }
-                    className="bg-orange-600 hover:bg-orange-700 mt-2"
-                  >
-                    {t.addProperty}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* اختيار العقار */}
-          <Card
-            className={
-              showValidation && !isPropertyValid ? "border-red-500" : ""
-            }
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />
-                {t.selectProperty}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={formData.property_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, property_id: value })
-                }
-              >
-                <SelectTrigger
-                  className={
-                    showValidation && !isPropertyValid ? "border-red-500" : ""
-                  }
-                >
-                  <SelectValue placeholder={t.propertyPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {properties?.map((property) => (
-                    <SelectItem key={property.id} value={property.id}>
-                      {property.name} - {property.city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {showValidation && !isPropertyValid && (
-                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {t.propertyRequired}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* خدمات النظافة */}
-          <Card
-            className={
-              showValidation && !isServicesValid ? "border-red-500" : ""
-            }
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🧹 {t.cleaning}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {getServicesByCategory("cleaning").map((service) => (
-                  <div
-                    key={service.id}
-                    className={`relative border-2 rounded-lg p-4 transition-all ${
-                      formData.service_ids.includes(service.id)
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id={service.id}
-                        checked={formData.service_ids.includes(service.id)}
-                        onCheckedChange={() => handleServiceToggle(service.id)}
-                      />
-                      <div className="flex-1">
-                        <Label
-                          htmlFor={service.id}
-                          className="font-semibold cursor-pointer block mb-1"
-                        >
-                          {service.name[lang]}
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          {service.description[lang]}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* خدمات الصيانة */}
-          <Card
-            className={
-              showValidation && !isServicesValid ? "border-red-500" : ""
-            }
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🔧 {t.maintenance}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {getServicesByCategory("maintenance").map((service) => (
-                  <div
-                    key={service.id}
-                    className={`relative border-2 rounded-lg p-4 transition-all ${
-                      formData.service_ids.includes(service.id)
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id={service.id}
-                        checked={formData.service_ids.includes(service.id)}
-                        onCheckedChange={() => handleServiceToggle(service.id)}
-                      />
-                      <div className="flex-1">
-                        <Label
-                          htmlFor={service.id}
-                          className="font-semibold cursor-pointer block mb-1"
-                        >
-                          {service.name[lang]}
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          {service.description[lang]}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {showValidation && !isServicesValid && (
-                <p className="text-red-500 text-sm mt-4 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {t.servicesRequired}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* التفاصيل */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.description}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder={t.descriptionPlaceholder}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={4}
+      <Card>
+        <CardHeader>
+          <CardTitle>{isEdit ? t.titleEdit : t.titleAdd}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">{t.name}</Label>
+              <Input
+                id="name"
+                placeholder={t.namePlaceholder}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
               />
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* أزرار */}
-          <div className="flex gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="address">{t.address}</Label>
+              <Input
+                id="address"
+                placeholder={t.addressPlaceholder}
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">{t.city}</Label>
+                <Input
+                  id="city"
+                  placeholder={t.cityPlaceholder}
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t.buildingType}</Label>
+                <Select
+                  value={formData.building_type}
+                  onValueChange={(v) => setFormData({ ...formData, building_type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="residential">{t.residential}</SelectItem>
+                    <SelectItem value="commercial">{t.commercial}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="units_count">{t.unitsCount}</Label>
+              <Input
+                id="units_count"
+                type="number"
+                min="1"
+                placeholder={t.unitsPlaceholder}
+                value={formData.units_count}
+                onChange={(e) => setFormData({ ...formData, units_count: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="map_url">{t.mapUrl}</Label>
+              <Input
+                id="map_url"
+                type="url"
+                placeholder={t.mapPlaceholder}
+                value={formData.map_url}
+                onChange={(e) => setFormData({ ...formData, map_url: e.target.value })}
+              />
+            </div>
+
             <Button
               type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full mt-2"
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t.submitting}
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  {t.saving}
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 mr-2" />
-                  {t.submit}
+                  <Save className="h-4 w-4 me-2" />
+                  {t.save}
                 </>
               )}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setLocation("/dashboard/owner/requests")}
-            >
-              {t.cancel}
-            </Button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

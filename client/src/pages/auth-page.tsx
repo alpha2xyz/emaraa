@@ -59,6 +59,7 @@ export default function AuthPage() {
       loginSuccess: "تم تسجيل الدخول بنجاح!",
       phoneInvalid: "رقم جوال سعودي فقط (يبدأ بـ 05 ويتكون من 10 أرقام)",
       nameInvalid: "الاسم يجب أن يكون عربي أو إنجليزي فقط (حد أقصى 25 حرف)",
+      loading: "جاري التحميل...",
     },
     en: {
       ownerRegisterTitle: "Create Property Owner Account",
@@ -82,6 +83,7 @@ export default function AuthPage() {
       loginSuccess: "Login successful!",
       phoneInvalid: "Saudi phone number only (starts with 05 and 10 digits)",
       nameInvalid: "Name must be Arabic or English only (max 25 characters)",
+      loading: "Loading...",
     },
   };
 
@@ -160,7 +162,7 @@ export default function AuthPage() {
         if (role === "owner") {
           setLocation("/dashboard/owner/properties/new");
         } else if (role === "provider") {
-          setLocation("/provider-profile");
+          setLocation("/dashboard/provider/profile");
         }
       } else {
         // تسجيل الدخول
@@ -185,7 +187,7 @@ export default function AuthPage() {
         if (role === "owner") {
           setLocation("/dashboard/owner");
         } else if (role === "provider") {
-          setLocation("/dashboard/provider/profile");
+          setLocation("/dashboard/provider");
         }
       }
     } catch (err) {
@@ -208,7 +210,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="w-full max-w-md">
         {/* Back Button */}
         <Button
@@ -216,7 +218,7 @@ export default function AuthPage() {
           onClick={() => setLocation("/")}
           className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4 me-2" />
           {t.back}
         </Button>
 
@@ -292,7 +294,7 @@ export default function AuthPage() {
               {/* Submit Button */}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading
-                  ? "جاري التحميل..."
+                  ? t.loading
                   : mode === "login"
                     ? t.loginButton
                     : t.registerButton}

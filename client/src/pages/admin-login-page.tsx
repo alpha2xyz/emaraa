@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="absolute top-4 right-4"><LanguageToggle className="text-slate-300" /></div>
+      <div className="absolute top-4 end-4"><LanguageToggle className="text-slate-300" /></div>
       <Card className="w-full max-w-md bg-slate-800/50 border-slate-700 backdrop-blur">
         <CardHeader className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-blue-600/20 rounded-full flex items-center justify-center">
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-slate-200">{t.user}</Label>
-              <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="Alpha1004" required className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500" />
+              <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="username" required className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500" />
             </div>
             <div className="space-y-2">
               <Label className="text-slate-200">{t.pass}</Label>
@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>{loading ? t.loading : t.login}</Button>
             <Button type="button" variant="ghost" className="w-full text-slate-400 hover:text-white" onClick={() => setLocation('/')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />{t.back}
+              <ArrowLeft className="w-4 h-4 me-2" />{t.back}
             </Button>
           </form>
         </CardContent>

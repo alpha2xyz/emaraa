@@ -55,6 +55,7 @@ export default function ProviderRequests() {
       cleaning: "خدمات النظافة",
       maintenance: "خدمات الصيانة",
       loading: "جاري التحميل...",
+      searchAndFilter: "البحث والفلترة",
       clearFilters: "إعادة تعيين",
       results: "نتيجة",
       completeProfile: "أكمل ملف شركتك أولاً",
@@ -79,6 +80,7 @@ export default function ProviderRequests() {
       cleaning: "Cleaning Services",
       maintenance: "Maintenance Services",
       loading: "Loading...",
+      searchAndFilter: "Search & Filter",
       clearFilters: "Clear Filters",
       results: "results",
       completeProfile: "Complete Your Company Profile First",
@@ -100,6 +102,8 @@ export default function ProviderRequests() {
         .select("id")
         .eq("phone", phone)
         .single();
+
+      if (!user) throw new Error("User not found");
 
       const { data: provider } = await supabase
         .from("providers")
@@ -238,7 +242,7 @@ export default function ProviderRequests() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            {lang === "ar" ? "البحث والفلترة" : "Search & Filter"}
+            {t.searchAndFilter}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -246,12 +250,12 @@ export default function ProviderRequests() {
             {/* Search */}
             <div className="md:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={t.search}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="ps-9"
                 />
               </div>
             </div>
