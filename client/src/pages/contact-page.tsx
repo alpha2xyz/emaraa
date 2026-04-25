@@ -11,13 +11,13 @@ export default function ContactPage() {
     : { title: 'Contact Us', subtitle: 'We are here to help. Reach us through any channel.', email: 'Email', phone: 'Phone', location: 'Location', loc: 'Riyadh, Saudi Arabia', back: 'Back to Home' };
 
   const contacts = [
-    { icon: Mail, label: t.email, value: 'support@emaraa.sa', href: 'mailto:support@emaraa.sa', external: false },
-    { icon: Phone, label: t.phone, value: '+966 54 321 0000', href: 'tel:+966543210000', external: false },
+    { icon: Mail, label: t.email, value: 'aallfaraidi@gmail.com', href: 'mailto:aallfaraidi@gmail.com', external: false },
+    { icon: Phone, label: t.phone, value: '0543977679', href: 'tel: 0543977679', external: false },
     { icon: MapPin, label: t.location, value: t.loc, href: 'https://maps.google.com/?q=Riyadh,Saudi+Arabia', external: true },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl mx-auto">
         <Link href="/">
           <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors">

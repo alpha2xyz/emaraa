@@ -14,12 +14,12 @@ export interface ToastProps {
 export function Toast({ title, description, variant = "default", open, onOpenChange }: ToastProps) {
   if (!open) return null
   return (
-    <div className={`pointer-events-auto flex w-full max-w-sm rounded-lg border p-4 shadow-lg ${variant === "destructive" ? "border-red-500 bg-red-50 text-red-900" : "bg-white border-gray-200"}`}>
+    <div className={`pointer-events-auto flex w-full max-w-sm rounded-lg border p-4 shadow-lg ${variant === "destructive" ? "border-red-700 bg-red-600 text-white" : "bg-gray-900 border-gray-700 text-white"}`}>
       <div className="flex-1">
         {title && <div className="text-sm font-semibold">{title}</div>}
         {description && <div className="text-sm opacity-90">{description}</div>}
       </div>
-      <button onClick={() => onOpenChange?.(false)} className="ml-2 text-gray-400 hover:text-gray-600">✕</button>
+      <button onClick={() => onOpenChange?.(false)} className="ml-2 text-gray-300 hover:text-white">✕</button>
     </div>
   )
 }

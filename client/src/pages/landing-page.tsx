@@ -3,18 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "@/hooks/use-lang";
 import { Link } from "wouter";
 import {
-  Building2,
   Users,
-  FileText,
   Globe,
   ClipboardList,
   Search,
   BarChart3,
-  CheckCircle2,
   Wrench,
-  Mail,
-  Phone,
-  MapPin,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -28,7 +22,7 @@ export default function LandingPage() {
       heroTitle: "عِمارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
-        "عِمارة هي منصة تربط ملاك العقارات بمقدمي خدمات الصيانة والنظافة الموثوقين. انشر احتياجاتك، واستلم عروضاً تنافسية، ووظف الأفضل - كل ذلك في مكان واحد.",
+        "عِمارة هي منصة تربط ملاك العقارات بمقدمي خدمات النظافة وإدارة المرافق الموثوقين. انشر احتياجاتك، واستلم عروضاً تنافسية، وتعاقد مع الأفضل - كل ذلك في مكان واحد.",
       getStarted: "ابدأ مجاناً",
       learnMore: "اعرف المزيد",
       howItWorksTitle: "كيف تعمل المنصة",
@@ -50,12 +44,8 @@ export default function LandingPage() {
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
       joinAsProvider: "انضم كمزود",
-      contactEmail: "alpha2xyz+admin@gmail.com",
-      contactPhone: "+966 543 9776 799",
-      contactLocation: "الرياض، المملكة العربية السعودية",
-      followUs: "تابعنا",
-      stayUpdated: "ابق على اطلاع بآخر الأخبار",
       adminLogin: "دخول آدمن",
+      viewDemo: "دليل المنصة",
       footerCopyright: "© 2025 عمارة. جميع الحقوق محفوظة.",
     },
     en: {
@@ -65,7 +55,7 @@ export default function LandingPage() {
       heroTitle: "Your Building,",
       heroHighlight: "Perfectly Managed",
       heroDesc:
-        "EMARAA connects property owners with trusted cleaning and maintenance providers. Post your needs, receive competitive bids, and hire the best - all in one place.",
+        "EMARAA connects property owners with trusted cleaning and facility management providers. Post your needs, receive competitive quotes, and contract the best - all in one place.",
       getStarted: "Get Started Free",
       learnMore: "Learn More",
       howItWorksTitle: "How It Works",
@@ -87,12 +77,8 @@ export default function LandingPage() {
       quickLinks: "Quick Links",
       contactUs: "Contact Us",
       joinAsProvider: "Join as Provider",
-      contactEmail: "alpha2xyz+admin@gmail.com",
-      contactPhone: "+966 543 9776 799",
-      contactLocation: "Riyadh, Saudi Arabia",
-      followUs: "Follow Us",
-      stayUpdated: "Stay updated with latest news",
       adminLogin: "Admin Login",
+      viewDemo: "Platform Guide",
       footerCopyright: "© 2025 EMARAA. All rights reserved.",
     },
   };
@@ -100,7 +86,7 @@ export default function LandingPage() {
   const t = content[lang];
 
   return (
-    <div className="min-h-screen bg-white" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-white" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
       <header className="bg-gray-800 text-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
@@ -150,7 +136,7 @@ export default function LandingPage() {
             <Link href="/auth?role=owner">
               <Button
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                className="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-transform text-white px-8"
               >
                 {t.getStarted}
               </Button>
@@ -266,7 +252,7 @@ export default function LandingPage() {
               <Link href="/auth?role=provider">
                 <Button
                   size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white border-0 px-10 shadow-lg"
+                  className="bg-green-600 hover:bg-green-700 active:scale-95 transition-transform text-white border-0 px-10 shadow-lg"
                 >
                   <Users className="h-5 w-5 me-2" />
                   {t.joinProvider}
@@ -289,7 +275,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-gray-100 py-12">
         <div className="container mx-auto px-4">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-8 mb-8">
             {/* Column 1 */}
             <div>
               <h3 className="text-xl font-bold text-blue-600 mb-3">
@@ -310,41 +296,14 @@ export default function LandingPage() {
                 <li className="hover:text-blue-600 cursor-pointer">
                   <Link href="/auth?role=provider">{t.joinAsProvider}</Link>
                 </li>
+                <li className="hover:text-blue-600 cursor-pointer transition-colors">
+                  <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer">
+                    {t.viewDemo}
+                  </a>
+                </li>
               </ul>
             </div>
 
-            {/* Column 3 */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">
-                {t.contactUs}
-              </h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-600" strokeWidth={2} />
-                  {t.contactEmail}
-                </p>
-                <p className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-blue-600" strokeWidth={2} />
-                  {t.contactPhone}
-                </p>
-                <p className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" strokeWidth={2} />
-                  {t.contactLocation}
-                </p>
-              </div>
-            </div>
-
-            {/* Column 4 - مخفي مؤقتاً
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">{t.followUs}</h4>
-                      <p className="text-sm text-gray-600 mb-3">{t.stayUpdated}</p>
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
-                        <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
-                        <div className="w-8 h-8 bg-gray-300 rounded hover:bg-blue-600 transition-colors cursor-pointer"></div>
-                      </div>
-                    </div>
-                    */}
           </div>
 
           <div className="border-t border-gray-300 pt-6 text-center">

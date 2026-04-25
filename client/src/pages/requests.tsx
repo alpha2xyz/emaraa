@@ -1,16 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Edit, Building2, Calendar, Eye } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { FileText, Plus, Edit, Building2, Calendar, Eye, Trash2 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
-import { getServicesByCategory } from "@/lib/services";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Requests() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const content = {
     ar: {
@@ -27,6 +33,9 @@ export default function Requests() {
       in_progress: "جاري التنفيذ",
       completed: "مكتمل",
       cancelled: "ملغي",
+      deleteConfirm: "هل أنت متأكد من حذف هذا الطلب؟",
+      deleteSuccess: "تم حذف الطلب بنجاح",
+      deleteError: "حدث خطأ أثناء الحذف",
     },
     en: {
       title: "Service Requests",
@@ -42,6 +51,9 @@ export default function Requests() {
       in_progress: "In Progress",
       completed: "Completed",
       cancelled: "Cancelled",
+      deleteConfirm: "Are you sure you want to delete this request?",
+      deleteSuccess: "Request deleted successfully",
+      deleteError: "An error occurred while deleting",
     },
   };
 
@@ -82,16 +94,34 @@ export default function Requests() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase.from("requests").delete().eq("id", requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      toast({ title: t.deleteSuccess });
+    },
+    onError: () => {
+      setDeleteId(null);
+      toast({ title: t.deleteError, variant: "destructive" });
+    },
+  });
+
+  const handleDelete = (requestId: string) => setDeleteId(requestId);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+        return "bg-yellow-100 text-gray-900 border-yellow-300";
       case "in_progress":
-        return "bg-blue-100 text-blue-800 border-blue-300";
+        return "bg-blue-100 text-gray-900 border-blue-300";
       case "completed":
-        return "bg-green-100 text-green-800 border-green-300";
+        return "bg-green-100 text-gray-900 border-green-300";
       case "cancelled":
-        return "bg-red-100 text-red-800 border-red-300";
+        return "bg-red-100 text-gray-900 border-red-300";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -121,30 +151,20 @@ export default function Requests() {
     });
   };
 
-  // Get service names
-  const getServiceNames = (serviceIds: string[], category: string) => {
-    const services = getServicesByCategory(category);
-    return serviceIds
-      .map((id) => {
-        const service = services.find((s) => s.id === id);
-        return service ? service.name[lang] : "";
-      })
-      .filter(Boolean);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري التحميل...</p>
+      <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+        <div className="max-w-6xl mx-auto space-y-4">
+          <Skeleton className="h-10 w-48 mb-6" />
+          {[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <>
+    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -181,11 +201,6 @@ export default function Requests() {
         ) : (
           <div className="space-y-4">
             {requests.map((request) => {
-              const serviceNames = getServiceNames(
-                request.service_ids,
-                request.service_category,
-              );
-
               return (
                 <Card
                   key={request.id}
@@ -215,29 +230,12 @@ export default function Requests() {
                             <span>{formatDate(request.created_at)}</span>
                           </div>
 
-                          {/* Services Count */}
+                          {/* Scope Label */}
                           <div className="flex items-center gap-2 text-gray-600">
                             <FileText className="w-5 h-5" />
-                            <span>
-                              {serviceNames.length}{" "}
-                              {serviceNames.length === 1
-                                ? t.service
-                                : t.services}
+                            <span className="text-sm font-medium">
+                              {lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services Required"}
                             </span>
-                          </div>
-
-                          {/* Service Names Preview */}
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {serviceNames.slice(0, 2).map((name, index) => (
-                              <span
-                                key={index}
-                                className="text-sm text-gray-700"
-                              >
-                                {name}
-                                {index < Math.min(1, serviceNames.length - 1) &&
-                                  ","}
-                              </span>
-                            ))}
                           </div>
                         </div>
                       </div>
@@ -268,6 +266,16 @@ export default function Requests() {
                           <Edit className="w-4 h-4 me-2" />
                           {lang === "ar" ? "تعديل" : "Edit"}
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:border-red-300"
+                          onClick={() => handleDelete(request.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 me-2" />
+                          {lang === "ar" ? "حذف" : "Delete"}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -278,5 +286,24 @@ export default function Requests() {
         )}
       </div>
     </div>
+
+    <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{lang === "ar" ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle>
+          <AlertDialogDescription>{t.deleteConfirm}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{lang === "ar" ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-green-600 hover:bg-green-700 text-black"
+            onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+          >
+            {lang === "ar" ? "حذف" : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

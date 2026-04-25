@@ -166,7 +166,7 @@ export default function PropertyForm() {
 
   return (
     <div
-      className="container mx-auto p-4 max-w-2xl"
+      className="page-enter container mx-auto p-4 max-w-2xl"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <Button

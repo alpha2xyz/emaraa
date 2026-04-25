@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
 import { ArrowLeft, FileText, CheckCircle2, XCircle, Building2, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLang } from '../hooks/use-lang';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '../lib/supabase';
+import { openSignedPdf } from '../lib/storage';
 
 export default function OwnerOffersPage() {
   const { lang } = useLang();
@@ -53,13 +55,13 @@ export default function OwnerOffersPage() {
   });
 
   const statusBadge = (s: string) => {
-    if (s === 'accepted') return <Badge className="bg-green-100 text-green-800"><CheckCircle2 className="h-3 w-3 me-1" />{t.accepted}</Badge>;
+    if (s === 'accepted') return <Badge className="bg-green-100 text-gray-900"><CheckCircle2 className="h-3 w-3 me-1" />{t.accepted}</Badge>;
     if (s === 'rejected') return <Badge variant="destructive"><XCircle className="h-3 w-3 me-1" />{t.rejected}</Badge>;
     return <Badge variant="secondary"><Clock className="h-3 w-3 me-1" />{t.pending}</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-4xl mx-auto">
         <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard/owner/requests')} className="mb-4">
           <ArrowLeft className="w-4 h-4 me-2" />{t.back}
@@ -69,7 +71,9 @@ export default function OwnerOffersPage() {
         </h1>
 
         {isLoading ? (
-          <p className="text-center text-gray-500 py-12">{t.loading}</p>
+          <div className="space-y-4">
+            {[1,2].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
+          </div>
         ) : !offers?.length ? (
           <Card className="text-center py-12">
             <CardContent>
@@ -100,11 +104,9 @@ export default function OwnerOffersPage() {
                   )}
                   <div className="flex gap-3 flex-wrap">
                     {offer.offer_file_url && (
-                      <a href={offer.offer_file_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" size="sm">
-                          <FileText className="w-4 h-4 me-2" />{t.viewOffer}
-                        </Button>
-                      </a>
+                      <Button variant="outline" size="sm" onClick={() => openSignedPdf('provider-offers', offer.offer_file_url)}>
+                        <FileText className="w-4 h-4 me-2" />{t.viewOffer}
+                      </Button>
                     )}
                     {offer.status === 'pending' && (
                       <>

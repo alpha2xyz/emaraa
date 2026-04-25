@@ -29,7 +29,7 @@ export function BottomNav() {
   if (!links.length) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-safe">
       <div className="flex items-center justify-around h-16">
         {links.map(({ href, icon: Icon, labelAr, labelEn }) => {
           const active = href === "/dashboard/owner" || href === "/dashboard/provider"

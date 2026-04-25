@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { SERVICES, getServicesByCategory } from "@/lib/services";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,8 +22,6 @@ export default function ProviderProfile() {
     email: "",
     city: "",
     description: "",
-    services: [] as string[],
-    other_services: "",
   });
 
   const [files, setFiles] = useState<{
@@ -52,11 +48,6 @@ export default function ProviderProfile() {
       cityPlaceholder: "مثال: الرياض",
       description: "نبذة عن الشركة",
       descriptionPlaceholder: "اكتب نبذة مختصرة عن شركتك وخدماتها...",
-      services: "الخدمات المقدمة",
-      cleaningServices: "خدمات النظافة",
-      maintenanceServices: "خدمات الصيانة",
-      otherServices: "خدمات أخرى",
-      otherServicesPlaceholder: "اكتب الخدمات الأخرى التي تقدمها...",
       documents: "المستندات المطلوبة (إجباري)",
       commercialRegister: "السجل التجاري",
       companyProfile: "بروفايل الشركة",
@@ -67,7 +58,6 @@ export default function ProviderProfile() {
       success: "تم حفظ البيانات بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
       errorDocuments: "يجب رفع جميع المستندات المطلوبة",
-      errorServices: "يجب اختيار خدمة واحدة على الأقل",
     },
     en: {
       title: "Service Provider Registration",
@@ -85,11 +75,6 @@ export default function ProviderProfile() {
       description: "Company Description",
       descriptionPlaceholder:
         "Write a brief description of your company and services...",
-      services: "Services Offered",
-      cleaningServices: "Cleaning Services",
-      maintenanceServices: "Maintenance Services",
-      otherServices: "Other Services",
-      otherServicesPlaceholder: "Write other services you provide...",
       documents: "Required Documents (Mandatory)",
       commercialRegister: "Commercial Register",
       companyProfile: "Company Profile",
@@ -100,7 +85,6 @@ export default function ProviderProfile() {
       success: "Data saved successfully!",
       error: "An error occurred, please try again",
       errorDocuments: "All required documents must be uploaded",
-      errorServices: "You must select at least one service",
     },
   };
 
@@ -128,24 +112,9 @@ export default function ProviderProfile() {
         email: p.email || "",
         city: p.city || "",
         description: p.description || "",
-        services: p.services || [],
-        other_services: p.other_services || "",
       });
     }
   }, [existingProvider]);
-
-  // خدمات النظافة والصيانة
-  const cleaningServices = getServicesByCategory("cleaning");
-  const maintenanceServices = getServicesByCategory("maintenance");
-
-  const handleServiceToggle = (serviceId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      services: prev.services.includes(serviceId)
-        ? prev.services.filter((id) => id !== serviceId)
-        : [...prev.services, serviceId],
-    }));
-  };
 
   const handleFileChange = (
     field: "commercial_register" | "company_profile",
@@ -173,11 +142,6 @@ export default function ProviderProfile() {
       const isNew = !existingProvider?.provider?.id;
       if (isNew && (!files.commercial_register || !files.company_profile)) {
         throw new Error("documents_required");
-      }
-
-      // التحقق من الخدمات
-      if (formData.services.length === 0 && !formData.other_services) {
-        throw new Error("services_required");
       }
 
       const phone = localStorage.getItem("userPhone");
@@ -217,8 +181,8 @@ export default function ProviderProfile() {
         email: formData.email || null,
         city: formData.city,
         description: formData.description,
-        services: formData.services,
-        other_services: formData.other_services || null,
+        services: [],
+        other_services: null,
         commercial_register_url: commercialRegisterPath,
         company_profile_url: companyProfilePath,
       };
@@ -243,13 +207,11 @@ export default function ProviderProfile() {
       setLocation("/dashboard/provider");
     },
     onError: (error: any) => {
-      console.error("Error:", error);
+      if (import.meta.env.DEV) console.error("Error:", error);
       let errorMessage = t.error;
 
       if (error.message === "documents_required") {
         errorMessage = t.errorDocuments;
-      } else if (error.message === "services_required") {
-        errorMessage = t.errorServices;
       }
 
       toast({
@@ -266,7 +228,7 @@ export default function ProviderProfile() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 p-4 sm:p-6"
+      className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-4xl mx-auto">
@@ -286,7 +248,7 @@ export default function ProviderProfile() {
         {/* Approval Status Banner */}
         {existingProvider?.provider && (
           existingProvider.provider.approved ? (
-            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 px-4 py-3 text-green-800 dark:text-green-200 mb-6">
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 mb-6">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
               <div>
                 <p className="font-semibold">
@@ -298,7 +260,7 @@ export default function ProviderProfile() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3 text-yellow-800 dark:text-yellow-200 mb-6">
+            <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-gray-900 mb-6">
               <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
               <div>
                 <p className="font-semibold">
@@ -404,82 +366,6 @@ export default function ProviderProfile() {
             </CardContent>
           </Card>
 
-          {/* الخدمات المقدمة */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.services}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* خدمات النظافة */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg text-gray-900">
-                  {t.cleaningServices}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto border rounded-lg p-4">
-                  {cleaningServices.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-start space-x-2 space-x-reverse"
-                    >
-                      <Checkbox
-                        id={service.id}
-                        checked={formData.services.includes(service.id)}
-                        onCheckedChange={() => handleServiceToggle(service.id)}
-                      />
-                      <Label
-                        htmlFor={service.id}
-                        className="text-sm font-normal cursor-pointer leading-tight"
-                      >
-                        {service.name[lang]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* خدمات الصيانة */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg text-gray-900">
-                  {t.maintenanceServices}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto border rounded-lg p-4">
-                  {maintenanceServices.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-start space-x-2 space-x-reverse"
-                    >
-                      <Checkbox
-                        id={service.id}
-                        checked={formData.services.includes(service.id)}
-                        onCheckedChange={() => handleServiceToggle(service.id)}
-                      />
-                      <Label
-                        htmlFor={service.id}
-                        className="text-sm font-normal cursor-pointer leading-tight"
-                      >
-                        {service.name[lang]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* خدمات أخرى */}
-              <div className="space-y-2">
-                <Label htmlFor="other_services">{t.otherServices}</Label>
-                <Textarea
-                  id="other_services"
-                  placeholder={t.otherServicesPlaceholder}
-                  value={formData.other_services}
-                  onChange={(e) =>
-                    setFormData({ ...formData, other_services: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* المستندات */}
           <Card>
             <CardHeader>
@@ -513,11 +399,14 @@ export default function ProviderProfile() {
                     <Upload className="w-4 h-4" />
                     {t.chooseFile}
                   </Label>
-                  {files.commercial_register && (
-                    <span className="text-sm text-gray-600">
-                      {files.commercial_register.name}
+                  {files.commercial_register ? (
+                    <span className="text-sm text-gray-600">{files.commercial_register.name}</span>
+                  ) : existingProvider?.provider?.commercial_register_url ? (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 <p className="text-xs text-gray-500">{t.fileTypes}</p>
               </div>
@@ -546,11 +435,14 @@ export default function ProviderProfile() {
                     <Upload className="w-4 h-4" />
                     {t.chooseFile}
                   </Label>
-                  {files.company_profile && (
-                    <span className="text-sm text-gray-600">
-                      {files.company_profile.name}
+                  {files.company_profile ? (
+                    <span className="text-sm text-gray-600">{files.company_profile.name}</span>
+                  ) : existingProvider?.provider?.company_profile_url ? (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 <p className="text-xs text-gray-500">{t.fileTypes}</p>
               </div>

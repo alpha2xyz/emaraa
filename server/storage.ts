@@ -3,8 +3,8 @@ import {
   type InsertUser,
   type Property,
   type InsertProperty,
-  type ServiceRequest,
-  type InsertServiceRequest,
+  type Request,
+  type InsertRequest,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -18,11 +18,11 @@ export interface IStorage {
   createProperty(property: InsertProperty): Promise<Property>;
   deleteProperty(id: string): Promise<boolean>;
 
-  getServiceRequests(): Promise<ServiceRequest[]>;
-  getServiceRequest(id: string): Promise<ServiceRequest | undefined>;
-  getServiceRequestsByProperty(propertyId: string): Promise<ServiceRequest[]>;
-  createServiceRequest(request: InsertServiceRequest): Promise<ServiceRequest>;
-  updateServiceRequest(id: string, data: Partial<ServiceRequest>): Promise<ServiceRequest | undefined>;
+  getServiceRequests(): Promise<Request[]>;
+  getServiceRequest(id: string): Promise<Request | undefined>;
+  getServiceRequestsByProperty(propertyId: string): Promise<Request[]>;
+  createServiceRequest(request: InsertRequest): Promise<Request>;
+  updateServiceRequest(id: string, data: Partial<Request>): Promise<Request | undefined>;
   deleteServiceRequest(id: string): Promise<boolean>;
   deleteServiceRequestsByProperty(propertyId: string): Promise<void>;
 }
@@ -30,7 +30,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private properties: Map<string, Property>;
-  private serviceRequests: Map<string, ServiceRequest>;
+  private serviceRequests: Map<string, Request>;
 
   constructor() {
     this.users = new Map();
@@ -80,40 +80,40 @@ export class MemStorage implements IStorage {
     return this.properties.delete(id);
   }
 
-  async getServiceRequests(): Promise<ServiceRequest[]> {
+  async getServiceRequests(): Promise<Request[]> {
     return Array.from(this.serviceRequests.values());
   }
 
-  async getServiceRequest(id: string): Promise<ServiceRequest | undefined> {
+  async getServiceRequest(id: string): Promise<Request | undefined> {
     return this.serviceRequests.get(id);
   }
 
-  async getServiceRequestsByProperty(propertyId: string): Promise<ServiceRequest[]> {
+  async getServiceRequestsByProperty(propertyId: string): Promise<Request[]> {
     return Array.from(this.serviceRequests.values()).filter(
-      (request) => request.propertyId === propertyId
+      (request) => request.property_id === propertyId
     );
   }
 
-  async createServiceRequest(insertRequest: InsertServiceRequest): Promise<ServiceRequest> {
+  async createServiceRequest(insertRequest: InsertRequest): Promise<Request> {
     const id = randomUUID();
-    const request: ServiceRequest = {
+    const request: Request = {
       id,
-      propertyId: insertRequest.propertyId,
-      title: insertRequest.title,
-      description: insertRequest.description,
-      category: insertRequest.category,
-      priority: insertRequest.priority,
-      status: insertRequest.status ?? "open",
+      owner_id: insertRequest.owner_id,
+      property_id: insertRequest.property_id,
+      service_category: insertRequest.service_category ?? "standard",
+      description: insertRequest.description ?? null,
+      status: insertRequest.status ?? "pending",
+      created_at: new Date(),
     };
     this.serviceRequests.set(id, request);
     return request;
   }
 
-  async updateServiceRequest(id: string, data: Partial<ServiceRequest>): Promise<ServiceRequest | undefined> {
+  async updateServiceRequest(id: string, data: Partial<Request>): Promise<Request | undefined> {
     const existing = this.serviceRequests.get(id);
     if (!existing) return undefined;
     
-    const updated: ServiceRequest = { ...existing, ...data, id };
+    const updated: Request = { ...existing, ...data, id };
     this.serviceRequests.set(id, updated);
     return updated;
   }
@@ -125,7 +125,7 @@ export class MemStorage implements IStorage {
   async deleteServiceRequestsByProperty(propertyId: string): Promise<void> {
     const entries = Array.from(this.serviceRequests.entries());
     for (const [id, request] of entries) {
-      if (request.propertyId === propertyId) {
+      if (request.property_id === propertyId) {
         this.serviceRequests.delete(id);
       }
     }

@@ -37,7 +37,7 @@ export default function ProviderDashboard() {
     },
   }[lang];
 
-  const { data: providerData } = useQuery({
+  const { data: providerData, isLoading: providerLoading } = useQuery({
     queryKey: ["/api/provider/profile"],
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
@@ -83,22 +83,23 @@ export default function ProviderDashboard() {
   ];
 
   const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;
+  const isApproved = providerData?.provider?.approved;
 
   return (
-    <div className="container mx-auto p-4 space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter container mx-auto p-4 space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div>
         <h1 className="text-3xl font-bold">{t.title}</h1>
         <p className="text-muted-foreground mt-2">{t.subtitle}</p>
       </div>
 
-      {!isProfileComplete && (
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+      {!providerLoading && !isProfileComplete && (
+        <Card className="border-orange-200 bg-orange-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
               <AlertCircle className="h-8 w-8 text-orange-500 flex-shrink-0" />
               <div className="flex-1">
-                <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-1">{t.completeProfile}</h3>
-                <p className="text-sm text-orange-700 dark:text-orange-200 mb-3">{t.completeProfileDesc}</p>
+                <h3 className="font-semibold text-gray-900 mb-1">{t.completeProfile}</h3>
+                <p className="text-sm text-gray-900 mb-3">{t.completeProfileDesc}</p>
                 <Button size="sm" onClick={() => setLocation("/dashboard/provider/profile")} className="bg-orange-600 hover:bg-orange-700">
                   <Package className="h-4 w-4 me-2" />
                   {t.completeNow}
@@ -109,7 +110,25 @@ export default function ProviderDashboard() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {!providerLoading && isProfileComplete && !isApproved && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <Clock className="h-8 w-8 text-yellow-500 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  {lang === "ar" ? "طلبك قيد المراجعة" : "Your registration is under review"}
+                </h3>
+                <p className="text-sm text-gray-900">
+                  {lang === "ar" ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة" : "You will be notified once your account is approved by admin"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <Card key={label} className="hover:shadow-md transition-shadow">
             <CardContent className="pt-6">

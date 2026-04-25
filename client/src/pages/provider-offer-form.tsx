@@ -12,17 +12,17 @@ import {
   Loader2,
   Building2,
   AlertCircle,
-  Send, // ← تأكد من وجود هذا
+  Send,
+  ClipboardList,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { SERVICES } from "@/lib/services";
 
 export default function ProviderOfferForm() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const [match, params] = useRoute("/dashboard/provider/requests/:id/offer");
+  const [, params] = useRoute("/dashboard/provider/requests/:id/offer");
   const requestId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,8 +55,23 @@ export default function ProviderOfferForm() {
       errorFileSize: "حجم الملف كبير جداً (الحد الأقصى 10MB)",
       errorFileType: "يجب أن يكون الملف بصيغة PDF",
       loading: "جاري التحميل...",
-      cleaning: "خدمات النظافة",
-      maintenance: "خدمات الصيانة",
+      scopeTitle: "نطاق الخدمات المطلوبة",
+      scopeText: `نرجو تقديم عرض سعر شامل للخدمات التالية:
+
+1. خدمات النظافة: تنظيف المناطق المشتركة يومياً، تنظيف الأسطح والخزانات بشكل دوري، جمع النفايات ونقلها بشكل يومي، تنظيف النوافذ والواجهات وقت الحاجة.
+
+2. خدمات الصيانة (وقت الحاجة والمتابعة بشكل دوري): صيانة الإنارة والكهرباء، صيانة المضخات والخزانات، صيانة الأبواب والمصاعد، متابعة كاميرات المراقبة.
+
+3. أعمال أخرى: رش المبيدات الحشرية، أعمال الزراعة والبستنة (وقت الحاجة وإن وجد أو طلب).
+
+4. خدمة التواصل للطوارئ على مدار الساعة.
+
+5. تسديد فواتير المرافق للمناطق المشتركة.
+
+6. توضيح أيام الاجازات والية العمل في فترات الأعياد والمناسبات الوطنية.
+
+**متطلبات العرض:** يجب أن يتضمن العرض المقدم ما يلي: تفصيل كامل للخدمات، السعر يقسم لكل وحدة سكنية وإجمالي العقد شاملاً الضريبة، وشروط الدفع، السجل التجاري وشهادات الاعتماد، مراجع من عملاء سابقين أو البورتوفوليو. تكون مدة العقد سنة وقابل للتجديد لمدد مماثلة.`,
+      alreadySubmitted: "لقد قدمت عرضاً لهذا الطلب مسبقاً ولا يمكن تقديم أكثر من عرض واحد",
     },
     en: {
       title: "Submit Offer",
@@ -82,8 +97,23 @@ export default function ProviderOfferForm() {
       errorFileSize: "File size is too large (max 10MB)",
       errorFileType: "File must be in PDF format",
       loading: "Loading...",
-      cleaning: "Cleaning Services",
-      maintenance: "Maintenance Services",
+      scopeTitle: "Scope of Services Required",
+      scopeText: `Please provide a comprehensive price quote for the following services:
+
+1. Cleaning Services: Daily cleaning of common areas, periodic cleaning of roofs and tanks, daily waste collection and removal, and window and facade cleaning as needed.
+
+2. Maintenance Services (as needed and on a regular basis): Lighting and electrical maintenance, pump and tank maintenance, door and elevator maintenance, and monitoring of security cameras.
+
+3. Other Services: Pest control, landscaping and gardening (as needed, if required, or upon request).
+
+4. 24/7 Emergency Contact Service.
+
+5. Payment of utility bills for common areas.
+
+6. Clear description of holidays and work procedures during national holidays and special occasions.
+
+**Proposal Requirements:** The submitted proposal must include the following: a full breakdown of services, the price per residential unit, the total contract amount including tax, payment terms, commercial registration and certifications, and references from previous clients or a portfolio. The contract term is one year and is renewable for similar periods.`,
+      alreadySubmitted: "You have already submitted an offer for this request. Only one offer per request is allowed.",
     },
   };
 
@@ -185,6 +215,15 @@ export default function ProviderOfferForm() {
         throw new Error(lang === "ar" ? "حسابك لم يتم قبوله بعد من قِبل الإدارة" : "Your account has not been approved by admin yet");
       }
 
+      // Check if provider already submitted an offer for this request
+      const { count: existingCount } = await supabase
+        .from("provider_offers")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", requestId)
+        .eq("provider_id", providerData.provider.id);
+
+      if ((existingCount ?? 0) > 0) throw new Error("already_submitted");
+
       // رفع الملف إلى Supabase Storage
       const fileExt = "pdf";
       const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.${fileExt}`;
@@ -195,11 +234,6 @@ export default function ProviderOfferForm() {
 
       if (uploadError) throw uploadError;
 
-      // الحصول على رابط الملف
-      const { data: urlData } = supabase.storage
-        .from("provider-offers")
-        .getPublicUrl(fileName);
-
       // حفظ العرض في قاعدة البيانات
       const { data, error } = await supabase
         .from("provider_offers")
@@ -207,7 +241,7 @@ export default function ProviderOfferForm() {
           {
             request_id: requestId,
             provider_id: providerData.provider.id,
-            offer_file_url: urlData.publicUrl,
+            offer_file_url: fileName,
             notes: notes || null,
           },
         ])
@@ -222,15 +256,16 @@ export default function ProviderOfferForm() {
         title: t.success,
         variant: "default",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/provider/offers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/provider/all-offers"] });
       setLocation("/dashboard/provider");
     },
 
     onError: (error: any) => {
-      console.error("Offer submission error:", error);
+      if (import.meta.env.DEV) console.error("Offer submission error:", error);
       let errorMessage = t.error;
 
       if (error.message === "no_file") errorMessage = t.errorFile;
+      else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
       else if (error.message === "provider_not_found" || error.message === "profile_incomplete") {
         errorMessage = lang === "ar" ? "يرجى إكمال ملف شركتك أولاً" : "Please complete your company profile first";
       } else if (error.message === "user_not_found") {
@@ -249,22 +284,6 @@ export default function ProviderOfferForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate();
-  };
-
-  const getCategoryName = (category: string) => {
-    return category === "cleaning" ? t.cleaning : t.maintenance;
-  };
-
-  const getServiceNames = (serviceIds: string[]) => {
-    if (!serviceIds || serviceIds.length === 0) return "";
-
-    return serviceIds
-      .map((id) => {
-        const service = SERVICES.find((s) => s.id === id);
-        return service ? service.name[lang] : "";
-      })
-      .filter(Boolean)
-      .join(", ");
   };
 
   if (isLoading) {
@@ -304,7 +323,7 @@ export default function ProviderOfferForm() {
       </div>
 
       {providerData?.provider?.company_name && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 px-4 py-3 text-sm text-blue-800 dark:text-blue-200">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-gray-900">
           <Building2 className="h-4 w-4 shrink-0" />
           <span>
             {lang === "ar"
@@ -313,6 +332,21 @@ export default function ProviderOfferForm() {
           </span>
         </div>
       )}
+
+      {/* نطاق الخدمات المطلوبة */}
+      <Card className="mb-6 border-blue-200 bg-blue-50/40">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-800">
+            <ClipboardList className="w-5 h-5" />
+            {t.scopeTitle}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="whitespace-pre-line text-sm text-gray-800 leading-relaxed">
+            {t.scopeText}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* تفاصيل الطلب */}
@@ -332,18 +366,6 @@ export default function ProviderOfferForm() {
             <div>
               <p className="text-sm text-muted-foreground">{t.city}:</p>
               <p className="font-medium">{request.properties?.city}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">{t.category}:</p>
-              <p className="font-medium">
-                {getCategoryName(request.service_category)}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">{t.services}:</p>
-              <p className="text-sm">{getServiceNames(request.service_ids)}</p>
             </div>
 
             {request.description && (

@@ -2,6 +2,39 @@
   @tailwind components;
   @tailwind utilities;
 
+  /* ── Arabic font stack ─────────────────────────────────────────────────── */
+  :root {
+    --font-sans: 'Cairo', 'Inter', sans-serif;
+    --font-arabic: 'Cairo', sans-serif;
+  }
+
+  /* ── Page fade-in transition ───────────────────────────────────────────── */
+  @keyframes page-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-enter {
+    animation: page-fade-in 0.3s ease-out forwards;
+  }
+
+  /* ── Mobile safe-area ──────────────────────────────────────────────────── */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ── Skeleton shimmer ──────────────────────────────────────────────────── */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
   :root {
     --button-outline: rgba(0, 0, 0, .10);
     --badge-outline: rgba(0, 0, 0, .05);

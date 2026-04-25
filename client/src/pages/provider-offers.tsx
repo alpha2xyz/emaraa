@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   FileText,
   CheckCircle2,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
+import { openSignedPdf } from "../lib/storage";
 
 export default function ProviderOffers() {
   const { lang } = useLang();
@@ -131,7 +133,7 @@ export default function ProviderOffers() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 p-4 sm:p-6"
+      className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-4xl mx-auto space-y-6">
@@ -146,9 +148,8 @@ export default function ProviderOffers() {
 
         {/* Loading */}
         {isLoading && (
-          <div className="text-center py-16">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-gray-500">{t.loading}</p>
+          <div className="space-y-4">
+            {[1,2].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
         )}
 
@@ -182,9 +183,9 @@ export default function ProviderOffers() {
                       {/* Category */}
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-lg">
-                          {offer.requests?.service_category === "cleaning"
-                            ? t.cleaning
-                            : t.maintenance}
+                          {offer.requests?.service_category === "standard"
+                            ? (lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services")
+                            : (offer.requests?.service_category === "cleaning" ? t.cleaning : t.maintenance)}
                         </span>
                         {statusBadge(offer.status)}
                       </div>
@@ -213,16 +214,10 @@ export default function ProviderOffers() {
 
                     {/* Actions */}
                     {offer.offer_file_url && (
-                      <a
-                        href={offer.offer_file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="outline" size="sm">
-                          <FileText className="w-4 h-4 me-2" />
-                          {t.viewFile}
-                        </Button>
-                      </a>
+                      <Button variant="outline" size="sm" onClick={() => openSignedPdf('provider-offers', offer.offer_file_url)}>
+                        <FileText className="w-4 h-4 me-2" />
+                        {t.viewFile}
+                      </Button>
                     )}
                   </div>
                 </CardContent>

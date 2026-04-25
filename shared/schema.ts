@@ -41,22 +41,21 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type Property = typeof properties.$inferSelect;
 
-// Service Request model
-export const serviceRequests = pgTable("service_requests", {
+// Request model
+export const requests = pgTable("requests", {
   id: uuid("id").primaryKey().defaultRandom(),
+  owner_id: uuid("owner_id").notNull(),
   property_id: uuid("property_id").notNull(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  category: text("category").notNull(), // plumbing, electrical, hvac, general, etc.
-  priority: text("priority").notNull(), // low, medium, high, urgent
-  status: text("status").notNull().default("open"), // open, in_progress, completed
+  service_category: text("service_category").notNull().default("standard"),
+  description: text("description"),
+  status: text("status").notNull().default("pending"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({
+export const insertRequestSchema = createInsertSchema(requests).omit({
   id: true,
   created_at: true,
 });
 
-export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
-export type ServiceRequest = typeof serviceRequests.$inferSelect;
+export type InsertRequest = z.infer<typeof insertRequestSchema>;
+export type Request = typeof requests.$inferSelect;

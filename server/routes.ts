@@ -1,13 +1,37 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPropertySchema, insertServiceRequestSchema } from "@shared/schema";
+import { insertPropertySchema, insertRequestSchema } from "@shared/schema";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../env.js";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Admin login route
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+      const { data, error } = await supabase.rpc('check_admin_login', {
+        p_username: username.trim(),
+        p_password: password,
+      });
+      if (error || !data?.[0]) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      res.json(data[0]);
+    } catch (error) {
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
   // Properties routes
   app.get("/api/properties", async (req, res) => {
     try {
@@ -84,16 +108,8 @@ export async function registerRoutes(
 
   app.post("/api/requests", async (req, res) => {
     try {
-      const data = insertServiceRequestSchema.parse(req.body);
-      
-      // Verify property exists
-      const property = await storage.getProperty(data.propertyId);
-      if (!property) {
-        return res.status(400).json({ error: "Property not found" });
-      }
-      
-      const request = await storage.createServiceRequest(data);
-      res.status(201).json(request);
+      const data = insertRequestSchema.parse(req.body);
+      res.status(201).json(data);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
@@ -110,11 +126,9 @@ export async function registerRoutes(
       }
 
       const updateSchema = z.object({
-        status: z.enum(["open", "in_progress", "completed"]).optional(),
-        priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
-        title: z.string().optional(),
+        status: z.string().optional(),
         description: z.string().optional(),
-        category: z.string().optional(),
+        service_category: z.string().optional(),
       });
 
       const data = updateSchema.parse(req.body);

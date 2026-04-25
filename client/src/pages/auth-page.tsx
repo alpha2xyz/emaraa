@@ -191,7 +191,7 @@ export default function AuthPage() {
         }
       }
     } catch (err) {
-      console.error("Error:", err);
+      if (import.meta.env.DEV) console.error("Error:", err);
       setError("حدث خطأ، حاول مرة أخرى");
     } finally {
       setLoading(false);
@@ -210,7 +210,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="w-full max-w-md">
         {/* Back Button */}
         <Button
@@ -248,7 +248,7 @@ export default function AuthPage() {
                     }}
                     maxLength={25}
                     required
-                    className={validationErrors.name ? "border-red-500" : ""}
+                    className={`text-base ${validationErrors.name ? "border-red-500" : ""}`}
                   />
                   {validationErrors.name && (
                     <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -273,7 +273,7 @@ export default function AuthPage() {
                   }}
                   maxLength={10}
                   required
-                  className={validationErrors.phone ? "border-red-500" : ""}
+                  className={`text-base ${validationErrors.phone ? "border-red-500" : ""}`}
                 />
                 {validationErrors.phone && (
                   <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -304,9 +304,11 @@ export default function AuthPage() {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() =>
-                    setMode(mode === "login" ? "register" : "login")
-                  }
+                  onClick={() => {
+                    const newMode = mode === "login" ? "register" : "login";
+                    setMode(newMode);
+                    setLocation(`/auth?role=${role}&mode=${newMode}`);
+                  }}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   {mode === "login" ? t.switchToRegister : t.switchToLogin}

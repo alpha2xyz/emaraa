@@ -18,5 +18,5 @@ export function useAuthGuard(requiredRole?: "owner" | "provider") {
       else if (role === "provider") setLocation("/dashboard/provider");
       else setLocation("/auth");
     }
-  }, []);
+  }, [requiredRole, setLocation]);
 }

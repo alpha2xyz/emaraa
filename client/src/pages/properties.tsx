@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -126,7 +127,7 @@ export default function Properties() {
       setDeleteId(null);
     },
     onError: (error) => {
-      console.error("Delete error:", error);
+      if (import.meta.env.DEV) console.error("Delete error:", error);
       toast({
         title: t.deleteError,
         variant: "destructive",
@@ -162,7 +163,7 @@ export default function Properties() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 p-4 sm:p-6"
+      className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-7xl mx-auto">
@@ -185,8 +186,8 @@ export default function Properties() {
 
         {/* Loading */}
         {isLoading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1,2,3].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}
           </div>
         )}
 

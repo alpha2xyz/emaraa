@@ -1,12 +1,6 @@
-/**
- * admin-auth.tsx  — Admin route guard
- *
- * Wraps any admin-only page. Reads the admin session stored in
- * localStorage (set by admin-login-page after successful Supabase auth).
- * Redirects to /admin if the session is missing.
- */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+import { supabase } from '../lib/supabase';
 
 interface AdminAuthProps {
   children: React.ReactNode;
@@ -14,25 +8,42 @@ interface AdminAuthProps {
 
 export default function AdminAuth({ children }: AdminAuthProps) {
   const [, setLocation] = useLocation();
+  const [verified, setVerified] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const isAdmin =
-      localStorage.getItem('userRole') === 'admin' &&
-      !!localStorage.getItem('adminId');
+    async function verifySession() {
+      const role = localStorage.getItem('userRole');
+      const token = localStorage.getItem('adminSessionToken');
 
-    if (!isAdmin) {
-      setLocation('/admin');
+      if (role !== 'admin' || !token) {
+        setLocation('/admin');
+        return;
+      }
+
+      // Live DB verification — token must exist and not be expired in Supabase
+      const { data: valid, error } = await supabase
+        .rpc('verify_admin_session', { p_token: token });
+
+      if (error || !valid) {
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('adminId');
+        localStorage.removeItem('adminSessionToken');
+        setLocation('/admin');
+        return;
+      }
+
+      setVerified(true);
+      setChecking(false);
     }
+
+    verifySession();
   }, [setLocation]);
 
-  const isAdmin =
-    localStorage.getItem('userRole') === 'admin' &&
-    !!localStorage.getItem('adminId');
-
-  if (!isAdmin) {
+  if (checking || !verified) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <p className="text-slate-400 text-sm">Redirecting to admin login…</p>
+        <p className="text-slate-400 text-sm">جارٍ التحقق من الجلسة…</p>
       </div>
     );
   }

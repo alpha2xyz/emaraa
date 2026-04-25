@@ -87,7 +87,7 @@ export default function OwnerDashboard() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50"
+      className="page-enter min-h-screen bg-gray-50"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="bg-white border-b px-6 py-4 flex justify-between items-center">
@@ -211,7 +211,9 @@ export default function OwnerDashboard() {
                   >
                     <div>
                       <p className="font-bold text-sm">
-                        {r.service_category === "cleaning" ? content.cleaning : content.maintenance}
+                        {r.service_category === "standard"
+                          ? (lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services")
+                          : (r.service_category === "cleaning" ? content.cleaning : content.maintenance)}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(r.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}

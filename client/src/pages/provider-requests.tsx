@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Building2,
   Send,
@@ -11,6 +12,7 @@ import {
   MapPin,
   Calendar,
   Package,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +27,6 @@ import {
 } from "@/components/ui/select";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
-import { SERVICES } from "@/lib/services";
 
 export default function ProviderRequests() {
   const { lang } = useLang();
@@ -33,7 +34,6 @@ export default function ProviderRequests() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [cityFilter, setCityFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const content = {
     ar: {
@@ -41,19 +41,16 @@ export default function ProviderRequests() {
       subtitle: "تصفح جميع الطلبات المتاحة وقدم عروضك",
       search: "بحث عن طلب...",
       filterCity: "تصفية حسب المدينة",
-      filterCategory: "تصفية حسب الفئة",
       all: "الكل",
       property: "العقار",
       city: "المدينة",
-      category: "الفئة",
-      services: "الخدمات المطلوبة",
+      scopeTitle: "نطاق الخدمات المطلوبة",
+      scopeShort: "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. | متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
       description: "الوصف",
       date: "تاريخ الإنشاء",
       submitOffer: "تقديم عرض",
       noRequests: "لا توجد طلبات متاحة",
       noResults: "لا توجد نتائج للبحث",
-      cleaning: "خدمات النظافة",
-      maintenance: "خدمات الصيانة",
       loading: "جاري التحميل...",
       searchAndFilter: "البحث والفلترة",
       clearFilters: "إعادة تعيين",
@@ -66,19 +63,16 @@ export default function ProviderRequests() {
       subtitle: "Browse all available requests and submit your offers",
       search: "Search for a request...",
       filterCity: "Filter by City",
-      filterCategory: "Filter by Category",
       all: "All",
       property: "Property",
       city: "City",
-      category: "Category",
-      services: "Requested Services",
+      scopeTitle: "Scope of Services Required",
+      scopeShort: "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. | Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
       description: "Description",
       date: "Created Date",
       submitOffer: "Submit Offer",
       noRequests: "No requests available",
       noResults: "No results found",
-      cleaning: "Cleaning Services",
-      maintenance: "Maintenance Services",
       loading: "Loading...",
       searchAndFilter: "Search & Filter",
       clearFilters: "Clear Filters",
@@ -90,7 +84,6 @@ export default function ProviderRequests() {
 
   const t = content[lang];
 
-  // جلب بيانات المزود
   const { data: providerData } = useQuery({
     queryKey: ["/api/provider/profile"],
     queryFn: async () => {
@@ -115,7 +108,6 @@ export default function ProviderRequests() {
     },
   });
 
-  // جلب كل الطلبات المتاحة
   const { data: requests, isLoading } = useQuery({
     queryKey: ["/api/requests/all-available"],
     queryFn: async () => {
@@ -141,13 +133,27 @@ export default function ProviderRequests() {
     },
   });
 
-  // التحقق من اكتمال الملف الشخصي
   const isProfileComplete =
     providerData?.provider?.company_name && providerData?.provider?.city;
+  const isApproved = providerData?.provider?.approved;
 
-  // فلترة الطلبات
+  // Fetch which requests this provider already submitted an offer for
+  const { data: myOffers } = useQuery({
+    queryKey: ["/api/provider/submitted-offer-ids", providerData?.provider?.id],
+    queryFn: async () => {
+      if (!providerData?.provider?.id) return [];
+      const { data } = await supabase
+        .from("provider_offers")
+        .select("request_id")
+        .eq("provider_id", providerData.provider.id);
+      return data || [];
+    },
+    enabled: !!providerData?.provider?.id,
+  });
+
+  const submittedRequestIds = new Set(myOffers?.map((o: any) => o.request_id) || []);
+
   const filteredRequests = requests?.filter((request: any) => {
-    // فلترة البحث
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
@@ -155,37 +161,15 @@ export default function ProviderRequests() {
       request.properties?.city?.toLowerCase().includes(searchLower) ||
       request.description?.toLowerCase().includes(searchLower);
 
-    // فلترة المدينة
     const matchesCity =
       cityFilter === "all" || request.properties?.city === cityFilter;
 
-    // فلترة الفئة
-    const matchesCategory =
-      categoryFilter === "all" || request.service_category === categoryFilter;
-
-    return matchesSearch && matchesCity && matchesCategory;
+    return matchesSearch && matchesCity;
   });
 
-  // استخراج المدن المتاحة
   const availableCities = Array.from(
     new Set(requests?.map((r: any) => r.properties?.city).filter(Boolean)),
   );
-
-  const getCategoryName = (category: string) => {
-    return category === "cleaning" ? t.cleaning : t.maintenance;
-  };
-
-  const getServiceNames = (serviceIds: string[]) => {
-    if (!serviceIds || serviceIds.length === 0) return "";
-
-    return serviceIds
-      .map((id) => {
-        const service = SERVICES.find((s) => s.id === id);
-        return service ? service.name[lang] : "";
-      })
-      .filter(Boolean)
-      .join(", ");
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -199,12 +183,11 @@ export default function ProviderRequests() {
   const clearFilters = () => {
     setSearchQuery("");
     setCityFilter("all");
-    setCategoryFilter("all");
   };
 
   return (
     <div
-      className="container mx-auto p-4 space-y-6"
+      className="page-enter container mx-auto p-4 space-y-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Header */}
@@ -215,12 +198,12 @@ export default function ProviderRequests() {
 
       {/* تنبيه إكمال الملف الشخصي */}
       {!isProfileComplete && (
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+        <Card className="border-orange-200 bg-orange-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
               <AlertCircle className="h-8 w-8 text-orange-500 flex-shrink-0" />
               <div className="flex-1">
-                <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-1">
+                <h3 className="font-semibold text-gray-900 mb-1">
                   {t.completeProfile}
                 </h3>
                 <Button
@@ -246,7 +229,7 @@ export default function ProviderRequests() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
               <div className="relative">
@@ -274,24 +257,10 @@ export default function ProviderRequests() {
                 ))}
               </SelectContent>
             </Select>
-
-            {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.filterCategory} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.all}</SelectItem>
-                <SelectItem value="cleaning">{t.cleaning}</SelectItem>
-                <SelectItem value="maintenance">{t.maintenance}</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Clear Filters Button */}
-          {(searchQuery ||
-            cityFilter !== "all" ||
-            categoryFilter !== "all") && (
+          {(searchQuery || cityFilter !== "all") && (
             <div className="mt-4 flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t.clearFilters}
@@ -306,9 +275,8 @@ export default function ProviderRequests() {
 
       {/* Requests Grid */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">{t.loading}</p>
+        <div className="space-y-4">
+          {[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>
       ) : !filteredRequests || filteredRequests.length === 0 ? (
         <Card>
@@ -316,13 +284,11 @@ export default function ProviderRequests() {
             <div className="text-center">
               <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">
-                {searchQuery || cityFilter !== "all" || categoryFilter !== "all"
+                {searchQuery || cityFilter !== "all"
                   ? t.noResults
                   : t.noRequests}
               </h3>
-              {(searchQuery ||
-                cityFilter !== "all" ||
-                categoryFilter !== "all") && (
+              {(searchQuery || cityFilter !== "all") && (
                 <Button
                   variant="outline"
                   onClick={clearFilters}
@@ -347,7 +313,7 @@ export default function ProviderRequests() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-bold text-lg">
-                        {getCategoryName(request.service_category)}
+                        {t.scopeTitle}
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                         <Calendar className="h-3 w-3" />
@@ -368,13 +334,10 @@ export default function ProviderRequests() {
                     </span>
                   </div>
 
-                  {/* Services */}
+                  {/* Scope of Services */}
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      {t.services}:
-                    </p>
-                    <p className="text-sm line-clamp-2">
-                      {getServiceNames(request.service_ids)}
+                    <p className="text-sm line-clamp-3 text-muted-foreground">
+                      {t.scopeShort}
                     </p>
                   </div>
 
@@ -391,18 +354,25 @@ export default function ProviderRequests() {
                   )}
 
                   {/* Action Button */}
-                  <Button
-                    className="w-full"
-                    onClick={() =>
-                      setLocation(
-                        `/dashboard/provider/requests/${request.id}/offer`,
-                      )
-                    }
-                    disabled={!isProfileComplete}
-                  >
-                    <Send className="h-4 w-4 me-2" />
-                    {t.submitOffer}
-                  </Button>
+                  {submittedRequestIds.has(request.id) ? (
+                    <Button className="w-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-50 cursor-default" variant="outline" disabled>
+                      <CheckCircle2 className="h-4 w-4 me-2 text-green-600" />
+                      {lang === "ar" ? "تم تقديم العرض" : "Offer Submitted"}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={() =>
+                        setLocation(
+                          `/dashboard/provider/requests/${request.id}/offer`,
+                        )
+                      }
+                      disabled={!isProfileComplete || !isApproved}
+                    >
+                      <Send className="h-4 w-4 me-2" />
+                      {t.submitOffer}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

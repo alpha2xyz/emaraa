@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useLang } from "@/hooks/use-lang";
+import { queryClient } from "@/lib/queryClient";
 
 export function Navbar() {
   const { lang, setLang } = useLang();
@@ -12,6 +13,7 @@ export function Navbar() {
   function handleLogout() {
     localStorage.removeItem("userPhone");
     localStorage.removeItem("userRole");
+    queryClient.clear();
     setLocation("/");
   }
 
