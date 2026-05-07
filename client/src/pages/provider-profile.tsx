@@ -234,9 +234,19 @@ export default function ProviderProfile() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-            <Building2 className="w-8 h-8 text-green-600" />
+          <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md"
+            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}>
+            {formData.company_name ? (
+              <span className="text-3xl font-extrabold text-white select-none">
+                {formData.company_name.trim().charAt(0).toUpperCase()}
+              </span>
+            ) : (
+              <Building2 className="w-10 h-10 text-white" />
+            )}
           </div>
+          {formData.company_name && (
+            <p className="text-sm text-gray-500 mb-1">{formData.company_name}</p>
+          )}
           <h1 className="text-3xl font-bold text-gray-900">
             {existingProvider?.provider
               ? (lang === "ar" ? "تعديل ملف الشركة" : "Edit Company Profile")

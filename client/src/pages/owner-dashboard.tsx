@@ -3,7 +3,6 @@ import {
   Building2,
   FileText,
   Plus,
-  Globe,
   LayoutDashboard,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +14,7 @@ import { supabase } from "../lib/supabase";
 
 export default function OwnerDashboard() {
   useAuthGuard("owner");
-  const { lang, toggleLang } = useLang();
+  const { lang } = useLang();
   const phone = localStorage.getItem("userPhone");
   const userName = localStorage.getItem("userName") || "";
   const today = new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
@@ -94,19 +93,13 @@ export default function OwnerDashboard() {
       className="page-enter min-h-screen bg-gray-50"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
-      <div className="bg-white border-b px-6 py-5 flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">
-            {lang === "ar"
-              ? `مرحباً${userName ? `، ${userName}` : ""}`
-              : `Welcome${userName ? `, ${userName}` : ""}`}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{today}</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={toggleLang} className="gap-2 mt-1">
-          <Globe className="w-4 h-4" />
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
+      <div className="bg-white border-b px-6 py-5">
+        <h1 className="text-2xl font-extrabold text-gray-900">
+          {lang === "ar"
+            ? `مرحباً${userName ? `، ${userName}` : ""}`
+            : `Welcome${userName ? `, ${userName}` : ""}`}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{today}</p>
       </div>
 
       <div className="p-4 sm:p-6 space-y-6">
