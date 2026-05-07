@@ -180,10 +180,15 @@ export async function registerRoutes(
         body: JSON.stringify({ method: "sms", phone: e164 }),
       });
 
-      if (!r.ok) return res.status(500).json({ error: "Failed to send OTP" });
+      if (!r.ok) {
+        const body = await r.text();
+        console.error("[otp/send] Authentica error:", r.status, body);
+        return res.status(500).json({ error: "Failed to send OTP", detail: `${r.status}: ${body}` });
+      }
       res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to send OTP" });
+    } catch (err: any) {
+      console.error("[otp/send] exception:", err?.message);
+      res.status(500).json({ error: "Failed to send OTP", detail: err?.message });
     }
   });
 
