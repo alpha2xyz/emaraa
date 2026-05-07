@@ -193,26 +193,13 @@ export default function Properties() {
 
         {/* Empty State */}
         {!isLoading && properties.length === 0 && (
-          <Card className="text-center py-14">
-            <CardContent className="flex flex-col items-center">
-              <div className="relative mb-6">
-                <div className="w-28 h-28 bg-blue-50 rounded-full flex items-center justify-center">
-                  <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
-                    <rect x="10" y="30" width="60" height="42" rx="4" fill="#DBEAFE"/>
-                    <rect x="22" y="15" width="36" height="55" rx="3" fill="#BFDBFE"/>
-                    <rect x="28" y="35" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="42" y="35" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="28" y="50" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="42" y="50" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="32" y="62" width="16" height="10" rx="2" fill="#93C5FD"/>
-                    <polygon points="22,16 40,4 58,16" fill="#EFF6FF"/>
-                  </svg>
-                </div>
-                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-blue-100 rounded-full" />
-                <div className="absolute -left-2 top-3 w-5 h-5 bg-blue-100 rounded-full" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-1">{t.noProperties}</h3>
-              <p className="text-gray-400 text-sm mb-6">{t.noPropertiesDesc}</p>
+          <Card className="text-center py-12">
+            <CardContent>
+              <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {t.noProperties}
+              </h3>
+              <p className="text-gray-600 mb-6">{t.noPropertiesDesc}</p>
               <Link href="/dashboard/owner/properties/new">
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-5 h-5 me-2" />

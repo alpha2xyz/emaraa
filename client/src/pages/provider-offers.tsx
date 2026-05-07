@@ -127,25 +127,16 @@ export default function ProviderOffers() {
 
         {/* Empty */}
         {!isLoading && (!offers || offers.length === 0) && (
-          <Card className="text-center py-14">
-            <CardContent className="flex flex-col items-center">
-              <div className="relative mb-6">
-                <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center">
-                  <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
-                    <rect x="8" y="16" width="48" height="60" rx="5" fill="#DCFCE7"/>
-                    <rect x="16" y="28" width="32" height="4" rx="2" fill="#86EFAC"/>
-                    <rect x="16" y="37" width="24" height="4" rx="2" fill="#86EFAC"/>
-                    <rect x="16" y="46" width="28" height="4" rx="2" fill="#86EFAC"/>
-                    <circle cx="58" cy="54" r="16" fill="#22C55E"/>
-                    <path d="M50 54l6 6 10-10" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-green-100 rounded-full" />
-                <div className="absolute -left-2 top-3 w-5 h-5 bg-green-100 rounded-full" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-1">{t.noOffers}</h2>
-              <p className="text-gray-400 text-sm mb-6">{lang === "ar" ? "ابدأ بتصفح الطلبات وتقديم عروضك" : "Browse available requests and start submitting"}</p>
-              <Button onClick={() => setLocation("/dashboard/provider/requests")} className="bg-blue-600 hover:bg-blue-700">
+          <Card className="text-center py-16">
+            <CardContent>
+              <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">
+                {t.noOffers}
+              </h2>
+              <Button
+                onClick={() => setLocation("/dashboard/provider/requests")}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
                 <Send className="w-4 h-4 me-2" />
                 {t.browseRequests}
               </Button>
