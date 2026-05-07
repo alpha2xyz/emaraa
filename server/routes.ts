@@ -4,11 +4,17 @@ import { storage } from "./storage";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
-const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY!;
+const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
+const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY ?? "";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log("[emaraa] env:", {
+  SUPABASE_URL: SUPABASE_URL ? "set" : "MISSING",
+  SUPABASE_ANON_KEY: SUPABASE_ANON_KEY ? "set" : "MISSING",
+  AUTHENTICA_API_KEY: AUTHENTICA_API_KEY ? "set" : "MISSING",
+});
+
+const supabase = createClient(SUPABASE_URL || "https://placeholder.supabase.co", SUPABASE_ANON_KEY || "placeholder");
 
 const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
 const authenticaHeaders = {
