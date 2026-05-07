@@ -72,6 +72,24 @@ export default function ProviderOfferForm() {
 
 **متطلبات العرض:** يجب أن يتضمن العرض المقدم ما يلي: تفصيل كامل للخدمات، السعر يقسم لكل وحدة سكنية وإجمالي العقد شاملاً الضريبة، وشروط الدفع، السجل التجاري وشهادات الاعتماد، مراجع من عملاء سابقين أو البورتوفوليو. تكون مدة العقد سنة وقابل للتجديد لمدد مماثلة.`,
       alreadySubmitted: "لقد قدمت عرضاً لهذا الطلب مسبقاً ولا يمكن تقديم أكثر من عرض واحد",
+      commercialScopeText: `نرجو تقديم عرض سعر شامل للخدمات التالية:
+
+1. خدمات النظافة: تنظيف المداخل والردهات يومياً، تنظيف الأدوار والمواقف والمرافق العامة، جمع النفايات ونقلها، تنظيف الواجهات عند الحاجة.
+
+2. خدمات الصيانة: صيانة أنظمة التكييف المركزي (HVAC)، صيانة المصاعد والسلالم المتحركة، متابعة منظومة الإطفاء والكاميرات، صيانة الإنارة والكهرباء.
+
+3. أعمال أخرى: رش المبيدات الحشرية، أعمال البستنة (إن وجدت)، إدارة مواقف السيارات (إن طُلب).
+
+4. خدمة الطوارئ على مدار الساعة لجميع الأعطال الحرجة.
+
+5. تسديد فواتير المرافق للمناطق المشتركة.
+
+6. توضيح آلية العمل في الإجازات والمناسبات الوطنية.
+
+**متطلبات العرض:** تفصيل كامل للخدمات، السعر لكل طابق أو وحدة تجارية وإجمالي العقد شاملاً الضريبة، شروط الدفع، السجل التجاري وشهادات الاعتماد، مراجع من عملاء تجاريين سابقين أو بورتفوليو لمشاريع مماثلة. مدة العقد سنة وقابل للتجديد.`,
+      buildingType: "نوع المبنى",
+      commercial: "تجاري",
+      residential: "سكني",
     },
     en: {
       title: "Submit Offer",
@@ -114,6 +132,24 @@ export default function ProviderOfferForm() {
 
 **Proposal Requirements:** The submitted proposal must include the following: a full breakdown of services, the price per residential unit, the total contract amount including tax, payment terms, commercial registration and certifications, and references from previous clients or a portfolio. The contract term is one year and is renewable for similar periods.`,
       alreadySubmitted: "You have already submitted an offer for this request. Only one offer per request is allowed.",
+      commercialScopeText: `Please provide a comprehensive price quote for the following services:
+
+1. Cleaning Services: Daily cleaning of entrances and lobbies, cleaning of floors, parking areas, and common facilities, daily waste collection and removal, facade cleaning as needed.
+
+2. Maintenance Services: Central HVAC system maintenance, elevator and escalator maintenance, fire suppression and camera monitoring, lighting and electrical maintenance.
+
+3. Other Services: Pest control, landscaping (if applicable), parking management (if requested).
+
+4. 24/7 emergency service for all critical faults.
+
+5. Payment of utility bills for common areas.
+
+6. Clear description of work procedures during holidays and national occasions.
+
+**Proposal Requirements:** Full service breakdown, per-floor or per-commercial-unit pricing plus total contract amount including VAT, payment terms, commercial registration and certifications, references from previous commercial clients or a portfolio of similar projects. Contract term is one year, renewable.`,
+      buildingType: "Building Type",
+      commercial: "Commercial",
+      residential: "Residential",
     },
   };
 
@@ -334,16 +370,16 @@ export default function ProviderOfferForm() {
       )}
 
       {/* نطاق الخدمات المطلوبة */}
-      <Card className="mb-6 border-blue-200 bg-blue-50/40">
+      <Card className={`mb-6 ${request.properties?.building_type === 'commercial' ? 'border-amber-200 bg-amber-50/40' : 'border-blue-200 bg-blue-50/40'}`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-800">
+          <CardTitle className={`flex items-center gap-2 ${request.properties?.building_type === 'commercial' ? 'text-amber-800' : 'text-blue-800'}`}>
             <ClipboardList className="w-5 h-5" />
             {t.scopeTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="whitespace-pre-line text-sm text-gray-800 leading-relaxed">
-            {t.scopeText}
+            {request.properties?.building_type === 'commercial' ? t.commercialScopeText : t.scopeText}
           </div>
         </CardContent>
       </Card>
@@ -366,6 +402,13 @@ export default function ProviderOfferForm() {
             <div>
               <p className="text-sm text-muted-foreground">{t.city}:</p>
               <p className="font-medium">{request.properties?.city}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">{t.buildingType}:</p>
+              <p className="font-medium">
+                {request.properties?.building_type === 'commercial' ? t.commercial : t.residential}
+              </p>
             </div>
 
             {request.description && (

@@ -185,7 +185,7 @@ export default function Requests() {
         {!requests || requests.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-500" />
               <h2 className="text-xl font-bold mb-2 text-gray-900">
                 {t.noRequests}
               </h2>

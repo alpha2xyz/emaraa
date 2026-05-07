@@ -241,7 +241,7 @@ export default function Properties() {
                 <CardContent className="space-y-3">
                   {/* Address */}
                   <div className="flex items-start gap-2 text-sm text-gray-700">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-500" />
                     <div>
                       <p className="line-clamp-1">{property.address}</p>
                       <p className="text-gray-500 text-xs">{property.city}</p>

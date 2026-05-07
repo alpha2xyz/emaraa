@@ -4,9 +4,16 @@ import { storage } from "./storage";
 import { insertPropertySchema, insertRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../env.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, AUTHENTICA_API_KEY } from "../env.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
+const authenticaHeaders = {
+  "X-Authorization": AUTHENTICA_API_KEY,
+  "Accept": "application/json",
+  "Content-Type": "application/json",
+};
 
 export async function registerRoutes(
   httpServer: Server,
@@ -153,6 +160,50 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete service request" });
+    }
+  });
+
+  // OTP — Send SMS OTP via Authentica
+  app.post("/api/otp/send", async (req, res) => {
+    try {
+      const { phone } = req.body;
+      if (!phone || !/^05\d{8}$/.test(phone)) {
+        return res.status(400).json({ error: "Invalid phone number" });
+      }
+
+      const e164 = "+966" + phone.substring(1);
+      const r = await fetch(`${AUTHENTICA_BASE}/send-otp`, {
+        method: "POST",
+        headers: authenticaHeaders,
+        body: JSON.stringify({ method: "sms", phone: e164 }),
+      });
+
+      if (!r.ok) return res.status(500).json({ error: "Failed to send OTP" });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to send OTP" });
+    }
+  });
+
+  // OTP — Verify SMS OTP via Authentica
+  app.post("/api/otp/verify", async (req, res) => {
+    try {
+      const { phone, code } = req.body;
+      if (!phone || !code) {
+        return res.status(400).json({ error: "Phone and code required" });
+      }
+
+      const e164 = "+966" + phone.substring(1);
+      const r = await fetch(`${AUTHENTICA_BASE}/verify-otp`, {
+        method: "POST",
+        headers: authenticaHeaders,
+        body: JSON.stringify({ phone: e164, otp: code }),
+      });
+
+      if (!r.ok) return res.status(400).json({ error: "Invalid OTP" });
+      res.json({ valid: true });
+    } catch (err) {
+      res.status(500).json({ error: "Verification failed" });
     }
   });
 

@@ -194,7 +194,7 @@ export default function ProviderOffers() {
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Building2 className="w-4 h-4" />
                         <span>{offer.requests?.properties?.name}</span>
-                        <span className="text-gray-400">·</span>
+                        <span className="text-gray-500">·</span>
                         <span>{offer.requests?.properties?.city}</span>
                       </div>
 

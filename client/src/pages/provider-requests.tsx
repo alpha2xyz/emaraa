@@ -46,6 +46,8 @@ export default function ProviderRequests() {
       city: "المدينة",
       scopeTitle: "نطاق الخدمات المطلوبة",
       scopeShort: "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. | متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
+      commercialScopeShort: "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. | متطلبات العرض: السعر لكل طابق أو وحدة تجارية، إجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
+      commercialBadge: "تجاري",
       description: "الوصف",
       date: "تاريخ الإنشاء",
       submitOffer: "تقديم عرض",
@@ -68,6 +70,8 @@ export default function ProviderRequests() {
       city: "City",
       scopeTitle: "Scope of Services Required",
       scopeShort: "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. | Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
+      commercialScopeShort: "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. | Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable.",
+      commercialBadge: "Commercial",
       description: "Description",
       date: "Created Date",
       submitOffer: "Submit Offer",
@@ -320,10 +324,17 @@ export default function ProviderRequests() {
                         <span>{formatDate(request.created_at)}</span>
                       </div>
                     </div>
-                    <Badge variant="outline" className="gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {request.properties?.city}
-                    </Badge>
+                    <div className="flex flex-col gap-1 items-end">
+                      <Badge variant="outline" className="gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {request.properties?.city}
+                      </Badge>
+                      {request.properties?.building_type === 'commercial' && (
+                        <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-xs">
+                          {t.commercialBadge}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   {/* Property Info */}
@@ -337,7 +348,7 @@ export default function ProviderRequests() {
                   {/* Scope of Services */}
                   <div>
                     <p className="text-sm line-clamp-3 text-muted-foreground">
-                      {t.scopeShort}
+                      {request.properties?.building_type === 'commercial' ? t.commercialScopeShort : t.scopeShort}
                     </p>
                   </div>
 
