@@ -1,40 +1,10 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { createServer } from "http";
-import { registerRoutes } from "../server/routes";
-
-const app = express();
-
-app.use(
-  express.json({
-    verify: (req: any, _res, buf) => {
-      req.rawBody = buf;
+export default function handler(req: any, res: any) {
+  res.json({
+    ok: true,
+    env: {
+      SUPABASE_URL: process.env.SUPABASE_URL ? "set" : "MISSING",
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? "set" : "MISSING",
+      AUTHENTICA_API_KEY: process.env.AUTHENTICA_API_KEY ? "set" : "MISSING",
     },
-  }),
-);
-app.use(express.urlencoded({ extended: false }));
-
-const server = createServer(app);
-
-let initError: Error | null = null;
-
-const ready = (async () => {
-  try {
-    await registerRoutes(server, app);
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      res.status(status).json({ message: err.message || "Internal Server Error" });
-    });
-  } catch (e: any) {
-    initError = e;
-    console.error("[emaraa] init failed:", e?.message, e?.stack);
-  }
-})();
-
-export default async (req: Request, res: Response) => {
-  await ready;
-  if (initError) {
-    res.status(500).json({ error: "Server init failed", detail: initError.message });
-    return;
-  }
-  return app(req, res);
-};
+  });
+}
