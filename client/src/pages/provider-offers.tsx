@@ -64,6 +64,7 @@ export default function ProviderOffers() {
 
   const { data: offers, isLoading } = useQuery({
     queryKey: ["/api/provider/all-offers"],
+    refetchOnMount: "always",
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error("Not logged in");

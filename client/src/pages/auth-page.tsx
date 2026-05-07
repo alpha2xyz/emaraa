@@ -174,59 +174,34 @@ export default function AuthPage() {
       const res = await fetch("/api/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone, code: otpCode }),
+        body: JSON.stringify({
+          phone: formData.phone,
+          code: otpCode,
+          mode,
+          role,
+          name: formData.name,
+        }),
       });
 
       if (!res.ok) {
-        setError(t.otpInvalid);
+        if (res.status === 409) setError(t.phoneExists);
+        else if (res.status === 404) setError(t.phoneNotFound);
+        else setError(t.otpInvalid);
         setLoading(false);
         return;
       }
 
-      // OTP verified — proceed with register or login
-      if (mode === "register") {
-        const { data: existingUser } = await supabase
-          .from("users")
-          .select("phone")
-          .eq("phone", formData.phone)
-          .single();
+      const { token, userId, phone, role: userRole } = await res.json();
 
-        if (existingUser) {
-          setError(t.phoneExists);
-          setLoading(false);
-          return;
-        }
+      localStorage.setItem("sessionToken", token);
+      localStorage.setItem("userId", userId);
+      localStorage.setItem("userPhone", phone);
+      localStorage.setItem("userRole", userRole);
 
-        const { error: insertError } = await supabase.from("users").insert([
-          { phone: formData.phone, name: formData.name.trim(), role: role },
-        ]);
-
-        if (insertError) throw insertError;
-
-        localStorage.setItem("userPhone", formData.phone);
-        localStorage.setItem("userRole", role);
-
-        if (role === "owner") setLocation("/dashboard/owner/properties/new");
-        else if (role === "provider") setLocation("/dashboard/provider/profile");
+      if (userRole === "owner") {
+        setLocation(mode === "register" ? "/dashboard/owner/properties/new" : "/dashboard/owner");
       } else {
-        const { data: user, error: loginError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("phone", formData.phone)
-          .eq("role", role)
-          .single();
-
-        if (loginError || !user) {
-          setError(t.phoneNotFound);
-          setLoading(false);
-          return;
-        }
-
-        localStorage.setItem("userPhone", formData.phone);
-        localStorage.setItem("userRole", role);
-
-        if (role === "owner") setLocation("/dashboard/owner");
-        else if (role === "provider") setLocation("/dashboard/provider");
+        setLocation(mode === "register" ? "/dashboard/provider/profile" : "/dashboard/provider");
       }
     } catch (err) {
       if (import.meta.env.DEV) console.error("Error:", err);

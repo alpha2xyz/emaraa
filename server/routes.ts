@@ -6,9 +6,11 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY ?? "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
 const authenticaHeaders = {
@@ -192,12 +194,12 @@ export async function registerRoutes(
     }
   });
 
-  // OTP — Verify SMS OTP via Authentica
+  // OTP — Verify SMS OTP via Authentica, create session
   app.post("/api/otp/verify", async (req, res) => {
     try {
-      const { phone, code } = req.body;
-      if (!phone || !code) {
-        return res.status(400).json({ error: "Phone and code required" });
+      const { phone, code, mode, role, name } = req.body;
+      if (!phone || !code || !mode || !role) {
+        return res.status(400).json({ error: "Phone, code, mode, and role are required" });
       }
 
       const e164 = "+966" + phone.substring(1);
@@ -208,8 +210,62 @@ export async function registerRoutes(
       });
 
       if (!r.ok) return res.status(400).json({ error: "Invalid OTP" });
-      res.json({ valid: true });
-    } catch (err) {
+
+      // OTP verified — create or find user
+      let userId: string;
+
+      if (mode === "register") {
+        const { data: existing } = await supabase
+          .from("users")
+          .select("id")
+          .eq("phone", phone)
+          .maybeSingle();
+
+        if (existing) {
+          return res.status(409).json({ error: "Phone already registered" });
+        }
+
+        const { data: newUser, error: insertError } = await supabase
+          .from("users")
+          .insert([{ phone, name: name?.trim() ?? null, role }])
+          .select("id")
+          .single();
+
+        if (insertError || !newUser) {
+          console.error("[otp/verify] user insert error:", insertError);
+          return res.status(500).json({ error: "Failed to create user" });
+        }
+        userId = newUser.id;
+      } else {
+        const { data: user } = await supabase
+          .from("users")
+          .select("id")
+          .eq("phone", phone)
+          .eq("role", role)
+          .maybeSingle();
+
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        userId = user.id;
+      }
+
+      // Create session (30-day expiry) via service role to bypass RLS
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const { data: session, error: sessionError } = await supabaseAdmin
+        .from("sessions")
+        .insert([{ user_id: userId, expires_at: expiresAt.toISOString() }])
+        .select("token")
+        .single();
+
+      if (sessionError || !session) {
+        console.error("[otp/verify] session insert error:", sessionError);
+        return res.status(500).json({ error: "Failed to create session" });
+      }
+
+      res.json({ token: session.token, userId, phone, role });
+    } catch (err: any) {
+      console.error("[otp/verify] exception:", err?.message);
       res.status(500).json({ error: "Verification failed" });
     }
   });

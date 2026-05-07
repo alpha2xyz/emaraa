@@ -14,10 +14,10 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
 
   useEffect(() => {
     async function verifySession() {
-      const phone = localStorage.getItem("userPhone");
+      const token = localStorage.getItem("sessionToken");
       const userRole = localStorage.getItem("userRole");
 
-      if (!phone || !userRole) {
+      if (!token || !userRole) {
         setLocation(`/auth?role=${role ?? "owner"}`);
         return;
       }
@@ -27,15 +27,16 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
         return;
       }
 
-      // Live DB check — verify the phone+role actually exist in the users table
+      // Validate session token against DB
       const { data, error } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .eq("role", userRole)
+        .from("sessions")
+        .select("user_id, expires_at")
+        .eq("token", token)
         .single();
 
-      if (error || !data) {
+      if (error || !data || new Date(data.expires_at) < new Date()) {
+        localStorage.removeItem("sessionToken");
+        localStorage.removeItem("userId");
         localStorage.removeItem("userPhone");
         localStorage.removeItem("userRole");
         setLocation(`/auth?role=${role ?? "owner"}`);

@@ -144,6 +144,7 @@ export default function ProviderRequests() {
   // Fetch which requests this provider already submitted an offer for
   const { data: myOffers } = useQuery({
     queryKey: ["/api/provider/submitted-offer-ids", providerData?.provider?.id],
+    refetchOnMount: "always",
     queryFn: async () => {
       if (!providerData?.provider?.id) return [];
       const { data } = await supabase
