@@ -213,6 +213,7 @@ export async function registerRoutes(
 
       // OTP verified — create or find user
       let userId: string;
+      let userName = "";
 
       if (mode === "register") {
         const { data: existing } = await supabase
@@ -228,7 +229,7 @@ export async function registerRoutes(
         const { data: newUser, error: insertError } = await supabase
           .from("users")
           .insert([{ phone, name: name?.trim() ?? null, role }])
-          .select("id")
+          .select("id, name")
           .single();
 
         if (insertError || !newUser) {
@@ -236,10 +237,11 @@ export async function registerRoutes(
           return res.status(500).json({ error: "Failed to create user" });
         }
         userId = newUser.id;
+        userName = newUser.name ?? "";
       } else {
         const { data: user } = await supabase
           .from("users")
-          .select("id")
+          .select("id, name")
           .eq("phone", phone)
           .eq("role", role)
           .maybeSingle();
@@ -248,6 +250,7 @@ export async function registerRoutes(
           return res.status(404).json({ error: "User not found" });
         }
         userId = user.id;
+        userName = user.name ?? "";
       }
 
       // Create session (30-day expiry) via service role to bypass RLS
@@ -263,7 +266,7 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Failed to create session" });
       }
 
-      res.json({ token: session.token, userId, phone, role });
+      res.json({ token: session.token, userId, phone, role, name: userName });
     } catch (err: any) {
       console.error("[otp/verify] exception:", err?.message);
       res.status(500).json({ error: "Verification failed" });

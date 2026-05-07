@@ -1,21 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  FileText,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Building2,
-  Calendar,
-  Send,
-} from "lucide-react";
+import { FileText, Building2, Calendar, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { openSignedPdf } from "../lib/storage";
+import { StatusBadge } from "@/components/StatusBadge";
 
 export default function ProviderOffers() {
   const { lang } = useLang();
@@ -102,28 +94,7 @@ export default function ProviderOffers() {
     },
   });
 
-  const statusBadge = (status: string) => {
-    if (status === "accepted")
-      return (
-        <Badge className="bg-green-100 text-green-800 gap-1">
-          <CheckCircle2 className="h-3 w-3" />
-          {t.accepted}
-        </Badge>
-      );
-    if (status === "rejected")
-      return (
-        <Badge variant="destructive" className="gap-1">
-          <XCircle className="h-3 w-3" />
-          {t.rejected}
-        </Badge>
-      );
-    return (
-      <Badge variant="secondary" className="gap-1">
-        <Clock className="h-3 w-3" />
-        {t.pending}
-      </Badge>
-    );
-  };
+  const statusBadge = (status: string) => <StatusBadge status={status} lang={lang} />;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
@@ -140,7 +111,7 @@ export default function ProviderOffers() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
             <Send className="w-8 h-8 text-blue-600" />
             {t.title}
           </h1>

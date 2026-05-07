@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
-import { ArrowLeft, FileText, CheckCircle2, XCircle, Building2, Clock } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle2, XCircle, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useLang } from '../hooks/use-lang';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '../lib/supabase';
+import { StatusBadge } from '@/components/StatusBadge';
 import { openSignedPdf } from '../lib/storage';
 
 export default function OwnerOffersPage() {
@@ -54,11 +54,7 @@ export default function OwnerOffersPage() {
     onError: () => toast({ title: t.error, variant: 'destructive' }),
   });
 
-  const statusBadge = (s: string) => {
-    if (s === 'accepted') return <Badge className="bg-green-100 text-gray-900"><CheckCircle2 className="h-3 w-3 me-1" />{t.accepted}</Badge>;
-    if (s === 'rejected') return <Badge variant="destructive"><XCircle className="h-3 w-3 me-1" />{t.rejected}</Badge>;
-    return <Badge variant="secondary"><Clock className="h-3 w-3 me-1" />{t.pending}</Badge>;
-  };
+  const statusBadge = (s: string) => <StatusBadge status={s} lang={lang} />;
 
   return (
     <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -66,7 +62,7 @@ export default function OwnerOffersPage() {
         <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard/owner/requests')} className="mb-4">
           <ArrowLeft className="w-4 h-4 me-2" />{t.back}
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
           <FileText className="w-8 h-8 text-blue-600" />{t.title}
         </h1>
 

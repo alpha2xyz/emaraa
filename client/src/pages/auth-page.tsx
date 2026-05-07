@@ -10,9 +10,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowLeft, AlertCircle } from "lucide-react";
+import { Building2, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
-import { supabase } from "../lib/supabase";
 
 export default function AuthPage() {
   const { lang } = useLang();
@@ -197,6 +196,7 @@ export default function AuthPage() {
       localStorage.setItem("userId", userId);
       localStorage.setItem("userPhone", phone);
       localStorage.setItem("userRole", userRole);
+      localStorage.setItem("userName", name || "");
 
       if (userRole === "owner") {
         setLocation(mode === "register" ? "/dashboard/owner/properties/new" : "/dashboard/owner");
@@ -222,18 +222,39 @@ export default function AuthPage() {
     return role === "provider" ? t.providerDesc : t.ownerDesc;
   };
 
+  const marketingFeatures = lang === "ar"
+    ? ["إدارة سهلة لعقاراتك", "موردون معتمدون ومراجَعون", "عروض شفافة وموثوقة"]
+    : ["Easy property management", "Vetted service providers", "Transparent, reliable offers"];
+
   return (
-    <div className="page-enter min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <div className="w-full max-w-md">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => setLocation("/")}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 me-2" />
-          {t.back}
-        </Button>
+    <div className="page-enter min-h-screen bg-white flex">
+      {/* Left marketing panel — desktop only */}
+      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-blue-600 to-blue-800 flex-col justify-center p-14 text-white" dir="rtl">
+        <Building2 className="w-12 h-12 mb-8 text-blue-200" />
+        <h1 className="text-4xl font-extrabold mb-3">عمارة</h1>
+        <p className="text-lg text-blue-100 mb-2">
+          {lang === "ar" ? "منصة إدارة المرافق العقارية" : "Facility Management Platform"}
+        </p>
+        <p className="text-blue-300 text-sm mb-10">
+          {lang === "ar" ? "ربط مالكي العقارات بمزودي الخدمات في المملكة" : "Connecting property owners with service providers in Saudi Arabia"}
+        </p>
+        <div className="space-y-4">
+          {marketingFeatures.map(item => (
+            <div key={item} className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-blue-300 flex-shrink-0" />
+              <span className="text-blue-100">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12" dir={lang === "ar" ? "rtl" : "ltr"}>
+        <div className="w-full max-w-md">
+          <Button variant="ghost" onClick={() => setLocation("/")} className="mb-4">
+            <ArrowLeft className="w-4 h-4 me-2" />
+            {t.back}
+          </Button>
 
         <Card>
           <CardHeader>
@@ -368,6 +389,7 @@ export default function AuthPage() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

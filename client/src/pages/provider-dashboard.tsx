@@ -11,6 +11,10 @@ export default function ProviderDashboard() {
   useAuthGuard("provider");
   const { lang } = useLang();
   const [, setLocation] = useLocation();
+  const userName = localStorage.getItem("userName") || "";
+  const today = new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
 
   const t = {
     ar: {
@@ -88,8 +92,12 @@ export default function ProviderDashboard() {
   return (
     <div className="page-enter container mx-auto p-4 space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div>
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <p className="text-muted-foreground mt-2">{t.subtitle}</p>
+        <h1 className="text-3xl font-extrabold text-gray-900">
+          {lang === "ar"
+            ? `مرحباً${userName ? `، ${userName}` : ""}`
+            : `Welcome${userName ? `, ${userName}` : ""}`}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">{today}</p>
       </div>
 
       {!providerLoading && !isProfileComplete && (

@@ -18,13 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 
@@ -197,7 +190,7 @@ export default function ProviderRequests() {
     >
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">{t.title}</h1>
+        <h1 className="text-3xl font-extrabold">{t.title}</h1>
         <p className="text-muted-foreground mt-2">{t.subtitle}</p>
       </div>
 
@@ -233,40 +226,49 @@ export default function ProviderRequests() {
             {t.searchAndFilter}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Search */}
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t.search}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="ps-9"
-                />
-              </div>
-            </div>
-
-            {/* City Filter */}
-            <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.filterCity} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.all}</SelectItem>
-                {availableCities.map((city: string) => (
-                  <SelectItem key={city} value={city}>
-                    {city}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t.search}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="ps-9"
+            />
           </div>
 
-          {/* Clear Filters Button */}
+          {/* City pill chips */}
+          {availableCities.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setCityFilter("all")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  cityFilter === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                {t.all}
+              </button>
+              {availableCities.map((city: string) => (
+                <button
+                  key={city}
+                  onClick={() => setCityFilter(city)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    cityFilter === city
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+          )}
+
           {(searchQuery || cityFilter !== "all") && (
-            <div className="mt-4 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t.clearFilters}
               </Button>
