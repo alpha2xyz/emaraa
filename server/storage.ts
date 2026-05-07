@@ -10,7 +10,7 @@ import { randomUUID } from "crypto";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
   getProperties(): Promise<Property[]>;
@@ -42,15 +42,15 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByPhone(phone: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.phone === phone,
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { ...insertUser, id, created_at: new Date() };
     this.users.set(id, user);
     return user;
   }
@@ -68,9 +68,13 @@ export class MemStorage implements IStorage {
     const property: Property = {
       id,
       name: insertProperty.name,
+      building_type: insertProperty.building_type,
       address: insertProperty.address,
-      type: insertProperty.type,
-      units: insertProperty.units ?? 1,
+      city: insertProperty.city,
+      units_count: insertProperty.units_count ?? 0,
+      map_url: insertProperty.map_url ?? null,
+      owner_id: insertProperty.owner_id,
+      created_at: new Date(),
     };
     this.properties.set(id, property);
     return property;
