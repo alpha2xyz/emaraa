@@ -16,10 +16,12 @@ export function Navbar() {
     if (token) {
       supabase.from("sessions").delete().eq("token", token).then(() => {});
     }
+    supabase.auth.signOut();
     localStorage.removeItem("sessionToken");
     localStorage.removeItem("userId");
     localStorage.removeItem("userPhone");
     localStorage.removeItem("userRole");
+    localStorage.removeItem("supabaseToken");
     queryClient.clear();
     setLocation("/");
   }

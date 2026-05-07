@@ -183,16 +183,27 @@ export default function Requests() {
 
         {/* Requests List */}
         {!requests || requests.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-500" />
-              <h2 className="text-xl font-bold mb-2 text-gray-900">
-                {t.noRequests}
-              </h2>
-              <p className="text-gray-600 mb-4">{t.createFirst}</p>
-              <Button
-                onClick={() => setLocation("/dashboard/owner/requests/new")}
-              >
+          <Card className="text-center py-14">
+            <CardContent className="flex flex-col items-center">
+              <div className="relative mb-6">
+                <div className="w-28 h-28 bg-amber-50 rounded-full flex items-center justify-center">
+                  <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
+                    <rect x="12" y="8" width="56" height="64" rx="5" fill="#FEF3C7"/>
+                    <rect x="20" y="18" width="40" height="5" rx="2.5" fill="#FCD34D"/>
+                    <rect x="20" y="29" width="30" height="5" rx="2.5" fill="#FCD34D"/>
+                    <rect x="20" y="40" width="35" height="5" rx="2.5" fill="#FCD34D"/>
+                    <rect x="20" y="51" width="24" height="5" rx="2.5" fill="#FCD34D"/>
+                    <circle cx="57" cy="57" r="14" fill="#F59E0B"/>
+                    <rect x="54" y="48" width="6" height="6" rx="1" fill="white"/>
+                    <rect x="54" y="56" width="6" height="7" rx="1" fill="white"/>
+                  </svg>
+                </div>
+                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-amber-100 rounded-full" />
+                <div className="absolute -left-2 top-3 w-5 h-5 bg-amber-100 rounded-full" />
+              </div>
+              <h2 className="text-xl font-bold mb-1 text-gray-800">{t.noRequests}</h2>
+              <p className="text-gray-400 text-sm mb-6">{t.createFirst}</p>
+              <Button onClick={() => setLocation("/dashboard/owner/requests/new")}>
                 <Plus className="w-4 h-4 me-2" />
                 {t.newRequest}
               </Button>

@@ -190,13 +190,19 @@ export default function AuthPage() {
         return;
       }
 
-      const { token, userId, phone, role: userRole } = await res.json();
+      const { token, userId, phone, role: userRole, name: returnedName, supabaseToken } = await res.json();
 
       localStorage.setItem("sessionToken", token);
       localStorage.setItem("userId", userId);
       localStorage.setItem("userPhone", phone);
       localStorage.setItem("userRole", userRole);
-      localStorage.setItem("userName", name || "");
+      localStorage.setItem("userName", returnedName || formData.name || "");
+      if (supabaseToken) {
+        localStorage.setItem("supabaseToken", supabaseToken);
+        import("../lib/supabase").then(({ supabase }) => {
+          supabase.auth.setSession({ access_token: supabaseToken, refresh_token: supabaseToken });
+        });
+      }
 
       if (userRole === "owner") {
         setLocation(mode === "register" ? "/dashboard/owner/properties/new" : "/dashboard/owner");
