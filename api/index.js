@@ -1,5 +1,7 @@
-export default function handler(req: any, res: any) {
-  res.json({
+"use strict";
+
+module.exports = function handler(req, res) {
+  res.status(200).json({
     ok: true,
     env: {
       SUPABASE_URL: process.env.SUPABASE_URL ? "set" : "MISSING",
@@ -7,4 +9,4 @@ export default function handler(req: any, res: any) {
       AUTHENTICA_API_KEY: process.env.AUTHENTICA_API_KEY ? "set" : "MISSING",
     },
   });
-}
+};
