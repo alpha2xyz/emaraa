@@ -39,6 +39,15 @@ export default function OwnerOffersPage() {
 
   const statusMutation = useMutation({
     mutationFn: async ({ offerId, status }: { offerId: string; status: 'accepted' | 'rejected' }) => {
+      // Verify the logged-in user owns this request before mutating
+      const userId = localStorage.getItem('userId');
+      const { data: req } = await supabase
+        .from('requests')
+        .select('owner_id')
+        .eq('id', requestId!)
+        .single();
+      if (!req || req.owner_id !== userId) throw new Error('Unauthorized');
+
       const { error } = await supabase.from('provider_offers').update({ status }).eq('id', offerId);
       if (error) throw error;
       if (status === 'accepted') {

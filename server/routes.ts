@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
@@ -19,11 +19,27 @@ const authenticaHeaders = {
   "Content-Type": "application/json",
 };
 
+// Middleware: validate session token from Authorization header
+async function requireSession(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.replace("Bearer ", "").trim();
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("user_id, expires_at")
+    .eq("token", token)
+    .single();
+  if (error || !data || new Date(data.expires_at) < new Date()) {
+    return res.status(401).json({ error: "Invalid or expired session" });
+  }
+  (req as any).userId = data.user_id;
+  next();
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Admin login route
+  // Admin login route — also creates session so client never calls Supabase directly
   app.post("/api/admin/login", async (req, res) => {
     try {
       const { username, password } = req.body;
@@ -37,14 +53,20 @@ export async function registerRoutes(
       if (error || !data?.[0]) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
-      res.json(data[0]);
+      const admin = data[0];
+      const { data: token, error: tokenError } = await supabase
+        .rpc('create_admin_session', { p_admin_id: admin.id });
+      if (tokenError || !token) {
+        return res.status(500).json({ error: "Failed to create session" });
+      }
+      res.json({ id: admin.id, token });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
     }
   });
 
-  // Properties routes
-  app.get("/api/properties", async (req, res) => {
+  // Properties routes (requireSession guards all data routes)
+  app.get("/api/properties", requireSession, async (req, res) => {
     try {
       const properties = await storage.getProperties();
       res.json(properties);
@@ -53,7 +75,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/properties/:id", async (req, res) => {
+  app.get("/api/properties/:id", requireSession, async (req, res) => {
     try {
       const property = await storage.getProperty(req.params.id);
       if (!property) {
@@ -65,7 +87,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/properties", async (req, res) => {
+  app.post("/api/properties", requireSession, async (req, res) => {
     try {
       const data = insertPropertySchema.parse(req.body);
       const property = await storage.createProperty(data);
@@ -78,7 +100,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/properties/:id", async (req, res) => {
+  app.delete("/api/properties/:id", requireSession, async (req, res) => {
     try {
       const property = await storage.getProperty(req.params.id);
       if (!property) {
@@ -96,7 +118,7 @@ export async function registerRoutes(
   });
 
   // Service Requests routes
-  app.get("/api/requests", async (req, res) => {
+  app.get("/api/requests", requireSession, async (req, res) => {
     try {
       const requests = await storage.getServiceRequests();
       res.json(requests);
@@ -105,7 +127,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/requests/:id", async (req, res) => {
+  app.get("/api/requests/:id", requireSession, async (req, res) => {
     try {
       const request = await storage.getServiceRequest(req.params.id);
       if (!request) {
@@ -117,7 +139,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/requests", async (req, res) => {
+  app.post("/api/requests", requireSession, async (req, res) => {
     try {
       const data = insertRequestSchema.parse(req.body);
       res.status(201).json(data);
@@ -129,7 +151,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/requests/:id", async (req, res) => {
+  app.patch("/api/requests/:id", requireSession, async (req, res) => {
     try {
       const existing = await storage.getServiceRequest(req.params.id);
       if (!existing) {
@@ -153,7 +175,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/requests/:id", async (req, res) => {
+  app.delete("/api/requests/:id", requireSession, async (req, res) => {
     try {
       const request = await storage.getServiceRequest(req.params.id);
       if (!request) {
@@ -175,6 +197,17 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid phone number" });
       }
 
+      // Rate limit: max 3 OTPs per phone per 10 minutes
+      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { count } = await supabaseAdmin
+        .from("otp_rate_limits")
+        .select("*", { count: "exact", head: true })
+        .eq("phone", phone)
+        .gte("created_at", tenMinAgo);
+      if ((count ?? 0) >= 3) {
+        return res.status(429).json({ error: "Too many OTP requests. Please wait 10 minutes." });
+      }
+
       const e164 = "+966" + phone.substring(1);
       const r = await fetch(`${AUTHENTICA_BASE}/send-otp`, {
         method: "POST",
@@ -187,6 +220,9 @@ export async function registerRoutes(
         console.error("[otp/send] Authentica error:", r.status, body);
         return res.status(500).json({ error: "Failed to send OTP", detail: `${r.status}: ${body}` });
       }
+
+      // Record this OTP attempt
+      await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
       res.json({ success: true });
     } catch (err: any) {
       console.error("[otp/send] exception:", err?.message);
@@ -200,6 +236,9 @@ export async function registerRoutes(
       const { phone, code, mode, role, name } = req.body;
       if (!phone || !code || !mode || !role) {
         return res.status(400).json({ error: "Phone, code, mode, and role are required" });
+      }
+      if (!["owner", "provider"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
       }
 
       const e164 = "+966" + phone.substring(1);

@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { useLang } from '../hooks/use-lang';
-import { supabase } from '../lib/supabase';
 
 export default function AdminLoginPage() {
   const { lang } = useLang();
@@ -28,18 +27,15 @@ export default function AdminLoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { data, error: dbError } = await supabase
-        .rpc('check_admin_login', { p_username: username.trim(), p_password: password });
-      const admin = data?.[0] ?? null;
-      if (dbError || !admin) { setError(t.invalid); return; }
-
-      // Generate a real server-side session token — stored in DB with 24h expiry
-      const { data: token, error: tokenError } = await supabase
-        .rpc('create_admin_session', { p_admin_id: admin.id });
-      if (tokenError || !token) { setError(t.invalid); return; }
-
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      if (!res.ok) { setError(t.invalid); return; }
+      const { id, token } = await res.json();
       localStorage.setItem('userRole', 'admin');
-      localStorage.setItem('adminId', admin.id);
+      localStorage.setItem('adminId', id);
       localStorage.setItem('adminSessionToken', token);
       setLocation('/admin/dashboard');
     } catch {
