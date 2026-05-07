@@ -4,7 +4,9 @@ import { storage } from "./storage";
 import { insertPropertySchema, insertRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, AUTHENTICA_API_KEY } from "../env.js";
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
