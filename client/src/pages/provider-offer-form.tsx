@@ -339,10 +339,8 @@ export default function ProviderOfferForm() {
   }
 
   return (
-    <div
-      className="container mx-auto p-4 max-w-4xl"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
+    <div className="min-h-screen bg-[#F9F9FF]" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div className="container mx-auto p-4 max-w-4xl py-8">
       {/* Header */}
       <Button
         variant="ghost"
@@ -359,7 +357,7 @@ export default function ProviderOfferForm() {
       </div>
 
       {providerData?.provider?.company_name && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-gray-900">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border-l-4 border-blue-500 bg-blue-50/80 px-4 py-3 text-sm font-medium text-blue-900">
           <Building2 className="h-4 w-4 shrink-0" />
           <span>
             {lang === "ar"
@@ -370,19 +368,15 @@ export default function ProviderOfferForm() {
       )}
 
       {/* نطاق الخدمات المطلوبة */}
-      <Card className={`mb-6 ${request.properties?.building_type === 'commercial' ? 'border-amber-200 bg-amber-50/40' : 'border-blue-200 bg-blue-50/40'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${request.properties?.building_type === 'commercial' ? 'text-amber-800' : 'text-blue-800'}`}>
-            <ClipboardList className="w-5 h-5" />
-            {t.scopeTitle}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="whitespace-pre-line text-sm text-gray-800 leading-relaxed">
-            {request.properties?.building_type === 'commercial' ? t.commercialScopeText : t.scopeText}
-          </div>
-        </CardContent>
-      </Card>
+      <div className={`mb-6 rounded-2xl border-l-4 p-6 ${request.properties?.building_type === 'commercial' ? 'border-amber-500 bg-amber-50/60' : 'border-blue-500 bg-blue-50/60'}`}>
+        <div className={`flex items-center gap-2 font-bold mb-3 ${request.properties?.building_type === 'commercial' ? 'text-amber-800' : 'text-blue-800'}`}>
+          <ClipboardList className="w-5 h-5" />
+          {t.scopeTitle}
+        </div>
+        <div className="whitespace-pre-line text-sm text-gray-800 leading-relaxed">
+          {request.properties?.building_type === 'commercial' ? t.commercialScopeText : t.scopeText}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* تفاصيل الطلب */}
@@ -441,7 +435,7 @@ export default function ProviderOfferForm() {
                     className="hidden"
                   />
                   <label htmlFor="offer-file">
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
+                    <div className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-primary bg-white transition-colors">
                       {offerFile ? (
                         <>
                           <FileText className="h-12 w-12 mx-auto text-green-500 mb-2" />
@@ -482,7 +476,7 @@ export default function ProviderOfferForm() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
-                  className="mt-2"
+                  className="mt-2 rounded-xl"
                 />
               </div>
 
@@ -499,7 +493,7 @@ export default function ProviderOfferForm() {
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
                   disabled={mutation.isPending || !offerFile}
                 >
                   {mutation.isPending ? (
@@ -518,6 +512,7 @@ export default function ProviderOfferForm() {
             </form>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

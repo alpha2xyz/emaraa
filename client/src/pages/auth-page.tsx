@@ -2,13 +2,6 @@ import { useState } from "react";
 import { useLang } from "@/hooks/use-lang";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Building2, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -235,7 +228,7 @@ export default function AuthPage() {
   return (
     <div className="page-enter min-h-screen bg-white flex">
       {/* Left marketing panel — desktop only */}
-      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-blue-600 to-blue-800 flex-col justify-center p-14 text-white" dir="rtl">
+      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 flex-col justify-center p-14 text-white" dir="rtl">
         <Building2 className="w-12 h-12 mb-8 text-blue-200" />
         <h1 className="text-4xl font-extrabold mb-3">عمارة</h1>
         <p className="text-lg text-blue-100 mb-2">
@@ -257,21 +250,21 @@ export default function AuthPage() {
       {/* Form panel */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12" dir={lang === "ar" ? "rtl" : "ltr"}>
         <div className="w-full max-w-md">
-          <Button variant="ghost" onClick={() => setLocation("/")} className="mb-4">
-            <ArrowLeft className="w-4 h-4 me-2" />
+          <button type="button" onClick={() => setLocation("/")} className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
             {t.back}
-          </Button>
+          </button>
 
-        <Card>
-          <CardHeader>
+        <div className="rounded-[20px] shadow-xl bg-white overflow-hidden">
+          <div className="px-6 pt-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
               <Building2 className="w-8 h-8 text-blue-600" />
-              <CardTitle>{getTitle()}</CardTitle>
+              <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
             </div>
-            <CardDescription>{getDescription()}</CardDescription>
-          </CardHeader>
+            <p className="text-sm text-gray-500">{getDescription()}</p>
+          </div>
 
-          <CardContent>
+          <div className="px-6 pb-6">
             {step === "phone" ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name Field - only for register */}
@@ -289,7 +282,7 @@ export default function AuthPage() {
                       }}
                       maxLength={25}
                       required
-                      className={`text-base ${validationErrors.name ? "border-red-500" : ""}`}
+                      className={`rounded-xl text-base ${validationErrors.name ? "border-red-500" : ""}`}
                     />
                     {validationErrors.name && (
                       <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -314,7 +307,7 @@ export default function AuthPage() {
                     }}
                     maxLength={10}
                     required
-                    className={`text-base ${validationErrors.phone ? "border-red-500" : ""}`}
+                    className={`rounded-xl text-base ${validationErrors.phone ? "border-red-500" : ""}`}
                   />
                   {validationErrors.phone && (
                     <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -331,7 +324,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={loading}>
                   {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
                 </Button>
 
@@ -367,7 +360,7 @@ export default function AuthPage() {
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     maxLength={4}
                     required
-                    className="text-base text-center tracking-widest text-xl"
+                    className="rounded-xl text-base text-center tracking-widest text-xl"
                   />
                 </div>
 
@@ -378,7 +371,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={loading || otpCode.length < 4}>
+                <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={loading || otpCode.length < 4}>
                   {loading ? t.loading : t.otpVerify}
                 </Button>
 
@@ -393,8 +386,8 @@ export default function AuthPage() {
                 </div>
               </form>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         </div>
       </div>
     </div>

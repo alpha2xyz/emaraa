@@ -181,23 +181,25 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: t.users, value: stats?.users ?? 0, icon: Users, color: 'text-blue-600' },
-    { label: t.properties, value: stats?.properties ?? 0, icon: Building2, color: 'text-green-600' },
-    { label: t.requests, value: stats?.requests ?? 0, icon: FileText, color: 'text-purple-600' },
-    { label: t.providers, value: stats?.providers ?? 0, icon: Shield, color: 'text-orange-600' },
+    { label: t.users, value: stats?.users ?? 0, icon: Users, accent: '#1275E2', iconBg: '#EFF6FF' },
+    { label: t.properties, value: stats?.properties ?? 0, icon: Building2, accent: '#15803D', iconBg: '#F0FDF4' },
+    { label: t.requests, value: stats?.requests ?? 0, icon: FileText, accent: '#8B3A4B', iconBg: '#FFF1F2' },
+    { label: t.providers, value: stats?.providers ?? 0, icon: Shield, accent: '#C55B00', iconBg: '#FFF7ED' },
   ];
 
   return (
-    <div className="page-enter min-h-screen bg-slate-50" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <header className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex justify-between items-center">
+      <header className="bg-white border-b shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Shield className="w-6 h-6 text-blue-400" />
-          <h1 className="text-xl font-bold">{t.title}</h1>
+          <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
+            <Shield className="w-5 h-5 text-blue-600" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
         </div>
         <div className="flex items-center gap-3">
-          <LanguageToggle className="text-slate-300" />
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-400 hover:text-red-300">
+          <LanguageToggle className="text-gray-500" />
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-600 hover:text-red-700">
             <LogOut className="w-4 h-4 me-2" />{t.logout}
           </Button>
         </div>
@@ -216,18 +218,18 @@ export default function AdminDashboard() {
           {/* ── Overview ──────────────────────────────────────────────── */}
           <TabsContent value="overview">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {statCards.map(({ label, value, icon: Icon, color }) => (
-                <Card key={label}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{label}</p>
-                        <p className="text-3xl font-bold">{value}</p>
-                      </div>
-                      <Icon className={`h-10 w-10 ${color}`} />
+              {statCards.map(({ label, value, icon: Icon, accent, iconBg }) => (
+                <div key={label} className="bg-white rounded-2xl shadow-sm p-5" style={{ borderTop: `4px solid ${accent}` }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{label}</p>
+                      <p className="text-3xl font-bold">{value}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: iconBg }}>
+                      <Icon className="h-5 w-5" style={{ color: accent }} />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </TabsContent>
@@ -241,14 +243,14 @@ export default function AdminDashboard() {
                   : !allProviders?.length ? <p className="text-center py-8 text-muted-foreground">{t.noData}</p>
                   : <div className="space-y-3">
                     {allProviders.map((p: any) => (
-                        <div key={p.id} className="p-4 border rounded-lg bg-white space-y-3">
+                        <div key={p.id} className="p-4 border rounded-lg bg-gray-50/40 space-y-3">
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="font-semibold">{p.company_name}</p>
-                                <Badge variant={p.approved ? 'default' : 'secondary'} className={p.approved ? 'bg-green-100 text-gray-900' : 'bg-yellow-100 text-gray-900'}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${p.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                   {p.approved ? t.approved : t.pending}
-                                </Badge>
+                                </span>
                               </div>
                               <p className="text-sm text-muted-foreground">{p.city}</p>
                               <p className="text-sm text-muted-foreground">{(p.users as any)?.name} · {(p.users as any)?.phone}</p>
@@ -296,7 +298,7 @@ export default function AdminDashboard() {
                   : !allUsers?.length ? <p className="text-center py-8 text-muted-foreground">{t.noData}</p>
                   : <div className="space-y-2">
                     {allUsers.map((u: any) => (
-                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg bg-white gap-2">
+                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg bg-gray-50/40 gap-2">
                         <div>
                           <p className="font-medium">{u.name || '—'}</p>
                           <p className="text-sm text-muted-foreground">{u.phone}</p>
@@ -318,7 +320,7 @@ export default function AdminDashboard() {
                   : !allProperties?.length ? <p className="text-center py-8 text-muted-foreground">{t.noData}</p>
                   : <div className="space-y-2">
                     {allProperties.map((p: any) => (
-                      <div key={p.id} className="p-3 border rounded-lg bg-white space-y-1">
+                      <div key={p.id} className="p-3 border rounded-lg bg-gray-50/40 space-y-1">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                           <p className="font-medium">{p.name}</p>
                           <p className="text-xs text-muted-foreground">{formatDate(p.created_at)}</p>
@@ -344,7 +346,7 @@ export default function AdminDashboard() {
                       const offers = r.provider_offers ?? [];
                       const isExpanded = expandedRequest === r.id;
                       return (
-                        <div key={r.id} className="border rounded-lg bg-white overflow-hidden">
+                        <div key={r.id} className="border rounded-lg bg-gray-50/40 overflow-hidden">
                           <button
                             className="w-full p-3 text-start hover:bg-gray-50 transition-colors"
                             onClick={() => setExpandedRequest(isExpanded ? null : r.id)}

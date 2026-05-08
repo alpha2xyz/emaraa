@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { FileText, Clock, CheckCircle2, Send, AlertCircle, Package } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -80,10 +79,10 @@ export default function ProviderDashboard() {
   });
 
   const stats = [
-    { label: t.available, value: availableRequests?.length || 0, icon: FileText, color: "text-blue-500" },
-    { label: t.myOffers, value: myOffers?.length || 0, icon: Send, color: "text-purple-500" },
-    { label: t.pending, value: myOffers?.filter((o: any) => o.status === "pending").length || 0, icon: Clock, color: "text-yellow-500" },
-    { label: t.accepted, value: myOffers?.filter((o: any) => o.status === "accepted").length || 0, icon: CheckCircle2, color: "text-green-500" },
+    { label: t.available, value: availableRequests?.length || 0, icon: FileText, accent: "#1275E2", iconBg: "#EFF6FF" },
+    { label: t.myOffers, value: myOffers?.length || 0, icon: Send, accent: "#8B3A4B", iconBg: "#FFF1F2" },
+    { label: t.pending, value: myOffers?.filter((o: any) => o.status === "pending").length || 0, icon: Clock, accent: "#C55B00", iconBg: "#FFF7ED" },
+    { label: t.accepted, value: myOffers?.filter((o: any) => o.status === "accepted").length || 0, icon: CheckCircle2, accent: "#15803D", iconBg: "#F0FDF4" },
   ];
 
   const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;
@@ -101,54 +100,50 @@ export default function ProviderDashboard() {
       </div>
 
       {!providerLoading && !isProfileComplete && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="h-8 w-8 text-orange-500 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-1">{t.completeProfile}</h3>
-                <p className="text-sm text-gray-900 mb-3">{t.completeProfileDesc}</p>
-                <Button size="sm" onClick={() => setLocation("/dashboard/provider/profile")} className="bg-orange-600 hover:bg-orange-700">
-                  <Package className="h-4 w-4 me-2" />
-                  {t.completeNow}
-                </Button>
-              </div>
+        <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-5">
+          <div className="flex items-start gap-4">
+            <AlertCircle className="h-8 w-8 text-orange-500 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">{t.completeProfile}</h3>
+              <p className="text-sm text-gray-900 mb-3">{t.completeProfileDesc}</p>
+              <Button size="sm" onClick={() => setLocation("/dashboard/provider/profile")} className="bg-orange-600 hover:bg-orange-700">
+                <Package className="h-4 w-4 me-2" />
+                {t.completeNow}
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {!providerLoading && isProfileComplete && !isApproved && (
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <Clock className="h-8 w-8 text-yellow-500 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  {lang === "ar" ? "طلبك قيد المراجعة" : "Your registration is under review"}
-                </h3>
-                <p className="text-sm text-gray-900">
-                  {lang === "ar" ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة" : "You will be notified once your account is approved by admin"}
-                </p>
-              </div>
+        <div className="rounded-2xl border border-yellow-200 bg-yellow-50/60 p-5">
+          <div className="flex items-start gap-4">
+            <Clock className="h-8 w-8 text-yellow-500 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">
+                {lang === "ar" ? "طلبك قيد المراجعة" : "Your registration is under review"}
+              </h3>
+              <p className="text-sm text-gray-900">
+                {lang === "ar" ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة" : "You will be notified once your account is approved by admin"}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        {stats.map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{label}</p>
-                  <p className="text-3xl font-bold">{value}</p>
-                </div>
-                <Icon className={`h-10 w-10 ${color}`} />
+        {stats.map(({ label, value, icon: Icon, accent, iconBg }) => (
+          <div key={label} className="bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-shadow" style={{ borderTop: `4px solid ${accent}` }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <p className="text-3xl font-bold">{value}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: iconBg }}>
+                <Icon className="h-5 w-5" style={{ color: accent }} />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </div>

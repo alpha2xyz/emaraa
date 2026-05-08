@@ -11,6 +11,7 @@ import {
   Wrench,
   Home,
   Building2,
+  CheckCircle2,
 } from "lucide-react";
 
 // ── Building illustration ───────────────────────────────────────────────────
@@ -221,10 +222,10 @@ export default function LandingPage() {
   const isRTL = lang === "ar";
 
   return (
-    <div className="page-enter min-h-screen bg-white" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <span className="text-2xl font-extrabold text-blue-600 tracking-tight">
@@ -241,7 +242,7 @@ export default function LandingPage() {
                 {lang === "ar" ? "EN" : "عربي"}
               </Button>
               <Link href="/auth?mode=login">
-                <Button variant="outline" size="sm" className="text-gray-700 border-gray-200 hover:border-blue-500 hover:text-blue-600">
+                <Button variant="outline" size="sm" className="rounded-xl text-gray-700 border-gray-200 hover:border-blue-500 hover:text-blue-600">
                   {t.login}
                 </Button>
               </Link>
@@ -251,7 +252,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="bg-white py-20 md:py-28">
+      <section className="bg-[#F9F9FF] py-20 md:py-28">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
 
@@ -275,7 +276,7 @@ export default function LandingPage() {
               </p>
               <div className="flex gap-3 flex-wrap">
                 <Link href="/auth?role=owner">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 active:scale-95 transition-transform shadow-md hover:shadow-lg">
+                  <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 active:scale-95 transition-transform shadow-md hover:shadow-lg">
                     {t.getStarted}
                   </Button>
                 </Link>
@@ -322,9 +323,7 @@ export default function LandingPage() {
                 <ul className="space-y-2.5 mb-6">
                   {t.residentialItems.map((item, i) => (
                     <li key={i} className="flex items-center gap-2.5 text-sm text-gray-600">
-                      <span className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 text-[10px] font-bold">✓</span>
-                      </span>
+                      <CheckCircle2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -347,9 +346,7 @@ export default function LandingPage() {
                 <ul className="space-y-2.5 mb-6">
                   {t.commercialItems.map((item, i) => (
                     <li key={i} className="flex items-center gap-2.5 text-sm text-gray-600">
-                      <span className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-amber-600 text-[10px] font-bold">✓</span>
-                      </span>
+                      <CheckCircle2 className="w-4 h-4 text-amber-500 flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -378,15 +375,13 @@ export default function LandingPage() {
 
             <div className="grid lg:grid-cols-3 gap-16 lg:gap-8">
               {[
-                { num: "1", icon: ClipboardList, title: t.step1Title, desc: t.step1Desc },
-                { num: "2", icon: Search,        title: t.step2Title, desc: t.step2Desc },
-                { num: "3", icon: BarChart3,      title: t.step3Title, desc: t.step3Desc },
-              ].map(({ num, icon: Icon, title, desc }) => (
+                { num: "1", icon: ClipboardList, title: t.step1Title, desc: t.step1Desc, color: "#1275E2" },
+                { num: "2", icon: Search,        title: t.step2Title, desc: t.step2Desc, color: "#8B3A4B" },
+                { num: "3", icon: BarChart3,      title: t.step3Title, desc: t.step3Desc, color: "#15803D" },
+              ].map(({ num, icon: Icon, title, desc, color }) => (
                 <div key={num} className="flex flex-col items-center text-center lg:items-center">
-                  {/* Icon */}
-                  <Icon className="w-12 h-12 text-blue-500 mb-4" strokeWidth={1.25} />
-                  {/* Big step number */}
-                  <span className="text-7xl font-extrabold text-blue-500 leading-none mb-5 tracking-tight">
+                  <Icon className="w-12 h-12 mb-4" strokeWidth={1.25} style={{ color }} />
+                  <span className="text-7xl font-extrabold leading-none mb-5 tracking-tight" style={{ color }}>
                     {num}
                   </span>
                   <h3 className="text-lg font-bold text-gray-900 mb-3">{title}</h3>
@@ -399,9 +394,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── Provider CTA ────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-[#F9F9FF]">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-sm px-10 py-14 text-center">
             <Wrench className="w-12 h-12 text-green-500 mx-auto mb-6" strokeWidth={1.25} />
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{t.providerCTATitle}</h2>
             <p className="text-base md:text-lg text-gray-500 mb-10 max-w-xl mx-auto">{t.providerCTADesc}</p>
