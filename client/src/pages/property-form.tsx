@@ -166,7 +166,7 @@ export default function PropertyForm() {
 
   return (
     <div
-      className="page-enter container mx-auto p-4 max-w-2xl"
+      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <Button
@@ -267,7 +267,7 @@ export default function PropertyForm() {
 
             <Button
               type="submit"
-              className="w-full mt-2"
+              className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (

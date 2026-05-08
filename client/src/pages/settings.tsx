@@ -101,7 +101,7 @@ export default function Settings() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <SettingsIcon className="w-8 h-8 text-gray-700" />
@@ -146,7 +146,7 @@ export default function Settings() {
             </>
           )}
 
-          <Button onClick={() => mutation.mutate()} className="w-full" disabled={mutation.isPending}>
+          <Button onClick={() => mutation.mutate()} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={mutation.isPending}>
             {mutation.isPending ? (
               <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.saving}</>
             ) : (

@@ -153,7 +153,7 @@ export default function Requests() {
 
   if (isLoading) {
     return (
-      <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
         <div className="max-w-6xl mx-auto space-y-4">
           <Skeleton className="h-10 w-48 mb-6" />
           {[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
@@ -164,7 +164,7 @@ export default function Requests() {
 
   return (
     <>
-    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">

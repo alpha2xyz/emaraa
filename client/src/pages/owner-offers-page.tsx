@@ -66,7 +66,7 @@ export default function OwnerOffersPage() {
   const statusBadge = (s: string) => <StatusBadge status={s} lang={lang} />;
 
   return (
-    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-4xl mx-auto">
         <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard/owner/requests')} className="mb-4">
           <ArrowLeft className="w-4 h-4 me-2" />{t.back}

@@ -17,7 +17,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl mx-auto">
         <Link href="/">
           <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors">
@@ -30,7 +30,7 @@ export default function ContactPage() {
           {contacts.map(({ icon: Icon, label, value, href, external }) => (
             <Card key={label} className="hover:shadow-md transition-shadow">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Icon className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>

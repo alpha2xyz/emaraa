@@ -163,7 +163,7 @@ export default function Properties() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6"
+      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-7xl mx-auto">

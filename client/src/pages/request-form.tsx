@@ -197,7 +197,7 @@ export default function RequestForm() {
   }
 
   return (
-    <div className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -326,7 +326,7 @@ export default function RequestForm() {
 
           {/* أزرار */}
           <div className="flex gap-4">
-            <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={mutation.isPending}>
+            <Button type="submit" className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={mutation.isPending}>
               {mutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 me-2 animate-spin" />

@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
               </div>
             </div>
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? t.loading : t.login}</Button>
+            <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={loading}>{loading ? t.loading : t.login}</Button>
             <Button type="button" variant="ghost" className="w-full text-slate-400 hover:text-white" onClick={() => setLocation('/')}>
               <ArrowLeft className="w-4 h-4 me-2" />{t.back}
             </Button>

@@ -90,7 +90,7 @@ export default function OwnerDashboard() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-gray-50"
+      className="page-enter min-h-screen bg-[#F9F9FF]"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="bg-white border-b px-6 py-5">

@@ -228,7 +228,7 @@ export default function ProviderProfile() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-gray-50 p-4 sm:p-6"
+      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-4xl mx-auto">
@@ -258,7 +258,7 @@ export default function ProviderProfile() {
         {/* Approval Status Banner */}
         {existingProvider?.provider && (
           existingProvider.provider.approved ? (
-            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 mb-6">
+            <div className="flex items-center gap-3 rounded-xl border-l-4 border-green-500 bg-green-50/80 px-4 py-3 text-green-800 mb-6">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
               <div>
                 <p className="font-semibold">
@@ -270,7 +270,7 @@ export default function ProviderProfile() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-gray-900 mb-6">
+            <div className="flex items-center gap-3 rounded-xl border-l-4 border-yellow-400 bg-yellow-50/80 px-4 py-3 text-gray-900 mb-6">
               <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
               <div>
                 <p className="font-semibold">
@@ -463,7 +463,7 @@ export default function ProviderProfile() {
           <div className="flex justify-center">
             <Button
               type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg"
+              className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-8 py-6 text-lg"
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (
