@@ -50,8 +50,8 @@ export default function AdminLoginPage() {
       <div className="absolute top-4 end-4"><LanguageToggle className="text-slate-300" /></div>
       <Card className="w-full max-w-md bg-slate-800/50 border-slate-700 backdrop-blur">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-blue-600/20 rounded-full flex items-center justify-center">
-            <Shield className="w-8 h-8 text-blue-400" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-[#2E4A6B]/20 rounded-full flex items-center justify-center">
+            <Shield className="w-8 h-8 text-[#8AAABF]" />
           </div>
           <CardTitle className="text-2xl text-white">{t.title}</CardTitle>
           <CardDescription className="text-slate-400">{t.subtitle}</CardDescription>
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
               </div>
             </div>
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-            <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={loading}>{loading ? t.loading : t.login}</Button>
+            <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading}>{loading ? t.loading : t.login}</Button>
             <Button type="button" variant="ghost" className="w-full text-slate-400 hover:text-white" onClick={() => setLocation('/')}>
               <ArrowLeft className="w-4 h-4 me-2" />{t.back}
             </Button>

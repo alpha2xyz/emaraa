@@ -16,7 +16,7 @@ export default function NotFound() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.title}</h1>
         <p className="text-sm text-gray-600 mb-6">{t.desc}</p>
         <Link href="/">
-          <button className="text-sm text-blue-600 hover:underline">{t.back}</button>
+          <button className="text-sm text-[#2E4A6B] hover:underline">{t.back}</button>
         </Link>
       </div>
     </div>

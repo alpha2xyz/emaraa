@@ -6,7 +6,6 @@ import { useLocation, useRoute } from "wouter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileText, Building2, Save, Loader2, ArrowLeft, AlertCircle, ClipboardList } from "lucide-react"
 import { useLang } from "@/hooks/use-lang"
@@ -23,11 +22,6 @@ export default function RequestForm() {
     property_id: "",
     description: "",
   })
-  const [commercialFields, setCommercialFields] = useState({
-    buildingType: "",
-    floorsCount: "",
-    specialNeeds: "",
-  })
   const [showValidation, setShowValidation] = useState(false)
 
   const content = {
@@ -39,13 +33,6 @@ export default function RequestForm() {
       scopeTitle: "نطاق الخدمات المطلوبة",
       scopeShort: "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
       commercialScopeShort: "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. متطلبات العرض: تفصيل السعر لكل طابق أو وحدة تجارية، الإجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
-      commercialDetailsTitle: "تفاصيل المبنى التجاري",
-      buildingTypeLabel: "نوع المبنى التجاري",
-      buildingTypePlaceholder: "مثال: مكتبي، تجاري، مستودع، مختلط",
-      floorsLabel: "عدد الأدوار المطلوب تغطيتها",
-      floorsPlaceholder: "مثال: 5 أدوار",
-      specialNeedsLabel: "متطلبات خاصة",
-      specialNeedsPlaceholder: "مواقف سيارات، مطابخ تجارية، مولدات، غرف خوادم...",
       description: "تفاصيل إضافية",
       descriptionPlaceholder: "اكتب أي تفاصيل أو ملاحظات إضافية...",
       submit: "إرسال الطلب",
@@ -57,7 +44,7 @@ export default function RequestForm() {
       noProperties: "لا توجد عقارات! أضف عقاراً أولاً",
       addProperty: "إضافة عقار",
       propertyRequired: "يرجى اختيار العقار",
-      limitReached: "لقد وصلت للحد الأقصى (طلب واحد فقط لكل حساب)",
+      limitReached: "لديك طلب واحد بالفعل. احذف طلبك الحالي من صفحة الطلبات لتتمكن من إنشاء طلب جديد.",
     },
     en: {
       title: "New Service Request",
@@ -67,13 +54,6 @@ export default function RequestForm() {
       scopeTitle: "Scope of Services Required",
       scopeShort: "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
       commercialScopeShort: "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable contract.",
-      commercialDetailsTitle: "Commercial Building Details",
-      buildingTypeLabel: "Commercial Building Type",
-      buildingTypePlaceholder: "e.g. Office, Retail, Warehouse, Mixed",
-      floorsLabel: "Number of Floors to Cover",
-      floorsPlaceholder: "e.g. 5 floors",
-      specialNeedsLabel: "Special Requirements",
-      specialNeedsPlaceholder: "Parking, commercial kitchens, generators, server rooms...",
       description: "Additional Details",
       descriptionPlaceholder: "Write any additional details or notes...",
       submit: "Submit Request",
@@ -85,13 +65,13 @@ export default function RequestForm() {
       noProperties: "No properties! Add a property first",
       addProperty: "Add Property",
       propertyRequired: "Please select a property",
-      limitReached: "You have reached the limit (1 request per account)",
+      limitReached: "You already have an active request. Delete it from the Requests page to submit a new one.",
     },
   }
 
   const t = content[lang]
 
-  const { data: properties, isLoading: propertiesLoading } = useQuery({
+  const { data: properties } = useQuery({
     queryKey: ["/api/properties"],
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone")
@@ -129,9 +109,7 @@ export default function RequestForm() {
 
   const selectedProperty = properties?.find((p: any) => p.id === formData.property_id)
   const isCommercial = selectedProperty?.building_type === 'commercial'
-
   const isPropertyValid = formData.property_id !== ""
-  const isFormValid = isPropertyValid
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -144,40 +122,30 @@ export default function RequestForm() {
         const { count } = await supabase
           .from("requests")
           .select("id", { count: "exact", head: true })
-          .eq("owner_id", user.id);
-        if ((count ?? 0) >= 1) throw new Error("limit_reached");
-      }
-
-      let finalDescription = formData.description
-      if (isCommercial && !requestId) {
-        const parts = []
-        if (commercialFields.buildingType) parts.push(`${t.buildingTypeLabel}: ${commercialFields.buildingType}`)
-        if (commercialFields.floorsCount) parts.push(`${t.floorsLabel}: ${commercialFields.floorsCount}`)
-        if (commercialFields.specialNeeds) parts.push(`${t.specialNeedsLabel}: ${commercialFields.specialNeeds}`)
-        if (parts.length) {
-          finalDescription = parts.join('\n') + (formData.description ? '\n\n' + formData.description : '')
-        }
-      }
-
-      const payload = {
-        owner_id: user.id,
-        property_id: formData.property_id,
-        service_category: "standard",
-        description: finalDescription || null,
-        status: "pending",
+          .eq("owner_id", user.id)
+        if ((count ?? 0) >= 1) throw new Error("limit_reached")
       }
 
       const { error } = requestId
-        ? await supabase.from("requests").update(payload).eq("id", requestId)
-        : await supabase.from("requests").insert(payload)
+        ? await supabase.from("requests").update({
+            owner_id: user.id,
+            property_id: formData.property_id,
+            service_category: "standard",
+            description: formData.description || null,
+            status: "pending",
+          }).eq("id", requestId)
+        : await supabase.from("requests").insert({
+            owner_id: user.id,
+            property_id: formData.property_id,
+            service_category: "standard",
+            description: formData.description || null,
+            status: "pending",
+          })
 
       if (error) throw error
     },
     onSuccess: () => {
-      toast({
-        title: requestId ? t.updateSuccess : t.success,
-        variant: "default",
-      })
+      toast({ title: requestId ? t.updateSuccess : t.success, variant: "default" })
       setLocation("/dashboard/owner/requests")
     },
     onError: (error: any) => {
@@ -192,29 +160,27 @@ export default function RequestForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setShowValidation(true)
-    if (!isFormValid) return
+    if (!isPropertyValid) return
     mutation.mutate()
   }
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/owner/requests")} className="mb-4">
             <ArrowLeft className="w-4 h-4 me-2" />
             {t.cancel}
           </Button>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-blue-600" />
+            <FileText className="w-8 h-8 text-[#2E4A6B]" />
             {t.title}
           </h1>
           <p className="text-gray-600 mt-1">{t.subtitle}</p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* اختيار العقار */}
+          {/* Property selector */}
           <Card className={showValidation && !isPropertyValid ? "border-red-500" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -247,96 +213,50 @@ export default function RequestForm() {
             </CardContent>
           </Card>
 
-          {/* نطاق الخدمات المطلوبة */}
-          <Card className={isCommercial ? "border-amber-200 bg-amber-50/30" : ""}>
+          {/* Scope + description — unified card */}
+          <Card className={isCommercial ? "border-[#EDB99F]" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardList className={`w-5 h-5 ${isCommercial ? "text-amber-600" : ""}`} />
+                <ClipboardList className={`w-5 h-5 ${isCommercial ? "text-[#C4694A]" : ""}`} />
                 {t.scopeTitle}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed">
-                {isCommercial ? t.commercialScopeShort : t.scopeShort}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* تفاصيل المبنى التجاري */}
-          {isCommercial && !requestId && (
-            <Card className="border-amber-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-700">
-                  <Building2 className="w-5 h-5" />
-                  {t.commercialDetailsTitle}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium mb-1">{t.buildingTypeLabel}</p>
-                  <Input
-                    placeholder={t.buildingTypePlaceholder}
-                    value={commercialFields.buildingType}
-                    onChange={(e) => setCommercialFields({ ...commercialFields, buildingType: e.target.value })}
-                    className="text-base"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">{t.floorsLabel}</p>
-                  <Input
-                    placeholder={t.floorsPlaceholder}
-                    value={commercialFields.floorsCount}
-                    onChange={(e) => setCommercialFields({ ...commercialFields, floorsCount: e.target.value })}
-                    className="text-base"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">{t.specialNeedsLabel}</p>
-                  <Textarea
-                    placeholder={t.specialNeedsPlaceholder}
-                    value={commercialFields.specialNeeds}
-                    onChange={(e) => setCommercialFields({ ...commercialFields, specialNeeds: e.target.value })}
-                    rows={3}
-                    className="text-base resize-none"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* التفاصيل */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.description}</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Textarea
-                placeholder={t.descriptionPlaceholder}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
-                rows={4}
-                maxLength={500}
-                className="text-base resize-none"
+                readOnly
+                value={isCommercial ? t.commercialScopeShort : t.scopeShort}
+                rows={6}
+                className={`text-sm leading-relaxed resize-none cursor-default focus:outline-none ${
+                  isCommercial
+                    ? "bg-[#FDF3EF]/60 border-[#EDB99F] text-[#5A2D1E]"
+                    : "bg-gray-50 border-gray-200 text-gray-700"
+                }`}
               />
-              <p className="text-xs text-gray-500 text-end mt-1">
-                {formData.description.length} / 500
-              </p>
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-2">{t.description}</p>
+                <Textarea
+                  placeholder={t.descriptionPlaceholder}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
+                  rows={4}
+                  maxLength={500}
+                  className="text-base resize-none"
+                />
+                <p className="text-xs text-gray-500 text-end mt-1">{formData.description.length} / 500</p>
+              </div>
             </CardContent>
           </Card>
 
-          {/* أزرار */}
           <div className="flex gap-4">
-            <Button type="submit" className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={mutation.isPending}>
+            <Button
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
+              disabled={mutation.isPending}
+            >
               {mutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                  {t.submitting}
-                </>
+                <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.submitting}</>
               ) : (
-                <>
-                  <Save className="w-4 h-4 me-2" />
-                  {t.submit}
-                </>
+                <><Save className="w-4 h-4 me-2" />{t.submit}</>
               )}
             </Button>
             <Button type="button" variant="outline" onClick={() => setLocation("/dashboard/owner/requests")}>

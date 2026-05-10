@@ -10,3 +10,4 @@ vite.config.ts.*
 .claude/
 .local/
 env.ts
+.vercel

@@ -127,7 +127,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('providers')
-        .select('id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, description, users(name, phone)')
+        .select('id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, description, users(name, phone)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -169,6 +169,24 @@ export default function AdminDashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
   });
 
+  async function impersonate(userId: string) {
+    const adminToken = localStorage.getItem('adminSessionToken');
+    const res = await fetch('/api/admin/impersonate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+      body: JSON.stringify({ userId }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    localStorage.setItem('sessionToken', data.token);
+    localStorage.setItem('userId', data.userId);
+    localStorage.setItem('userPhone', data.phone);
+    localStorage.setItem('userRole', data.role);
+    localStorage.setItem('userName', data.name ?? '');
+    if (data.supabaseToken) localStorage.setItem('supabaseToken', data.supabaseToken);
+    setLocation(`/dashboard/${data.role}`);
+  }
+
   function handleLogout() {
     localStorage.removeItem('userRole');
     localStorage.removeItem('adminId');
@@ -192,8 +210,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="bg-white border-b shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
-            <Shield className="w-5 h-5 text-blue-600" />
+          <div className="w-9 h-9 bg-[#EEF2F7] rounded-xl flex items-center justify-center">
+            <Shield className="w-5 h-5 text-[#2E4A6B]" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
         </div>
@@ -247,7 +265,7 @@ export default function AdminDashboard() {
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-semibold">{p.company_name}</p>
+                                <button onClick={() => impersonate(p.user_id)} className="font-semibold hover:text-[#2E4A6B] hover:underline text-start">{p.company_name}</button>
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${p.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                   {p.approved ? t.approved : t.pending}
                                 </span>
@@ -292,7 +310,7 @@ export default function AdminDashboard() {
           {/* ── Users ─────────────────────────────────────────────────── */}
           <TabsContent value="users">
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-500" />{t.users}</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-[#3D6187]" />{t.users}</CardTitle></CardHeader>
               <CardContent>
                 {usersLoading ? <p className="text-center py-8 text-muted-foreground">{t.loading}</p>
                   : !allUsers?.length ? <p className="text-center py-8 text-muted-foreground">{t.noData}</p>
@@ -300,7 +318,7 @@ export default function AdminDashboard() {
                     {allUsers.map((u: any) => (
                       <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg bg-gray-50/40 gap-2">
                         <div>
-                          <p className="font-medium">{u.name || '—'}</p>
+                          <button onClick={() => impersonate(u.id)} className="font-medium hover:text-[#2E4A6B] hover:underline text-start">{u.name || '—'}</button>
                           <p className="text-sm text-muted-foreground">{u.phone}</p>
                         </div>
                         <p className="text-xs text-muted-foreground">{formatDate(u.created_at)}</p>

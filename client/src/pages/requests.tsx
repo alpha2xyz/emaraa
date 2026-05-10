@@ -169,12 +169,12 @@ export default function Requests() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+            <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-[#2E4A6B]" />
             {t.title}
           </h1>
           <Button
             onClick={() => setLocation("/dashboard/owner/requests/new")}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-[#2E4A6B] hover:bg-[#243A56]"
           >
             <Plus className="w-4 h-4 me-2" />
             {t.newRequest}
@@ -186,7 +186,7 @@ export default function Requests() {
           <Card className="text-center py-14">
             <CardContent className="flex flex-col items-center">
               <div className="relative mb-6">
-                <div className="w-28 h-28 bg-amber-50 rounded-full flex items-center justify-center">
+                <div className="w-28 h-28 bg-[#FDF3EF] rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
                     <rect x="12" y="8" width="56" height="64" rx="5" fill="#FEF3C7"/>
                     <rect x="20" y="18" width="40" height="5" rx="2.5" fill="#FCD34D"/>
@@ -198,8 +198,8 @@ export default function Requests() {
                     <rect x="54" y="56" width="6" height="7" rx="1" fill="white"/>
                   </svg>
                 </div>
-                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-amber-100 rounded-full" />
-                <div className="absolute -left-2 top-3 w-5 h-5 bg-amber-100 rounded-full" />
+                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-[#F8DDD4] rounded-full" />
+                <div className="absolute -left-2 top-3 w-5 h-5 bg-[#F8DDD4] rounded-full" />
               </div>
               <h2 className="text-xl font-bold mb-1 text-gray-800">{t.noRequests}</h2>
               <p className="text-gray-400 text-sm mb-6">{t.createFirst}</p>
@@ -230,7 +230,7 @@ export default function Requests() {
                         <div className="space-y-2">
                           {/* Property */}
                           <div className="flex items-center gap-2 text-gray-900">
-                            <Building2 className="w-5 h-5 text-blue-600" />
+                            <Building2 className="w-5 h-5 text-[#2E4A6B]" />
                             <span className="font-semibold">{t.property}:</span>
                             <span>{request.properties?.name || "N/A"}</span>
                           </div>
@@ -260,7 +260,7 @@ export default function Requests() {
                               `/dashboard/owner/requests/${request.id}/offers`,
                             )
                           }
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-[#2E4A6B] hover:bg-[#243A56]"
                         >
                           <Eye className="w-4 h-4 me-2" />
                           {lang === "ar" ? "عرض العروض" : "View Offers"}
@@ -307,7 +307,7 @@ export default function Requests() {
         <AlertDialogFooter>
           <AlertDialogCancel>{lang === "ar" ? "إلغاء" : "Cancel"}</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-green-600 hover:bg-green-700 text-black"
+            className="bg-red-600 hover:bg-red-700"
             onClick={() => deleteId && deleteMutation.mutate(deleteId)}
           >
             {lang === "ar" ? "حذف" : "Delete"}

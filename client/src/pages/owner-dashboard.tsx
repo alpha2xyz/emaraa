@@ -105,12 +105,12 @@ export default function OwnerDashboard() {
       <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* كرت العقارات */}
-          <Card className="border-t-4 border-t-blue-600">
+          <Card className="border-t-4 border-t-[#2E4A6B]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
                 {content.myProperties}
               </CardTitle>
-              <Building2 className="w-5 h-5 text-blue-600" />
+              <Building2 className="w-5 h-5 text-[#2E4A6B]" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{properties.length}</div>
@@ -133,13 +133,13 @@ export default function OwnerDashboard() {
 
         <div className="flex gap-4">
           <Link href="/dashboard/owner/properties/new">
-            <Button className="bg-blue-600">
+            <Button className="bg-[#2E4A6B] hover:bg-[#243A56]">
               <Plus className="w-4 h-4 me-2" />
               {content.addProperty}
             </Button>
           </Link>
           <Link href="/dashboard/owner/requests/new">
-            <Button variant="outline" className="border-blue-600 text-blue-600">
+            <Button variant="outline" className="border-[#2E4A6B] text-[#2E4A6B]">
               {content.createRequest}
             </Button>
           </Link>
@@ -172,7 +172,7 @@ export default function OwnerDashboard() {
                       <p className="text-xs text-gray-500">{p.city}</p>
                     </div>
                     <Link href={`/dashboard/owner/properties/${p.id}/edit`}>
-                      <Button variant="ghost" size="sm" className="text-blue-600">
+                      <Button variant="ghost" size="sm" className="text-[#2E4A6B]">
                         {content.edit}
                       </Button>
                     </Link>
@@ -216,7 +216,7 @@ export default function OwnerDashboard() {
                       </p>
                     </div>
                     <Link href={`/dashboard/owner/requests/${r.id}/offers`}>
-                      <Button variant="ghost" size="sm" className="text-blue-600">
+                      <Button variant="ghost" size="sm" className="text-[#2E4A6B]">
                         {content.offers}
                       </Button>
                     </Link>

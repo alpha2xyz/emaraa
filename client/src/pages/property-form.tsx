@@ -50,7 +50,7 @@ export default function PropertyForm() {
       commercial: "تجاري",
       unitsCount: "عدد الوحدات",
       unitsPlaceholder: "مثال: 24",
-      mapUrl: "رابط الموقع على الخريطة (اختياري)",
+      mapUrl: "رابط الموقع على الخريطة",
       mapPlaceholder: "https://maps.google.com/...",
       save: "حفظ",
       saving: "جاري الحفظ...",
@@ -72,7 +72,7 @@ export default function PropertyForm() {
       commercial: "Commercial",
       unitsCount: "Number of Units",
       unitsPlaceholder: "e.g. 24",
-      mapUrl: "Map URL (optional)",
+      mapUrl: "Map URL",
       mapPlaceholder: "https://maps.google.com/...",
       save: "Save",
       saving: "Saving...",
@@ -259,6 +259,7 @@ export default function PropertyForm() {
               <Input
                 id="map_url"
                 type="url"
+                required
                 placeholder={t.mapPlaceholder}
                 value={formData.map_url}
                 onChange={(e) => setFormData({ ...formData, map_url: e.target.value })}
@@ -267,7 +268,7 @@ export default function PropertyForm() {
 
             <Button
               type="submit"
-              className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+              className="w-full mt-2 bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (

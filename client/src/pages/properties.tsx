@@ -138,9 +138,9 @@ export default function Properties() {
   const getBuildingTypeIcon = (type: string) => {
     switch (type) {
       case "residential":
-        return <Home className="w-5 h-5 text-blue-600" />;
+        return <Home className="w-5 h-5 text-[#7D3040]" />;
       case "commercial":
-        return <Briefcase className="w-5 h-5 text-green-600" />;
+        return <Briefcase className="w-5 h-5 text-[#C4694A]" />;
       case "mixed":
         return <Building className="w-5 h-5 text-purple-600" />;
       default:
@@ -171,13 +171,13 @@ export default function Properties() {
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+              <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-[#2E4A6B]" />
               {t.title}
             </h1>
             <p className="text-gray-600 mt-2">{t.subtitle}</p>
           </div>
           <Link href="/dashboard/owner/properties/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-[#2E4A6B] hover:bg-[#243A56] text-white">
               <Plus className="w-5 h-5 me-2" />
               {t.addNew}
             </Button>
@@ -196,25 +196,25 @@ export default function Properties() {
           <Card className="text-center py-14">
             <CardContent className="flex flex-col items-center">
               <div className="relative mb-6">
-                <div className="w-28 h-28 bg-blue-50 rounded-full flex items-center justify-center">
+                <div className="w-28 h-28 bg-[#EEF2F7] rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
-                    <rect x="10" y="30" width="60" height="42" rx="4" fill="#DBEAFE"/>
-                    <rect x="22" y="15" width="36" height="55" rx="3" fill="#BFDBFE"/>
-                    <rect x="28" y="35" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="42" y="35" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="28" y="50" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="42" y="50" width="10" height="10" rx="1.5" fill="#93C5FD"/>
-                    <rect x="32" y="62" width="16" height="10" rx="2" fill="#93C5FD"/>
-                    <polygon points="22,16 40,4 58,16" fill="#EFF6FF"/>
+                    <rect x="10" y="30" width="60" height="42" rx="4" fill="#D0DCE8"/>
+                    <rect x="22" y="15" width="36" height="55" rx="3" fill="#B8CCD9"/>
+                    <rect x="28" y="35" width="10" height="10" rx="1.5" fill="#8AAABF"/>
+                    <rect x="42" y="35" width="10" height="10" rx="1.5" fill="#8AAABF"/>
+                    <rect x="28" y="50" width="10" height="10" rx="1.5" fill="#8AAABF"/>
+                    <rect x="42" y="50" width="10" height="10" rx="1.5" fill="#8AAABF"/>
+                    <rect x="32" y="62" width="16" height="10" rx="2" fill="#8AAABF"/>
+                    <polygon points="22,16 40,4 58,16" fill="#EEF2F7"/>
                   </svg>
                 </div>
-                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-blue-100 rounded-full" />
-                <div className="absolute -left-2 top-3 w-5 h-5 bg-blue-100 rounded-full" />
+                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-[#D8E4EE] rounded-full" />
+                <div className="absolute -left-2 top-3 w-5 h-5 bg-[#D8E4EE] rounded-full" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-1">{t.noProperties}</h3>
               <p className="text-gray-400 text-sm mb-6">{t.noPropertiesDesc}</p>
               <Link href="/dashboard/owner/properties/new">
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-[#2E4A6B] hover:bg-[#243A56]">
                   <Plus className="w-5 h-5 me-2" />
                   {t.addNew}
                 </Button>
@@ -241,7 +241,13 @@ export default function Properties() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                    <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      property.building_type === 'commercial'
+                        ? 'bg-[#FDF3EF] text-[#C4694A]'
+                        : property.building_type === 'residential'
+                        ? 'bg-[#FDF0F2] text-[#7D3040]'
+                        : 'bg-purple-50 text-purple-700'
+                    }`}>
                       {getBuildingTypeText(property.building_type)}
                     </span>
                     {property.units_count && (

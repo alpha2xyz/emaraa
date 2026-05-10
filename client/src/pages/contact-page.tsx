@@ -20,7 +20,7 @@ export default function ContactPage() {
     <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl mx-auto">
         <Link href="/">
-          <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors">
+          <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#2E4A6B] mb-6 transition-colors">
             {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}{t.back}
           </button>
         </Link>
@@ -30,12 +30,12 @@ export default function ContactPage() {
           {contacts.map(({ icon: Icon, label, value, href, external }) => (
             <Card key={label} className="hover:shadow-md transition-shadow">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-[#EEF2F7] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-6 h-6 text-[#2E4A6B]" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">{label}</p>
-                  <a href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">{value}</a>
+                  <a href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="font-semibold text-gray-900 hover:text-[#2E4A6B] transition-colors">{value}</a>
                 </div>
               </CardContent>
             </Card>

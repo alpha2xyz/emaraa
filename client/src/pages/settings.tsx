@@ -146,7 +146,7 @@ export default function Settings() {
             </>
           )}
 
-          <Button onClick={() => mutation.mutate()} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={mutation.isPending}>
+          <Button onClick={() => mutation.mutate()} className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={mutation.isPending}>
             {mutation.isPending ? (
               <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.saving}</>
             ) : (

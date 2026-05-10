@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Building2, Calendar, Send } from "lucide-react";
+import { FileText, Building2, Calendar, Send, Phone, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/hooks/use-lang";
@@ -17,6 +17,7 @@ export default function ProviderOffers() {
     ar: {
       title: "عروضي المقدمة",
       subtitle: "تتبع جميع العروض التي قدمتها",
+      phoneDisclosure: "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
       noOffers: "لم تقدم أي عروض بعد",
       browseRequests: "تصفح الطلبات",
       request: "الطلب",
@@ -51,8 +52,11 @@ export default function ProviderOffers() {
       rejected: "Rejected",
       cleaning: "Cleaning",
       maintenance: "Maintenance",
+      phoneDisclosure: "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
     },
   }[lang];
+
+  const userPhone = localStorage.getItem("userPhone") || "";
 
   const { data: offers, isLoading } = useQuery({
     queryKey: ["/api/provider/all-offers"],
@@ -112,10 +116,26 @@ export default function ProviderOffers() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-            <Send className="w-8 h-8 text-blue-600" />
+            <Send className="w-8 h-8 text-[#2E4A6B]" />
             {t.title}
           </h1>
           <p className="text-gray-600 mt-1">{t.subtitle}</p>
+        </div>
+
+        {/* Phone disclosure banner */}
+        <div className="rounded-2xl border border-[#B8CCD9] bg-[#EEF2F7]/60 p-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-[#3D6187] flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-[#1A2E42]">{t.phoneDisclosure}</p>
+              {userPhone && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Phone className="h-3.5 w-3.5 text-[#2E4A6B]" />
+                  <span className="text-sm font-semibold text-blue-700">{userPhone}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Loading */}
@@ -130,7 +150,7 @@ export default function ProviderOffers() {
           <Card className="text-center py-14">
             <CardContent className="flex flex-col items-center">
               <div className="relative mb-6">
-                <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center">
+                <div className="w-28 h-28 bg-[#F3F5F1] rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
                     <rect x="8" y="16" width="48" height="60" rx="5" fill="#DCFCE7"/>
                     <rect x="16" y="28" width="32" height="4" rx="2" fill="#86EFAC"/>
@@ -140,12 +160,12 @@ export default function ProviderOffers() {
                     <path d="M50 54l6 6 10-10" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-green-100 rounded-full" />
-                <div className="absolute -left-2 top-3 w-5 h-5 bg-green-100 rounded-full" />
+                <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-[#DDE4D8] rounded-full" />
+                <div className="absolute -left-2 top-3 w-5 h-5 bg-[#DDE4D8] rounded-full" />
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-1">{t.noOffers}</h2>
               <p className="text-gray-400 text-sm mb-6">{lang === "ar" ? "ابدأ بتصفح الطلبات وتقديم عروضك" : "Browse available requests and start submitting"}</p>
-              <Button onClick={() => setLocation("/dashboard/provider/requests")} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => setLocation("/dashboard/provider/requests")} className="bg-[#6B7C5E] hover:bg-[#576649]">
                 <Send className="w-4 h-4 me-2" />
                 {t.browseRequests}
               </Button>

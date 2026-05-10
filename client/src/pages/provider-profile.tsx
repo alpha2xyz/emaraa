@@ -235,7 +235,7 @@ export default function ProviderProfile() {
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md"
-            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}>
+            style={{ background: 'linear-gradient(135deg, #2E4A6B 0%, #243A56 100%)' }}>
             {formData.company_name ? (
               <span className="text-3xl font-extrabold text-white select-none">
                 {formData.company_name.trim().charAt(0).toUpperCase()}
@@ -404,7 +404,7 @@ export default function ProviderProfile() {
                   />
                   <Label
                     htmlFor="commercial_register"
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-100"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
                   >
                     <Upload className="w-4 h-4" />
                     {t.chooseFile}
@@ -440,7 +440,7 @@ export default function ProviderProfile() {
                   />
                   <Label
                     htmlFor="company_profile"
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-100"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
                   >
                     <Upload className="w-4 h-4" />
                     {t.chooseFile}
@@ -460,25 +460,23 @@ export default function ProviderProfile() {
           </Card>
 
           {/* زر الحفظ */}
-          <div className="flex justify-center">
-            <Button
-              type="submit"
-              className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-8 py-6 text-lg"
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 me-2 animate-spin" />
-                  {t.saving}
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5 me-2" />
-                  {t.save}
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              <>
+                <Loader2 className="w-5 h-5 me-2 animate-spin" />
+                {t.saving}
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5 me-2" />
+                {t.save}
+              </>
+            )}
+          </Button>
         </form>
       </div>
     </div>

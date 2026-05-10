@@ -335,5 +335,32 @@ export async function registerRoutes(
     }
   });
 
+  // Admin impersonation — creates a real session for any user. Requires valid admin session token.
+  app.post("/api/admin/impersonate", async (req, res) => {
+    const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
+    if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
+
+    const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
+    if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
+
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "userId required" });
+
+    const { data: user } = await supabaseAdmin
+      .from("users").select("id, name, phone, role").eq("id", userId).single();
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from("sessions")
+      .insert([{ user_id: user.id, expires_at: expiresAt.toISOString() }])
+      .select("token").single();
+
+    if (sessionError || !session) return res.status(500).json({ error: "Failed to create session" });
+
+    const supabaseToken = SUPABASE_JWT_SECRET ? signSupabaseJwt(user.id, user.phone, user.role) : "";
+    res.json({ token: session.token, userId: user.id, phone: user.phone, role: user.role, name: user.name ?? "", supabaseToken });
+  });
+
   return httpServer;
 }

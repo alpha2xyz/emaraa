@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 
 // ── Error Boundary ─────────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component<
@@ -72,9 +72,23 @@ import AdminAuth         from "@/pages/admin-auth";
 // ── Shared Dashboard Shell ─────────────────────────────────────────────────
 function DashboardLayout({ children, role }: { children: React.ReactNode; role?: "owner" | "provider" }) {
   const { lang } = useLang();
+  const [, setLocation] = useLocation();
   const isRTL = lang === "ar";
+  const isImpersonating = !!localStorage.getItem("adminSessionToken");
+
+  function backToAdmin() {
+    localStorage.setItem("userRole", "admin");
+    setLocation("/admin/dashboard");
+  }
+
   return (
     <RequireAuth role={role}>
+      {isImpersonating && (
+        <div className="bg-amber-500 text-white text-xs px-4 py-2 flex items-center justify-between sticky top-0 z-50">
+          <span>Admin view — logged in as {role}</span>
+          <button onClick={backToAdmin} className="underline font-semibold">← Back to Admin</button>
+        </div>
+      )}
       <div
         className="min-h-screen bg-background"
         dir={isRTL ? "rtl" : "ltr"}

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { FileText, Clock, CheckCircle2, Send, AlertCircle, Package } from "lucide-react";
+import { FileText, Clock, CheckCircle2, Send, AlertCircle, Package, Phone, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -26,6 +26,7 @@ export default function ProviderDashboard() {
       completeProfile: "أكمل ملف شركتك أولاً",
       completeProfileDesc: "يجب إكمال معلومات الشركة قبل البدء في تقديم العروض",
       completeNow: "إكمال الآن",
+      phoneDisclosure: "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
     },
     en: {
       title: "Dashboard",
@@ -37,8 +38,11 @@ export default function ProviderDashboard() {
       completeProfile: "Complete Your Company Profile First",
       completeProfileDesc: "You must complete company information before submitting offers",
       completeNow: "Complete Now",
+      phoneDisclosure: "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
     },
   }[lang];
+
+  const userPhone = localStorage.getItem("userPhone") || "";
 
   const { data: providerData, isLoading: providerLoading } = useQuery({
     queryKey: ["/api/provider/profile"],
@@ -79,10 +83,10 @@ export default function ProviderDashboard() {
   });
 
   const stats = [
-    { label: t.available, value: availableRequests?.length || 0, icon: FileText, accent: "#1275E2", iconBg: "#EFF6FF" },
-    { label: t.myOffers, value: myOffers?.length || 0, icon: Send, accent: "#8B3A4B", iconBg: "#FFF1F2" },
-    { label: t.pending, value: myOffers?.filter((o: any) => o.status === "pending").length || 0, icon: Clock, accent: "#C55B00", iconBg: "#FFF7ED" },
-    { label: t.accepted, value: myOffers?.filter((o: any) => o.status === "accepted").length || 0, icon: CheckCircle2, accent: "#15803D", iconBg: "#F0FDF4" },
+    { label: t.available, value: availableRequests?.length || 0, icon: FileText, accent: "#2E4A6B", iconBg: "#EEF2F7" },
+    { label: t.myOffers, value: myOffers?.length || 0, icon: Send, accent: "#7D3040", iconBg: "#FDF0F2" },
+    { label: t.pending, value: myOffers?.filter((o: any) => o.status === "pending").length || 0, icon: Clock, accent: "#C4694A", iconBg: "#FDF3EF" },
+    { label: t.accepted, value: myOffers?.filter((o: any) => o.status === "accepted").length || 0, icon: CheckCircle2, accent: "#6B7C5E", iconBg: "#F3F5F1" },
   ];
 
   const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;
@@ -126,6 +130,23 @@ export default function ProviderDashboard() {
               <p className="text-sm text-gray-900">
                 {lang === "ar" ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة" : "You will be notified once your account is approved by admin"}
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!providerLoading && isProfileComplete && (
+        <div className="rounded-2xl border border-[#B8CCD9] bg-[#EEF2F7]/60 p-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-[#3D6187] flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-[#1A2E42]">{t.phoneDisclosure}</p>
+              {userPhone && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Phone className="h-3.5 w-3.5 text-[#2E4A6B]" />
+                  <span className="text-sm font-semibold text-[#2E4A6B]">{userPhone}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -228,8 +228,8 @@ export default function AuthPage() {
   return (
     <div className="page-enter min-h-screen bg-white flex">
       {/* Left marketing panel — desktop only */}
-      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 flex-col justify-center p-14 text-white" dir="rtl">
-        <Building2 className="w-12 h-12 mb-8 text-blue-200" />
+      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-[#2E4A6B] via-[#243A56] to-[#162534] flex-col justify-center p-14 text-white" dir="rtl">
+        <Building2 className="w-12 h-12 mb-8 text-[#8AAABF]" />
         <h1 className="text-4xl font-extrabold mb-3">عمارة</h1>
         <p className="text-lg text-blue-100 mb-2">
           {lang === "ar" ? "منصة إدارة المرافق العقارية" : "Facility Management Platform"}
@@ -258,7 +258,7 @@ export default function AuthPage() {
         <div className="rounded-[20px] shadow-xl bg-white overflow-hidden">
           <div className="px-6 pt-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
-              <Building2 className="w-8 h-8 text-blue-600" />
+              <Building2 className="w-8 h-8 text-[#2E4A6B]" />
               <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
             </div>
             <p className="text-sm text-gray-500">{getDescription()}</p>
@@ -324,7 +324,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={loading}>
+                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading}>
                   {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
                 </Button>
 
@@ -336,7 +336,7 @@ export default function AuthPage() {
                       setMode(newMode);
                       setLocation(`/auth?role=${role}&mode=${newMode}`);
                     }}
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-sm text-[#2E4A6B] hover:underline"
                   >
                     {mode === "login" ? t.switchToRegister : t.switchToLogin}
                   </button>
@@ -371,7 +371,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white" disabled={loading || otpCode.length < 4}>
+                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading || otpCode.length < 4}>
                   {loading ? t.loading : t.otpVerify}
                 </Button>
 
@@ -379,7 +379,7 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => { setStep("phone"); setOtpCode(""); setError(""); }}
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-sm text-[#2E4A6B] hover:underline"
                   >
                     {t.otpResend}
                   </button>
