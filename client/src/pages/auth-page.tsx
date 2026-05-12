@@ -185,6 +185,8 @@ export default function AuthPage() {
 
       const { token, userId, phone, role: userRole, name: returnedName, supabaseToken } = await res.json();
 
+      localStorage.removeItem("adminSessionToken");
+      localStorage.removeItem("adminId");
       localStorage.setItem("sessionToken", token);
       localStorage.setItem("userId", userId);
       localStorage.setItem("userPhone", phone);
