@@ -129,7 +129,7 @@ const enSections: Section[] = [
 ];
 
 export default function TermsPage() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const isRTL = lang === 'ar';
   const sections = isRTL ? arSections : enSections;
 
@@ -142,12 +142,20 @@ export default function TermsPage() {
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl mx-auto">
-        <Link href="/">
-          <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#2E4A6B] mb-6 transition-colors">
-            {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-            {l.back}
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/">
+            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#2E4A6B] transition-colors">
+              {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+              {l.back}
+            </button>
+          </Link>
+          <button
+            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+            className="text-sm px-3 py-1 rounded-full border border-[#2E4A6B] text-[#2E4A6B] hover:bg-[#2E4A6B] hover:text-white transition-colors"
+          >
+            {lang === 'ar' ? 'EN' : 'عربي'}
           </button>
-        </Link>
+        </div>
 
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{l.title}</h1>
         <p className="text-gray-500 mb-10 text-sm">{l.subtitle}</p>

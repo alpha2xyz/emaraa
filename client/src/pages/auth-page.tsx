@@ -21,6 +21,7 @@ export default function AuthPage() {
   });
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [otpCode, setOtpCode] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // جلب role و mode من URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -326,7 +327,35 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading}>
+                {mode === "register" && (
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                      className="mt-0.5 accent-[#2E4A6B] w-4 h-4 flex-shrink-0"
+                    />
+                    <span className="text-sm text-gray-600 leading-snug">
+                      {lang === "ar" ? (
+                        <>
+                          أوافق على{' '}
+                          <a href="/terms" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">شروط الاستخدام</a>
+                          {' '}و{' '}
+                          <a href="/privacy" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">سياسة الخصوصية</a>
+                        </>
+                      ) : (
+                        <>
+                          I agree to the{' '}
+                          <a href="/terms" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">Terms of Use</a>
+                          {' '}and{' '}
+                          <a href="/privacy" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">Privacy Policy</a>
+                        </>
+                      )}
+                    </span>
+                  </label>
+                )}
+
+                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading || (mode === "register" && !termsAccepted)}>
                   {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
                 </Button>
 
@@ -336,6 +365,7 @@ export default function AuthPage() {
                     onClick={() => {
                       const newMode = mode === "login" ? "register" : "login";
                       setMode(newMode);
+                      setTermsAccepted(false);
                       setLocation(`/auth?role=${role}&mode=${newMode}`);
                     }}
                     className="text-sm text-[#2E4A6B] hover:underline"
