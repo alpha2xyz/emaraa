@@ -22,7 +22,7 @@ export default function OwnerDashboard() {
   });
 
   // 1. جلب العقارات والطلبات بناءً على المستخدم
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading, isError } = useQuery({
     queryKey: ["owner-stats", phone],
     queryFn: async () => {
       if (!phone) return { properties: [], requests: [] };
@@ -102,6 +102,7 @@ export default function OwnerDashboard() {
         <p className="text-sm text-muted-foreground mt-0.5">{today}</p>
       </div>
 
+      {isError && <div className="text-center py-10 text-red-500">{lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}</div>}
       <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* كرت العقارات */}

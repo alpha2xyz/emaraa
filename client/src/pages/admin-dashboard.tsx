@@ -13,12 +13,15 @@ import { useLang } from '../hooks/use-lang';
 import { supabase } from '../lib/supabase';
 import { openSignedPdf } from '../lib/storage';
 import { LanguageToggle } from '../components/LanguageToggle';
+import { useToast } from '@/hooks/use-toast';
+import { StatusBadge } from '@/components/StatusBadge';
 
 export default function AdminDashboard() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const isRTL = lang === 'ar';
+  const { toast } = useToast();
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
 
   const t = lang === 'ar'
@@ -176,7 +179,10 @@ export default function AdminDashboard() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
       body: JSON.stringify({ userId }),
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      toast({ variant: "destructive", title: lang === "ar" ? "فشل تبديل الحساب" : "Impersonation failed" });
+      return;
+    }
     const data = await res.json();
     localStorage.setItem('sessionToken', data.token);
     localStorage.setItem('userId', data.userId);
@@ -277,10 +283,10 @@ export default function AdminDashboard() {
                             </div>
                             {!p.approved && (
                               <div className="flex gap-2 shrink-0">
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" onClick={() => approveMutation.mutate({ id: p.id, approved: true })}>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate({ id: p.id, approved: true })}>
                                   <CheckCircle2 className="h-3 w-3 me-1" />{t.approve}
                                 </Button>
-                                <Button size="sm" variant="destructive" className="h-8" onClick={() => approveMutation.mutate({ id: p.id, approved: false })}>
+                                <Button size="sm" variant="destructive" className="h-8" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate({ id: p.id, approved: false })}>
                                   <XCircle className="h-3 w-3 me-1" />{t.reject}
                                 </Button>
                               </div>
@@ -378,9 +384,7 @@ export default function AdminDashboard() {
                                       ? (lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services")
                                       : (r.service_category === "cleaning" ? t.cleaning : t.maintenance)}
                                   </Badge>
-                                  <Badge variant={r.status === 'completed' ? 'default' : 'outline'} className="text-xs">
-                                    {t.reqStatus[r.status as keyof typeof t.reqStatus] ?? r.status}
-                                  </Badge>
+                                  <StatusBadge status={r.status} lang={lang} />
                                 </div>
                                 <p className="text-sm text-muted-foreground">{(r.properties as any)?.city} · {t.owner}: {(r.properties as any)?.users?.name}</p>
                                 {r.description && <p className="text-xs text-gray-500">{r.description}</p>}

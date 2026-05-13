@@ -258,7 +258,7 @@ export default function ProviderProfile() {
         {/* Approval Status Banner */}
         {existingProvider?.provider && (
           existingProvider.provider.approved ? (
-            <div className="flex items-center gap-3 rounded-xl border-l-4 border-green-500 bg-green-50/80 px-4 py-3 text-green-800 mb-6">
+            <div className="flex items-center gap-3 rounded-xl border-s-4 border-green-500 bg-green-50/80 px-4 py-3 text-green-800 mb-6">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
               <div>
                 <p className="font-semibold">
@@ -270,7 +270,7 @@ export default function ProviderProfile() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3 rounded-xl border-l-4 border-yellow-400 bg-yellow-50/80 px-4 py-3 text-gray-900 mb-6">
+            <div className="flex items-center gap-3 rounded-xl border-s-4 border-yellow-400 bg-yellow-50/80 px-4 py-3 text-gray-900 mb-6">
               <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
               <div>
                 <p className="font-semibold">

@@ -130,7 +130,7 @@ export default function ProviderRequests() {
   const isApproved = providerData?.provider?.approved;
 
   const { data: myOffers } = useQuery({
-    queryKey: ["/api/provider/submitted-offer-ids", providerData?.provider?.id],
+    queryKey: ["/api/provider/submitted-offer-ids"],
     refetchOnMount: "always",
     queryFn: async () => {
       if (!providerData?.provider?.id) return [];
@@ -180,14 +180,14 @@ export default function ProviderRequests() {
   const hasActiveFilters = searchQuery || cityFilter !== "all" || typeFilter !== "all";
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6 space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div>
         <h1 className="text-3xl font-extrabold">{t.title}</h1>
         <p className="text-muted-foreground mt-2">{t.subtitle}</p>
       </div>
 
       {!isProfileComplete && (
-        <div className="flex items-start gap-4 rounded-xl border-l-4 border-orange-400 bg-orange-50/80 px-5 py-4">
+        <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-5 py-4">
           <AlertCircle className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900 mb-1">{t.completeProfile}</h3>

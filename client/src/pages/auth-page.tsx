@@ -3,7 +3,7 @@ import { useLang } from "@/hooks/use-lang";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Building2, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function AuthPage() {
@@ -58,7 +58,7 @@ export default function AuthPage() {
       otpDesc: "تم إرسال رمز التحقق عبر SMS إلى رقم جوالك",
       otpPlaceholder: "أدخل الرمز المكون من 4 أرقام",
       otpVerify: "تحقق",
-      otpResend: "إعادة إرسال الرمز",
+      otpResend: "تغيير رقم الجوال",
       otpInvalid: "رمز التحقق غير صحيح أو منتهي الصلاحية",
       otpSendFailed: "فشل إرسال رمز التحقق، حاول مرة أخرى",
     },
@@ -89,7 +89,7 @@ export default function AuthPage() {
       otpDesc: "A verification code was sent to your mobile number via SMS",
       otpPlaceholder: "Enter 4-digit code",
       otpVerify: "Verify",
-      otpResend: "Resend code",
+      otpResend: "Change phone number",
       otpInvalid: "Invalid or expired verification code",
       otpSendFailed: "Failed to send verification code, try again",
     },
@@ -230,9 +230,9 @@ export default function AuthPage() {
   return (
     <div className="page-enter min-h-screen bg-white flex">
       {/* Left marketing panel — desktop only */}
-      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-[#2E4A6B] via-[#243A56] to-[#162534] flex-col justify-center p-14 text-white" dir="rtl">
+      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-[#2E4A6B] via-[#243A56] to-[#162534] flex-col justify-center p-14 text-white" dir={lang === "ar" ? "rtl" : "ltr"}>
         <Building2 className="w-12 h-12 mb-8 text-[#8AAABF]" />
-        <h1 className="text-4xl font-extrabold mb-3">عمارة</h1>
+        <h1 className="text-4xl font-extrabold mb-3">{lang === "ar" ? "عمارة" : "Emaraa"}</h1>
         <p className="text-lg text-blue-100 mb-2">
           {lang === "ar" ? "منصة إدارة المرافق العقارية" : "Facility Management Platform"}
         </p>
@@ -252,8 +252,8 @@ export default function AuthPage() {
       {/* Form panel */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12" dir={lang === "ar" ? "rtl" : "ltr"}>
         <div className="w-full max-w-md">
-          <button type="button" onClick={() => setLocation("/")} className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
+          <button type="button" onClick={() => setLocation("/")} disabled={loading} className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t.back}
           </button>
 

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
+  ArrowRight,
   Upload,
   FileText,
   Loader2,
@@ -284,16 +285,20 @@ export default function ProviderOfferForm() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>{t.loading}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-[#2E4A6B]" />
+        <p className="text-gray-500">{t.loading}</p>
+        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">{lang === "ar" ? "رجوع" : "Back"}</button>
       </div>
     );
   }
 
   if (!request) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>{t.error}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <AlertCircle className="w-8 h-8 text-red-500" />
+        <p className="text-gray-500">{t.error}</p>
+        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">{lang === "ar" ? "رجوع" : "Back"}</button>
       </div>
     );
   }
@@ -302,7 +307,7 @@ export default function ProviderOfferForm() {
     <div className="min-h-screen bg-[#F9F9FF]" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="container mx-auto p-4 max-w-4xl py-8">
         <Button variant="ghost" onClick={() => setLocation("/dashboard/provider/requests")} className="mb-4">
-          <ArrowLeft className="h-4 w-4 me-2" />
+          {lang === "ar" ? <ArrowRight className="w-4 h-4 me-2" /> : <ArrowLeft className="w-4 h-4 me-2" />}
           {t.back}
         </Button>
 
@@ -313,20 +318,20 @@ export default function ProviderOfferForm() {
 
         {/* Issue 3: early approval gate banner */}
         {isNotApproved && (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border-l-4 border-orange-400 bg-orange-50/80 px-4 py-3">
+          <div className="mb-4 flex items-start gap-3 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-4 py-3">
             <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
             <span className="text-sm text-orange-900 font-medium">{t.notApproved}</span>
           </div>
         )}
 
         {/* Issue 5B: phone disclosure banner */}
-        <div className="mb-4 flex items-start gap-3 rounded-xl border-l-4 border-[#2E4A6B] bg-[#EEF2F7]/80 px-4 py-3">
+        <div className="mb-4 flex items-start gap-3 rounded-xl border-s-4 border-[#2E4A6B] bg-[#EEF2F7]/80 px-4 py-3">
           <AlertCircle className="h-5 w-5 text-[#3D6187] flex-shrink-0 mt-0.5" />
           <span className="text-sm text-[#1A2E42]">{t.phoneDisclosure}</span>
         </div>
 
         {providerData?.provider?.company_name && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border-l-4 border-[#2E4A6B] bg-[#EEF2F7]/80 px-4 py-3 text-sm font-medium text-[#1A2E42]">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border-s-4 border-[#2E4A6B] bg-[#EEF2F7]/80 px-4 py-3 text-sm font-medium text-[#1A2E42]">
             <Building2 className="h-4 w-4 shrink-0" />
             <span>
               {lang === "ar"
@@ -337,7 +342,7 @@ export default function ProviderOfferForm() {
         )}
 
         {/* Scope of services */}
-        <div className={`mb-6 rounded-2xl border-l-4 p-6 ${request.properties?.building_type === 'commercial' ? 'border-[#C4694A] bg-[#FDF3EF]/60' : 'border-[#7D3040] bg-[#FDF0F2]/60'}`}>
+        <div className={`mb-6 rounded-2xl border-s-4 p-6 ${request.properties?.building_type === 'commercial' ? 'border-[#C4694A] bg-[#FDF3EF]/60' : 'border-[#7D3040] bg-[#FDF0F2]/60'}`}>
           <div className={`flex items-center gap-2 font-bold mb-3 ${request.properties?.building_type === 'commercial' ? 'text-[#5A2D1E]' : 'text-[#5A2030]'}`}>
             <ClipboardList className="w-5 h-5" />
             {t.scopeTitle}

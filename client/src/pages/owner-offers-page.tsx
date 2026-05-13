@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
-import { ArrowLeft, FileText, CheckCircle2, XCircle, Building2, Phone } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileText, CheckCircle2, XCircle, Building2, Phone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -122,7 +122,7 @@ export default function OwnerOffersPage() {
     <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-4xl mx-auto">
         <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard/owner/requests')} className="mb-4">
-          <ArrowLeft className="w-4 h-4 me-2" />{t.back}
+          {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}{t.back}
         </Button>
 
         {/* Issue 4: property name + city subtitle */}

@@ -34,6 +34,9 @@ function signSupabaseJwt(sub: string, phone: string, role: string): string {
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+const otpVerifyAttempts = new Map<string, { count: number; resetAt: number }>();
+const adminLoginAttempts = new Map<string, { count: number; resetAt: number }>();
+
 const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
 const authenticaHeaders = {
   "X-Authorization": AUTHENTICA_API_KEY,
@@ -64,6 +67,18 @@ export async function registerRoutes(
   // Admin login route — also creates session so client never calls Supabase directly
   app.post("/api/admin/login", async (req, res) => {
     try {
+      const ip = req.ip || "unknown";
+      const now = Date.now();
+      const loginRecord = adminLoginAttempts.get(ip);
+      if (loginRecord && now < loginRecord.resetAt) {
+        if (loginRecord.count >= 10) {
+          return res.status(429).json({ error: "Too many attempts. Try again later." });
+        }
+        loginRecord.count++;
+      } else {
+        adminLoginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
+      }
+
       const { username, password } = req.body;
       if (!username || !password) {
         return res.status(400).json({ error: "Username and password required" });
@@ -128,11 +143,14 @@ export async function registerRoutes(
       if (!property) {
         return res.status(404).json({ error: "Property not found" });
       }
-      
+      if (property.owner_id !== (req as any).userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
       // Delete associated service requests
       await storage.deleteServiceRequestsByProperty(req.params.id);
       await storage.deleteProperty(req.params.id);
-      
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete property" });
@@ -203,7 +221,10 @@ export async function registerRoutes(
       if (!request) {
         return res.status(404).json({ error: "Service request not found" });
       }
-      
+      if (request.owner_id !== (req as any).userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
       await storage.deleteServiceRequest(req.params.id);
       res.status(204).send();
     } catch (error) {
@@ -240,7 +261,7 @@ export async function registerRoutes(
       if (!r.ok) {
         const body = await r.text();
         console.error("[otp/send] Authentica error:", r.status, body);
-        return res.status(500).json({ error: "Failed to send OTP", detail: `${r.status}: ${body}` });
+        return res.status(500).json({ error: "Failed to send verification code" });
       }
 
       // Record this OTP attempt
@@ -248,14 +269,26 @@ export async function registerRoutes(
       res.json({ success: true });
     } catch (err: any) {
       console.error("[otp/send] exception:", err?.message);
-      res.status(500).json({ error: "Failed to send OTP", detail: err?.message });
+      res.status(500).json({ error: "Failed to send verification code" });
     }
   });
 
   // OTP — Verify SMS OTP via Authentica, create session
   app.post("/api/otp/verify", async (req, res) => {
     try {
-      const { phone, code, mode, role, name } = req.body;
+      const phone = req.body.phone as string;
+      const now = Date.now();
+      const verifyRecord = otpVerifyAttempts.get(phone);
+      if (verifyRecord && now < verifyRecord.resetAt) {
+        if (verifyRecord.count >= 5) {
+          return res.status(429).json({ error: "Too many attempts. Try again later." });
+        }
+        verifyRecord.count++;
+      } else {
+        otpVerifyAttempts.set(phone, { count: 1, resetAt: now + 15 * 60 * 1000 });
+      }
+
+      const { code, mode, role, name } = req.body;
       if (!phone || !code || !mode || !role) {
         return res.status(400).json({ error: "Phone, code, mode, and role are required" });
       }
@@ -327,6 +360,7 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Failed to create session" });
       }
 
+      otpVerifyAttempts.delete(phone);
       const supabaseToken = SUPABASE_JWT_SECRET ? signSupabaseJwt(userId, phone, role) : "";
       res.json({ token: session.token, userId, phone, role, name: userName, supabaseToken });
     } catch (err: any) {

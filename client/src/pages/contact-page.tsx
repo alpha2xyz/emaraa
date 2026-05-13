@@ -12,7 +12,7 @@ export default function ContactPage() {
 
   const contacts = [
     { icon: Mail, label: t.email, value: 'aallfaraidi@gmail.com', href: 'mailto:aallfaraidi@gmail.com', external: false },
-    { icon: Phone, label: t.phone, value: '0543977679', href: 'tel: 0543977679', external: false },
+    { icon: Phone, label: t.phone, value: '0543977679', href: 'tel:0543977679', external: false },
     { icon: MapPin, label: t.location, value: t.loc, href: 'https://maps.google.com/?q=Riyadh,Saudi+Arabia', external: true },
   ];
 

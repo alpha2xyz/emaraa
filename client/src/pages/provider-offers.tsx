@@ -131,7 +131,7 @@ export default function ProviderOffers() {
               {userPhone && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Phone className="h-3.5 w-3.5 text-[#2E4A6B]" />
-                  <span className="text-sm font-semibold text-blue-700">{userPhone}</span>
+                  <span className="text-sm font-semibold text-blue-700" dir="ltr">{userPhone}</span>
                 </div>
               )}
             </div>

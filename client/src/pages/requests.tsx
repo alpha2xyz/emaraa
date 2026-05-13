@@ -60,7 +60,7 @@ export default function Requests() {
   const t = content[lang];
 
   // جلب طلبات المستخدم
-  const { data: requests, isLoading } = useQuery({
+  const { data: requests, isLoading, isError } = useQuery({
     queryKey: ["/api/requests"],
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
@@ -162,6 +162,14 @@ export default function Requests() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+        <div className="text-center py-10 text-red-500">{lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}</div>
+      </div>
+    );
+  }
+
   return (
     <>
     <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -232,7 +240,7 @@ export default function Requests() {
                           <div className="flex items-center gap-2 text-gray-900">
                             <Building2 className="w-5 h-5 text-[#2E4A6B]" />
                             <span className="font-semibold">{t.property}:</span>
-                            <span>{request.properties?.name || "N/A"}</span>
+                            <span>{request.properties?.name || (lang === "ar" ? "غير محدد" : "N/A")}</span>
                           </div>
 
                           {/* Date */}

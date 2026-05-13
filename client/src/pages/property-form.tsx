@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Save, Loader2, ArrowLeft } from "lucide-react";
+import { Building2, Save, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -174,7 +174,7 @@ export default function PropertyForm() {
         onClick={() => setLocation("/dashboard/owner/properties")}
         className="mb-4"
       >
-        <ArrowLeft className="h-4 w-4 me-2" />
+        {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
         {t.back}
       </Button>
 
@@ -186,9 +186,6 @@ export default function PropertyForm() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>{isEdit ? t.titleEdit : t.titleAdd}</CardTitle>
-        </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -237,6 +234,7 @@ export default function PropertyForm() {
                   <SelectContent>
                     <SelectItem value="residential">{t.residential}</SelectItem>
                     <SelectItem value="commercial">{t.commercial}</SelectItem>
+                    <SelectItem value="mixed">{lang === "ar" ? "مختلط" : "Mixed"}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

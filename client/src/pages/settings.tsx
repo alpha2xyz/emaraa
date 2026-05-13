@@ -101,7 +101,7 @@ export default function Settings() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <SettingsIcon className="w-8 h-8 text-gray-700" />

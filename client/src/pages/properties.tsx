@@ -314,6 +314,7 @@ export default function Properties() {
               <AlertDialogAction
                 onClick={() => deleteId && deleteMutation.mutate(deleteId)}
                 className="bg-red-600 hover:bg-red-700"
+                disabled={deleteMutation.isPending}
               >
                 {t.confirmDelete}
               </AlertDialogAction>

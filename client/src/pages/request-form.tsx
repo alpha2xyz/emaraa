@@ -1,13 +1,13 @@
 
 import type React from 'react'
 import { useState, useEffect } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useLocation, useRoute } from "wouter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileText, Building2, Save, Loader2, ArrowLeft, AlertCircle, ClipboardList } from "lucide-react"
+import { FileText, Building2, Save, Loader2, ArrowLeft, ArrowRight, AlertCircle, ClipboardList } from "lucide-react"
 import { useLang } from "@/hooks/use-lang"
 import { supabase } from "../lib/supabase"
 import { useToast } from "@/hooks/use-toast"
@@ -16,6 +16,7 @@ export default function RequestForm() {
   const { lang } = useLang()
   const [, setLocation] = useLocation()
   const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [, params] = useRoute("/dashboard/owner/requests/:id/edit")
   const requestId = params?.id
   const [formData, setFormData] = useState({
@@ -146,6 +147,7 @@ export default function RequestForm() {
     },
     onSuccess: () => {
       toast({ title: requestId ? t.updateSuccess : t.success, variant: "default" })
+      queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
       setLocation("/dashboard/owner/requests")
     },
     onError: (error: any) => {
@@ -169,7 +171,7 @@ export default function RequestForm() {
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
           <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/owner/requests")} className="mb-4">
-            <ArrowLeft className="w-4 h-4 me-2" />
+            {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t.cancel}
           </Button>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">

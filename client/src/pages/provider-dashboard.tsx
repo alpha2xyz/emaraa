@@ -44,7 +44,7 @@ export default function ProviderDashboard() {
 
   const userPhone = localStorage.getItem("userPhone") || "";
 
-  const { data: providerData, isLoading: providerLoading } = useQuery({
+  const { data: providerData, isLoading: providerLoading, isError } = useQuery({
     queryKey: ["/api/provider/profile"],
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
@@ -91,6 +91,14 @@ export default function ProviderDashboard() {
 
   const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;
   const isApproved = providerData?.provider?.approved;
+
+  if (isError) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        {lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}
+      </div>
+    );
+  }
 
   return (
     <div className="page-enter container mx-auto p-4 space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -144,7 +152,7 @@ export default function ProviderDashboard() {
               {userPhone && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Phone className="h-3.5 w-3.5 text-[#2E4A6B]" />
-                  <span className="text-sm font-semibold text-[#2E4A6B]">{userPhone}</span>
+                  <span className="text-sm font-semibold text-[#2E4A6B]" dir="ltr">{userPhone}</span>
                 </div>
               )}
             </div>
@@ -156,9 +164,9 @@ export default function ProviderDashboard() {
         {stats.map(({ label, value, icon: Icon, accent, iconBg }) => (
           <div key={label} className="bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-shadow" style={{ borderTop: `4px solid ${accent}` }}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <p className="text-3xl font-bold">{value}</p>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">{label}</p>
+                <p className="text-xl font-bold">{value}</p>
               </div>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: iconBg }}>
                 <Icon className="h-5 w-5" style={{ color: accent }} />
