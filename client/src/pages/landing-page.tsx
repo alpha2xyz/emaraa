@@ -165,6 +165,8 @@ export default function LandingPage() {
       contactUs: "اتصل بنا",
       joinAsProvider: "انضم كمزود",
       viewDemo: "دليل المنصة",
+      termsOfUse: "شروط الاستخدام",
+      privacyPolicy: "سياسة الخصوصية",
       footerTagline: "عمارتك، مُدارة بشكل مثالي",
       footerCopyright: "© 2026 عِمارة. جميع الحقوق محفوظة.",
     },
@@ -201,6 +203,8 @@ export default function LandingPage() {
       contactUs: "Contact Us",
       joinAsProvider: "Join as Provider",
       viewDemo: "Platform Guide",
+      termsOfUse: "Terms of Use",
+      privacyPolicy: "Privacy Policy",
       footerTagline: "Your Building, Perfectly Managed",
       footerCopyright: "© 2026 EMARAA. All rights reserved.",
     },
@@ -424,6 +428,12 @@ export default function LandingPage() {
                 </li>
                 <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
                   <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer">{t.viewDemo}</a>
+                </li>
+                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
+                  <Link href="/terms">{t.termsOfUse}</Link>
+                </li>
+                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
+                  <Link href="/privacy">{t.privacyPolicy}</Link>
                 </li>
               </ul>
             </div>
