@@ -110,8 +110,6 @@ export default function Requests() {
     },
   });
 
-  const handleDelete = (requestId: string) => setDeleteId(requestId);
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -176,7 +174,7 @@ export default function Requests() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-3">
             <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-[#2E4A6B]" />
             {t.title}
           </h1>
@@ -289,7 +287,7 @@ export default function Requests() {
                           variant="outline"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:border-red-300"
-                          onClick={() => handleDelete(request.id)}
+                          onClick={() => setDeleteId(request.id)}
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="w-4 h-4 me-2" />

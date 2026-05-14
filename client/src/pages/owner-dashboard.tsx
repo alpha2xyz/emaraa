@@ -1,10 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Building2,
-  FileText,
-  Plus,
-  LayoutDashboard,
-} from "lucide-react";
+import { Building2, FileText, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -22,7 +17,7 @@ export default function OwnerDashboard() {
   });
 
   // 1. جلب العقارات والطلبات بناءً على المستخدم
-  const { data: dashboardData, isLoading, isError } = useQuery({
+  const { data: dashboardData, isError } = useQuery({
     queryKey: ["owner-stats", phone],
     queryFn: async () => {
       if (!phone) return { properties: [], requests: [] };
@@ -149,7 +144,7 @@ export default function OwnerDashboard() {
         {/* قائمة العقارات الأخيرة */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{content.myProperties}</CardTitle>
+            <CardTitle className="font-extrabold">{content.myProperties}</CardTitle>
             <Link href="/dashboard/owner/properties">
               <Button variant="ghost" size="sm">
                 {content.viewAll}
@@ -187,7 +182,7 @@ export default function OwnerDashboard() {
         {/* قائمة الطلبات الأخيرة */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{content.myRequests}</CardTitle>
+            <CardTitle className="font-extrabold">{content.myRequests}</CardTitle>
             <Link href="/dashboard/owner/requests">
               <Button variant="ghost" size="sm">
                 {content.viewAll}

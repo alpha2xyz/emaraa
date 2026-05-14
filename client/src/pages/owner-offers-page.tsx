@@ -143,12 +143,30 @@ export default function OwnerOffersPage() {
             {[1, 2].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
           </div>
         ) : !offers?.length ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">{t.noOffers}</p>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center text-center py-16 px-6">
+            <svg width="96" height="96" viewBox="0 0 96 96" fill="none" className="mb-6 opacity-80">
+              <rect x="16" y="8" width="52" height="68" rx="6" fill="#EEF2F7" stroke="#B8CCD9" strokeWidth="2"/>
+              <rect x="24" y="20" width="36" height="4" rx="2" fill="#B8CCD9"/>
+              <rect x="24" y="30" width="28" height="4" rx="2" fill="#D1DCE9"/>
+              <rect x="24" y="40" width="20" height="4" rx="2" fill="#D1DCE9"/>
+              <circle cx="68" cy="68" r="20" fill="#2E4A6B"/>
+              <path d="M60 68h16M68 60v16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">
+              {lang === 'ar' ? 'لا توجد عروض بعد' : 'No offers yet'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
+              {lang === 'ar'
+                ? 'سيظهر هنا أي عرض يقدمه مزودو الخدمات على طلبك. تأكد من أن طلبك منشور ومرئي للمزودين.'
+                : 'Any offers submitted by providers will appear here. Make sure your request is published and visible to providers.'}
+            </p>
+            <a
+              href="/dashboard/owner/requests"
+              className="inline-flex items-center gap-2 rounded-full bg-[#2E4A6B] text-white text-sm font-medium px-5 py-2.5 hover:bg-[#243A56] transition-colors"
+            >
+              {lang === 'ar' ? '← طلباتي' : 'My Requests →'}
+            </a>
+          </div>
         ) : (
           <div className="space-y-4">
             {offers.map((offer: any) => (

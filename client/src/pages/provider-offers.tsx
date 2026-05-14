@@ -62,13 +62,12 @@ export default function ProviderOffers() {
     queryKey: ["/api/provider/all-offers"],
     refetchOnMount: "always",
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
+      if (!userPhone) throw new Error("Not logged in");
 
       const { data: user } = await supabase
         .from("users")
         .select("id")
-        .eq("phone", phone)
+        .eq("phone", userPhone)
         .single();
 
       if (!user) throw new Error("User not found");
@@ -97,8 +96,6 @@ export default function ProviderOffers() {
       return data ?? [];
     },
   });
-
-  const statusBadge = (status: string) => <StatusBadge status={status} lang={lang} />;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
@@ -188,7 +185,7 @@ export default function ProviderOffers() {
                             ? (lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services")
                             : (offer.requests?.service_category === "cleaning" ? t.cleaning : t.maintenance)}
                         </span>
-                        {statusBadge(offer.status)}
+                        <StatusBadge status={offer.status} lang={lang} />
                       </div>
 
                       {/* Property */}

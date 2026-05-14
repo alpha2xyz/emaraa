@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -59,7 +60,7 @@ export default function Settings() {
     setUserRole(localStorage.getItem("userRole"));
   }, []);
 
-  const { data: userData } = useQuery({
+  const { data: userData, isLoading } = useQuery({
     queryKey: ["/api/user/profile"],
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
@@ -120,12 +121,20 @@ export default function Settings() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">{t.name}</Label>
-            <Input id="name" value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} />
+            {isLoading ? (
+              <Skeleton className="h-10 w-full rounded-xl" />
+            ) : (
+              <Input id="name" value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} />
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="phone">{t.phone}</Label>
-            <Input id="phone" value={profileData.phone} disabled className="bg-gray-100" />
+            {isLoading ? (
+              <Skeleton className="h-10 w-full rounded-xl" />
+            ) : (
+              <Input id="phone" value={profileData.phone} disabled className="bg-gray-100" />
+            )}
           </div>
 
           {userRole === "provider" && (
@@ -133,11 +142,19 @@ export default function Settings() {
               <Separator className="my-2" />
               <div className="space-y-2">
                 <Label htmlFor="company_name">{t.companyName}</Label>
-                <Input id="company_name" value={profileData.company_name} onChange={(e) => setProfileData({ ...profileData, company_name: e.target.value })} />
+                {isLoading ? (
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                ) : (
+                  <Input id="company_name" value={profileData.company_name} onChange={(e) => setProfileData({ ...profileData, company_name: e.target.value })} />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">{t.city}</Label>
-                <Input id="city" value={profileData.city} onChange={(e) => setProfileData({ ...profileData, city: e.target.value })} />
+                {isLoading ? (
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                ) : (
+                  <Input id="city" value={profileData.city} onChange={(e) => setProfileData({ ...profileData, city: e.target.value })} />
+                )}
               </div>
               <Button variant="outline" className="w-full" onClick={() => setLocation("/dashboard/provider/profile")}>
                 <Building2 className="w-4 h-4 me-2" />
@@ -146,7 +163,7 @@ export default function Settings() {
             </>
           )}
 
-          <Button onClick={() => mutation.mutate()} className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={mutation.isPending}>
+          <Button onClick={() => mutation.mutate()} className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={mutation.isPending || isLoading}>
             {mutation.isPending ? (
               <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.saving}</>
             ) : (

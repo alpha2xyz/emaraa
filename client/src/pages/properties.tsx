@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Properties() {
   const { lang } = useLang();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -176,12 +175,21 @@ export default function Properties() {
             </h1>
             <p className="text-gray-600 mt-2">{t.subtitle}</p>
           </div>
-          <Link href="/dashboard/owner/properties/new">
-            <Button className="bg-[#2E4A6B] hover:bg-[#243A56] text-white">
-              <Plus className="w-5 h-5 me-2" />
-              {t.addNew}
-            </Button>
-          </Link>
+          {!properties?.length && (
+            <Link href="/dashboard/owner/properties/new">
+              <Button className="bg-[#2E4A6B] hover:bg-[#243A56] text-white">
+                <Plus className="w-5 h-5 me-2" />
+                {t.addNew}
+              </Button>
+            </Link>
+          )}
+          {(properties?.length ?? 0) > 0 && (
+            <p className="text-sm text-gray-500 bg-gray-50 rounded-xl px-4 py-2 border border-gray-200">
+              {lang === 'ar'
+                ? 'عِماره تسمح بعقار واحد لكل حساب في المرحلة الحالية'
+                : 'Emaraa allows one property per account in the current phase'}
+            </p>
+          )}
         </div>
 
         {/* Loading */}

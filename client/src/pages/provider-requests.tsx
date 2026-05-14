@@ -205,7 +205,7 @@ export default function ProviderRequests() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 font-extrabold">
             <Filter className="h-5 w-5" />
             {t.searchAndFilter}
           </CardTitle>

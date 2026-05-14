@@ -23,6 +23,8 @@ export default function AdminDashboard() {
   const isRTL = lang === 'ar';
   const { toast } = useToast();
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
+  const [newAdmin, setNewAdmin] = useState({ username: '', password: '' });
+  const [adminCreateLoading, setAdminCreateLoading] = useState(false);
 
   const t = lang === 'ar'
     ? {
@@ -108,6 +110,7 @@ export default function AdminDashboard() {
       ]);
       return { users: users.count ?? 0, properties: properties.count ?? 0, requests: requests.count ?? 0, providers: providers.count ?? 0 };
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Users (owners) ─────────────────────────────────────────────────────────
@@ -122,6 +125,7 @@ export default function AdminDashboard() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Providers ──────────────────────────────────────────────────────────────
@@ -135,6 +139,7 @@ export default function AdminDashboard() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Properties ─────────────────────────────────────────────────────────────
@@ -148,6 +153,7 @@ export default function AdminDashboard() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Requests + Offers ──────────────────────────────────────────────────────
@@ -161,6 +167,7 @@ export default function AdminDashboard() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Approve/Reject ─────────────────────────────────────────────────────────
@@ -199,6 +206,30 @@ export default function AdminDashboard() {
     localStorage.removeItem('adminSessionToken');
     setLocation('/admin');
   }
+
+  const handleCreateAdmin = async () => {
+    if (!newAdmin.username.trim() || !newAdmin.password.trim()) return;
+    setAdminCreateLoading(true);
+    try {
+      const token = localStorage.getItem('adminSessionToken');
+      const res = await fetch('/api/admin/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ username: newAdmin.username, password: newAdmin.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'failed');
+      toast({ title: 'تم إنشاء المشرف بنجاح', description: `اسم المستخدم: ${newAdmin.username}` });
+      setNewAdmin({ username: '', password: '' });
+    } catch (err: any) {
+      toast({
+        title: err.message === 'username_taken' ? 'اسم المستخدم مستخدم بالفعل' : 'حدث خطأ',
+        variant: 'destructive',
+      });
+    } finally {
+      setAdminCreateLoading(false);
+    }
+  };
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -430,6 +461,37 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* ── Create Admin ──────────────────────────────────────────── */}
+        <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#2E4A6B]" />
+            إضافة مشرف جديد
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-3 max-w-lg">
+            <input
+              type="text"
+              placeholder="اسم المستخدم"
+              value={newAdmin.username}
+              onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E4A6B]/20"
+            />
+            <input
+              type="password"
+              placeholder="كلمة المرور"
+              value={newAdmin.password}
+              onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E4A6B]/20"
+            />
+            <button
+              onClick={handleCreateAdmin}
+              disabled={adminCreateLoading || !newAdmin.username || !newAdmin.password}
+              className="px-5 py-2.5 bg-[#2E4A6B] text-white rounded-xl text-sm font-medium hover:bg-[#243A56] disabled:opacity-50 transition-colors whitespace-nowrap"
+            >
+              {adminCreateLoading ? '...' : 'إنشاء'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

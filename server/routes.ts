@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { createHmac } from "crypto";
+import bcrypt from "bcryptjs";
 import { storage } from "./storage.js";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
@@ -34,7 +35,6 @@ function signSupabaseJwt(sub: string, phone: string, role: string): string {
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-const otpVerifyAttempts = new Map<string, { count: number; resetAt: number }>();
 const adminLoginAttempts = new Map<string, { count: number; resetAt: number }>();
 
 const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
@@ -126,6 +126,15 @@ export async function registerRoutes(
 
   app.post("/api/properties", requireSession, async (req, res) => {
     try {
+      // Server-side 1-property-per-owner limit
+      const { count: propertyCount } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", (req as any).userId);
+      if ((propertyCount ?? 0) >= 1) {
+        return res.status(400).json({ error: "limit_reached" });
+      }
+
       const data = insertPropertySchema.parse(req.body);
       const property = await storage.createProperty(data);
       res.status(201).json(property);
@@ -181,6 +190,16 @@ export async function registerRoutes(
 
   app.post("/api/requests", requireSession, async (req, res) => {
     try {
+      // Block new request if owner already has an accepted offer
+      const { count: acceptedCount } = await supabase
+        .from("requests")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", (req as any).userId)
+        .eq("status", "accepted");
+      if ((acceptedCount ?? 0) >= 1) {
+        return res.status(400).json({ error: "accepted_exists" });
+      }
+
       const data = insertRequestSchema.parse(req.body);
       res.status(201).json(data);
     } catch (error) {
@@ -277,15 +296,16 @@ export async function registerRoutes(
   app.post("/api/otp/verify", async (req, res) => {
     try {
       const phone = req.body.phone as string;
-      const now = Date.now();
-      const verifyRecord = otpVerifyAttempts.get(phone);
-      if (verifyRecord && now < verifyRecord.resetAt) {
-        if (verifyRecord.count >= 5) {
-          return res.status(429).json({ error: "Too many attempts. Try again later." });
-        }
-        verifyRecord.count++;
-      } else {
-        otpVerifyAttempts.set(phone, { count: 1, resetAt: now + 15 * 60 * 1000 });
+
+      // Rate limit: max 5 OTP verify attempts per phone per 15 minutes (DB-backed, survives cold starts)
+      const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { count: verifyCount } = await supabaseAdmin
+        .from("otp_rate_limits")
+        .select("phone", { count: "exact", head: true })
+        .eq("phone", phone)
+        .gte("created_at", fifteenMinAgo);
+      if ((verifyCount ?? 0) >= 5) {
+        return res.status(429).json({ error: "Too many attempts. Try again later." });
       }
 
       const { code, mode, role, name } = req.body;
@@ -303,7 +323,11 @@ export async function registerRoutes(
         body: JSON.stringify({ phone: e164, otp: code }),
       });
 
-      if (!r.ok) return res.status(400).json({ error: "Invalid OTP" });
+      if (!r.ok) {
+        // Record failed verify attempt in DB so rate limit persists across cold starts
+        await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+        return res.status(400).json({ error: "Invalid OTP" });
+      }
 
       // OTP verified — create or find user
       let userId: string;
@@ -360,7 +384,6 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Failed to create session" });
       }
 
-      otpVerifyAttempts.delete(phone);
       const supabaseToken = SUPABASE_JWT_SECRET ? signSupabaseJwt(userId, phone, role) : "";
       res.json({ token: session.token, userId, phone, role, name: userName, supabaseToken });
     } catch (err: any) {
@@ -394,6 +417,51 @@ export async function registerRoutes(
 
     const supabaseToken = SUPABASE_JWT_SECRET ? signSupabaseJwt(user.id, user.phone, user.role) : "";
     res.json({ token: session.token, userId: user.id, phone: user.phone, role: user.role, name: user.name ?? "", supabaseToken });
+  });
+
+  // Create a new admin account. Requires a valid admin session token.
+  app.post("/api/admin/create", async (req, res) => {
+    try {
+      const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
+      if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
+
+      const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
+      if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
+
+      const { username, password } = req.body;
+      if (!username || typeof username !== "string" || !username.trim()) {
+        return res.status(400).json({ error: "Username is required" });
+      }
+      if (!password || typeof password !== "string" || !password.trim()) {
+        return res.status(400).json({ error: "Password is required" });
+      }
+
+      // Check for duplicate username
+      const { data: existing } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("username", username.trim())
+        .maybeSingle();
+      if (existing) {
+        return res.status(400).json({ error: "username_taken" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      const { error: insertError } = await supabaseAdmin
+        .from("admins")
+        .insert([{ username: username.trim(), password_hash: hashedPassword }]);
+
+      if (insertError) {
+        console.error("[admin/create] insert error:", insertError);
+        return res.status(500).json({ error: "Failed to create admin" });
+      }
+
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("[admin/create] exception:", err?.message);
+      res.status(500).json({ error: "Failed to create admin" });
+    }
   });
 
   return httpServer;

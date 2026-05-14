@@ -32,6 +32,7 @@ export default function ProviderOfferForm() {
 
   const [offerFile, setOfferFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
+  const [phoneConsent, setPhoneConsent] = useState(false);
 
   const content = {
     ar: {
@@ -96,6 +97,8 @@ export default function ProviderOfferForm() {
       residential: "سكني",
       notApproved: "حسابك لم يتم قبوله بعد من قِبل الإدارة — لا يمكنك تقديم عروض حتى يتم القبول.",
       phoneDisclosure: "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
+      invalidFileType: "يجب أن يكون الملف بصيغة PDF فقط",
+      fileTooLarge: "حجم الملف يتجاوز 10 ميغابايت",
     },
     en: {
       title: "Submit Offer",
@@ -159,6 +162,8 @@ export default function ProviderOfferForm() {
       residential: "Residential",
       notApproved: "Your account has not been approved by admin yet — you cannot submit offers until approved.",
       phoneDisclosure: "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
+      invalidFileType: "Only PDF files are accepted",
+      fileTooLarge: "File size exceeds 10MB",
     },
   };
 
@@ -240,6 +245,13 @@ export default function ProviderOfferForm() {
         .eq("provider_id", providerData.provider.id);
       if ((existingCount ?? 0) > 0) throw new Error("already_submitted");
 
+      if (!['application/pdf'].includes(offerFile.type) && !offerFile.name.toLowerCase().endsWith('.pdf')) {
+        throw new Error('invalid_file_type')
+      }
+      if (offerFile.size > 10 * 1024 * 1024) {
+        throw new Error('file_too_large')
+      }
+
       const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("provider-offers")
@@ -268,6 +280,8 @@ export default function ProviderOfferForm() {
       if (import.meta.env.DEV) console.error("Offer submission error:", error);
       let errorMessage = t.error;
       if (error.message === "no_file") errorMessage = t.errorFile;
+      else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
+      else if (error.message === "file_too_large") errorMessage = t.fileTooLarge;
       else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
       else if (error.message === "provider_not_found" || error.message === "profile_incomplete")
         errorMessage = lang === "ar" ? "يرجى إكمال ملف شركتك أولاً" : "Please complete your company profile first";
@@ -324,10 +338,20 @@ export default function ProviderOfferForm() {
           </div>
         )}
 
-        {/* Issue 5B: phone disclosure banner */}
-        <div className="mb-4 flex items-start gap-3 rounded-xl border-s-4 border-[#2E4A6B] bg-[#EEF2F7]/80 px-4 py-3">
-          <AlertCircle className="h-5 w-5 text-[#3D6187] flex-shrink-0 mt-0.5" />
-          <span className="text-sm text-[#1A2E42]">{t.phoneDisclosure}</span>
+        {/* Issue 5B: phone consent checkbox */}
+        <div className="flex items-start gap-3 rounded-xl border border-[#B8CCD9] bg-[#EEF2F7]/60 px-4 py-3 mb-4">
+          <input
+            type="checkbox"
+            id="phoneConsent"
+            checked={phoneConsent}
+            onChange={(e) => setPhoneConsent(e.target.checked)}
+            className="mt-1 h-4 w-4 accent-[#2E4A6B] flex-shrink-0 cursor-pointer"
+          />
+          <label htmlFor="phoneConsent" className="text-sm text-[#1A2E42] cursor-pointer leading-relaxed">
+            {lang === 'ar'
+              ? 'أوافق على مشاركة رقم جوالي المسجّل مع مالك العقار في حال قبول عرضي'
+              : 'I agree to share my registered phone number with the property owner if my offer is accepted'}
+          </label>
         </div>
 
         {providerData?.provider?.company_name && (
@@ -487,7 +511,7 @@ export default function ProviderOfferForm() {
                   <Button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
-                    disabled={mutation.isPending || !offerFile || !!isNotApproved}
+                    disabled={mutation.isPending || !offerFile || !!isNotApproved || !phoneConsent}
                   >
                     {mutation.isPending ? (
                       <><Loader2 className="h-4 w-4 me-2 animate-spin" />{t.submitting}</>
