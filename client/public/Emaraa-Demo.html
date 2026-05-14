@@ -1,1241 +1,190 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<title>عِمارة – دليل المنصة</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل المستخدم — منصة عِماره</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-  * { font-family: 'Tajawal', sans-serif; box-sizing: border-box; }
-  @page { size: A4 portrait; margin: 0; }
-  body { margin: 0; padding: 0; background: #e5e7eb; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
+body { background: #F0F2F5; color: #1A2535; direction: rtl; }
 
-  /* Each printed page */
-  .slide {
-    width: 210mm;
-    height: 297mm;
-    background: white;
-    margin: 0 auto 12px;
-    overflow: hidden;
-    position: relative;
-    page-break-after: always;
-    page-break-inside: avoid;
-  }
+.hero {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  color: #fff;
+  text-align: center;
+  padding: 52px 24px 40px;
+}
+.hero h1 { font-size: 28pt; font-weight: 800; margin-bottom: 8px; }
+.hero p { font-size: 11pt; opacity: .8; }
+.hero-roles { display: flex; justify-content: center; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+.role-chip { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 16px; font-size: 9.5pt; font-weight: 600; }
 
-  /* Browser chrome frame */
-  .browser-chrome {
-    background: #374151;
-    padding: 8px 14px 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-  .browser-dots { display: flex; gap: 5px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .dot-r { background: #ef4444; }
-  .dot-y { background: #f59e0b; }
-  .dot-g { background: #22c55e; }
-  .browser-url {
-    flex: 1;
-    background: #1f2937;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 11px;
-    color: #9ca3af;
-    direction: ltr;
-    font-family: monospace;
-  }
-  .browser-content {
-    flex: 1;
-    overflow: hidden;
-  }
+.wrap { max-width: 780px; margin: 0 auto; padding: 32px 16px 60px; }
 
-  /* Cover slide specifics */
-  .cover-gradient {
-    background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #0ea5e9 100%);
-  }
+.section { background: #fff; border-radius: 16px; margin-bottom: 22px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.section-header { padding: 18px 24px; display: flex; align-items: center; gap: 12px; }
+.section-header.owner  { background: #EEF2F7; }
+.section-header.provider { background: #F0FDF4; }
+.section-header.admin  { background: #FFF7ED; }
+.section-icon { font-size: 22pt; }
+.section-title { font-size: 14pt; font-weight: 800; }
+.section-header.owner   .section-title { color: #2E4A6B; }
+.section-header.provider .section-title { color: #166534; }
+.section-header.admin   .section-title { color: #92400E; }
+.section-sub { font-size: 9pt; color: #6B7C5E; margin-top: 2px; }
 
-  /* Section label */
-  .section-badge {
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    margin-bottom: 2px;
-  }
+.steps { padding: 20px 24px 24px; }
+.step { display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start; }
+.step:last-child { margin-bottom: 0; }
+.num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13pt; font-weight: 800; color: #fff; flex-shrink: 0; margin-top: 2px; }
+.num.o { background: #2E4A6B; }
+.num.p { background: #166534; }
+.num.a { background: #92400E; }
+.step-body strong { display: block; font-size: 10.5pt; font-weight: 700; margin-bottom: 3px; }
+.step-body span { font-size: 9.5pt; color: #5A6880; line-height: 1.6; }
 
-  /* Stat card */
-  .stat-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px;
-    background: white;
-  }
+.tip { background: #F8FAFC; border-right: 4px solid #2563eb; border-radius: 0 10px 10px 0; padding: 11px 14px; margin: 4px 0 0; font-size: 9pt; color: #2E4A6B; }
+.tip strong { display: block; margin-bottom: 2px; font-size: 8.5pt; color: #1d4ed8; }
 
-  /* Request card */
-  .req-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px;
-    background: white;
-    margin-bottom: 10px;
-  }
+.divider { height: 1px; background: #EEF2F7; margin: 14px 0; }
 
-  /* Badge */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 2px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-  }
+.url-bar { background: #1F2937; border-radius: 10px; padding: 10px 16px; text-align: center; margin-bottom: 22px; }
+.url-bar span { font-size: 11pt; color: #60a5fa; font-weight: 700; direction: ltr; display: inline-block; }
 
-  /* Step circle */
-  .step-circle {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: #2563eb;
-    color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 16px;
-    flex-shrink: 0;
-  }
-
-  /* Print: hide screen chrome */
-  @media print {
-    body { background: white; }
-    .slide { margin: 0; box-shadow: none; }
-  }
-
-  /* Scrollbar hidden inside frames */
-  .browser-content::-webkit-scrollbar { display: none; }
-
-  /* Page header inside app */
-  .app-topbar {
-    background: #1f2937;
-    color: white;
-    padding: 10px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .app-topbar .logo { font-size: 18px; font-weight: 800; color: #60a5fa; }
-  .app-topbar .nav-btn {
-    padding: 4px 12px;
-    border: 1px solid #4b5563;
-    border-radius: 6px;
-    font-size: 12px;
-    color: white;
-    background: transparent;
-  }
-
-  /* Inner content scroll container */
-  .inner-scroll {
-    height: calc(100% - 40px);
-    overflow: hidden;
-  }
-
-  /* Property card */
-  .prop-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px;
-    background: white;
-    margin-bottom: 10px;
-  }
-
-  /* Offer card */
-  .offer-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 14px;
-    background: white;
-    margin-bottom: 10px;
-  }
+.footer { text-align: center; font-size: 8.5pt; color: #9CA3AF; padding-top: 8px; }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 0 — COVER PAGE
-═══════════════════════════════════════════════════════════ -->
-<div class="slide cover-gradient flex flex-col items-center justify-center text-white text-center px-16">
-  <!-- Logo mark -->
-  <div class="mb-8">
-    <div style="width:100px;height:100px;background:rgba(255,255,255,0.15);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-        <rect x="8" y="28" width="40" height="20" rx="3" fill="white" opacity="0.9"/>
-        <polygon points="28,6 4,30 52,30" fill="white" opacity="0.7"/>
-        <rect x="22" y="34" width="12" height="14" rx="2" fill="#1d4ed8"/>
-      </svg>
-    </div>
-    <h1 style="font-size:52px;font-weight:800;letter-spacing:-1px;margin:0;">عِمارة</h1>
-    <p style="font-size:14px;opacity:0.75;margin-top:4px;letter-spacing:2px;">EMARAA PLATFORM</p>
-  </div>
-
-  <div style="width:60px;height:3px;background:rgba(255,255,255,0.4);border-radius:2px;margin:0 auto 32px;"></div>
-
-  <h2 style="font-size:28px;font-weight:700;margin:0 0 12px;">دليل المنصة التعريفي</h2>
-  <p style="font-size:15px;opacity:0.8;line-height:1.7;max-width:440px;margin:0 auto 40px;">
-    منصة تربط ملاك العقارات بمزودي خدمات النظافة وإدارة المرافق الموثوقين — انشر احتياجاتك، واستلم عروضاً تنافسية، وتعاقد مع الأفضل.
-  </p>
-
-  <!-- Two journey pills -->
-  <div style="display:flex;gap:16px;justify-content:center;margin-bottom:48px;">
-    <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:12px;padding:14px 28px;text-align:center;">
-      <div style="font-size:22px;margin-bottom:4px;">🏢</div>
-      <div style="font-size:13px;font-weight:700;">رحلة مالك العقار</div>
-      <div style="font-size:11px;opacity:0.7;margin-top:2px;">6 شاشات</div>
-    </div>
-    <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:12px;padding:14px 28px;text-align:center;">
-      <div style="font-size:22px;margin-bottom:4px;">🔧</div>
-      <div style="font-size:13px;font-weight:700;">رحلة مزود الخدمة</div>
-      <div style="font-size:11px;opacity:0.7;margin-top:2px;">5 شاشات</div>
-    </div>
-  </div>
-
-  <!-- Page list -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 32px;text-align:right;font-size:12px;opacity:0.8;max-width:500px;width:100%;">
-    <div>① الصفحة الرئيسية</div>
-    <div>⑦ تسجيل مزود الخدمة</div>
-    <div>② تسجيل مالك العقار</div>
-    <div>⑧ ملف الشركة</div>
-    <div>③ لوحة التحكم (مالك)</div>
-    <div>⑨ لوحة التحكم (مزود)</div>
-    <div>④ عقاراتي</div>
-    <div>⑩ الطلبات المتاحة</div>
-    <div>⑤ طلبات الخدمة</div>
-    <div>⑪ تقديم عرض</div>
-    <div>⑥ العروض المقدمة</div>
-    <div></div>
-  </div>
-
-  <!-- Footer -->
-  <div style="position:absolute;bottom:24px;font-size:11px;opacity:0.5;">
-    © 2025 عِمارة — جميع الحقوق محفوظة
+<div class="hero">
+  <h1>دليل منصة عِماره</h1>
+  <p>منصة B2B لربط مُلاك العقارات بمزودي خدمات إدارة المرافق</p>
+  <div class="hero-roles">
+    <span class="role-chip">🏢 مالك العقار</span>
+    <span class="role-chip">🔧 مزود الخدمة</span>
   </div>
 </div>
 
+<div class="wrap">
 
-<!-- ═══════════════════════════════════════════════════════════
-     OWNER SECTION DIVIDER
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col items-center justify-center" style="background:linear-gradient(180deg,#eff6ff 0%,#dbeafe 100%);">
-  <div style="width:80px;height:80px;background:#2563eb;border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
-    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-      <path d="M22 6L4 20h4v18h12v-10h4v10h12V20h4L22 6z" fill="white"/>
-    </svg>
-  </div>
-  <h1 style="font-size:40px;font-weight:800;color:#1e3a5f;margin:0 0 10px;">رحلة مالك العقار</h1>
-  <p style="font-size:16px;color:#475569;margin:0 0 40px;">Owner Journey</p>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:500px;">
-    <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">① الصفحة الرئيسية</span>
-    <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">② التسجيل</span>
-    <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">③ لوحة التحكم</span>
-    <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">④ عقاراتي</span>
-    <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑤ طلبات الخدمة</span>
-    <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑥ العروض المقدمة</span>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 1 — LANDING PAGE
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <!-- label -->
-  <div style="background:#2563eb;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ①</span>
-    <span style="color:white;font-size:13px;font-weight:600;">الصفحة الرئيسية</span>
-  </div>
-  <!-- browser chrome -->
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/</div>
-  </div>
-  <!-- page content -->
-  <div class="browser-content" style="overflow:hidden;background:white;">
-    <!-- header -->
-    <div class="app-topbar">
-      <span class="logo">عِمارة</span>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="nav-btn">🌐 العربية</button>
-        <button class="nav-btn">تسجيل الدخول</button>
-      </div>
-    </div>
-
-    <!-- hero -->
-    <div style="background:linear-gradient(180deg,#eff6ff,#f8fafc,white);padding:32px 40px;text-align:center;">
-      <h1 style="font-size:32px;font-weight:800;color:#111827;margin:0 0 8px;line-height:1.3;">
-        عِمارة،<br>
-        <span style="color:#2563eb;">عمارتك، مُدارة بكفاءة</span>
-      </h1>
-      <p style="font-size:13px;color:#4b5563;max-width:480px;margin:0 auto 20px;line-height:1.7;">
-        عِمارة هي منصة تربط ملاك العقارات بمقدمي خدمات النظافة وإدارة المرافق الموثوقين. انشر احتياجاتك، واستلم عروضاً تنافسية، وتعاقد مع الأفضل - كل ذلك في مكان واحد.
-      </p>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <button style="background:#2563eb;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;">ابدأ مجاناً</button>
-        <button style="background:white;color:#374151;border:2px solid #9ca3af;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;">اعرف المزيد</button>
-      </div>
-    </div>
-
-    <!-- how it works -->
-    <div style="padding:20px 28px;background:white;">
-      <h2 style="font-size:18px;font-weight:700;text-align:center;color:#111827;margin:0 0 16px;">كيف تعمل المنصة</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-        <!-- step 1 -->
-        <div style="border:2px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;position:relative;">
-          <div style="position:absolute;top:-14px;right:16px;background:#2563eb;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">1</div>
-          <div style="width:48px;height:48px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:8px auto 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-          </div>
-          <h3 style="font-size:12px;font-weight:700;margin:0 0 4px;color:#111827;">أضف عقارك</h3>
-          <p style="font-size:10px;color:#6b7280;margin:0;">أضف تفاصيل المبنى والخدمات التي تحتاجها</p>
-        </div>
-        <!-- step 2 -->
-        <div style="border:2px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;position:relative;">
-          <div style="position:absolute;top:-14px;right:16px;background:#2563eb;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">2</div>
-          <div style="width:48px;height:48px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:8px auto 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          </div>
-          <h3 style="font-size:12px;font-weight:700;margin:0 0 4px;color:#111827;">احصل على عروض</h3>
-          <p style="font-size:10px;color:#6b7280;margin:0;">مقدمو الخدمات المؤهلون يقدمون عروضهم على طلباتك</p>
-        </div>
-        <!-- step 3 -->
-        <div style="border:2px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;position:relative;">
-          <div style="position:absolute;top:-14px;right:16px;background:#2563eb;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">3</div>
-          <div style="width:48px;height:48px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:8px auto 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-          </div>
-          <h3 style="font-size:12px;font-weight:700;margin:0 0 4px;color:#111827;">قارن واختر</h3>
-          <p style="font-size:10px;color:#6b7280;margin:0;">راجع العروض واختر أفضل مزود خدمة مناسب لك</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- provider CTA -->
-    <div style="background:#f9fafb;padding:20px 28px;text-align:center;">
-      <div style="width:52px;height:52px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-      </div>
-      <h2 style="font-size:16px;font-weight:700;color:#111827;margin:0 0 6px;">هل أنت مزود خدمة؟</h2>
-      <p style="font-size:11px;color:#4b5563;margin:0 0 12px;">انضم إلى عمارة للعثور على عملاء جدد، والمزايدة على المشاريع، وتنمية عملك.</p>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button style="background:#16a34a;color:white;border:none;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;">انضم كمزود خدمة</button>
-        <button style="background:white;color:#16a34a;border:2px solid #16a34a;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;">تسجيل دخول مزود</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 2 — OWNER REGISTER
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#2563eb;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ②</span>
-    <span style="color:white;font-size:13px;font-weight:600;">تسجيل مالك العقار</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/auth?role=owner</div>
+  <div class="url-bar">
+    <span>emaraa.vercel.app</span>
   </div>
 
-  <div class="browser-content" style="background:linear-gradient(135deg,#eff6ff,#e0e7ff);display:flex;align-items:center;justify-content:center;height:100%;">
-    <div style="background:white;border-radius:16px;padding:32px 36px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.1);">
-      <!-- back -->
-      <button style="background:none;border:none;color:#6b7280;font-size:12px;font-family:inherit;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:4px;">
-        ← رجوع للصفحة الرئيسية
-      </button>
-
-      <!-- icon + title -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <h2 style="font-size:18px;font-weight:700;margin:0;color:#111827;">إنشاء حساب مالك عقار</h2>
-      </div>
-      <p style="font-size:12px;color:#6b7280;margin:0 0 20px;">أدير عقاراتي وأطلب خدمات النظافة وإدارة المرافق</p>
-
-      <!-- form -->
-      <div style="margin-bottom:14px;">
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">الاسم الكامل</label>
-        <input type="text" placeholder="أدخل اسمك الكامل" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;" />
-      </div>
-      <div style="margin-bottom:20px;">
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">رقم الجوال</label>
-        <input type="tel" placeholder="05xxxxxxxx" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;" dir="ltr" />
-      </div>
-      <button style="width:100%;background:#2563eb;color:white;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;margin-bottom:12px;">تسجيل</button>
-      <p style="text-align:center;font-size:12px;color:#2563eb;margin:0;">لديك حساب؟ سجل دخول</p>
-
-      <!-- divider info -->
-      <div style="margin-top:18px;padding:10px 12px;background:#f0f9ff;border-radius:8px;border-right:3px solid #2563eb;">
-        <p style="font-size:11px;color:#0369a1;margin:0;">يمكنك أيضاً تسجيل الدخول إذا كان لديك حساب مسبق برقم الجوال فقط</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 3 — OWNER DASHBOARD
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#2563eb;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ③</span>
-    <span style="color:white;font-size:13px;font-weight:600;">لوحة التحكم – مالك العقار</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/owner</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;">
-    <!-- topbar -->
-    <div style="background:white;border-bottom:1px solid #e5e7eb;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        <h1 style="font-size:18px;font-weight:700;margin:0;color:#111827;">لوحة التحكم</h1>
-      </div>
-      <button style="border:1px solid #d1d5db;background:white;padding:5px 12px;border-radius:6px;font-size:11px;font-family:inherit;">🌐 English</button>
-    </div>
-
-    <div style="padding:16px 18px;">
-      <!-- stat cards -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div style="border:1px solid #e5e7eb;border-top:4px solid #2563eb;border-radius:8px;padding:14px;background:white;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span style="font-size:12px;color:#6b7280;font-weight:500;">عقاراتي</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          </div>
-          <div style="font-size:32px;font-weight:700;color:#111827;">2</div>
-        </div>
-        <div style="border:1px solid #e5e7eb;border-top:4px solid #16a34a;border-radius:8px;padding:14px;background:white;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span style="font-size:12px;color:#6b7280;font-weight:500;">طلبات الخدمة</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <div style="font-size:32px;font-weight:700;color:#111827;">3</div>
-        </div>
-      </div>
-
-      <!-- action buttons -->
-      <div style="display:flex;gap:10px;margin-bottom:14px;">
-        <button style="background:#2563eb;color:white;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
-          + إضافة عقار
-        </button>
-        <button style="background:white;color:#2563eb;border:2px solid #2563eb;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;">
-          طلب جديد
-        </button>
-      </div>
-
-      <!-- properties list -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden;">
-        <div style="padding:12px 14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-          <h3 style="font-size:13px;font-weight:700;margin:0;color:#111827;">عقاراتي</h3>
-          <button style="background:none;border:none;color:#2563eb;font-size:11px;font-family:inherit;">عرض الكل</button>
-        </div>
-        <div style="padding:10px 14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:6px;">
-            <div><p style="font-weight:700;font-size:13px;margin:0;">برج الأمانة</p><p style="font-size:11px;color:#6b7280;margin:0;">الرياض</p></div>
-            <button style="background:none;border:none;color:#2563eb;font-size:11px;font-family:inherit;">تعديل</button>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #f3f4f6;border-radius:6px;">
-            <div><p style="font-weight:700;font-size:13px;margin:0;">مجمع النخيل السكني</p><p style="font-size:11px;color:#6b7280;margin:0;">جدة</p></div>
-            <button style="background:none;border:none;color:#2563eb;font-size:11px;font-family:inherit;">تعديل</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- requests list -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
-        <div style="padding:12px 14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-          <h3 style="font-size:13px;font-weight:700;margin:0;color:#111827;">طلبات الخدمة</h3>
-          <button style="background:none;border:none;color:#2563eb;font-size:11px;font-family:inherit;">عرض الكل</button>
-        </div>
-        <div style="padding:10px 14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:6px;">
-            <div><p style="font-weight:700;font-size:12px;margin:0;">نطاق الخدمات المطلوبة</p><p style="font-size:10px;color:#6b7280;margin:0;">١٥ أبريل ٢٠٢٥</p></div>
-            <button style="background:none;border:none;color:#2563eb;font-size:11px;font-family:inherit;">العروض</button>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #f3f4f6;border-radius:6px;">
-            <div><p style="font-weight:700;font-size:12px;margin:0;">نطاق الخدمات المطلوبة</p><p style="font-size:10px;color:#6b7280;margin:0;">٢٠ مارس ٢٠٢٥</p></div>
-            <button style="background:none;border:none;color:#2563eb;font-size:11px;font-family:inherit;">العروض</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 4 — MY PROPERTIES
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#2563eb;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ④</span>
-    <span style="color:white;font-size:13px;font-weight:600;">عقاراتي</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/owner/properties</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:20px 22px;">
-    <!-- header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+  <!-- ─── OWNER ─── -->
+  <div class="section">
+    <div class="section-header owner">
+      <span class="section-icon">🏢</span>
       <div>
-        <h1 style="font-size:22px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px;margin:0 0 4px;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          عقاراتي
-        </h1>
-        <p style="font-size:12px;color:#6b7280;margin:0;">إدارة العقارات والمباني</p>
-      </div>
-      <button style="background:#2563eb;color:white;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
-        + إضافة عقار جديد
-      </button>
-    </div>
-
-    <!-- grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-      <!-- card 1 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-        <div style="padding:14px 14px 10px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-            <h3 style="font-size:14px;font-weight:700;margin:0;color:#111827;">برج الأمانة</h3>
-          </div>
-          <span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">سكني</span>
-          <span style="font-size:10px;color:#6b7280;margin-right:6px;">24 وحدة</span>
-        </div>
-        <div style="padding:0 14px 10px;">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#374151;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <div>
-              <p style="margin:0;">شارع الملك فهد</p>
-              <p style="margin:0;color:#9ca3af;">الرياض</p>
-            </div>
-          </div>
-        </div>
-        <div style="padding:10px 14px;border-top:1px solid #f3f4f6;display:flex;gap:6px;">
-          <button style="flex:1;border:1px solid #e5e7eb;background:white;padding:6px;border-radius:6px;font-size:11px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;color:#374151;">
-            ✏️ تعديل
-          </button>
-          <button style="border:1px solid #e5e7eb;background:white;padding:6px 10px;border-radius:6px;font-size:11px;color:#dc2626;font-family:inherit;">🗑</button>
-        </div>
-      </div>
-
-      <!-- card 2 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-        <div style="padding:14px 14px 10px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-            <h3 style="font-size:14px;font-weight:700;margin:0;color:#111827;">مجمع النخيل</h3>
-          </div>
-          <span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">تجاري</span>
-          <span style="font-size:10px;color:#6b7280;margin-right:6px;">8 وحدات</span>
-        </div>
-        <div style="padding:0 14px 10px;">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#374151;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <div>
-              <p style="margin:0;">طريق المدينة</p>
-              <p style="margin:0;color:#9ca3af;">جدة</p>
-            </div>
-          </div>
-        </div>
-        <div style="padding:10px 14px;border-top:1px solid #f3f4f6;display:flex;gap:6px;">
-          <button style="flex:1;border:1px solid #e5e7eb;background:white;padding:6px;border-radius:6px;font-size:11px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;color:#374151;">
-            ✏️ تعديل
-          </button>
-          <button style="border:1px solid #e5e7eb;background:white;padding:6px 10px;border-radius:6px;font-size:11px;color:#dc2626;font-family:inherit;">🗑</button>
-        </div>
-      </div>
-
-      <!-- card 3 — add new -->
-      <div style="background:white;border:2px dashed #d1d5db;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;cursor:pointer;">
-        <div style="width:44px;height:44px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>
-        <p style="font-size:12px;font-weight:600;color:#2563eb;margin:0;">إضافة عقار جديد</p>
+        <div class="section-title">مالك العقار</div>
+        <div class="section-sub">انشر طلبك، استقبل العروض، اختر أفضل مزود</div>
       </div>
     </div>
+    <div class="steps">
 
-    <!-- info note -->
-    <div style="margin-top:16px;padding:10px 14px;background:#eff6ff;border-radius:8px;border-right:3px solid #2563eb;">
-      <p style="font-size:11px;color:#1d4ed8;margin:0;">💡 يمكنك إضافة عدة عقارات وتقديم طلبات خدمة مستقلة لكل عقار</p>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 5 — SERVICE REQUESTS
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#2563eb;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑤</span>
-    <span style="color:white;font-size:13px;font-weight:600;">طلبات الخدمة</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/owner/requests</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:20px 22px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-      <h1 style="font-size:22px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px;margin:0;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
-        طلبات الخدمة
-      </h1>
-      <button style="background:#2563eb;color:white;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;">+ طلب خدمة جديد</button>
-    </div>
-
-    <!-- request cards -->
-    <div style="space-y:12px;">
-      <!-- card 1 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-          <div style="flex:1;">
-            <div style="margin-bottom:10px;">
-              <span style="background:#fef9c3;color:#78350f;border:1px solid #fcd34d;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;">قيد الانتظار</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;color:#111827;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-              <span style="font-weight:600;">العقار:</span> برج الأمانة
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:#6b7280;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              ١٥ أبريل ٢٠٢٥
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16"/></svg>
-              <span style="font-weight:500;">نطاق الخدمات المطلوبة</span>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <button style="background:#2563eb;color:white;border:none;padding:7px 14px;border-radius:7px;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;">👁 عرض العروض</button>
-            <button style="background:white;color:#374151;border:1px solid #e5e7eb;padding:7px 14px;border-radius:7px;font-size:11px;font-family:inherit;">✏️ تعديل</button>
-            <button style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:7px 14px;border-radius:7px;font-size:11px;font-family:inherit;">🗑 حذف</button>
-          </div>
+      <div class="step">
+        <div class="num o">1</div>
+        <div class="step-body">
+          <strong>أنشئ حسابك</strong>
+          <span>اختر "مالك عقار" → أدخل رقم جوالك → أدخل رمز SMS المُرسَل إليك.</span>
         </div>
       </div>
 
-      <!-- card 2 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-          <div style="flex:1;">
-            <div style="margin-bottom:10px;">
-              <span style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;">جاري التنفيذ</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;color:#111827;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-              <span style="font-weight:600;">العقار:</span> مجمع النخيل
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:#6b7280;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              ٢٠ مارس ٢٠٢٥
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16"/></svg>
-              <span style="font-weight:500;">نطاق الخدمات المطلوبة</span>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <button style="background:#2563eb;color:white;border:none;padding:7px 14px;border-radius:7px;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;">👁 عرض العروض</button>
-            <button style="background:white;color:#374151;border:1px solid #e5e7eb;padding:7px 14px;border-radius:7px;font-size:11px;font-family:inherit;">✏️ تعديل</button>
-            <button style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:7px 14px;border-radius:7px;font-size:11px;font-family:inherit;">🗑 حذف</button>
-          </div>
+      <div class="step">
+        <div class="num o">2</div>
+        <div class="step-body">
+          <strong>أضف عقارك</strong>
+          <span>من لوحة التحكم → "عقاراتي" → "إضافة عقار" → أدخل الاسم والنوع والعنوان ورابط الخريطة.</span>
+          <div class="tip"><strong>ملاحظة</strong>عقار واحد لكل حساب في المرحلة الحالية.</div>
         </div>
       </div>
-    </div>
 
-    <!-- note -->
-    <div style="padding:10px 14px;background:#f0fdf4;border-radius:8px;border-right:3px solid #16a34a;">
-      <p style="font-size:11px;color:#15803d;margin:0;">✅ بعد تقديم الطلب، ستتلقى عروضاً من مزودي الخدمة المعتمدين ويمكنك قبول الأنسب</p>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 6 — OWNER: VIEW OFFERS
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#2563eb;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑥</span>
-    <span style="color:white;font-size:13px;font-weight:600;">العروض المقدمة على الطلب</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/owner/requests/:id/offers</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:20px 22px;">
-    <button style="background:none;border:none;color:#6b7280;font-size:12px;font-family:inherit;margin-bottom:14px;display:flex;align-items:center;gap:4px;">← رجوع</button>
-    <h1 style="font-size:22px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px;margin:0 0 18px;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
-      العروض المقدمة
-    </h1>
-
-    <!-- offer 1 — accepted -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <div style="padding:14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          <span style="font-size:15px;font-weight:700;color:#111827;">شركة النظافة المتكاملة</span>
-        </div>
-        <span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">✓ مقبول</span>
-      </div>
-      <div style="padding:14px;">
-        <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">المدينة</p>
-        <p style="font-size:13px;color:#374151;margin:0 0 10px;font-weight:600;">الرياض</p>
-        <div style="background:#f9fafb;border-radius:6px;padding:10px;margin-bottom:12px;">
-          <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">الملاحظات</p>
-          <p style="font-size:12px;color:#374151;margin:0;">نقدم خدمات نظافة شاملة للمبنى مع فريق متخصص يعمل ٦ أيام في الأسبوع. السعر يشمل المواد والعمالة.</p>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button style="border:1px solid #e5e7eb;background:white;padding:6px 14px;border-radius:7px;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;">📄 عرض الملف</button>
+      <div class="step">
+        <div class="num o">3</div>
+        <div class="step-body">
+          <strong>انشر طلب خدمة</strong>
+          <span>من "طلبات الخدمة" → "طلب جديد" → اختر عقارك، اكتب وصف الخدمة المطلوبة → "إرسال".</span>
         </div>
       </div>
-    </div>
 
-    <!-- offer 2 — pending -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <div style="padding:14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          <span style="font-size:15px;font-weight:700;color:#111827;">مؤسسة الخدمات الذهبية</span>
-        </div>
-        <span style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">⏳ معلق</span>
-      </div>
-      <div style="padding:14px;">
-        <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">المدينة</p>
-        <p style="font-size:13px;color:#374151;margin:0 0 10px;font-weight:600;">الرياض</p>
-        <div style="background:#f9fafb;border-radius:6px;padding:10px;margin-bottom:12px;">
-          <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">الملاحظات</p>
-          <p style="font-size:12px;color:#374151;margin:0;">نقدم عرضاً تنافسياً مع ضمان الجودة لمدة سنة كاملة وفريق مدرب على أعلى مستوى.</p>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button style="border:1px solid #e5e7eb;background:white;padding:6px 14px;border-radius:7px;font-size:11px;font-family:inherit;">📄 عرض الملف</button>
-          <button style="background:#16a34a;color:white;border:none;padding:6px 14px;border-radius:7px;font-size:11px;font-family:inherit;">✓ قبول</button>
-          <button style="background:#dc2626;color:white;border:none;padding:6px 14px;border-radius:7px;font-size:11px;font-family:inherit;">✕ رفض</button>
+      <div class="step">
+        <div class="num o">4</div>
+        <div class="step-body">
+          <strong>استقبل العروض وقارنها</strong>
+          <span>المزودون المعتمدون يرسلون عروضهم. من "عروضي" تجد كل عرض مع ملف PDF وملاحظات المزود.</span>
         </div>
       </div>
+
+      <div class="step">
+        <div class="num o">5</div>
+        <div class="step-body">
+          <strong>اقبل العرض وتواصل مع المزود</strong>
+          <span>اضغط "قبول" على العرض المناسب → يظهر رقم جوال المزود مباشرة → تواصل معه لترتيب التنفيذ.</span>
+          <div class="tip"><strong>مهم</strong>الدفع يتم مباشرة مع المزود — عِماره وسيط وليست طرفاً في المعاملة المالية.</div>
+        </div>
+      </div>
+
     </div>
   </div>
-</div>
 
-
-<!-- ═══════════════════════════════════════════════════════════
-     PROVIDER SECTION DIVIDER
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col items-center justify-center" style="background:linear-gradient(180deg,#f0fdf4 0%,#dcfce7 100%);">
-  <div style="width:80px;height:80px;background:#16a34a;border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
-    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
-      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-    </svg>
-  </div>
-  <h1 style="font-size:40px;font-weight:800;color:#14532d;margin:0 0 10px;">رحلة مزود الخدمة</h1>
-  <p style="font-size:16px;color:#475569;margin:0 0 40px;">Service Provider Journey</p>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:520px;">
-    <span style="background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑦ التسجيل</span>
-    <span style="background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑧ ملف الشركة</span>
-    <span style="background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑨ لوحة التحكم</span>
-    <span style="background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑩ الطلبات المتاحة</span>
-    <span style="background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;">⑪ تقديم عرض</span>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 7 — PROVIDER REGISTER
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#16a34a;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑦</span>
-    <span style="color:white;font-size:13px;font-weight:600;">تسجيل مزود الخدمة</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/auth?role=provider</div>
-  </div>
-
-  <div class="browser-content" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);display:flex;align-items:center;justify-content:center;height:100%;">
-    <div style="background:white;border-radius:16px;padding:32px 36px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.1);">
-      <button style="background:none;border:none;color:#6b7280;font-size:12px;font-family:inherit;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:4px;">
-        ← رجوع للصفحة الرئيسية
-      </button>
-
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-        </svg>
-        <h2 style="font-size:18px;font-weight:700;margin:0;color:#111827;">إنشاء حساب مزود خدمة</h2>
-      </div>
-      <p style="font-size:12px;color:#6b7280;margin:0 0 20px;">أقدم خدمات النظافة وإدارة المرافق للعقارات</p>
-
-      <div style="margin-bottom:14px;">
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">الاسم الكامل</label>
-        <input type="text" placeholder="أدخل اسمك الكامل" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;" />
-      </div>
-      <div style="margin-bottom:20px;">
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">رقم الجوال</label>
-        <input type="tel" placeholder="05xxxxxxxx" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;" dir="ltr" />
-      </div>
-      <button style="width:100%;background:#16a34a;color:white;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;margin-bottom:12px;">تسجيل</button>
-      <p style="text-align:center;font-size:12px;color:#16a34a;margin:0;">لديك حساب؟ سجل دخول</p>
-
-      <div style="margin-top:18px;padding:10px 12px;background:#f0fdf4;border-radius:8px;border-right:3px solid #16a34a;">
-        <p style="font-size:11px;color:#15803d;margin:0;">بعد التسجيل ستكمل ملف شركتك ثم تنتظر موافقة الإدارة قبل البدء في تقديم العروض</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 8 — PROVIDER PROFILE
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#16a34a;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑧</span>
-    <span style="color:white;font-size:13px;font-weight:600;">ملف الشركة</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/provider/profile</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:18px 22px;overflow:hidden;">
-    <!-- header -->
-    <div style="text-align:center;margin-bottom:16px;">
-      <div style="width:52px;height:52px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-      </div>
-      <h1 style="font-size:20px;font-weight:700;margin:0 0 4px;color:#111827;">تسجيل بيانات مزود الخدمة</h1>
-      <p style="font-size:12px;color:#6b7280;margin:0;">أكمل بياناتك لبدء تقديم الخدمات</p>
-    </div>
-
-    <!-- status banner -->
-    <div style="display:flex;align-items:center;gap:10px;background:#fef9c3;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;margin-bottom:14px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  <!-- ─── PROVIDER ─── -->
+  <div class="section">
+    <div class="section-header provider">
+      <span class="section-icon">🔧</span>
       <div>
-        <p style="font-size:12px;font-weight:700;color:#111827;margin:0;">طلبك قيد المراجعة</p>
-        <p style="font-size:11px;color:#374151;margin:0;">سيتم إشعارك عند قبول حسابك من قِبل الإدارة</p>
+        <div class="section-title">مزود الخدمة</div>
+        <div class="section-sub">سجّل شركتك، تصفّح الطلبات، قدّم عروضك</div>
       </div>
     </div>
+    <div class="steps">
 
-    <!-- personal info card -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:10px;">
-      <h3 style="font-size:13px;font-weight:700;margin:0 0 10px;color:#111827;">المعلومات الشخصية</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px;">الاسم</label>
-          <input value="أحمد محمد السالم" disabled style="width:100%;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;" />
-        </div>
-        <div>
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px;">رقم الجوال</label>
-          <input value="0543977679" disabled style="width:100%;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;" dir="ltr" />
+      <div class="step">
+        <div class="num p">1</div>
+        <div class="step-body">
+          <strong>سجّل حسابك</strong>
+          <span>اختر "مزود خدمة" → أدخل رقم جوالك → أدخل رمز SMS.</span>
         </div>
       </div>
-    </div>
 
-    <!-- company info card -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:10px;">
-      <h3 style="font-size:13px;font-weight:700;margin:0 0 10px;color:#111827;">بيانات الشركة</h3>
-      <div style="margin-bottom:8px;">
-        <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px;">اسم الشركة</label>
-        <input placeholder="مثال: شركة الخدمات المتكاملة" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;" />
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div>
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px;">البريد الإلكتروني (اختياري)</label>
-          <input placeholder="example@co.com" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;" dir="ltr" />
-        </div>
-        <div>
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px;">المدينة</label>
-          <input placeholder="مثال: الرياض" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;" />
+      <div class="step">
+        <div class="num p">2</div>
+        <div class="step-body">
+          <strong>أكمل ملف شركتك</strong>
+          <span>من "ملفي الشخصي" → أدخل: اسم الشركة، المدينة، البريد الإلكتروني، رقم السجل التجاري، ورفع ملف الشركة. انتظر موافقة الإدارة.</span>
+          <div class="tip"><strong>مطلوب للتفعيل</strong>جميع الحقول إلزامية. الحساب غير المكتمل لا يستطيع إرسال عروض.</div>
         </div>
       </div>
-      <div>
-        <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px;">نبذة عن الشركة</label>
-        <textarea rows="2" placeholder="اكتب نبذة مختصرة عن شركتك..." style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;resize:none;"></textarea>
-      </div>
-    </div>
 
-    <!-- documents card -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:14px;">
-      <h3 style="font-size:13px;font-weight:700;margin:0 0 10px;color:#111827;">📄 المستندات المطلوبة (إجباري)</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <label style="font-size:11px;color:#374151;font-weight:600;display:block;margin-bottom:4px;">السجل التجاري <span style="color:red;">*</span></label>
-          <div style="background:#eff6ff;border:1px dashed #93c5fd;border-radius:6px;padding:10px;text-align:center;">
-            <div style="font-size:18px;margin-bottom:4px;">📤</div>
-            <p style="font-size:10px;color:#2563eb;margin:0;font-weight:600;">اختر ملف</p>
-            <p style="font-size:9px;color:#9ca3af;margin:2px 0 0;">PDF أو صورة (بحد أقصى 5MB)</p>
-          </div>
-        </div>
-        <div>
-          <label style="font-size:11px;color:#374151;font-weight:600;display:block;margin-bottom:4px;">بروفايل الشركة <span style="color:red;">*</span></label>
-          <div style="background:#eff6ff;border:1px dashed #93c5fd;border-radius:6px;padding:10px;text-align:center;">
-            <div style="font-size:18px;margin-bottom:4px;">📤</div>
-            <p style="font-size:10px;color:#2563eb;margin:0;font-weight:600;">اختر ملف</p>
-            <p style="font-size:9px;color:#9ca3af;margin:2px 0 0;">PDF أو صورة (بحد أقصى 5MB)</p>
-          </div>
+      <div class="step">
+        <div class="num p">3</div>
+        <div class="step-body">
+          <strong>تصفّح طلبات الخدمة</strong>
+          <span>بعد الموافقة من "الطلبات المتاحة" → تجد طلبات الملاك في مدينتك مع تفاصيل العقار والخدمة المطلوبة.</span>
         </div>
       </div>
-    </div>
 
-    <div style="text-align:center;">
-      <button style="background:#16a34a;color:white;border:none;padding:11px 40px;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;">💾 حفظ والمتابعة</button>
+      <div class="step">
+        <div class="num p">4</div>
+        <div class="step-body">
+          <strong>قدّم عرضك</strong>
+          <span>اضغط على الطلب → "تقديم عرض" → ارفع ملف PDF بعرضك السعري، أضف ملاحظاتك، وافق على مشاركة رقمك → "إرسال".</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num p">5</div>
+        <div class="step-body">
+          <strong>تابع حالة عروضك</strong>
+          <span>من "عروضي المقدمة" ترى حالة كل عرض: قيد الانتظار / مقبول / مرفوض. عند القبول يتواصل معك المالك مباشرة.</span>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <div class="footer">منصة عِماره — دليل المستخدم — مايو 2026</div>
+
 </div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 9 — PROVIDER DASHBOARD
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#16a34a;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑨</span>
-    <span style="color:white;font-size:13px;font-weight:600;">لوحة التحكم – مزود الخدمة</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/provider</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:22px 24px;">
-    <h1 style="font-size:24px;font-weight:700;margin:0 0 4px;color:#111827;">لوحة التحكم</h1>
-    <p style="font-size:13px;color:#6b7280;margin:0 0 18px;">مرحباً بك في لوحة التحكم الخاصة بك</p>
-
-    <!-- approved banner -->
-    <div style="display:flex;align-items:center;gap:10px;background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:18px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-      <div>
-        <p style="font-size:13px;font-weight:700;color:#111827;margin:0;">تم قبول حسابك ✓</p>
-        <p style="font-size:11px;color:#374151;margin:0;">يمكنك الآن تصفح الطلبات وتقديم عروضك</p>
-      </div>
-    </div>
-
-    <!-- stats grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
-      <!-- stat 1 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <p style="font-size:12px;color:#6b7280;margin:0 0 4px;">الطلبات المتاحة</p>
-            <p style="font-size:30px;font-weight:700;margin:0;color:#111827;">5</p>
-          </div>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
-        </div>
-      </div>
-      <!-- stat 2 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <p style="font-size:12px;color:#6b7280;margin:0 0 4px;">عروضي المقدمة</p>
-            <p style="font-size:30px;font-weight:700;margin:0;color:#111827;">3</p>
-          </div>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </div>
-      </div>
-      <!-- stat 3 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <p style="font-size:12px;color:#6b7280;margin:0 0 4px;">قيد المراجعة</p>
-            <p style="font-size:30px;font-weight:700;margin:0;color:#111827;">2</p>
-          </div>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-      </div>
-      <!-- stat 4 -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <p style="font-size:12px;color:#6b7280;margin:0 0 4px;">مقبول</p>
-            <p style="font-size:30px;font-weight:700;margin:0;color:#111827;">1</p>
-          </div>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- navigation hint -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
-      <h3 style="font-size:13px;font-weight:700;margin:0 0 10px;color:#111827;">روابط سريعة</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;">📋 الطلبات المتاحة</button>
-        <button style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;">📬 عروضي</button>
-        <button style="background:#fdf4ff;color:#9333ea;border:1px solid #e9d5ff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;">🏢 ملف الشركة</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 10 — AVAILABLE REQUESTS
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#16a34a;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑩</span>
-    <span style="color:white;font-size:13px;font-weight:600;">الطلبات المتاحة</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/provider/requests</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:20px 22px;">
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 4px;color:#111827;">الطلبات المتاحة</h1>
-    <p style="font-size:13px;color:#6b7280;margin:0 0 16px;">تصفح جميع الطلبات المتاحة وقدم عروضك</p>
-
-    <!-- filter bar -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:16px;">
-      <h3 style="font-size:12px;font-weight:700;margin:0 0 10px;color:#111827;display:flex;align-items:center;gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        البحث والفلترة
-      </h3>
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
-        <div style="position:relative;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input placeholder="بحث عن طلب..." style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:8px 32px 8px 10px;font-size:12px;font-family:inherit;box-sizing:border-box;" />
-        </div>
-        <select style="border:1px solid #d1d5db;border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;background:white;">
-          <option>تصفية حسب المدينة</option>
-          <option>الرياض</option>
-          <option>جدة</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- requests grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-      <!-- request card 1 -->
-      <div style="background:white;border:2px solid #e5e7eb;border-radius:10px;padding:14px;transition:all 0.2s;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
-            <h3 style="font-size:13px;font-weight:700;margin:0 0 3px;color:#111827;">نطاق الخدمات المطلوبة</h3>
-            <div style="display:flex;align-items:center;gap:3px;font-size:10px;color:#6b7280;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
-              ١٥ أبريل ٢٠٢٥
-            </div>
-          </div>
-          <span style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap;">
-            📍 الرياض
-          </span>
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-bottom:8px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          برج الأمانة
-        </div>
-        <p style="font-size:10px;color:#6b7280;margin:0 0 10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
-          نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات…
-        </p>
-        <button style="width:100%;background:#2563eb;color:white;border:none;padding:8px;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;">
-          ➤ تقديم عرض
-        </button>
-      </div>
-
-      <!-- request card 2 -->
-      <div style="background:white;border:2px solid #e5e7eb;border-radius:10px;padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
-            <h3 style="font-size:13px;font-weight:700;margin:0 0 3px;color:#111827;">نطاق الخدمات المطلوبة</h3>
-            <div style="display:flex;align-items:center;gap:3px;font-size:10px;color:#6b7280;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
-              ٢٠ مارس ٢٠٢٥
-            </div>
-          </div>
-          <span style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap;">
-            📍 جدة
-          </span>
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-bottom:8px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          مجمع النخيل
-        </div>
-        <p style="font-size:10px;color:#6b7280;margin:0 0 10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
-          نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات…
-        </p>
-        <button style="width:100%;background:#2563eb;color:white;border:none;padding:8px;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;">
-          ➤ تقديم عرض
-        </button>
-      </div>
-
-      <!-- request card 3 -->
-      <div style="background:white;border:2px solid #e5e7eb;border-radius:10px;padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
-            <h3 style="font-size:13px;font-weight:700;margin:0 0 3px;color:#111827;">نطاق الخدمات المطلوبة</h3>
-            <div style="display:flex;align-items:center;gap:3px;font-size:10px;color:#6b7280;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
-              ١٠ مارس ٢٠٢٥
-            </div>
-          </div>
-          <span style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap;">
-            📍 الدمام
-          </span>
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-bottom:8px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          مبنى الأعمال
-        </div>
-        <p style="font-size:10px;color:#6b7280;margin:0 0 10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
-          رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق…
-        </p>
-        <button style="width:100%;background:#2563eb;color:white;border:none;padding:8px;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;">
-          ➤ تقديم عرض
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     SLIDE 11 — SUBMIT OFFER
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col" dir="rtl">
-  <div style="background:#16a34a;padding:5px 18px;display:flex;align-items:center;gap:8px;">
-    <span style="background:rgba(255,255,255,0.25);color:white;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:700;">شاشة ⑪</span>
-    <span style="color:white;font-size:13px;font-weight:600;">تقديم عرض</span>
-  </div>
-  <div class="browser-chrome">
-    <div class="browser-dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
-    <div class="browser-url">emaraa.replit.app/dashboard/provider/requests/:id/offer</div>
-  </div>
-
-  <div class="browser-content" style="background:#f9fafb;padding:20px 24px;">
-    <button style="background:none;border:none;color:#6b7280;font-size:12px;font-family:inherit;margin-bottom:14px;display:flex;align-items:center;gap:4px;">← رجوع</button>
-
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 18px;color:#111827;display:flex;align-items:center;gap:8px;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      تقديم عرض
-    </h1>
-
-    <!-- request summary -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;">
-      <h3 style="font-size:13px;font-weight:700;margin:0 0 10px;color:#111827;">تفاصيل الطلب</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
-        <div>
-          <span style="color:#6b7280;">العقار:</span>
-          <span style="color:#111827;font-weight:600;margin-right:4px;">برج الأمانة</span>
-        </div>
-        <div>
-          <span style="color:#6b7280;">المدينة:</span>
-          <span style="color:#111827;font-weight:600;margin-right:4px;">الرياض</span>
-        </div>
-        <div style="grid-column:1/-1;">
-          <span style="color:#6b7280;">نطاق الخدمة:</span>
-          <span style="color:#111827;font-weight:600;margin-right:4px;">نطاق الخدمات المطلوبة</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- scope of services -->
-    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px;">
-      <h3 style="font-size:12px;font-weight:700;margin:0 0 8px;color:#92400e;">📌 نطاق الخدمات المطلوبة</h3>
-      <p style="font-size:11px;color:#374151;margin:0;line-height:1.6;">
-        نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق. | متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع، لمدة سنة قابلة للتجديد.
-      </p>
-    </div>
-
-    <!-- offer form -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;">
-      <h3 style="font-size:13px;font-weight:700;margin:0 0 12px;color:#111827;">تفاصيل عرضك</h3>
-
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">ملف العرض <span style="color:red;">*</span></label>
-        <div style="background:#eff6ff;border:2px dashed #93c5fd;border-radius:8px;padding:18px;text-align:center;">
-          <div style="font-size:22px;margin-bottom:6px;">📤</div>
-          <p style="font-size:12px;color:#2563eb;font-weight:600;margin:0 0 3px;">ارفع ملف العرض</p>
-          <p style="font-size:10px;color:#9ca3af;margin:0;">PDF فقط (بحد أقصى 10MB)</p>
-        </div>
-      </div>
-
-      <div>
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">ملاحظات إضافية (اختياري)</label>
-        <textarea rows="3" placeholder="أي معلومات إضافية تريد مشاركتها مع المالك..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:12px;font-family:inherit;box-sizing:border-box;resize:none;"></textarea>
-      </div>
-    </div>
-
-    <button style="width:100%;background:#16a34a;color:white;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-      ➤ إرسال العرض
-    </button>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════
-     BACK COVER
-═══════════════════════════════════════════════════════════ -->
-<div class="slide flex flex-col items-center justify-center text-center px-16" style="background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 50%,#0ea5e9 100%);page-break-after:avoid;">
-  <div style="margin-bottom:32px;">
-    <div style="width:80px;height:80px;background:rgba(255,255,255,0.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-      <svg width="44" height="44" viewBox="0 0 56 56" fill="none">
-        <rect x="8" y="28" width="40" height="20" rx="3" fill="white" opacity="0.9"/>
-        <polygon points="28,6 4,30 52,30" fill="white" opacity="0.7"/>
-        <rect x="22" y="34" width="12" height="14" rx="2" fill="#1d4ed8"/>
-      </svg>
-    </div>
-    <h1 style="font-size:44px;font-weight:800;color:white;margin:0 0 6px;">عِمارة</h1>
-    <p style="font-size:13px;color:rgba(255,255,255,0.6);letter-spacing:3px;margin:0;">EMARAA PLATFORM</p>
-  </div>
-
-  <div style="width:50px;height:2px;background:rgba(255,255,255,0.3);border-radius:2px;margin:0 auto 28px;"></div>
-
-  <h2 style="font-size:22px;font-weight:700;color:white;margin:0 0 16px;">عمارتك، مُدارة بكفاءة</h2>
-  <p style="font-size:14px;color:rgba(255,255,255,0.75);margin:0 0 40px;max-width:380px;line-height:1.7;">
-    انضم إلى آلاف ملاك العقارات ومزودي الخدمات الذين يثقون في عِمارة لإدارة مبانيهم
-  </p>
-
-  <!-- contact info -->
-  <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">
-    <div style="text-align:center;">
-      <div style="font-size:20px;margin-bottom:4px;">📧</div>
-      <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0;">البريد الإلكتروني</p>
-      <p style="font-size:13px;color:white;font-weight:600;margin:0;" dir="ltr">aallfaraidi@gmail.com</p>
-    </div>
-    <div style="text-align:center;">
-      <div style="font-size:20px;margin-bottom:4px;">📞</div>
-      <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0;">الهاتف</p>
-      <p style="font-size:13px;color:white;font-weight:600;margin:0;" dir="ltr">0543977679</p>
-    </div>
-    <div style="text-align:center;">
-      <div style="font-size:20px;margin-bottom:4px;">📍</div>
-      <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0;">الموقع</p>
-      <p style="font-size:13px;color:white;font-weight:600;margin:0;">الرياض، المملكة العربية السعودية</p>
-    </div>
-  </div>
-
-  <div style="font-size:12px;color:rgba(255,255,255,0.4);">© 2025 عِمارة — جميع الحقوق محفوظة</div>
-</div>
-
-<!-- Print button (hidden on print) -->
-<div style="text-align:center;padding:24px;background:#e5e7eb;" class="no-print">
-  <p style="font-size:14px;color:#374151;margin:0 0 12px;font-family:'Tajawal',sans-serif;">
-    لطباعة كـ PDF: اضغط زر الطباعة وغيّر الوجهة إلى "حفظ كـ PDF"
-  </p>
-  <button onclick="window.print()" style="background:#2563eb;color:white;border:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;">
-    🖨️ طباعة / حفظ كـ PDF
-  </button>
-</div>
-<style>
-@media print {
-  .no-print { display: none !important; }
-}
-</style>
-
 </body>
 </html>
