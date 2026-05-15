@@ -134,6 +134,7 @@ export async function registerRoutes(
       }
 
       const data = insertPropertySchema.parse(req.body);
+      data.owner_id = (req as any).userId;
       const property = await storage.createProperty(data);
       res.status(201).json(property);
     } catch (error) {
@@ -199,6 +200,8 @@ export async function registerRoutes(
       }
 
       const data = insertRequestSchema.parse(req.body);
+      data.owner_id = (req as any).userId;
+      (data as any).status = undefined;
       res.status(201).json(data);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -213,6 +216,9 @@ export async function registerRoutes(
       const existing = await storage.getServiceRequest(req.params.id);
       if (!existing) {
         return res.status(404).json({ error: "Service request not found" });
+      }
+      if (existing.owner_id !== (req as any).userId) {
+        return res.status(403).json({ error: "Forbidden" });
       }
 
       const updateSchema = z.object({
@@ -246,6 +252,56 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete service request" });
+    }
+  });
+
+  // Offer status — accept or reject an offer (server-enforced ownership check)
+  app.patch("/api/offers/:id/status", requireSession, async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!["accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const { data: offer, error: offerError } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id, request_id")
+        .eq("id", req.params.id)
+        .single();
+      if (offerError || !offer) {
+        return res.status(404).json({ error: "Offer not found" });
+      }
+
+      const { data: request, error: reqError } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", offer.request_id)
+        .single();
+      if (reqError || !request) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+
+      if (request.owner_id !== (req as any).userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from("provider_offers")
+        .update({ status })
+        .eq("id", req.params.id);
+      if (updateError) throw updateError;
+
+      if (status === "accepted") {
+        await supabaseAdmin.from("requests").update({ status: "in_progress" }).eq("id", offer.request_id);
+        await supabaseAdmin.from("provider_offers")
+          .update({ status: "rejected" })
+          .eq("request_id", offer.request_id)
+          .neq("id", req.params.id);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update offer status" });
     }
   });
 

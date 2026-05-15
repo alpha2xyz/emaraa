@@ -90,22 +90,16 @@ export default function OwnerOffersPage() {
 
   const statusMutation = useMutation({
     mutationFn: async ({ offerId, status }: { offerId: string; status: 'accepted' | 'rejected' }) => {
-      const phone = localStorage.getItem('userPhone');
-      if (!phone) throw new Error('Unauthorized');
-      const { data: user } = await supabase.from('users').select('id').eq('phone', phone).single();
-      if (!user) throw new Error('Unauthorized');
-      const { data: req } = await supabase
-        .from('requests')
-        .select('owner_id')
-        .eq('id', requestId!)
-        .single();
-      if (!req || req.owner_id !== user.id) throw new Error('Unauthorized');
-
-      const { error } = await supabase.from('provider_offers').update({ status }).eq('id', offerId);
-      if (error) throw error;
-      if (status === 'accepted') {
-        await supabase.from('requests').update({ status: 'in_progress' }).eq('id', requestId!);
-        await supabase.from('provider_offers').update({ status: 'rejected' }).eq('request_id', requestId!).neq('id', offerId);
+      const token = localStorage.getItem('sessionToken');
+      if (!token) throw new Error('Unauthorized');
+      const res = await fetch(`/api/offers/${offerId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed');
       }
     },
     onSuccess: (_, { status }) => {
