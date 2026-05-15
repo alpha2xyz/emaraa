@@ -123,23 +123,49 @@ export default function ProviderProfile() {
     }
   }, [existingProvider]);
 
-  const handleFileChange = (
+  const handleFileChange = async (
     field: "commercial_register" | "company_profile" | "fal_license",
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // التحقق من حجم الملف (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: lang === "ar" ? "الملف كبير جداً" : "File too large",
-          description: lang === "ar" ? "الحد الأقصى 5MB" : "Maximum 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      setFiles((prev) => ({ ...prev, [field]: file }));
+    if (!file) return;
+
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    const allowedExts = [".pdf", ".jpg", ".jpeg", ".png"];
+    const ext = "." + (file.name.split(".").pop() ?? "").toLowerCase();
+    if (!allowedTypes.includes(file.type) && !allowedExts.includes(ext)) {
+      toast({
+        title: lang === "ar" ? "نوع الملف غير مدعوم" : "Unsupported file type",
+        description: lang === "ar" ? "يُقبل PDF أو صورة (JPG, PNG) فقط" : "Only PDF or images (JPG, PNG) are accepted",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: lang === "ar" ? "الملف كبير جداً" : "File too large",
+        description: lang === "ar" ? "الحد الأقصى 5MB" : "Maximum 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const buf = await file.slice(0, 8).arrayBuffer();
+    const b = new Uint8Array(buf);
+    const isPdf  = b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
+    const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
+    const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+    if (!isPdf && !isJpeg && !isPng) {
+      toast({
+        title: lang === "ar" ? "الملف تالف أو غير صالح" : "File is corrupt or invalid",
+        description: lang === "ar" ? "تأكد من أن الملف سليم ومن النوع الصحيح" : "Make sure the file is valid and of the correct type",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFiles((prev) => ({ ...prev, [field]: file }));
   };
 
   // حفظ البيانات

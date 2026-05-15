@@ -215,15 +215,21 @@ export default function ProviderOfferForm() {
     enabled: !!requestId,
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== "application/pdf") {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       toast({ title: t.errorFileType, variant: "destructive" });
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
       toast({ title: t.errorFileSize, variant: "destructive" });
+      return;
+    }
+    const buf = await file.slice(0, 4).arrayBuffer();
+    const b = new Uint8Array(buf);
+    if (!(b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46)) {
+      toast({ title: t.errorFileType, variant: "destructive" });
       return;
     }
     setOfferFile(file);
