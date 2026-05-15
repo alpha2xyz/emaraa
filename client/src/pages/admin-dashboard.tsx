@@ -55,6 +55,7 @@ export default function AdminDashboard() {
         viewPdf: 'عرض PDF',
         crDoc: 'السجل التجاري',
         profileDoc: 'بروفايل الشركة',
+        falDoc: 'رخصة فال',
         noOffers: 'لا توجد عروض',
         offerStatus: { pending: 'قيد المراجعة', accepted: 'مقبول', rejected: 'مرفوض' },
         reqStatus: { pending: 'معلق', in_progress: 'قيد التنفيذ', completed: 'مكتمل', cancelled: 'ملغي' },
@@ -90,6 +91,7 @@ export default function AdminDashboard() {
         viewPdf: 'View PDF',
         crDoc: 'Commercial Register',
         profileDoc: 'Company Profile',
+        falDoc: 'FAL License',
         noOffers: 'No offers',
         offerStatus: { pending: 'Pending', accepted: 'Accepted', rejected: 'Rejected' },
         reqStatus: { pending: 'Pending', in_progress: 'In Progress', completed: 'Completed', cancelled: 'Cancelled' },
@@ -134,7 +136,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('providers')
-        .select('id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, description, users(name, phone)')
+        .select('id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, fal_license_url, description, users(name, phone)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -323,7 +325,7 @@ export default function AdminDashboard() {
                               </div>
                             )}
                           </div>
-                          {(p.commercial_register_url || p.company_profile_url) && (
+                          {(p.commercial_register_url || p.company_profile_url || p.fal_license_url) && (
                             <div className="flex gap-2 flex-wrap pt-1 border-t">
                               {p.commercial_register_url && (
                                 <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', p.commercial_register_url)}>
@@ -333,6 +335,11 @@ export default function AdminDashboard() {
                               {p.company_profile_url && (
                                 <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', p.company_profile_url)}>
                                   <ExternalLink className="h-3 w-3" />{t.profileDoc}
+                                </Button>
+                              )}
+                              {p.fal_license_url && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', p.fal_license_url)}>
+                                  <ExternalLink className="h-3 w-3" />{t.falDoc}
                                 </Button>
                               )}
                             </div>

@@ -27,9 +27,11 @@ export default function ProviderProfile() {
   const [files, setFiles] = useState<{
     commercial_register: File | null;
     company_profile: File | null;
+    fal_license: File | null;
   }>({
     commercial_register: null,
     company_profile: null,
+    fal_license: null,
   });
 
   const content = {
@@ -51,13 +53,14 @@ export default function ProviderProfile() {
       documents: "المستندات المطلوبة (إجباري)",
       commercialRegister: "السجل التجاري",
       companyProfile: "بروفايل الشركة",
+      falLicense: "رخصة فال",
       chooseFile: "اختر ملف",
       fileTypes: "PDF أو صورة (بحد أقصى 5MB)",
       save: "حفظ والمتابعة",
       saving: "جاري الحفظ...",
       success: "تم حفظ البيانات بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
-      errorDocuments: "يجب رفع جميع المستندات المطلوبة",
+      errorDocuments: "يجب رفع جميع المستندات المطلوبة (السجل التجاري، بروفايل الشركة، رخصة فال)",
     },
     en: {
       title: "Service Provider Registration",
@@ -78,13 +81,14 @@ export default function ProviderProfile() {
       documents: "Required Documents (Mandatory)",
       commercialRegister: "Commercial Register",
       companyProfile: "Company Profile",
+      falLicense: "FAL License",
       chooseFile: "Choose File",
       fileTypes: "PDF or Image (max 5MB)",
       save: "Save & Continue",
       saving: "Saving...",
       success: "Data saved successfully!",
       error: "An error occurred, please try again",
-      errorDocuments: "All required documents must be uploaded",
+      errorDocuments: "All required documents must be uploaded (Commercial Register, Company Profile, FAL License)",
     },
   };
 
@@ -120,7 +124,7 @@ export default function ProviderProfile() {
   }, [existingProvider]);
 
   const handleFileChange = (
-    field: "commercial_register" | "company_profile",
+    field: "commercial_register" | "company_profile" | "fal_license",
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
@@ -143,7 +147,7 @@ export default function ProviderProfile() {
     mutationFn: async () => {
       // التحقق من المستندات — مطلوبة فقط عند التسجيل الأول
       const isNew = !existingProvider?.provider?.id;
-      if (isNew && (!files.commercial_register || !files.company_profile)) {
+      if (isNew && (!files.commercial_register || !files.company_profile || !files.fal_license)) {
         throw new Error("documents_required");
       }
 
@@ -177,6 +181,9 @@ export default function ProviderProfile() {
       const companyProfilePath = files.company_profile
         ? await uploadFile(files.company_profile, "company-profiles")
         : existingProvider?.provider?.company_profile_url || null;
+      const falLicensePath = files.fal_license
+        ? await uploadFile(files.fal_license, "fal-licenses")
+        : existingProvider?.provider?.fal_license_url || null;
 
       const profilePayload: any = {
         user_id: user.id,
@@ -188,6 +195,7 @@ export default function ProviderProfile() {
         other_services: null,
         commercial_register_url: commercialRegisterPath,
         company_profile_url: companyProfilePath,
+        fal_license_url: falLicensePath,
       };
 
       const existingId = existingProvider?.provider?.id;
@@ -451,6 +459,42 @@ export default function ProviderProfile() {
                   {files.company_profile ? (
                     <span className="text-sm text-gray-600">{files.company_profile.name}</span>
                   ) : existingProvider?.provider?.company_profile_url ? (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-xs text-gray-500">{t.fileTypes}</p>
+              </div>
+
+              {/* رخصة فال */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fal_license"
+                  className="flex items-center gap-2"
+                >
+                  {t.falLicense}
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="fal_license"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => handleFileChange("fal_license", e)}
+                    className="hidden"
+                  />
+                  <Label
+                    htmlFor="fal_license"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {t.chooseFile}
+                  </Label>
+                  {files.fal_license ? (
+                    <span className="text-sm text-gray-600">{files.fal_license.name}</span>
+                  ) : existingProvider?.provider?.fal_license_url ? (
                     <span className="text-sm text-green-600 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" />
                       {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
