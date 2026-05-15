@@ -1,3 +1,4 @@
+import type React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, Hourglass } from "lucide-react";
 

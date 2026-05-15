@@ -47,9 +47,8 @@ export default function ProviderDashboard() {
   const { data: providerData, isLoading: providerLoading, isError } = useQuery({
     queryKey: ["/api/provider/profile"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-      const { data: user } = await supabase.from("users").select("id").eq("phone", phone).single();
+      if (!userPhone) throw new Error("Not logged in");
+      const { data: user } = await supabase.from("users").select("id").eq("phone", userPhone).single();
       if (!user) throw new Error("User not found");
       const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
       return { user, provider };

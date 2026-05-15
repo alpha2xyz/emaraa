@@ -98,13 +98,16 @@ export default function ProviderProfile() {
       if (!phone) return null;
       const { data: user } = await supabase.from("users").select("id, name, phone").eq("phone", phone).single();
       if (!user) return null;
-      setUserData({ name: user.name || "", phone: user.phone });
       const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
       return { user, provider };
     },
   });
 
   useEffect(() => {
+    if (existingProvider?.user) {
+      const u = existingProvider.user;
+      setUserData({ name: u.name || "", phone: u.phone });
+    }
     if (existingProvider?.provider) {
       const p = existingProvider.provider;
       setFormData({

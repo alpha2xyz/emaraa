@@ -1,10 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { useLang } from "@/hooks/use-lang";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const [location, setLocation] = useLocation();
 
   const isLoggedIn = !!localStorage.getItem("userPhone");
@@ -33,12 +34,7 @@ export function Navbar() {
           {lang === "ar" ? "عمارة" : "Emaraa"}
         </Link>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="text-sm px-3 py-1 rounded border hover:bg-accent transition-colors"
-          >
-            {lang === "ar" ? "EN" : "عربي"}
-          </button>
+          <LanguageToggle />
           {isLoggedIn && (
             <button
               onClick={handleLogout}

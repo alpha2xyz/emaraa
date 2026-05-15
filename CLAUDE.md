@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Emaraa** (إعمار) — Saudi B2B facility management marketplace. Property owners post service requests; service providers submit PDF proposals; admin approves providers and manages the platform.
 
-- Live: https://emaraa--alpha2xyz.replit.app
+- Live: https://emaraa.vercel.app
 - Supabase project: https://txzbzpnrclkdodosbndy.supabase.co
 
 ## Commands
@@ -85,11 +85,11 @@ PDF proposals and company documents are stored in Supabase Storage. `client/src/
 
 ## Server Configuration — Fixed Bugs (2026-05-02)
 
-Three bugs that caused crash loops on Replit deployment. **Never reintroduce these.**
+Three bugs that caused crash loops on deployment. **Never reintroduce these.**
 
 ### 1. `reusePort: true` — BANNED
 `server/index.ts` had `httpServer.listen({ port, host, reusePort: true })`.
-`SO_REUSEPORT` is not supported in Replit's deployment containers → `ENOTSUP` crash.
+`SO_REUSEPORT` is not supported in Node deployment containers → `ENOTSUP` crash.
 **Fix:** `httpServer.listen(port, host, callback)` — flat args, no options object.
 
 ### 2. Wildcard `"*"` string routes — BANNED in Express v5
@@ -101,40 +101,6 @@ Express v5 uses path-to-regexp v8 which rejects bare `*` → `Missing parameter 
 `server/index.ts` now reads `process.env.HOST || "0.0.0.0"`.
 Run locally with: `HOST=127.0.0.1 PORT=3000 npm run dev`
 Replit deployment leaves HOST unset → falls back to `0.0.0.0` (correct for production).
-
----
-
-## UI System — What Was Done (2026-05-02)
-
-Global component changes (apply app-wide):
-- `button.tsx` — `rounded-full` on all sizes (pill buttons)
-- `badge.tsx` — `rounded-full` (pill badges)
-- `card.tsx` — border removed, rounding `rounded-2xl`, shadow-only
-- `index.css` — shadow variables fixed (were `opacity: 0.00`); brand color stays blue `210 85% 45%`
-
-Landing page (`landing-page.tsx`) fully redesigned:
-- White navbar replaces dark `bg-gray-800` header
-- Hero: 2-col grid, left text + right inline SVG building illustration (blue palette)
-- Tagline chip, `font-extrabold` headlines, pill CTAs
-- How It Works: open/airy, no cards — bare icon → giant `text-7xl` step number → title → desc
-- Provider CTA: white bg, bare icon, matches How It Works rhythm
-- Social proof strip removed — `{/* TODO: add social proof strip when real numbers are ready */}`
-- `text-gray-400` → `text-gray-500` across 5 pages
-
-## UI — Pending Next Session (Tier 2)
-
-- **U7** Auth page: white bg, desktop split-panel (marketing left / form right)
-- **U8** Dashboard greeting: "مرحباً، [الاسم]" + date + quick-action row
-- **U9** Status badge system: colored dot + pill, consistent across all pages
-- **U12** Provider-requests filter: pill chips replacing dropdown
-- **U14** Section heading weights boosted to `font-extrabold`
-
-## UI — Pending Next Session (Tier 3)
-
-- Empty state illustrations (SVG inline)
-- Richer provider request cards
-- Bottom nav active blob indicator
-- Provider avatar upload on profile page
 
 ## Prompt Style Guide
 
@@ -154,23 +120,32 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 - **Verify:** `POST /api/otp/verify` — calls `https://api.authentica.sa/api/v2/verify-otp`
 - OTPs are **4 digits**, 5-min expiry. Auth UI: `maxLength=4`, `disabled` until 4 chars entered.
 - **Twilio is fully removed** — no Twilio imports, env vars, or SDK calls anywhere.
-- Known limitation: OTP state lives in an in-memory `Map` in `routes.ts` — OTPs are lost on cold starts (acceptable for MVP).
+- Known limitation: OTP state lives in an in-memory `Map` in `routes.ts` — OTPs are lost on cold starts. **Pending medium-priority item:** move to a Supabase `otp_codes` table with TTL.
 
-## Vercel Migration (Pending — ~2hr effort)
+## Vercel Deployment (Live as of 2026-05-13)
 
-Three blocking fixes before first deploy:
-
-1. Create `vercel.json` at project root (SPA rewrites + build config)
-2. Move `AUTHENTICA_API_KEY` from `env.ts` into Vercel env vars
-3. Clean up `@replit/vite-plugin-*` imports in `vite.config.ts`
-
-Env vars to set in Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AUTHENTICA_API_KEY`
-
-Before first deploy: run `DATABASE_URL=<supabase-conn-string> npm run db:push` manually.
+- Live URL: https://emaraa.vercel.app
+- GitHub repo: `git@github.com:alpha2xyz/emaraa.git` — Vercel auto-deploys on push to `main`
+- Env vars set in Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AUTHENTICA_API_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL`
 
 ## Feature Backlog
 
-- Owner email OTP via Resend (Stage 1 pre-launch)
-- Provider password emailed on admin approval (Stage 2 pre-launch)
-- Contract signing via **Signit API** (signit.sa) — Saudi-native, SDGA-licensed (Stage 3, requires CR)
-- Subscription payments via **Moyasar** (Stage 3, requires CR)
+**Medium — pre-launch:**
+- Move OTP storage from in-memory Map to Supabase table (`server/routes.ts:215`)
+- Explicit phone-sharing consent at provider registration (`provider-offer-form.tsx:322`)
+- Server-side MIME type validation on file uploads
+- Owner offers empty state — richer illustration + CTA (`owner-offers-page.tsx:146`)
+- 1 property per owner limit (UI + server enforcement)
+- Lock new requests once an offer is accepted
+- Second admin account (via `admins` table, role field)
+- SLA/Terms acceptance checkbox at registration
+
+**Stage 1:**
+- Owner email OTP via Resend
+
+**Stage 2 (post-CR):**
+- Provider notified on admin approval
+
+**Stage 3 (requires CR):**
+- Contract signing via **Signit API** (signit.sa) — Saudi-native, SDGA-licensed
+- Subscription payments via **Moyasar**

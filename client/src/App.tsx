@@ -181,9 +181,9 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-            <Router />
-            <Toaster />
-          </TooltipProvider>
+          <Router />
+          <Toaster />
+        </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

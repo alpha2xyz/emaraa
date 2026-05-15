@@ -43,8 +43,8 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
         return;
       }
 
-      setVerified(true);
       setChecking(false);
+      setVerified(true);
     }
 
     verifySession();
