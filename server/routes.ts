@@ -35,8 +35,6 @@ function signSupabaseJwt(sub: string, phone: string, role: string): string {
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-const adminLoginAttempts = new Map<string, { count: number; resetAt: number }>();
-
 const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
 const authenticaHeaders = {
   "X-Authorization": AUTHENTICA_API_KEY,
@@ -68,16 +66,16 @@ export async function registerRoutes(
   app.post("/api/admin/login", async (req, res) => {
     try {
       const ip = req.ip || "unknown";
-      const now = Date.now();
-      const loginRecord = adminLoginAttempts.get(ip);
-      if (loginRecord && now < loginRecord.resetAt) {
-        if (loginRecord.count >= 10) {
-          return res.status(429).json({ error: "Too many attempts. Try again later." });
-        }
-        loginRecord.count++;
-      } else {
-        adminLoginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
+      const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { count: attemptCount } = await supabaseAdmin
+        .from("admin_login_attempts")
+        .select("ip", { count: "exact", head: true })
+        .eq("ip", ip)
+        .gte("created_at", fifteenMinAgo);
+      if ((attemptCount ?? 0) >= 10) {
+        return res.status(429).json({ error: "Too many attempts. Try again later." });
       }
+      await supabaseAdmin.from("admin_login_attempts").insert([{ ip }]);
 
       const { username, password } = req.body;
       if (!username || !password) {
