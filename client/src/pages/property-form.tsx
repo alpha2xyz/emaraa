@@ -29,7 +29,7 @@ export default function PropertyForm() {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
-    city: "",
+    city: "الرياض",
     building_type: "residential",
     units_count: "",
     map_url: "",
@@ -110,7 +110,7 @@ export default function PropertyForm() {
       setFormData({
         name: existingProperty.name || "",
         address: existingProperty.address || "",
-        city: existingProperty.city || "",
+        city: "الرياض",
         building_type: existingProperty.building_type || "residential",
         units_count: existingProperty.units_count?.toString() || "",
         map_url: existingProperty.map_url || "",
@@ -222,10 +222,9 @@ export default function PropertyForm() {
                 <Label htmlFor="city">{t.city}</Label>
                 <Input
                   id="city"
-                  placeholder={t.cityPlaceholder}
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  required
+                  value="الرياض"
+                  disabled
+                  className="bg-gray-100 text-gray-500"
                 />
               </div>
 
