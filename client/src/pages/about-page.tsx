@@ -13,7 +13,7 @@ export default function AboutPage() {
           <Building2 className="w-10 h-10 text-white" />
         </div>
         <h1 className="text-4xl font-extrabold mb-3">
-          {isRTL ? "عِماره" : "Emaraa"}
+          {isRTL ? "عِمارة" : "Emaraa"}
         </h1>
         <p className="text-lg text-blue-100 max-w-xl mx-auto leading-relaxed">
           {isRTL

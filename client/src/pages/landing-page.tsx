@@ -163,7 +163,7 @@ export default function LandingPage() {
       providerLogin: "تسجيل دخول مزود",
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
-      joinAsProvider: "انضم كمزود",
+      aboutUs: "عن عِمارة",
       viewDemo: "دليل المنصة",
       termsOfUse: "شروط الاستخدام",
       privacyPolicy: "سياسة الخصوصية",
@@ -201,7 +201,7 @@ export default function LandingPage() {
       providerLogin: "Provider Login",
       quickLinks: "Quick Links",
       contactUs: "Contact Us",
-      joinAsProvider: "Join as Provider",
+      aboutUs: "About Emaraa",
       viewDemo: "Platform Guide",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
@@ -424,7 +424,7 @@ export default function LandingPage() {
                   <Link href="/contact">{t.contactUs}</Link>
                 </li>
                 <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/auth?role=provider">{t.joinAsProvider}</Link>
+                  <Link href="/about">{t.aboutUs}</Link>
                 </li>
                 <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
                   <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer">{t.viewDemo}</a>
