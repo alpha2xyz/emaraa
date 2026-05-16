@@ -39,6 +39,9 @@ export default function OwnerOffersPage() {
         confirmBtn: 'نعم، قبول',
         cancelBtn: 'إلغاء',
         phone: 'رقم التواصل',
+        priceTotal: 'السعر الإجمالي',
+        pricePerUnit: 'السعر لكل وحدة',
+        sar: 'ريال',
       }
     : {
         title: 'Submitted Offers',
@@ -56,6 +59,9 @@ export default function OwnerOffersPage() {
         confirmBtn: 'Yes, Accept',
         cancelBtn: 'Cancel',
         phone: 'Contact Number',
+        priceTotal: 'Total Price',
+        pricePerUnit: 'Price per Unit',
+        sar: 'SAR',
       };
 
   // Issue 4: fetch request + property for context subtitle
@@ -65,7 +71,7 @@ export default function OwnerOffersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('requests')
-        .select('id, properties(name, city)')
+        .select('id, properties(name, city, units_count)')
         .eq('id', requestId!)
         .single();
       if (error) throw error;
@@ -80,7 +86,7 @@ export default function OwnerOffersPage() {
       const { data, error } = await supabase
         .from('provider_offers')
         // Issue 5A: include users(phone) via providers join
-        .select('id, offer_file_url, notes, status, created_at, providers(id, company_name, city, users(phone))')
+        .select('id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, users(phone))')
         .eq('request_id', requestId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -180,6 +186,26 @@ export default function OwnerOffersPage() {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">{t.notes}</p>
                       <p className="text-sm text-gray-700 bg-gray-50 rounded p-2">{offer.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Price display */}
+                  {offer.price_total && (
+                    <div className="flex gap-4 bg-[#F9F9FF] rounded-lg px-3 py-2 border border-gray-100">
+                      <div>
+                        <p className="text-xs text-gray-500">{t.priceTotal}</p>
+                        <p className="font-bold text-gray-800">
+                          {Number(offer.price_total).toLocaleString('ar-SA')} {t.sar}
+                        </p>
+                      </div>
+                      {(property as any)?.units_count && (
+                        <div className="border-s border-gray-200 ps-4">
+                          <p className="text-xs text-gray-500">{t.pricePerUnit}</p>
+                          <p className="font-bold text-[#2E4A6B]">
+                            {Math.round(Number(offer.price_total) / (property as any).units_count).toLocaleString('ar-SA')} {t.sar}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 

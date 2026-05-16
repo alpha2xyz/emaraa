@@ -33,6 +33,7 @@ export default function ProviderOfferForm() {
   const [offerFile, setOfferFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [phoneConsent, setPhoneConsent] = useState(false);
+  const [priceTotal, setPriceTotal] = useState("");
 
   const content = {
     ar: {
@@ -48,6 +49,9 @@ export default function ProviderOfferForm() {
       offerFile: "ملف العرض (PDF)",
       chooseFile: "اختر ملف PDF",
       fileSelected: "تم اختيار الملف",
+      priceTotal: "السعر الإجمالي السنوي (ريال سعودي)",
+      priceTotalPlaceholder: "مثال: 48000",
+      priceTotalHint: "سيتم احتساب السعر لكل وحدة تلقائياً وعرضه للمالك",
       notes: "ملاحظات إضافية (اختياري)",
       notesPlaceholder: "أضف أي ملاحظات أو تفاصيل إضافية...",
       submit: "إرسال العرض",
@@ -113,6 +117,9 @@ export default function ProviderOfferForm() {
       offerFile: "Offer File (PDF)",
       chooseFile: "Choose PDF File",
       fileSelected: "File selected",
+      priceTotal: "Total Annual Price (SAR)",
+      priceTotalPlaceholder: "e.g. 48000",
+      priceTotalHint: "Price per unit will be calculated automatically and shown to the owner",
       notes: "Additional Notes (Optional)",
       notesPlaceholder: "Add any additional notes or details...",
       submit: "Submit Offer",
@@ -271,15 +278,27 @@ export default function ProviderOfferForm() {
           provider_id: providerData.provider.id,
           offer_file_url: fileName,
           notes: notes || null,
+          price_total: priceTotal ? parseFloat(priceTotal) : null,
         }])
         .select()
         .single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({ title: t.success, variant: "default" });
       queryClient.invalidateQueries({ queryKey: ["/api/provider/all-offers"] });
+      // Fire SMS notifications (non-blocking)
+      if (data?.id) {
+        const token = localStorage.getItem("sessionToken");
+        if (token) {
+          fetch("/api/sms/offer-submitted", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ offerId: data.id }),
+          }).catch(() => {});
+        }
+      }
       setLocation("/dashboard/provider/offers");
     },
     onError: (error: any) => {
@@ -493,6 +512,24 @@ export default function ProviderOfferForm() {
                 </div>
 
                 <div>
+                  <Label htmlFor="price-total">{t.priceTotal} <span className="text-red-500">*</span></Label>
+                  <div className="relative mt-2">
+                    <input
+                      id="price-total"
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder={t.priceTotalPlaceholder}
+                      value={priceTotal}
+                      onChange={(e) => setPriceTotal(e.target.value)}
+                      required
+                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{t.priceTotalHint}</p>
+                </div>
+
+                <div>
                   <Label htmlFor="notes">{t.notes}</Label>
                   <Textarea
                     id="notes"
@@ -517,7 +554,7 @@ export default function ProviderOfferForm() {
                   <Button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
-                    disabled={mutation.isPending || !offerFile || !!isNotApproved || !phoneConsent}
+                    disabled={mutation.isPending || !offerFile || !!isNotApproved || !phoneConsent || !priceTotal}
                   >
                     {mutation.isPending ? (
                       <><Loader2 className="h-4 w-4 me-2 animate-spin" />{t.submitting}</>

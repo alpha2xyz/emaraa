@@ -46,6 +46,7 @@ export default function RequestForm() {
       addProperty: "إضافة عقار",
       propertyRequired: "يرجى اختيار العقار",
       limitReached: "لديك طلب واحد بالفعل. احذف طلبك الحالي من صفحة الطلبات لتتمكن من إنشاء طلب جديد.",
+      riyadhOnly: "عِماره متاحة حالياً للعقارات في الرياض فقط. عقارك مسجّل في مدينة أخرى.",
     },
     en: {
       title: "New Service Request",
@@ -67,6 +68,7 @@ export default function RequestForm() {
       addProperty: "Add Property",
       propertyRequired: "Please select a property",
       limitReached: "You already have an active request. Delete it from the Requests page to submit a new one.",
+      riyadhOnly: "Emaraa is currently available for properties in Riyadh only. Your property is registered in another city.",
     },
   }
 
@@ -119,6 +121,11 @@ export default function RequestForm() {
       const { data: user } = await supabase.from("users").select("id").eq("phone", phone).single()
       if (!user) throw new Error("User not found")
 
+      // Riyadh-only filter (new requests only)
+      if (!requestId && selectedProperty && selectedProperty.city !== "الرياض") {
+        throw new Error("riyadh_only")
+      }
+
       if (!requestId) {
         const { count } = await supabase
           .from("requests")
@@ -127,35 +134,50 @@ export default function RequestForm() {
         if ((count ?? 0) >= 1) throw new Error("limit_reached")
       }
 
-      const { error } = requestId
-        ? await supabase.from("requests").update({
-            owner_id: user.id,
-            property_id: formData.property_id,
-            service_category: "standard",
-            description: formData.description || null,
-            status: "pending",
-          }).eq("id", requestId)
-        : await supabase.from("requests").insert({
-            owner_id: user.id,
-            property_id: formData.property_id,
-            service_category: "standard",
-            description: formData.description || null,
-            status: "pending",
-          })
-
-      if (error) throw error
+      if (requestId) {
+        const { error } = await supabase.from("requests").update({
+          owner_id: user.id,
+          property_id: formData.property_id,
+          service_category: "standard",
+          description: formData.description || null,
+          status: "pending",
+        }).eq("id", requestId)
+        if (error) throw error
+        return null
+      } else {
+        const { data: inserted, error } = await supabase.from("requests").insert({
+          owner_id: user.id,
+          property_id: formData.property_id,
+          service_category: "standard",
+          description: formData.description || null,
+          status: "pending",
+        }).select("id").single()
+        if (error) throw error
+        return inserted?.id ?? null
+      }
     },
-    onSuccess: () => {
+    onSuccess: (newRequestId) => {
       toast({ title: requestId ? t.updateSuccess : t.success, variant: "default" })
       queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
+      // Notify Riyadh providers about the new request (fire-and-forget)
+      if (!requestId && newRequestId) {
+        const token = localStorage.getItem("sessionToken")
+        if (token) {
+          fetch("/api/sms/new-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ requestId: newRequestId }),
+          }).catch(() => {})
+        }
+      }
       setLocation("/dashboard/owner/requests")
     },
     onError: (error: any) => {
       if (import.meta.env.DEV) console.error("Error:", error)
-      toast({
-        title: error?.message === "limit_reached" ? t.limitReached : t.error,
-        variant: "destructive",
-      })
+      let msg = t.error
+      if (error?.message === "limit_reached") msg = t.limitReached
+      else if (error?.message === "riyadh_only") msg = t.riyadhOnly
+      toast({ title: msg, variant: "destructive" })
     },
   })
 

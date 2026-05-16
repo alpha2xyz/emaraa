@@ -33,6 +33,7 @@ export default function PropertyForm() {
     building_type: "residential",
     units_count: "",
     map_url: "",
+    national_address: "",
   });
 
   const content = {
@@ -52,6 +53,8 @@ export default function PropertyForm() {
       unitsPlaceholder: "مثال: 24",
       mapUrl: "رابط الموقع على الخريطة",
       mapPlaceholder: "https://maps.google.com/...",
+      nationalAddress: "العنوان الوطني (اختياري)",
+      nationalAddressPlaceholder: "مثال: RTHA1234",
       save: "حفظ",
       saving: "جاري الحفظ...",
       back: "رجوع",
@@ -74,6 +77,8 @@ export default function PropertyForm() {
       unitsPlaceholder: "e.g. 24",
       mapUrl: "Map URL",
       mapPlaceholder: "https://maps.google.com/...",
+      nationalAddress: "National Address (Optional)",
+      nationalAddressPlaceholder: "e.g. RTHA1234",
       save: "Save",
       saving: "Saving...",
       back: "Back",
@@ -109,6 +114,7 @@ export default function PropertyForm() {
         building_type: existingProperty.building_type || "residential",
         units_count: existingProperty.units_count?.toString() || "",
         map_url: existingProperty.map_url || "",
+        national_address: existingProperty.national_address || "",
       });
     }
   }, [existingProperty]);
@@ -134,6 +140,7 @@ export default function PropertyForm() {
         building_type: formData.building_type,
         units_count: formData.units_count ? parseInt(formData.units_count) : null,
         map_url: formData.map_url || null,
+        national_address: formData.national_address.trim() || null,
       };
 
       if (isEdit) {
@@ -261,6 +268,17 @@ export default function PropertyForm() {
                 placeholder={t.mapPlaceholder}
                 value={formData.map_url}
                 onChange={(e) => setFormData({ ...formData, map_url: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="national_address">{t.nationalAddress}</Label>
+              <Input
+                id="national_address"
+                type="text"
+                placeholder={t.nationalAddressPlaceholder}
+                value={formData.national_address}
+                onChange={(e) => setFormData({ ...formData, national_address: e.target.value })}
               />
             </div>
 

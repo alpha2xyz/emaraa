@@ -47,6 +47,7 @@ import NotFound          from "@/pages/not-found";
 import ContactPage       from "@/pages/contact-page";
 import TermsPage         from "@/pages/terms";
 import PrivacyPage       from "@/pages/privacy";
+import AboutPage         from "@/pages/about-page";
 
 // Owner
 import OwnerDashboard    from "@/pages/owner-dashboard";
@@ -113,6 +114,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/terms"   component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/about"   component={AboutPage} />
 
       {/* ── Admin ───────────────────────────────────────────────────── */}
       <Route path="/admin" component={AdminLoginPage} />

@@ -305,6 +305,79 @@ export async function registerRoutes(
     }
   });
 
+  // Helper: send a plain SMS via Authentica (fire-and-forget)
+  async function sendSms(phone: string, message: string) {
+    const e164 = phone.startsWith("+") ? phone : "+966" + phone.substring(1);
+    await fetch(`${AUTHENTICA_BASE}/send-sms`, {
+      method: "POST",
+      headers: authenticaHeaders,
+      body: JSON.stringify({ phone: e164, message }),
+    });
+  }
+
+  // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
+  app.post("/api/sms/offer-submitted", requireSession, async (req, res) => {
+    try {
+      const { offerId } = req.body;
+      if (!offerId) return res.status(400).json({ error: "offerId required" });
+
+      const { data: offer } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id, request_id, provider_id, providers(user_id)")
+        .eq("id", offerId)
+        .single();
+      if (!offer) return res.status(404).json({ error: "Offer not found" });
+
+      const { data: request } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", offer.request_id)
+        .single();
+
+      // Notify provider — offer confirmed
+      const providerUserId = (offer.providers as any)?.user_id;
+      if (providerUserId) {
+        const { data: pu } = await supabaseAdmin.from("users").select("phone").eq("id", providerUserId).single();
+        if (pu?.phone) sendSms(pu.phone, "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك.").catch(() => {});
+      }
+
+      // Notify owner — new offer arrived
+      if (request?.owner_id) {
+        const { data: ou } = await supabaseAdmin.from("users").select("phone").eq("id", request.owner_id).single();
+        if (ou?.phone) sendSms(ou.phone, "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app").catch(() => {});
+      }
+
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "Failed" });
+    }
+  });
+
+  // SMS — notify all approved Riyadh providers when a new request is posted
+  app.post("/api/sms/new-request", requireSession, async (req, res) => {
+    try {
+      const { requestId } = req.body;
+      if (!requestId) return res.status(400).json({ error: "requestId required" });
+
+      const { data: providers } = await supabaseAdmin
+        .from("providers")
+        .select("user_id")
+        .eq("approved", true)
+        .eq("city", "الرياض");
+
+      if (providers?.length) {
+        for (const p of providers) {
+          const { data: u } = await supabaseAdmin.from("users").select("phone").eq("id", p.user_id).single();
+          if (u?.phone) sendSms(u.phone, "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app").catch(() => {});
+        }
+      }
+
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "Failed" });
+    }
+  });
+
   // OTP — Send SMS OTP via Authentica
   app.post("/api/otp/send", async (req, res) => {
     try {

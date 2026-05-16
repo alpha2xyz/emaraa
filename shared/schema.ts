@@ -29,6 +29,7 @@ export const properties = pgTable("properties", {
   city: text("city").notNull(),
   units_count: integer("units_count").default(0),
   map_url: text("map_url"),
+  national_address: text("national_address"),
   owner_id: uuid("owner_id").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });

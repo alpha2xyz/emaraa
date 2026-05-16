@@ -73,6 +73,7 @@ export class MemStorage implements IStorage {
       city: insertProperty.city,
       units_count: insertProperty.units_count ?? 0,
       map_url: insertProperty.map_url ?? null,
+      national_address: insertProperty.national_address ?? null,
       owner_id: insertProperty.owner_id,
       created_at: new Date(),
     };

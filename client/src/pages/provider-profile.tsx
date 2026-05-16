@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2, Save, Loader2, Upload, FileText, CheckCircle2, Clock, CreditCard } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,8 @@ export default function ProviderProfile() {
     email: "",
     city: "",
     description: "",
+    bank_name: "",
+    iban: "",
   });
 
   const [files, setFiles] = useState<{
@@ -50,6 +53,12 @@ export default function ProviderProfile() {
       cityPlaceholder: "مثال: الرياض",
       description: "نبذة عن الشركة",
       descriptionPlaceholder: "اكتب نبذة مختصرة عن شركتك وخدماتها...",
+      bankInfo: "بيانات الحساب البنكي",
+      bankName: "اسم البنك",
+      bankNamePlaceholder: "اختر البنك",
+      iban: "رقم الآيبان (IBAN)",
+      ibanPlaceholder: "SA00000000000000000000",
+      ibanHint: "يبدأ بـ SA ويتكون من 24 خانة",
       documents: "المستندات المطلوبة (إجباري)",
       commercialRegister: "السجل التجاري",
       companyProfile: "بروفايل الشركة",
@@ -61,6 +70,7 @@ export default function ProviderProfile() {
       success: "تم حفظ البيانات بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
       errorDocuments: "يجب رفع جميع المستندات المطلوبة (السجل التجاري، بروفايل الشركة، رخصة فال)",
+      errorIban: "رقم الآيبان يجب أن يبدأ بـ SA ويتكون من 24 خانة",
     },
     en: {
       title: "Service Provider Registration",
@@ -78,6 +88,12 @@ export default function ProviderProfile() {
       description: "Company Description",
       descriptionPlaceholder:
         "Write a brief description of your company and services...",
+      bankInfo: "Bank Account Details",
+      bankName: "Bank Name",
+      bankNamePlaceholder: "Select bank",
+      iban: "IBAN Number",
+      ibanPlaceholder: "SA00000000000000000000",
+      ibanHint: "Starts with SA, 24 characters total",
       documents: "Required Documents (Mandatory)",
       commercialRegister: "Commercial Register",
       companyProfile: "Company Profile",
@@ -89,6 +105,7 @@ export default function ProviderProfile() {
       success: "Data saved successfully!",
       error: "An error occurred, please try again",
       errorDocuments: "All required documents must be uploaded (Commercial Register, Company Profile, FAL License)",
+      errorIban: "IBAN must start with SA and be 24 characters",
     },
   };
 
@@ -119,6 +136,8 @@ export default function ProviderProfile() {
         email: p.email || "",
         city: p.city || "",
         description: p.description || "",
+        bank_name: p.bank_name || "",
+        iban: p.iban || "",
       });
     }
   }, [existingProvider]);
@@ -177,6 +196,11 @@ export default function ProviderProfile() {
         throw new Error("documents_required");
       }
 
+      // IBAN validation — SA + 22 digits
+      if (formData.iban && !/^SA\d{22}$/.test(formData.iban.trim())) {
+        throw new Error("iban_invalid");
+      }
+
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error("User not found");
 
@@ -217,6 +241,8 @@ export default function ProviderProfile() {
         email: formData.email || null,
         city: formData.city,
         description: formData.description,
+        bank_name: formData.bank_name || null,
+        iban: formData.iban.trim() || null,
         services: [],
         other_services: null,
         commercial_register_url: commercialRegisterPath,
@@ -249,6 +275,8 @@ export default function ProviderProfile() {
 
       if (error.message === "documents_required") {
         errorMessage = t.errorDocuments;
+      } else if (error.message === "iban_invalid") {
+        errorMessage = t.errorIban;
       }
 
       toast({
@@ -409,6 +437,60 @@ export default function ProviderProfile() {
                   rows={4}
                   required
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* البنك والآيبان */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                {t.bankInfo}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bank_name">{t.bankName} <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={formData.bank_name}
+                    onValueChange={(v) => setFormData({ ...formData, bank_name: v })}
+                  >
+                    <SelectTrigger id="bank_name">
+                      <SelectValue placeholder={t.bankNamePlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        "البنك الأهلي السعودي",
+                        "بنك الراجحي",
+                        "بنك الرياض",
+                        "البنك السعودي الفرنسي",
+                        "بنك البلاد",
+                        "بنك الجزيرة",
+                        "بنك ساب",
+                        "البنك السعودي للاستثمار",
+                        "البنك العربي الوطني",
+                        "بنك الأول",
+                      ].map((b) => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="iban">{t.iban} <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="iban"
+                    type="text"
+                    placeholder={t.ibanPlaceholder}
+                    value={formData.iban}
+                    onChange={(e) => setFormData({ ...formData, iban: e.target.value.toUpperCase() })}
+                    maxLength={24}
+                    required
+                  />
+                  <p className="text-xs text-gray-500">{t.ibanHint}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
