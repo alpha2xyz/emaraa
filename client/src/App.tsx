@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
+
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [location]);
+  return null;
+}
 
 // ── Error Boundary ─────────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component<
@@ -107,7 +113,9 @@ function DashboardLayout({ children, role }: { children: React.ReactNode; role?:
 // ── Router ─────────────────────────────────────────────────────────────────
 function Router() {
   return (
-    <Switch>
+    <>
+      <ScrollToTop />
+      <Switch>
       {/* ── Public ──────────────────────────────────────────────────── */}
       <Route path="/"        component={LandingPage} />
       <Route path="/auth"    component={AuthPage} />
@@ -174,6 +182,7 @@ function Router() {
       {/* ── 404 ─────────────────────────────────────────────────────── */}
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 

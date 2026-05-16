@@ -3,66 +3,153 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دليل المستخدم — منصة عِماره</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<title>دليل المستخدم — منصة عِمارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
-body { background: #F0F2F5; color: #1A2535; direction: rtl; }
+body { background: #F9F9FF; color: #1A2E42; direction: rtl; }
 
+/* ── Hero ── */
 .hero {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #1A2E42 0%, #2E4A6B 60%, #3A6A9E 100%);
   color: #fff;
   text-align: center;
-  padding: 52px 24px 40px;
+  padding: 48px 24px 40px;
+  position: relative;
+  overflow: hidden;
 }
-.hero h1 { font-size: 28pt; font-weight: 800; margin-bottom: 8px; }
-.hero p { font-size: 11pt; opacity: .8; }
-.hero-roles { display: flex; justify-content: center; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
-.role-chip { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 16px; font-size: 9.5pt; font-weight: 600; }
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06) 1px, transparent 1px),
+                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.hero-inner { position: relative; max-width: 640px; margin: 0 auto; }
+.hero h1 { font-size: 26pt; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px; }
+.hero p  { font-size: 11pt; color: #93C5FD; line-height: 1.7; }
+.hero-chips { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.chip {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 5px 16px;
+  font-size: 9.5pt;
+  font-weight: 700;
+  color: #fff;
+}
 
-.wrap { max-width: 780px; margin: 0 auto; padding: 32px 16px 60px; }
+/* ── URL bar ── */
+.url-bar {
+  background: #1F2937;
+  border-radius: 12px;
+  padding: 10px 20px;
+  text-align: center;
+  margin: 24px auto 0;
+  max-width: 640px;
+  display: block;
+}
+.url-bar span { font-size: 11pt; color: #60A5FA; font-weight: 700; direction: ltr; display: inline-block; }
 
-.section { background: #fff; border-radius: 16px; margin-bottom: 22px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
-.section-header { padding: 18px 24px; display: flex; align-items: center; gap: 12px; }
-.section-header.owner  { background: #EEF2F7; }
+/* ── Wrap ── */
+.wrap { max-width: 680px; margin: 0 auto; padding: 28px 16px 64px; }
+
+/* ── Section cards ── */
+.section {
+  background: #fff;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #F0F4F8;
+}
+.section-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.section-header.owner    { background: #EEF2F7; }
 .section-header.provider { background: #F0FDF4; }
-.section-header.admin  { background: #FFF7ED; }
-.section-icon { font-size: 22pt; }
-.section-title { font-size: 14pt; font-weight: 800; }
-.section-header.owner   .section-title { color: #2E4A6B; }
-.section-header.provider .section-title { color: #166534; }
-.section-header.admin   .section-title { color: #92400E; }
-.section-sub { font-size: 9pt; color: #6B7C5E; margin-top: 2px; }
 
-.steps { padding: 20px 24px 24px; }
-.step { display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start; }
+.icon-box {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.icon-box.owner    { background: #2E4A6B; }
+.icon-box.provider { background: #166534; }
+.icon-box svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.section-title { font-size: 14pt; font-weight: 800; }
+.section-header.owner    .section-title { color: #2E4A6B; }
+.section-header.provider .section-title { color: #166534; }
+.section-sub { font-size: 9pt; color: #6B7280; margin-top: 3px; }
+
+/* ── Steps ── */
+.steps { padding: 20px 24px 26px; }
+.step { display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start; }
 .step:last-child { margin-bottom: 0; }
-.num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13pt; font-weight: 800; color: #fff; flex-shrink: 0; margin-top: 2px; }
+
+.num {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12pt; font-weight: 800; color: #fff;
+  flex-shrink: 0; margin-top: 2px;
+}
 .num.o { background: #2E4A6B; }
 .num.p { background: #166534; }
-.num.a { background: #92400E; }
-.step-body strong { display: block; font-size: 10.5pt; font-weight: 700; margin-bottom: 3px; }
-.step-body span { font-size: 9.5pt; color: #5A6880; line-height: 1.6; }
 
-.tip { background: #F8FAFC; border-right: 4px solid #2563eb; border-radius: 0 10px 10px 0; padding: 11px 14px; margin: 4px 0 0; font-size: 9pt; color: #2E4A6B; }
-.tip strong { display: block; margin-bottom: 2px; font-size: 8.5pt; color: #1d4ed8; }
+.step-body strong { display: block; font-size: 10.5pt; font-weight: 700; color: #1A2E42; margin-bottom: 4px; }
+.step-body span   { font-size: 9.5pt; color: #5A6880; line-height: 1.7; }
 
-.divider { height: 1px; background: #EEF2F7; margin: 14px 0; }
+/* ── Tips ── */
+.tip {
+  background: #F8FAFC;
+  border-right: 3px solid #2E4A6B;
+  border-radius: 0 10px 10px 0;
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-size: 9pt;
+  color: #2E4A6B;
+  line-height: 1.6;
+}
+.tip strong { display: block; margin-bottom: 2px; font-size: 8.5pt; color: #1A2E42; font-weight: 800; }
 
-.url-bar { background: #1F2937; border-radius: 10px; padding: 10px 16px; text-align: center; margin-bottom: 22px; }
-.url-bar span { font-size: 11pt; color: #60a5fa; font-weight: 700; direction: ltr; display: inline-block; }
+.tip.green {
+  border-right-color: #166534;
+  color: #166534;
+}
+.tip.green strong { color: #14532D; }
 
-.footer { text-align: center; font-size: 8.5pt; color: #9CA3AF; padding-top: 8px; }
+/* ── Divider ── */
+.divider { height: 1px; background: #EEF2F7; margin: 16px 0; }
+
+/* ── Footer ── */
+.footer {
+  text-align: center;
+  font-size: 9pt;
+  color: #9CA3AF;
+  padding-top: 12px;
+  border-top: 1px solid #EEF2F7;
+}
+.footer strong { color: #2E4A6B; }
 </style>
 </head>
 <body>
 
+<!-- ── Hero ── -->
 <div class="hero">
-  <h1>دليل منصة عِماره</h1>
-  <p>منصة B2B لربط مُلاك العقارات بمزودي خدمات إدارة المرافق</p>
-  <div class="hero-roles">
-    <span class="role-chip">🏢 مالك العقار</span>
-    <span class="role-chip">🔧 مزود الخدمة</span>
+  <div class="hero-inner">
+    <h1>دليل منصة عِمارة</h1>
+    <p>منصة B2B لربط مُلاك العقارات بمزودي خدمات إدارة المرافق في الرياض</p>
+    <div class="hero-chips">
+      <span class="chip">مالك العقار</span>
+      <span class="chip">مزود الخدمة</span>
+    </div>
   </div>
 </div>
 
@@ -73,9 +160,12 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
   </div>
 
   <!-- ─── OWNER ─── -->
-  <div class="section">
+  <div class="section" style="margin-top: 24px;">
     <div class="section-header owner">
-      <span class="section-icon">🏢</span>
+      <div class="icon-box owner">
+        <!-- building icon -->
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
       <div>
         <div class="section-title">مالك العقار</div>
         <div class="section-sub">انشر طلبك، استقبل العروض، اختر أفضل مزود</div>
@@ -87,7 +177,7 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num o">1</div>
         <div class="step-body">
           <strong>أنشئ حسابك</strong>
-          <span>اختر "مالك عقار" → أدخل رقم جوالك → أدخل رمز SMS المُرسَل إليك.</span>
+          <span>من صفحة تسجيل الدخول، اختر "مالك عقار" ← أدخل رقم جوالك ← أدخل رمز SMS المرسل إليك.</span>
         </div>
       </div>
 
@@ -95,8 +185,8 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num o">2</div>
         <div class="step-body">
           <strong>أضف عقارك</strong>
-          <span>من لوحة التحكم → "عقاراتي" → "إضافة عقار" → أدخل الاسم والنوع والعنوان ورابط الخريطة.</span>
-          <div class="tip"><strong>ملاحظة</strong>عقار واحد لكل حساب في المرحلة الحالية.</div>
+          <span>من لوحة التحكم ← "عقاراتي" ← "إضافة عقار" ← أدخل الاسم والنوع والحي ورابط الخريطة.</span>
+          <div class="tip"><strong>ملاحظة</strong>عقار واحد لكل حساب في المرحلة الحالية، وتحديد الرياض فقط.</div>
         </div>
       </div>
 
@@ -104,7 +194,7 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num o">3</div>
         <div class="step-body">
           <strong>انشر طلب خدمة</strong>
-          <span>من "طلبات الخدمة" → "طلب جديد" → اختر عقارك، اكتب وصف الخدمة المطلوبة → "إرسال".</span>
+          <span>من "طلبات الخدمة" ← "طلب جديد" ← اختر عقارك، اختر نوع الخدمة، واكتب وصف احتياجك ← "إرسال".</span>
         </div>
       </div>
 
@@ -112,7 +202,7 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num o">4</div>
         <div class="step-body">
           <strong>استقبل العروض وقارنها</strong>
-          <span>المزودون المعتمدون يرسلون عروضهم. من "عروضي" تجد كل عرض مع ملف PDF وملاحظات المزود.</span>
+          <span>المزودون المعتمدون يرسلون عروضهم بصيغة PDF. من "عروضي" تجد كل عرض مع السعر الإجمالي وملاحظات المزود.</span>
         </div>
       </div>
 
@@ -120,8 +210,8 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num o">5</div>
         <div class="step-body">
           <strong>اقبل العرض وتواصل مع المزود</strong>
-          <span>اضغط "قبول" على العرض المناسب → يظهر رقم جوال المزود مباشرة → تواصل معه لترتيب التنفيذ.</span>
-          <div class="tip"><strong>مهم</strong>الدفع يتم مباشرة مع المزود — عِماره وسيط وليست طرفاً في المعاملة المالية.</div>
+          <span>اضغط "قبول" على العرض المناسب ← يظهر رقم جوال المزود مباشرة ← تواصل معه لترتيب التنفيذ.</span>
+          <div class="tip"><strong>مهم</strong>الدفع يتم مباشرة مع المزود — عِمارة وسيط وليست طرفاً في المعاملة المالية.</div>
         </div>
       </div>
 
@@ -131,7 +221,10 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
   <!-- ─── PROVIDER ─── -->
   <div class="section">
     <div class="section-header provider">
-      <span class="section-icon">🔧</span>
+      <div class="icon-box provider">
+        <!-- wrench/tools icon -->
+        <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
       <div>
         <div class="section-title">مزود الخدمة</div>
         <div class="section-sub">سجّل شركتك، تصفّح الطلبات، قدّم عروضك</div>
@@ -143,7 +236,7 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num p">1</div>
         <div class="step-body">
           <strong>سجّل حسابك</strong>
-          <span>اختر "مزود خدمة" → أدخل رقم جوالك → أدخل رمز SMS.</span>
+          <span>من صفحة تسجيل الدخول، اختر "مزود خدمة" ← أدخل رقم جوالك ← أدخل رمز SMS.</span>
         </div>
       </div>
 
@@ -151,8 +244,8 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num p">2</div>
         <div class="step-body">
           <strong>أكمل ملف شركتك</strong>
-          <span>من "ملفي الشخصي" → أدخل: اسم الشركة، المدينة، البريد الإلكتروني، رقم السجل التجاري، ورفع ملف الشركة. انتظر موافقة الإدارة.</span>
-          <div class="tip"><strong>مطلوب للتفعيل</strong>جميع الحقول إلزامية. الحساب غير المكتمل لا يستطيع إرسال عروض.</div>
+          <span>من "ملفي الشخصي" ← أدخل: اسم الشركة، المدينة، البريد الإلكتروني، السجل التجاري، ملف الشركة (PDF)، رقم الآيبان SA. انتظر موافقة الإدارة.</span>
+          <div class="tip green"><strong>مطلوب للتفعيل</strong>جميع الحقول إلزامية — الحساب غير المكتمل لا يستطيع إرسال عروض.</div>
         </div>
       </div>
 
@@ -160,7 +253,7 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num p">3</div>
         <div class="step-body">
           <strong>تصفّح طلبات الخدمة</strong>
-          <span>بعد الموافقة من "الطلبات المتاحة" → تجد طلبات الملاك في مدينتك مع تفاصيل العقار والخدمة المطلوبة.</span>
+          <span>بعد الموافقة، من "الطلبات المتاحة" تجد طلبات الملاك في الرياض مع تفاصيل العقار والخدمة المطلوبة.</span>
         </div>
       </div>
 
@@ -168,7 +261,8 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num p">4</div>
         <div class="step-body">
           <strong>قدّم عرضك</strong>
-          <span>اضغط على الطلب → "تقديم عرض" → ارفع ملف PDF بعرضك السعري، أضف ملاحظاتك، وافق على مشاركة رقمك → "إرسال".</span>
+          <span>اضغط على الطلب ← "تقديم عرض" ← أدخل السعر الإجمالي للعقد، ارفع ملف PDF بعرضك السعري، أضف ملاحظاتك، ووافق على مشاركة رقمك ← "إرسال".</span>
+          <div class="tip green"><strong>تلميح</strong>السعر الإجمالي يُقسَّم تلقائياً على عدد الوحدات ويُعرض للمالك سعر/وحدة.</div>
         </div>
       </div>
 
@@ -176,14 +270,16 @@ body { background: #F0F2F5; color: #1A2535; direction: rtl; }
         <div class="num p">5</div>
         <div class="step-body">
           <strong>تابع حالة عروضك</strong>
-          <span>من "عروضي المقدمة" ترى حالة كل عرض: قيد الانتظار / مقبول / مرفوض. عند القبول يتواصل معك المالك مباشرة.</span>
+          <span>من "عروضي المقدمة" ترى حالة كل عرض: قيد الانتظار / مقبول / مرفوض. عند القبول يتواصل معك المالك مباشرة عبر جوالك.</span>
         </div>
       </div>
 
     </div>
   </div>
 
-  <div class="footer">منصة عِماره — دليل المستخدم — مايو 2026</div>
+  <div class="footer">
+    <strong>منصة عِمارة</strong> — دليل المستخدم — مايو 2026
+  </div>
 
 </div>
 </body>
