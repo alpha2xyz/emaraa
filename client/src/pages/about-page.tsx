@@ -116,14 +116,6 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Focus note */}
-        <section className="border-t border-gray-100 pt-8 text-center">
-          <p className="text-sm text-gray-400">
-            {isRTL
-              ? "عِماره متاحة حالياً للعقارات السكنية في الرياض • النطاق يتوسع بعد أكتوبر 2026"
-              : "Emaraa is currently available for residential properties in Riyadh • Coverage expanding after October 2026"}
-          </p>
-        </section>
       </div>
     </div>
   );
