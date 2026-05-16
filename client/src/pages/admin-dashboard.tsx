@@ -62,6 +62,13 @@ export default function AdminDashboard() {
         cleaning: 'نظافة',
         maintenance: 'صيانة',
         notes: 'ملاحظات',
+        bank: 'البنك',
+        iban: 'الآيبان',
+        noBankInfo: 'لم يُدخل بيانات بنكية',
+        price: 'السعر الإجمالي',
+        neighborhood: 'الحي',
+        nationalAddress: 'العنوان الوطني',
+        sar: 'ريال',
       }
     : {
         title: 'Admin Dashboard',
@@ -98,6 +105,13 @@ export default function AdminDashboard() {
         cleaning: 'Cleaning',
         maintenance: 'Maintenance',
         notes: 'Notes',
+        bank: 'Bank',
+        iban: 'IBAN',
+        noBankInfo: 'No bank info entered',
+        price: 'Total Price',
+        neighborhood: 'Neighborhood',
+        nationalAddress: 'National Address',
+        sar: 'SAR',
       };
 
   // ── Stats ──────────────────────────────────────────────────────────────────
@@ -136,7 +150,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('providers')
-        .select('id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, fal_license_url, description, users(name, phone)')
+        .select('id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, fal_license_url, description, bank_name, iban, users(name, phone)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -150,7 +164,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, name, city, building_type, units_count, created_at, users(name, phone)')
+        .select('id, name, city, address, national_address, building_type, units_count, created_at, users(name, phone)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -164,7 +178,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('requests')
-        .select('id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, providers(company_name, city))')
+        .select('id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -312,6 +326,11 @@ export default function AdminDashboard() {
                               <p className="text-sm text-muted-foreground">{p.city}</p>
                               <p className="text-sm text-muted-foreground">{(p.users as any)?.name} · {(p.users as any)?.phone}</p>
                               {p.description && <p className="text-sm text-gray-600 mt-1">{p.description}</p>}
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {p.bank_name || p.iban
+                                  ? <span>{t.bank}: {p.bank_name ?? '—'} · {t.iban}: {p.iban ?? '—'}</span>
+                                  : <span className="italic">{t.noBankInfo}</span>}
+                              </div>
                               <p className="text-xs text-muted-foreground">{formatDate(p.created_at)}</p>
                             </div>
                             {!p.approved && (
@@ -388,6 +407,7 @@ export default function AdminDashboard() {
                           <p className="text-xs text-muted-foreground">{formatDate(p.created_at)}</p>
                         </div>
                         <p className="text-sm text-muted-foreground">{p.city} · {p.building_type} {p.units_count ? `· ${p.units_count} ${isRTL ? 'وحدة' : 'units'}` : ''}</p>
+                        {p.address && <p className="text-sm text-muted-foreground">{t.neighborhood}: {p.address}{p.national_address ? ` · ${t.nationalAddress}: ${p.national_address}` : ''}</p>}
                         <p className="text-sm text-muted-foreground">{t.owner}: {(p.users as any)?.name} · {(p.users as any)?.phone}</p>
                       </div>
                     ))}
@@ -446,6 +466,7 @@ export default function AdminDashboard() {
                                   <div className="space-y-0.5">
                                     <p className="text-sm font-medium">{o.providers?.company_name}</p>
                                     <p className="text-xs text-muted-foreground">{o.providers?.city}</p>
+                                    {o.price_total != null && <p className="text-xs font-medium text-gray-700">{t.price}: {o.price_total.toLocaleString()} {t.sar}</p>}
                                     {o.notes && <p className="text-xs text-gray-500">{t.notes}: {o.notes}</p>}
                                     <Badge variant="outline" className={`text-xs ${o.status === 'accepted' ? 'border-green-400 text-green-700' : o.status === 'rejected' ? 'border-red-400 text-red-700' : 'border-yellow-400 text-yellow-700'}`}>
                                       {t.offerStatus[o.status as keyof typeof t.offerStatus] ?? o.status}
