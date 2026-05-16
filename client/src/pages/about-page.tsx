@@ -1,5 +1,6 @@
 import { useLang } from "@/hooks/use-lang";
-import { Building2, ShieldCheck, Phone, Mail } from "lucide-react";
+import { ShieldCheck, Building2, Users, Sparkles } from "lucide-react";
+import { Link } from "wouter";
 
 export default function AboutPage() {
   const { lang } = useLang();
@@ -7,118 +8,154 @@ export default function AboutPage() {
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
-      {/* Hero */}
-      <div className="bg-gradient-to-br from-[#2E4A6B] to-[#1A2E42] text-white py-16 px-6 text-center">
-        <div className="mx-auto w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
-          <Building2 className="w-10 h-10 text-white" />
+
+      {/* ── Hero ── */}
+      <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#3A6A9E] text-white py-20 px-6 text-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
+        <div className="relative max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+            <span>🇸🇦</span>
+            <span>{isRTL ? "منصة سعودية — مبنية في الرياض" : "Saudi Platform — Built in Riyadh"}</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-5 leading-tight">
+            {isRTL ? "بُنيت لأن الطريقة القديمة لم تعد تكفي" : "Built Because the Old Way Wasn't Good Enough"}
+          </h1>
+          <p className="text-lg text-blue-100 leading-relaxed">
+            {isRTL
+              ? "إدارة عقارك لا ينبغي أن تبدأ بـ \"من يعرف شركة نظافة موثوقة؟\" في مجموعة واتساب."
+              : "Managing your building shouldn't start with \"does anyone know a reliable cleaning company?\" in a WhatsApp group."}
+          </p>
         </div>
-        <h1 className="text-4xl font-extrabold mb-3">
-          {isRTL ? "عِمارة" : "Emaraa"}
-        </h1>
-        <p className="text-lg text-blue-100 max-w-xl mx-auto leading-relaxed">
-          {isRTL
-            ? "سوق B2B سعودي يربط ملّاك العقارات بمزودي خدمات إدارة المرافق الموثوقين"
-            : "Saudi B2B marketplace connecting property owners with trusted facility management providers"}
-        </p>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-12 space-y-12">
-        {/* Mission */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            {isRTL ? "مهمتنا" : "Our Mission"}
+      {/* ── Why Emaraa ── */}
+      <div className="max-w-3xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
+            {isRTL ? "لماذا عِمارة؟" : "Why Emaraa?"}
           </h2>
-          <p className="text-gray-600 leading-relaxed text-base">
+          <p className="text-gray-500 text-base leading-relaxed max-w-xl mx-auto">
             {isRTL
-              ? "نؤمن بأن كل عقار سكني يستحق إدارة مرافق احترافية وشفافة. عِماره تُبسّط العملية: المالك يرفع طلبه، ومزودو الخدمات المعتمدون يتقدمون بعروضهم، والمالك يختار الأنسب — كل ذلك في مكان واحد وبدون وسيط."
-              : "We believe every residential property deserves professional, transparent facility management. Emaraa simplifies the process: owners post their requests, vetted providers submit proposals, and owners choose the best fit — all in one place, no middlemen."}
+              ? "في السوق السعودي، مالك العقار يجد مزود الخدمة بالمعارف أو الصدفة. لا مقارنة، لا توثيق، لا ضمان. عِمارة بُنيت لتغيير هذا."
+              : "In the Saudi market, property owners find service providers through connections or chance. No comparison, no documentation, no guarantee. Emaraa was built to change that."}
           </p>
-        </section>
+        </div>
 
-        {/* How it works */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            {isRTL ? "كيف تعمل المنصة؟" : "How It Works"}
+        {/* Problem → Solution cards */}
+        <div className="grid sm:grid-cols-3 gap-5 mb-16">
+          {[
+            {
+              icon: "📋",
+              ar: { title: "عروض مكتوبة لا شفهية", body: "كل مزود يُقدّم عرضه بصيغة PDF رسمية — لا وعود شفهية، لا مفاجآت في السعر." },
+              en: { title: "Written Offers, Not Verbal", body: "Every provider submits a formal PDF proposal — no verbal promises, no price surprises." },
+            },
+            {
+              icon: "🛡️",
+              ar: { title: "مزودون مُتحقَّق منهم فقط", body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال — قبل أي تواصل مع المُلاك." },
+              en: { title: "Verified Providers Only", body: "Every company goes through manual review: commercial register, profile, and FAL license — before any contact with owners." },
+            },
+            {
+              icon: "⚖️",
+              ar: { title: "المقارنة بين يديك", body: "تصلك عروض متعددة على نفس الطلب — تختار بمعلومة كاملة، لا بـ \"هذا اللي أعرفه\"." },
+              en: { title: "Comparison Is Yours", body: "Multiple offers arrive for the same request — you choose with full information, not just 'who I know'." },
+            },
+          ].map((item, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center hover:shadow-md transition-shadow">
+              <div className="text-3xl mb-3">{item.icon}</div>
+              <h3 className="font-bold text-gray-900 text-sm mb-2">{isRTL ? item.ar.title : item.en.title}</h3>
+              <p className="text-gray-500 text-xs leading-relaxed">{isRTL ? item.ar.body : item.en.body}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Values ── */}
+        <div className="bg-[#1A2E42] rounded-2xl p-8 text-white mb-16">
+          <h2 className="text-2xl font-extrabold mb-6 text-center">
+            {isRTL ? "ما الذي نؤمن به" : "What We Stand For"}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-5">
             {[
               {
-                step: "١",
-                ar: "المالك يسجّل عقاره",
-                en: "Owner registers property",
+                icon: <ShieldCheck className="w-5 h-5" />,
+                ar: { title: "الثقة تُبنى بالتوثيق", body: "لا نثق بالكلام — كل مزود معنا يُثبت هويته ورخصته قبل أن يصل للمُلاك." },
+                en: { title: "Trust Is Built With Documentation", body: "We don't take anyone's word for it — every provider proves their identity and license before reaching owners." },
               },
               {
-                step: "٢",
-                ar: "مزودو الخدمات يرسلون عروضهم بصيغة PDF",
-                en: "Providers submit PDF proposals",
+                icon: <Sparkles className="w-5 h-5" />,
+                ar: { title: "الشفافية في كل خطوة", body: "السعر مكتوب، العرض مرفوع، القرار للمالك. لا عمولات مخفية، لا وسطاء بينك وبين المزود." },
+                en: { title: "Transparency at Every Step", body: "Price is written, offer is uploaded, decision is yours. No hidden fees, no middlemen between you and the provider." },
               },
               {
-                step: "٣",
-                ar: "المالك يقبل العرض الأنسب ويتواصل مباشرة",
-                en: "Owner accepts the best offer and connects directly",
+                icon: <Building2 className="w-5 h-5" />,
+                ar: { title: "سعودية الهوية", body: "منصة بُنيت في الرياض، لفهم طبيعة السوق السعودي، ومتطلبات التراخيص المحلية، وخصوصية قطاع العقارات في المملكة." },
+                en: { title: "Saudi by Identity", body: "A platform built in Riyadh, understanding the Saudi market, local licensing requirements, and the specifics of the Kingdom's real estate sector." },
               },
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-                <div className="w-10 h-10 rounded-full bg-[#EEF2F7] flex items-center justify-center mx-auto mb-3 text-[#2E4A6B] font-bold text-lg">
-                  {item.step}
+            ].map((v, i) => (
+              <div key={i} className="flex items-start gap-4">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {v.icon}
                 </div>
-                <p className="text-gray-700 text-sm font-medium">{isRTL ? item.ar : item.en}</p>
+                <div>
+                  <p className="font-bold text-sm mb-1">{isRTL ? v.ar.title : v.en.title}</p>
+                  <p className="text-blue-200 text-xs leading-relaxed">{isRTL ? v.ar.body : v.en.body}</p>
+                </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
-        {/* Trust & Verification */}
-        <section className="bg-[#EEF2F7] rounded-2xl p-6">
+        {/* ── Market Numbers ── */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-8">
+            {isRTL ? "السوق الذي نخدمه" : "The Market We Serve"}
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { num: "٩٬٣٥٤", label: isRTL ? "جمعية ملاك نشطة في المملكة" : "Active owners associations in KSA", src: "REGA" },
+              { num: "٣٠٢", label: isRTL ? "شركة حاصلة على ترخيص فال" : "FAL-licensed FM companies", src: "فال" },
+              { num: "١٢٩", label: isRTL ? "منها في الرياض — نطاقنا الحالي" : "of which are in Riyadh — our current scope", src: "" },
+            ].map((s, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+                <p className="text-3xl font-extrabold text-[#2E4A6B] mb-1" style={{ fontFamily: "Tajawal, sans-serif" }}>{s.num}</p>
+                <p className="text-xs text-gray-500 leading-snug">{s.label}</p>
+                {s.src && <p className="text-[10px] text-gray-300 mt-1">{s.src}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Founder Note ── */}
+        <div className="bg-[#EEF2F7] rounded-2xl p-7 mb-16">
           <div className="flex items-center gap-3 mb-4">
-            <ShieldCheck className="w-6 h-6 text-[#2E4A6B]" />
-            <h2 className="text-xl font-bold text-gray-900">
-              {isRTL ? "التحقق من مزودي الخدمات" : "Provider Verification"}
-            </h2>
+            <div className="w-10 h-10 rounded-full bg-[#2E4A6B] flex items-center justify-center">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900 text-sm">{isRTL ? "من المؤسس" : "From the Founder"}</p>
+              <p className="text-xs text-gray-400">{isRTL ? "عبدالله الفريدي — الرياض" : "Abdallah Alfaraidi — Riyadh"}</p>
+            </div>
           </div>
           <p className="text-gray-600 text-sm leading-relaxed">
             {isRTL
-              ? "كل مزود خدمة يمر بمراجعة يدوية من فريق عِماره قبل الموافقة. نتحقق من السجل التجاري، بروفايل الشركة، ورخصة فال — لضمان أن الملاك يتعاملون فقط مع شركات موثوقة."
-              : "Every service provider undergoes manual review by the Emaraa team before approval. We verify the commercial register, company profile, and FAL license — ensuring owners only deal with trusted companies."}
+              ? "\"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات — رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذا هو عِمارة.\""
+              : "\"I built Emaraa because I saw how owners dealt with service providers — scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That's Emaraa.\""}
           </p>
-        </section>
+        </div>
 
-        {/* Contact */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            {isRTL ? "تواصل معنا" : "Contact Us"}
-          </h2>
-          <div className="space-y-4">
-            <a
-              href="mailto:info@emaraa.sa"
-              className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 hover:shadow-md transition-shadow"
-            >
-              <Mail className="w-5 h-5 text-[#2E4A6B]" />
-              <div>
-                <p className="text-xs text-gray-500">{isRTL ? "البريد الإلكتروني" : "Email"}</p>
-                <p className="font-medium text-gray-800">info@emaraa.sa</p>
-              </div>
-            </a>
-            <a
-              href="https://wa.me/966500000000"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 hover:shadow-md transition-shadow"
-            >
-              <Phone className="w-5 h-5 text-[#2E4A6B]" />
-              <div>
-                <p className="text-xs text-gray-500">WhatsApp</p>
-                <p className="font-medium text-gray-800">
-                  {isRTL ? "تواصل عبر واتساب" : "Chat on WhatsApp"}
-                </p>
-              </div>
-            </a>
-          </div>
-        </section>
-
+        {/* ── CTA ── */}
+        <div className="text-center">
+          <p className="text-gray-500 text-sm mb-5">
+            {isRTL ? "هل لديك عقار سكني في الرياض؟" : "Do you have a residential property in Riyadh?"}
+          </p>
+          <Link href="/auth">
+            <button className="bg-[#2E4A6B] hover:bg-[#1A2E42] text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm">
+              {isRTL ? "ابدأ مجاناً" : "Get Started Free"}
+            </button>
+          </Link>
+        </div>
       </div>
 
-      {/* Saudi Made badge */}
+      {/* ── Saudi Made badge ── */}
       <div className="border-t border-gray-100 py-8 flex justify-center">
         <img
           src="https://www.tameeni.com/images/saudi-made-ar.png"
