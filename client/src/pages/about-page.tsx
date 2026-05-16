@@ -1,5 +1,5 @@
 import { useLang } from "@/hooks/use-lang";
-import { ShieldCheck, Building2, Users, Sparkles } from "lucide-react";
+import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AboutPage() {
@@ -41,23 +41,23 @@ export default function AboutPage() {
         <div className="grid sm:grid-cols-3 gap-5 mb-16">
           {[
             {
-              icon: "📋",
+              icon: <FileText className="w-6 h-6" />,
               ar: { title: "عروض مكتوبة لا شفهية", body: "كل مزود يُقدّم عرضه بصيغة PDF رسمية — لا وعود شفهية، لا مفاجآت في السعر." },
               en: { title: "Written Offers, Not Verbal", body: "Every provider submits a formal PDF proposal — no verbal promises, no price surprises." },
             },
             {
-              icon: "🛡️",
+              icon: <ShieldCheck className="w-6 h-6" />,
               ar: { title: "مزودون مُتحقَّق منهم فقط", body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال — قبل أي تواصل مع المُلاك." },
               en: { title: "Verified Providers Only", body: "Every company goes through manual review: commercial register, profile, and FAL license — before any contact with owners." },
             },
             {
-              icon: "⚖️",
+              icon: <Scale className="w-6 h-6" />,
               ar: { title: "المقارنة بين يديك", body: "تصلك عروض متعددة على نفس الطلب — تختار بمعلومة كاملة، لا بـ \"هذا اللي أعرفه\"." },
               en: { title: "Comparison Is Yours", body: "Multiple offers arrive for the same request — you choose with full information, not just 'who I know'." },
             },
           ].map((item, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center hover:shadow-md transition-shadow">
-              <div className="text-3xl mb-3">{item.icon}</div>
+              <div className="w-12 h-12 rounded-2xl bg-[#EEF2F7] flex items-center justify-center mx-auto mb-4 text-[#2E4A6B]">{item.icon}</div>
               <h3 className="font-bold text-gray-900 text-sm mb-2">{isRTL ? item.ar.title : item.en.title}</h3>
               <p className="text-gray-500 text-xs leading-relaxed">{isRTL ? item.ar.body : item.en.body}</p>
             </div>
