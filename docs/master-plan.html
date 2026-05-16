@@ -323,6 +323,10 @@ tr:nth-child(even) td{background:#F8FAFC;}
         <span class="ck">✓</span>
         <div class="text"><strong>Sprint 1 — 7 مهام كود مكتملة (16 مايو 2026)</strong><span>بنك/IBAN إلزامي • سعر/وحدة تلقائي • SMS للمزود والمالك • فلتر الرياض • العنوان الوطني • إشعار مزودي الرياض • صفحة /about — دُفعت على Vercel + migration DB</span></div>
       </div>
+      <div class="done-item">
+        <span class="ck">✓</span>
+        <div class="text"><strong>لوحة الإدارة — حقول جديدة (16 مايو 2026)</strong><span>admin-dashboard.tsx: عرض البنك والآيبان في بطاقة المزود • السعر الإجمالي/وحدة في العروض • الحي والعنوان الوطني في العقارات — query + UI</span></div>
+      </div>
     </div>
   </div>
 
@@ -614,9 +618,9 @@ tr:nth-child(even) td{background:#F8FAFC;}
     </div>
     <div class="gap-body">
       <div class="why">حالياً: المزود لا يعلم أن طلباً جديداً نُشر إلا إذا فتح التطبيق. المالك لا يعلم أن عرضاً وصل. هذا يقتل الانخراط — المنصة ستبدو "ميتة" حتى لو كان فيها نشاط.</div>
-      <div class="fix">
-        <strong>الحل الأسرع:</strong>
-        استخدام Authentica (لديك API key بالفعل) لإرسال SMS للمزود عند نشر طلب في مدينته، وللمالك عند وصول عرض. لا تحتاج بنية جديدة — فقط call إضافية في routes.ts عند إنشاء request أو offer. أولوية قبل الإطلاق.
+      <div class="fix" style="background:var(--GL);border-color:var(--GE);color:#166534;">
+        <strong>✅ مُطبَّق 16 مايو 2026:</strong>
+        POST /api/sms/new-request — يُرسل لجميع مزودي الرياض الموافق عليهم فور نشر طلب جديد. POST /api/sms/offer-submitted — يُرسل تأكيداً للمزود وإشعاراً للمالك فور إرسال عرض. مبني على Authentica في server/routes.ts — مدفوع على Vercel.
       </div>
     </div>
   </div>
@@ -713,15 +717,15 @@ tr:nth-child(even) td{background:#F8FAFC;}
 
   <!-- GAP 9 -->
   <div class="gap-item">
-    <div class="gap-header info">
-      <span class="sev info">متوسطة</span>
+    <div class="gap-header" style="background:var(--GL);">
+      <span class="sev" style="background:var(--G);color:#fff;">مُعالَجة ✅</span>
       <div class="title">9. صفحة "من نحن" والهوية — لماذا يثقون بك؟</div>
     </div>
     <div class="gap-body">
       <div class="why">عميل B2B سيبحث عنك قبل التسجيل. إذا لم يجد اسم الشركة، رقم تواصل، قصة المؤسس، أو من وراء المنصة — لن يسجّل. الغموض يُساوي عدم الثقة في السوق السعودي.</div>
-      <div class="fix">
-        <strong>الإجراء:</strong>
-        صفحة /about: اسمك، مهمة المنصة، لماذا بُنيت، طريقة التواصل. لا تحتاج شركة مسجّلة بعد — الشفافية الشخصية كافية في المرحلة الأولى. أضف: صورتك، رقم واتساب تجاري، بريد إلكتروني.
+      <div class="fix" style="background:var(--GL);border-color:var(--GE);color:#166534;">
+        <strong>✅ مُطبَّق 16 مايو 2026:</strong>
+        صفحة /about منشورة على emaraa.vercel.app/about — تتضمن مهمة المنصة، كيف تعمل (3 خطوات)، آلية التحقق من المزودين (فال)، وطريقة التواصل (إيميل + واتساب). مُترجمة بالعربي والإنجليزي.
       </div>
     </div>
   </div>
