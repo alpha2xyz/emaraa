@@ -409,40 +409,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-white border-t border-gray-100 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid sm:grid-cols-2 gap-8 mb-8">
-            <div>
-              <p className="text-xl font-extrabold text-[#2E4A6B] mb-2">{t.siteName}</p>
-              <p className="text-sm text-gray-500">{t.footerTagline}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">{t.quickLinks}</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/contact">{t.contactUs}</Link>
-                </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/about">{t.aboutUs}</Link>
-                </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer">{t.viewDemo}</a>
-                </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/terms">{t.termsOfUse}</Link>
-                </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/privacy">{t.privacyPolicy}</Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-100 pt-6 text-center">
-            <p className="text-sm text-gray-500">{t.footerCopyright}</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
