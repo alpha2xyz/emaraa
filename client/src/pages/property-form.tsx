@@ -42,10 +42,9 @@ export default function PropertyForm() {
       titleEdit: "تعديل العقار",
       name: "اسم العقار",
       namePlaceholder: "مثال: برج الياسمين",
-      address: "العنوان",
-      addressPlaceholder: "العنوان التفصيلي للعقار",
+      neighborhood: "الحي",
+      neighborhoodPlaceholder: "مثال: العليا، النرجس، حطين...",
       city: "المدينة",
-      cityPlaceholder: "مثال: الرياض",
       buildingType: "نوع المبنى",
       residential: "سكني",
       commercial: "تجاري",
@@ -66,10 +65,9 @@ export default function PropertyForm() {
       titleEdit: "Edit Property",
       name: "Property Name",
       namePlaceholder: "e.g. Yasmine Tower",
-      address: "Address",
-      addressPlaceholder: "Detailed property address",
+      neighborhood: "Neighborhood",
+      neighborhoodPlaceholder: "e.g. Al Olaya, Al Narjis, Hittin...",
       city: "City",
-      cityPlaceholder: "e.g. Riyadh",
       buildingType: "Building Type",
       residential: "Residential",
       commercial: "Commercial",
@@ -206,17 +204,6 @@ export default function PropertyForm() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">{t.address}</Label>
-              <Input
-                id="address"
-                placeholder={t.addressPlaceholder}
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                required
-              />
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">{t.city}</Label>
@@ -229,21 +216,32 @@ export default function PropertyForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>{t.buildingType}</Label>
-                <Select
-                  value={formData.building_type}
-                  onValueChange={(v) => setFormData({ ...formData, building_type: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="residential">{t.residential}</SelectItem>
-                    <SelectItem value="commercial">{t.commercial}</SelectItem>
-                    <SelectItem value="mixed">{lang === "ar" ? "مختلط" : "Mixed"}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="address">{t.neighborhood}</Label>
+                <Input
+                  id="address"
+                  placeholder={t.neighborhoodPlaceholder}
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t.buildingType}</Label>
+              <Select
+                value={formData.building_type}
+                onValueChange={(v) => setFormData({ ...formData, building_type: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="residential">{t.residential}</SelectItem>
+                  <SelectItem value="commercial">{t.commercial}</SelectItem>
+                  <SelectItem value="mixed">{lang === "ar" ? "مختلط" : "Mixed"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
