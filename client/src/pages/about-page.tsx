@@ -102,18 +102,22 @@ export default function AboutPage() {
 
         {/* ── Market Numbers ── */}
         <div className="mb-16">
-          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-8">
-            {isRTL ? "السوق الذي نخدمه" : "The Market We Serve"}
+          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-2">
+            {isRTL ? "الفرصة في الرياض" : "The Riyadh Opportunity"}
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <p className="text-center text-gray-400 text-sm mb-8">
+            {isRTL ? "أرقام رسمية — هذا هو السوق الذي ينتظرك" : "Official figures — this is the market waiting for you"}
+          </p>
+          <div className="grid grid-cols-3 gap-4">
             {[
-              { num: "١٢٩", label: isRTL ? "شركة حاصلة على ترخيص فال في الرياض" : "FAL-licensed FM companies in Riyadh", src: "فال" },
-              { num: "+٣٠٠", label: isRTL ? "شركة مرخّصة في المملكة" : "Licensed companies across KSA", src: "فال" },
+              { num: "+700K", label: isRTL ? "وحدة سكنية في الرياض" : "Residential units in Riyadh", src: isRTL ? "إحصاء 2022" : "Census 2022" },
+              { num: "9,354", label: isRTL ? "جمعية ملاك نشطة في المملكة" : "Active owners associations in KSA", src: "REGA 2024" },
+              { num: "3.4%", label: isRTL ? "نمو سكاني سنوي في الرياض" : "Annual population growth in Riyadh", src: isRTL ? "الهيئة العامة للإحصاء" : "GASTAT" },
             ].map((s, i) => (
               <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-                <p className="text-3xl font-extrabold text-[#2E4A6B] mb-1" style={{ fontFamily: "Tajawal, sans-serif" }}>{s.num}</p>
+                <p className="text-2xl font-extrabold text-[#2E4A6B] mb-1" style={{ fontFamily: "Tajawal, sans-serif" }}>{s.num}</p>
                 <p className="text-xs text-gray-500 leading-snug">{s.label}</p>
-                {s.src && <p className="text-[10px] text-gray-300 mt-1">{s.src}</p>}
+                <p className="text-[10px] text-gray-300 mt-1">{s.src}</p>
               </div>
             ))}
           </div>
