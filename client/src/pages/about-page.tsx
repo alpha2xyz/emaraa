@@ -10,17 +10,13 @@ export default function AboutPage() {
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
 
       {/* ── Hero ── */}
-      <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#3A6A9E] text-white py-20 px-6 text-center relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#3A6A9E] text-white py-10 px-6 text-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
         <div className="relative max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-            <span>🇸🇦</span>
-            <span>{isRTL ? "منصة سعودية — مبنية في الرياض" : "Saudi Platform — Built in Riyadh"}</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-5 leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
             {isRTL ? "بُنيت لأن الطريقة القديمة لم تعد تكفي" : "Built Because the Old Way Wasn't Good Enough"}
           </h1>
-          <p className="text-lg text-blue-100 leading-relaxed">
+          <p className="text-sm text-blue-100 leading-relaxed">
             {isRTL
               ? "إدارة عقارك لا ينبغي أن تبدأ بـ \"من يعرف شركة نظافة موثوقة؟\" في مجموعة واتساب."
               : "Managing your building shouldn't start with \"does anyone know a reliable cleaning company?\" in a WhatsApp group."}
@@ -109,11 +105,10 @@ export default function AboutPage() {
           <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-8">
             {isRTL ? "السوق الذي نخدمه" : "The Market We Serve"}
           </h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {[
-              { num: "٩٬٣٥٤", label: isRTL ? "جمعية ملاك نشطة في المملكة" : "Active owners associations in KSA", src: "REGA" },
-              { num: "٣٠٢", label: isRTL ? "شركة حاصلة على ترخيص فال" : "FAL-licensed FM companies", src: "فال" },
-              { num: "١٢٩", label: isRTL ? "منها في الرياض — نطاقنا الحالي" : "of which are in Riyadh — our current scope", src: "" },
+              { num: "١٢٩", label: isRTL ? "شركة حاصلة على ترخيص فال في الرياض" : "FAL-licensed FM companies in Riyadh", src: "فال" },
+              { num: "+٣٠٠", label: isRTL ? "شركة مرخّصة في المملكة" : "Licensed companies across KSA", src: "فال" },
             ].map((s, i) => (
               <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
                 <p className="text-3xl font-extrabold text-[#2E4A6B] mb-1" style={{ fontFamily: "Tajawal, sans-serif" }}>{s.num}</p>
@@ -132,12 +127,12 @@ export default function AboutPage() {
             </div>
             <div>
               <p className="font-bold text-gray-900 text-sm">{isRTL ? "من المؤسس" : "From the Founder"}</p>
-              <p className="text-xs text-gray-400">{isRTL ? "عبدالله الفريدي — الرياض" : "Abdallah Alfaraidi — Riyadh"}</p>
+              <p className="text-xs text-gray-400">{isRTL ? "عبدالله الفرائضي — الرياض" : "Abdallah Alfaraidi — Riyadh"}</p>
             </div>
           </div>
           <p className="text-gray-600 text-sm leading-relaxed">
             {isRTL
-              ? "\"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات — رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذا هو عِمارة.\""
+              ? "\"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات — رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذه هي عِمارة.\""
               : "\"I built Emaraa because I saw how owners dealt with service providers — scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That's Emaraa.\""}
           </p>
         </div>
@@ -156,11 +151,11 @@ export default function AboutPage() {
       </div>
 
       {/* ── Saudi Made badge ── */}
-      <div className="border-t border-gray-100 py-8 flex justify-center">
+      <div className="flex justify-end px-6 pb-6">
         <img
           src="https://www.tameeni.com/images/saudi-made-ar.png"
           alt="صنع في السعودية"
-          className="h-16 object-contain opacity-80"
+          className="h-9 object-contain opacity-70"
         />
       </div>
     </div>
