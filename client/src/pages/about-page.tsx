@@ -117,6 +117,15 @@ export default function AboutPage() {
         </section>
 
       </div>
+
+      {/* Saudi Made badge */}
+      <div className="border-t border-gray-100 py-8 flex justify-center">
+        <img
+          src="https://www.tameeni.com/images/saudi-made-ar.png"
+          alt="صنع في السعودية"
+          className="h-16 object-contain opacity-80"
+        />
+      </div>
     </div>
   );
 }
