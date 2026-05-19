@@ -130,21 +130,23 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 
 ## Feature Backlog
 
-**Medium — pre-launch:**
-- Move OTP storage from in-memory Map to Supabase table (`server/routes.ts:215`)
-- Explicit phone-sharing consent at provider registration (`provider-offer-form.tsx:322`)
-- Server-side MIME type validation on file uploads
-- Owner offers empty state — richer illustration + CTA (`owner-offers-page.tsx:146`)
-- 1 property per owner limit (UI + server enforcement)
-- Lock new requests once an offer is accepted
-- Second admin account (via `admins` table, role field)
+**Pre-launch (remaining):**
+- Second admin account (add `role` field to `admins` table + UI in admin dashboard)
+
+**Already shipped (pre-launch):**
+- OTP storage moved to Supabase `otp_rate_limits` table (no in-memory Map)
+- Phone-sharing consent checkbox at provider offer submission
+- 1 property per owner — server-side enforcement (`routes.ts:127`)
+- Lock new requests once an offer is accepted (`routes.ts:192`)
 - SLA/Terms acceptance checkbox at registration
+- File MIME validation — magic bytes checked client-side before upload (`provider-offer-form.tsx:238`, `provider-profile.tsx:175`)
+- Owner offers empty state — SVG illustration + CTA to requests page (`owner-offers-page.tsx:146`)
 
 **Stage 1:**
 - Owner email OTP via Resend
 
 **Stage 2 (post-CR):**
-- Provider notified on admin approval
+- Provider notified via SMS when admin approves their account (SMS fires on offer/request events but not on approval — `routes.ts:318`)
 
 **Stage 3 (requires CR):**
 - Contract signing via **Signit API** (signit.sa) — Saudi-native, SDGA-licensed

@@ -192,7 +192,7 @@ export default function AdminDashboard() {
       const { error } = await supabase.from('providers').update({ approved }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'all-providers'] }),
   });
 
   async function impersonate(userId: string) {

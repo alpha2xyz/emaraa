@@ -95,9 +95,14 @@ export default function ProviderRequests() {
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error("Not logged in");
-      const { data: user } = await supabase.from("users").select("id").eq("phone", phone).single();
-      if (!user) throw new Error("User not found");
-      const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, providers(*)")
+        .eq("phone", phone)
+        .single();
+      if (error || !data) throw new Error("User not found");
+      const user = { id: data.id };
+      const provider = (data as any).providers?.[0] ?? null;
       return { user, provider };
     },
   });

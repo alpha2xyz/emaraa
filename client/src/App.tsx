@@ -48,6 +48,7 @@ import RequireAuth from "@/components/RequireAuth";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 // ── Pages ──────────────────────────────────────────────────────────────────
+// Public pages — loaded eagerly (seen before auth)
 import LandingPage       from "@/pages/landing-page";
 import AuthPage          from "@/pages/auth-page";
 import NotFound          from "@/pages/not-found";
@@ -56,28 +57,25 @@ import TermsPage         from "@/pages/terms";
 import PrivacyPage       from "@/pages/privacy";
 import AboutPage         from "@/pages/about-page";
 
-// Owner
-import OwnerDashboard    from "@/pages/owner-dashboard";
-import Properties        from "@/pages/properties";
-import PropertyForm      from "@/pages/property-form";
-import Requests          from "@/pages/requests";
-import RequestForm       from "@/pages/request-form";
-import OwnerOffersPage   from "@/pages/owner-offers-page";
+// Auth-gated pages — lazy loaded (split into separate chunks)
+const OwnerDashboard    = React.lazy(() => import("@/pages/owner-dashboard"));
+const Properties        = React.lazy(() => import("@/pages/properties"));
+const PropertyForm      = React.lazy(() => import("@/pages/property-form"));
+const Requests          = React.lazy(() => import("@/pages/requests"));
+const RequestForm       = React.lazy(() => import("@/pages/request-form"));
+const OwnerOffersPage   = React.lazy(() => import("@/pages/owner-offers-page"));
 
-// Provider
-import ProviderDashboard from "@/pages/provider-dashboard";
-import ProviderRequests  from "@/pages/provider-requests";
-import ProviderOfferForm from "@/pages/provider-offer-form";
-import ProviderProfile   from "@/pages/provider-profile";
-import ProviderOffers    from "@/pages/provider-offers";
+const ProviderDashboard = React.lazy(() => import("@/pages/provider-dashboard"));
+const ProviderRequests  = React.lazy(() => import("@/pages/provider-requests"));
+const ProviderOfferForm = React.lazy(() => import("@/pages/provider-offer-form"));
+const ProviderProfile   = React.lazy(() => import("@/pages/provider-profile"));
+const ProviderOffers    = React.lazy(() => import("@/pages/provider-offers"));
 
-// Shared
-import Settings          from "@/pages/settings";
+const Settings          = React.lazy(() => import("@/pages/settings"));
 
-// Admin
-import AdminLoginPage    from "@/pages/admin-login-page";
-import AdminDashboard    from "@/pages/admin-dashboard";
-import AdminAuth         from "@/pages/admin-auth";
+const AdminLoginPage    = React.lazy(() => import("@/pages/admin-login-page"));
+const AdminDashboard    = React.lazy(() => import("@/pages/admin-dashboard"));
+const AdminAuth         = React.lazy(() => import("@/pages/admin-auth"));
 
 // ── Shared Dashboard Shell ─────────────────────────────────────────────────
 function DashboardLayout({ children, role }: { children: React.ReactNode; role?: "owner" | "provider" }) {
@@ -115,7 +113,11 @@ function DashboardLayout({ children, role }: { children: React.ReactNode; role?:
 // ── Router ─────────────────────────────────────────────────────────────────
 function Router() {
   return (
-    <>
+    <React.Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#2E4A6B] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
       <ScrollToTop />
       <Switch>
       {/* ── Public ──────────────────────────────────────────────────── */}
@@ -184,7 +186,7 @@ function Router() {
       {/* ── 404 ─────────────────────────────────────────────────────── */}
       <Route component={NotFound} />
     </Switch>
-    </>
+    </React.Suspense>
   );
 }
 
