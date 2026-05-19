@@ -239,7 +239,6 @@ export default function PropertyForm() {
                 <SelectContent>
                   <SelectItem value="residential">{t.residential}</SelectItem>
                   <SelectItem value="commercial">{t.commercial}</SelectItem>
-                  <SelectItem value="mixed">{lang === "ar" ? "مختلط" : "Mixed"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

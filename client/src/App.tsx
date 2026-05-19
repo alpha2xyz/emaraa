@@ -45,6 +45,7 @@ import { useLang } from "@/hooks/use-lang";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
 import RequireAuth from "@/components/RequireAuth";
+import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 // ── Pages ──────────────────────────────────────────────────────────────────
 import LandingPage       from "@/pages/landing-page";
@@ -84,6 +85,7 @@ function DashboardLayout({ children, role }: { children: React.ReactNode; role?:
   const [, setLocation] = useLocation();
   const isRTL = lang === "ar";
   const isImpersonating = !!localStorage.getItem("adminSessionToken");
+  useIdleLogout();
 
   function backToAdmin() {
     localStorage.setItem("userRole", "admin");

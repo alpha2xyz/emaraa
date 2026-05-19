@@ -23,7 +23,6 @@ import {
   ExternalLink,
   Home,
   Briefcase,
-  Building,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
@@ -48,7 +47,6 @@ export default function Properties() {
       units: "وحدة",
       residential: "سكني",
       commercial: "تجاري",
-      mixed: "مختلط",
       deleteTitle: "تأكيد الحذف",
       deleteDesc:
         "هل أنت متأكد من حذف هذا العقار؟ لا يمكن التراجع عن هذا الإجراء.",
@@ -69,7 +67,6 @@ export default function Properties() {
       units: "units",
       residential: "Residential",
       commercial: "Commercial",
-      mixed: "Mixed",
       deleteTitle: "Confirm Deletion",
       deleteDesc:
         "Are you sure you want to delete this property? This action cannot be undone.",
@@ -140,8 +137,6 @@ export default function Properties() {
         return <Home className="w-5 h-5 text-[#7D3040]" />;
       case "commercial":
         return <Briefcase className="w-5 h-5 text-[#C4694A]" />;
-      case "mixed":
-        return <Building className="w-5 h-5 text-purple-600" />;
       default:
         return <Building2 className="w-5 h-5 text-gray-600" />;
     }
@@ -153,8 +148,6 @@ export default function Properties() {
         return t.residential;
       case "commercial":
         return t.commercial;
-      case "mixed":
-        return t.mixed;
       default:
         return type;
     }
@@ -252,9 +245,7 @@ export default function Properties() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       property.building_type === 'commercial'
                         ? 'bg-[#FDF3EF] text-[#C4694A]'
-                        : property.building_type === 'residential'
-                        ? 'bg-[#FDF0F2] text-[#7D3040]'
-                        : 'bg-purple-50 text-purple-700'
+                        : 'bg-[#FDF0F2] text-[#7D3040]'
                     }`}>
                       {getBuildingTypeText(property.building_type)}
                     </span>

@@ -24,7 +24,7 @@ export type User = typeof users.$inferSelect;
 export const properties = pgTable("properties", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  building_type: text("building_type").notNull(), // residential, commercial, mixed
+  building_type: text("building_type").notNull(), // residential, commercial
   address: text("address").notNull(),
   city: text("city").notNull(),
   units_count: integer("units_count").default(0),

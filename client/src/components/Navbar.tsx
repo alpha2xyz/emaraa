@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useLang } from "@/hooks/use-lang";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { queryClient } from "@/lib/queryClient";
-import { supabase } from "@/lib/supabase";
+import { logoutUser } from "@/lib/auth";
 
 export function Navbar() {
   const { lang } = useLang();
@@ -12,19 +12,8 @@ export function Navbar() {
   const isAdmin = location.startsWith("/admin");
   if (location === "/" || location === "/auth" || location === "/contact" || isAdmin) return null;
 
-  async function handleLogout() {
-    const token = localStorage.getItem("sessionToken");
-    if (token) {
-      supabase.from("sessions").delete().eq("token", token).then(() => {});
-    }
-    supabase.auth.signOut();
-    localStorage.removeItem("sessionToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userPhone");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("supabaseToken");
-    queryClient.clear();
-    setLocation("/");
+  function handleLogout() {
+    logoutUser(queryClient, setLocation);
   }
 
   return (
