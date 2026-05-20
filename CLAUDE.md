@@ -120,7 +120,7 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 - **Verify:** `POST /api/otp/verify` — calls `https://api.authentica.sa/api/v2/verify-otp`
 - OTPs are **4 digits**, 5-min expiry. Auth UI: `maxLength=4`, `disabled` until 4 chars entered.
 - **Twilio is fully removed** — no Twilio imports, env vars, or SDK calls anywhere.
-- Known limitation: OTP state lives in an in-memory `Map` in `routes.ts` — OTPs are lost on cold starts. **Pending medium-priority item:** move to a Supabase `otp_codes` table with TTL.
+- OTP rate-limiting state persists in the `otp_rate_limits` Supabase table (no in-memory Map).
 
 ## Vercel Deployment (Live as of 2026-05-13)
 
@@ -131,23 +131,49 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 ## Feature Backlog
 
 **Pre-launch (remaining):**
-- Second admin account (add `role` field to `admins` table + UI in admin dashboard)
+- Provider notified via SMS when admin approves their account (`routes.ts:318` — SMS fires on offer/request events only, not on approval)
+- `map_url` URL validation — currently stores raw strings; validate `https://maps.google.com` prefix before save
+- Admin password minimum complexity (currently no length/complexity check at `routes.ts:558`)
 
 **Already shipped (pre-launch):**
+- Second admin account — `POST /api/admin/create` (`routes.ts:549`) + full UI in `admin-dashboard.tsx:226`
 - OTP storage moved to Supabase `otp_rate_limits` table (no in-memory Map)
-- Phone-sharing consent checkbox at provider offer submission
-- 1 property per owner — server-side enforcement (`routes.ts:127`)
-- Lock new requests once an offer is accepted (`routes.ts:192`)
-- SLA/Terms acceptance checkbox at registration
-- File MIME validation — magic bytes checked client-side before upload (`provider-offer-form.tsx:238`, `provider-profile.tsx:175`)
+- Phone-sharing consent checkbox at provider offer submission (`provider-offer-form.tsx:35`)
+- 1 property per owner — server-side check exists (`routes.ts:127`) ⚠️ bypassed by direct Supabase writes; needs RLS enforcement
+- Lock new requests once an offer is accepted — server-side check exists (`routes.ts:192`) ⚠️ bypassed by direct Supabase writes; needs RLS enforcement
+- SLA/Terms acceptance checkbox at registration (`auth-page.tsx:331`)
+- File MIME validation — magic bytes checked client-side before upload (`provider-offer-form.tsx:236`, `provider-profile.tsx:175`)
 - Owner offers empty state — SVG illustration + CTA to requests page (`owner-offers-page.tsx:146`)
+- Admin impersonation — `POST /api/admin/impersonate` + UI in `admin-dashboard.tsx:197`
+- Provider IBAN + bank name storage (`provider-profile.tsx`, `migrations/001_sprint1.sql`)
+- FAL license document upload (3rd required doc for providers — `provider-profile.tsx:195`)
+- `price_total` field on provider offers (`provider-offer-form.tsx:37`)
+- Approval status banner on provider profile (`provider-profile.tsx:323`)
+- Settings page (`settings.tsx`) + About page (`about-page.tsx`)
 
 **Stage 1:**
 - Owner email OTP via Resend
 
-**Stage 2 (post-CR):**
-- Provider notified via SMS when admin approves their account (SMS fires on offer/request events but not on approval — `routes.ts:318`)
-
 **Stage 3 (requires CR):**
 - Contract signing via **Signit API** (signit.sa) — Saudi-native, SDGA-licensed
 - Subscription payments via **Moyasar**
+
+## Security Issues (Audit 2026-05-20)
+
+### CRITICAL
+- **Open RLS policies** (`security_fixes.sql:72–90`) — All tables have `USING (true)` for the anon role, meaning any browser with the public anon key can read/write any row. Must rewrite policies to use `auth.uid() = owner_id` / `auth.uid() = user_id` patterns.
+- **Business rules bypassed** (`property-form.tsx:151`, `request-form.tsx:148`) — 1-property limit and offer-lock are enforced on the Express server, but both pages write directly to Supabase, bypassing the server entirely. Enforcement must move to RLS or DB triggers.
+
+### HIGH
+- **CORS wildcard fallback** (`server/index.ts:11`) — `origin: true` when `FRONTEND_URL` is unset reflects any origin with credentials. Fix: explicit fallback to `["http://localhost:5000"]`.
+- **No role enforcement on API endpoints** (`server/routes.ts:46`) — `requireSession` validates the session but never checks `role`. Providers can call owner-only endpoints.
+- **Admin impersonation has no audit log** (`routes.ts:523`) — No DB record of who impersonated whom. Add an `audit_log` table entry on every impersonation.
+- **Fake `refresh_token`** (`client/src/lib/supabase.ts:10`) — `setSession` is called with the JWT as both `access_token` and `refresh_token`. This will silently break if Supabase SDK attempts a real token refresh.
+- **No security headers / no Helmet** (`server/index.ts`) — No CSP, X-Frame-Options, or HSTS. Add `helmet()` as first middleware.
+
+### MEDIUM
+- **No global rate limiting** — Only OTP and admin login are rate-limited. SMS trigger endpoints (`/api/sms/*`) are unprotected.
+- **IBAN stored and served in plaintext** — `providers` table RLS allows any authenticated user to SELECT all IBANs. Restrict column access to provider + admin only.
+- **Session/admin/rate-limit table DDL missing from repo** — `sessions`, `admin_login_attempts`, `otp_rate_limits`, `admins` exist in production but have no `CREATE TABLE` in any migration file.
+- **`MemStorage` is dead code in production** (`server/storage.ts`) — All Express property/request routes use in-memory storage that is empty on every cold start (Vercel = serverless). These routes return empty data in production.
+- **`.env.example` missing vars** — `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL` are required but absent from `.env.example`.
