@@ -419,21 +419,21 @@ export default function LandingPage() {
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">{t.quickLinks}</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/contact">{t.contactUs}</Link>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/contact" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.contactUs}</Link>
                 </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/about">{t.aboutUs}</Link>
+                <li>
+                  <Link href="/about" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.aboutUs}</Link>
                 </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer">{t.viewDemo}</a>
+                <li>
+                  <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.viewDemo}</a>
                 </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/terms">{t.termsOfUse}</Link>
+                <li>
+                  <Link href="/terms" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.termsOfUse}</Link>
                 </li>
-                <li className="hover:text-[#2E4A6B] cursor-pointer transition-colors">
-                  <Link href="/privacy">{t.privacyPolicy}</Link>
+                <li>
+                  <Link href="/privacy" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.privacyPolicy}</Link>
                 </li>
               </ul>
             </div>
