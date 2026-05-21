@@ -18,7 +18,7 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
       const userRole = localStorage.getItem("userRole");
 
       if (!token || !userRole) {
-        setLocation(`/auth?role=${role ?? "owner"}`);
+        setLocation(`/auth?role=${role ?? "owner"}&mode=login`);
         return;
       }
 
@@ -39,7 +39,7 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
         localStorage.removeItem("userId");
         localStorage.removeItem("userPhone");
         localStorage.removeItem("userRole");
-        setLocation(`/auth?role=${role ?? "owner"}`);
+        setLocation(`/auth?role=${role ?? "owner"}&mode=login`);
         return;
       }
 
