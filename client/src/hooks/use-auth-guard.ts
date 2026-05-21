@@ -9,14 +9,14 @@ export function useAuthGuard(requiredRole?: "owner" | "provider") {
     const role = localStorage.getItem("userRole");
 
     if (!phone || !role) {
-      setLocation("/auth");
+      setLocation(`/auth?role=${requiredRole ?? "owner"}&mode=login`);
       return;
     }
 
     if (requiredRole && role !== requiredRole) {
       if (role === "owner") setLocation("/dashboard/owner");
       else if (role === "provider") setLocation("/dashboard/provider");
-      else setLocation("/auth");
+      else setLocation(`/auth?role=${requiredRole}&mode=login`);
     }
   }, [requiredRole, setLocation]);
 }
