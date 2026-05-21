@@ -46,7 +46,7 @@ const authenticaHeaders = {
 async function requireSession(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace("Bearer ", "").trim();
   if (!token) return res.status(401).json({ error: "Unauthorized" });
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("sessions")
     .select("user_id, expires_at")
     .eq("token", token)
@@ -62,6 +62,21 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Session verification — used by RequireAuth.tsx (bypasses RLS via supabaseAdmin)
+  app.get("/api/session/verify", async (req, res) => {
+    const token = req.headers.authorization?.replace("Bearer ", "").trim();
+    if (!token) return res.status(401).json({ valid: false });
+    const { data, error } = await supabaseAdmin
+      .from("sessions")
+      .select("user_id, expires_at")
+      .eq("token", token)
+      .single();
+    if (error || !data || new Date(data.expires_at) < new Date()) {
+      return res.status(401).json({ valid: false });
+    }
+    res.json({ valid: true, userId: data.user_id });
+  });
+
   // Admin login route — also creates session so client never calls Supabase directly
   app.post("/api/admin/login", async (req, res) => {
     try {
@@ -627,6 +642,66 @@ export async function registerRoutes(
       console.error("[admin/create] exception:", err?.message);
       res.status(500).json({ error: "Failed to create admin" });
     }
+  });
+
+  // ── Admin data endpoints (all use supabaseAdmin to bypass RLS) ──────────────
+
+  async function verifyAdminToken(req: Request, res: Response): Promise<boolean> {
+    const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
+    if (!adminToken) { res.status(401).json({ error: "Unauthorized" }); return false; }
+    const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
+    if (!isValid) { res.status(401).json({ error: "Invalid admin session" }); return false; }
+    return true;
+  }
+
+  app.get("/api/admin/stats", async (req, res) => {
+    if (!await verifyAdminToken(req, res)) return;
+    const [users, properties, requests, providers] = await Promise.all([
+      supabaseAdmin.from("users").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("properties").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("requests").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("providers").select("id", { count: "exact", head: true }),
+    ]);
+    res.json({ users: users.count ?? 0, properties: properties.count ?? 0, requests: requests.count ?? 0, providers: providers.count ?? 0 });
+  });
+
+  app.get("/api/admin/users", async (req, res) => {
+    if (!await verifyAdminToken(req, res)) return;
+    const { data, error } = await supabaseAdmin
+      .from("users").select("id, name, phone, role, created_at").eq("role", "owner")
+      .order("created_at", { ascending: false });
+    if (error) return res.status(500).json({ error: "Failed to fetch users" });
+    res.json(data ?? []);
+  });
+
+  app.get("/api/admin/providers", async (req, res) => {
+    if (!await verifyAdminToken(req, res)) return;
+    const { data, error } = await supabaseAdmin
+      .from("providers")
+      .select("id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, fal_license_url, description, bank_name, iban, users(name, phone)")
+      .order("created_at", { ascending: false });
+    if (error) return res.status(500).json({ error: "Failed to fetch providers" });
+    res.json(data ?? []);
+  });
+
+  app.get("/api/admin/properties", async (req, res) => {
+    if (!await verifyAdminToken(req, res)) return;
+    const { data, error } = await supabaseAdmin
+      .from("properties")
+      .select("id, name, city, address, national_address, building_type, units_count, created_at, users(name, phone)")
+      .order("created_at", { ascending: false });
+    if (error) return res.status(500).json({ error: "Failed to fetch properties" });
+    res.json(data ?? []);
+  });
+
+  app.get("/api/admin/requests", async (req, res) => {
+    if (!await verifyAdminToken(req, res)) return;
+    const { data, error } = await supabaseAdmin
+      .from("requests")
+      .select("id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))")
+      .order("created_at", { ascending: false });
+    if (error) return res.status(500).json({ error: "Failed to fetch requests" });
+    res.json(data ?? []);
   });
 
   return httpServer;

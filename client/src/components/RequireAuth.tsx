@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { supabase } from "@/lib/supabase";
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -27,14 +26,12 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
         return;
       }
 
-      // Validate session token against DB
-      const { data, error } = await supabase
-        .from("sessions")
-        .select("user_id, expires_at")
-        .eq("token", token)
-        .single();
+      // Validate session token via server (supabaseAdmin bypasses RLS — no JWT dependency)
+      const res = await fetch("/api/session/verify", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (error || !data || new Date(data.expires_at) < new Date()) {
+      if (!res.ok) {
         localStorage.removeItem("sessionToken");
         localStorage.removeItem("userId");
         localStorage.removeItem("userPhone");

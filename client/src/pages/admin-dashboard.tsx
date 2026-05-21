@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLang } from '../hooks/use-lang';
-import { supabase } from '../lib/supabase';
 import { openSignedPdf } from '../lib/storage';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { useToast } from '@/hooks/use-toast';
@@ -114,17 +113,18 @@ export default function AdminDashboard() {
         sar: 'SAR',
       };
 
+  const adminHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('adminSessionToken')}`,
+  });
+
   // ── Stats ──────────────────────────────────────────────────────────────────
   const { data: stats } = useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: async () => {
-      const [users, properties, requests, providers] = await Promise.all([
-        supabase.from('users').select('id', { count: 'exact', head: true }),
-        supabase.from('properties').select('id', { count: 'exact', head: true }),
-        supabase.from('requests').select('id', { count: 'exact', head: true }),
-        supabase.from('providers').select('id', { count: 'exact', head: true }),
-      ]);
-      return { users: users.count ?? 0, properties: properties.count ?? 0, requests: requests.count ?? 0, providers: providers.count ?? 0 };
+      const res = await fetch('/api/admin/stats', { headers: adminHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -133,13 +133,9 @@ export default function AdminDashboard() {
   const { data: allUsers, isLoading: usersLoading } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name, phone, role, created_at')
-        .eq('role', 'owner')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const res = await fetch('/api/admin/users', { headers: adminHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -148,12 +144,9 @@ export default function AdminDashboard() {
   const { data: allProviders, isLoading: providersLoading } = useQuery({
     queryKey: ['admin', 'all-providers'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('providers')
-        .select('id, user_id, company_name, city, approved, created_at, commercial_register_url, company_profile_url, fal_license_url, description, bank_name, iban, users(name, phone)')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const res = await fetch('/api/admin/providers', { headers: adminHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch providers');
+      return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -162,12 +155,9 @@ export default function AdminDashboard() {
   const { data: allProperties, isLoading: propertiesLoading } = useQuery({
     queryKey: ['admin', 'properties'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('id, name, city, address, national_address, building_type, units_count, created_at, users(name, phone)')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const res = await fetch('/api/admin/properties', { headers: adminHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch properties');
+      return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -176,12 +166,9 @@ export default function AdminDashboard() {
   const { data: allRequests, isLoading: requestsLoading } = useQuery({
     queryKey: ['admin', 'requests'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('requests')
-        .select('id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const res = await fetch('/api/admin/requests', { headers: adminHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch requests');
+      return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
