@@ -112,7 +112,7 @@ export async function registerRoutes(
 
   app.get("/api/properties/:id", requireSession, async (req, res) => {
     try {
-      const property = await storage.getProperty(req.params.id);
+      const property = await storage.getProperty((req.params.id as string));
       if (!property) {
         return res.status(404).json({ error: "Property not found" });
       }
@@ -147,7 +147,7 @@ export async function registerRoutes(
 
   app.delete("/api/properties/:id", requireSession, async (req, res) => {
     try {
-      const property = await storage.getProperty(req.params.id);
+      const property = await storage.getProperty((req.params.id as string));
       if (!property) {
         return res.status(404).json({ error: "Property not found" });
       }
@@ -156,8 +156,8 @@ export async function registerRoutes(
       }
 
       // Delete associated service requests
-      await storage.deleteServiceRequestsByProperty(req.params.id);
-      await storage.deleteProperty(req.params.id);
+      await storage.deleteServiceRequestsByProperty((req.params.id as string));
+      await storage.deleteProperty((req.params.id as string));
 
       res.status(204).send();
     } catch (error) {
@@ -177,7 +177,7 @@ export async function registerRoutes(
 
   app.get("/api/requests/:id", requireSession, async (req, res) => {
     try {
-      const request = await storage.getServiceRequest(req.params.id);
+      const request = await storage.getServiceRequest((req.params.id as string));
       if (!request) {
         return res.status(404).json({ error: "Service request not found" });
       }
@@ -213,7 +213,7 @@ export async function registerRoutes(
 
   app.patch("/api/requests/:id", requireSession, async (req, res) => {
     try {
-      const existing = await storage.getServiceRequest(req.params.id);
+      const existing = await storage.getServiceRequest((req.params.id as string));
       if (!existing) {
         return res.status(404).json({ error: "Service request not found" });
       }
@@ -228,7 +228,7 @@ export async function registerRoutes(
       });
 
       const data = updateSchema.parse(req.body);
-      const updated = await storage.updateServiceRequest(req.params.id, data);
+      const updated = await storage.updateServiceRequest((req.params.id as string), data);
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -240,7 +240,7 @@ export async function registerRoutes(
 
   app.delete("/api/requests/:id", requireSession, async (req, res) => {
     try {
-      const request = await storage.getServiceRequest(req.params.id);
+      const request = await storage.getServiceRequest((req.params.id as string));
       if (!request) {
         return res.status(404).json({ error: "Service request not found" });
       }
@@ -248,7 +248,7 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      await storage.deleteServiceRequest(req.params.id);
+      await storage.deleteServiceRequest((req.params.id as string));
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete service request" });
@@ -266,7 +266,7 @@ export async function registerRoutes(
       const { data: offer, error: offerError } = await supabaseAdmin
         .from("provider_offers")
         .select("id, request_id")
-        .eq("id", req.params.id)
+        .eq("id", (req.params.id as string))
         .single();
       if (offerError || !offer) {
         return res.status(404).json({ error: "Offer not found" });
@@ -288,7 +288,7 @@ export async function registerRoutes(
       const { error: updateError } = await supabaseAdmin
         .from("provider_offers")
         .update({ status })
-        .eq("id", req.params.id);
+        .eq("id", (req.params.id as string));
       if (updateError) throw updateError;
 
       if (status === "accepted") {
@@ -296,7 +296,7 @@ export async function registerRoutes(
         await supabaseAdmin.from("provider_offers")
           .update({ status: "rejected" })
           .eq("request_id", offer.request_id)
-          .neq("id", req.params.id);
+          .neq("id", (req.params.id as string));
       }
 
       res.json({ success: true });

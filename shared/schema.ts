@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, timestamp, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Users model
@@ -12,9 +11,10 @@ export const users = pgTable("users", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  created_at: true,
+export const insertUserSchema = z.object({
+  phone: z.string(),
+  name: z.string().nullable().optional(),
+  role: z.string().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -34,9 +34,15 @@ export const properties = pgTable("properties", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertPropertySchema = createInsertSchema(properties).omit({
-  id: true,
-  created_at: true,
+export const insertPropertySchema = z.object({
+  name: z.string(),
+  building_type: z.string(),
+  address: z.string(),
+  city: z.string(),
+  units_count: z.number().int().nullable().optional(),
+  map_url: z.string().nullable().optional(),
+  national_address: z.string().nullable().optional(),
+  owner_id: z.string().uuid(),
 });
 
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
@@ -53,9 +59,12 @@ export const requests = pgTable("requests", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertRequestSchema = createInsertSchema(requests).omit({
-  id: true,
-  created_at: true,
+export const insertRequestSchema = z.object({
+  owner_id: z.string().uuid(),
+  property_id: z.string().uuid(),
+  service_category: z.string().optional(),
+  description: z.string().nullable().optional(),
+  status: z.string().optional(),
 });
 
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
