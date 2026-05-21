@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -7,8 +8,14 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
+app.use(helmet());
+
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ["http://localhost:5000"];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || true,
+  origin: allowedOrigins,
   credentials: true,
 }));
 

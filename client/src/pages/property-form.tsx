@@ -166,6 +166,11 @@ export default function PropertyForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const url = formData.map_url.trim();
+    if (url && !url.startsWith("https://maps.google.com") && !url.startsWith("https://maps.app.goo.gl") && !url.startsWith("https://goo.gl/maps")) {
+      toast({ title: lang === "ar" ? "رابط الخريطة غير صحيح. استخدم رابطاً من Google Maps" : "Invalid map URL. Use a Google Maps link.", variant: "destructive" });
+      return;
+    }
     mutation.mutate();
   };
 

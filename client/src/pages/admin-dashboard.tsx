@@ -189,8 +189,13 @@ export default function AdminDashboard() {
   // ── Approve/Reject ─────────────────────────────────────────────────────────
   const approveMutation = useMutation({
     mutationFn: async ({ id, approved }: { id: string; approved: boolean }) => {
-      const { error } = await supabase.from('providers').update({ approved }).eq('id', id);
-      if (error) throw error;
+      const adminToken = localStorage.getItem('adminSessionToken');
+      const res = await fetch('/api/admin/approve-provider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ id, approved }),
+      });
+      if (!res.ok) throw new Error('Failed to update provider');
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'all-providers'] }),
   });

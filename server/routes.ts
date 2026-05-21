@@ -461,7 +461,7 @@ export async function registerRoutes(
       let userName = "";
 
       if (mode === "register") {
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
           .from("users")
           .select("id")
           .eq("phone", phone)
@@ -471,7 +471,7 @@ export async function registerRoutes(
           return res.status(409).json({ error: "Phone already registered" });
         }
 
-        const { data: newUser, error: insertError } = await supabase
+        const { data: newUser, error: insertError } = await supabaseAdmin
           .from("users")
           .insert([{ phone, name: name?.trim() ?? null, role }])
           .select("id, name")
@@ -484,7 +484,7 @@ export async function registerRoutes(
         userId = newUser.id;
         userName = newUser.name ?? "";
       } else {
-        const { data: user } = await supabase
+        const { data: user } = await supabaseAdmin
           .from("users")
           .select("id, name")
           .eq("phone", phone)
@@ -546,6 +546,41 @@ export async function registerRoutes(
     res.json({ token: session.token, userId: user.id, phone: user.phone, role: user.role, name: user.name ?? "", supabaseToken });
   });
 
+  // Approve or reject a provider. Sends SMS to provider on approval.
+  app.post("/api/admin/approve-provider", async (req, res) => {
+    try {
+      const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
+      if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
+
+      const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
+      if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
+
+      const { id, approved } = req.body;
+      if (!id || typeof approved !== "boolean") {
+        return res.status(400).json({ error: "id and approved required" });
+      }
+
+      const { error } = await supabaseAdmin.from("providers").update({ approved }).eq("id", id);
+      if (error) throw error;
+
+      if (approved) {
+        const { data: provider } = await supabaseAdmin
+          .from("providers")
+          .select("user_id")
+          .eq("id", id)
+          .single();
+        if (provider?.user_id) {
+          const { data: u } = await supabaseAdmin.from("users").select("phone").eq("id", provider.user_id).single();
+          if (u?.phone) sendSms(u.phone, "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app").catch(() => {});
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update provider approval" });
+    }
+  });
+
   // Create a new admin account. Requires a valid admin session token.
   app.post("/api/admin/create", async (req, res) => {
     try {
@@ -561,6 +596,9 @@ export async function registerRoutes(
       }
       if (!password || typeof password !== "string" || !password.trim()) {
         return res.status(400).json({ error: "Password is required" });
+      }
+      if (password.length < 12) {
+        return res.status(400).json({ error: "password_too_short" });
       }
 
       // Check for duplicate username
