@@ -74,7 +74,16 @@ export async function registerRoutes(
     if (error || !data || new Date(data.expires_at) < new Date()) {
       return res.status(401).json({ valid: false });
     }
-    res.json({ valid: true, userId: data.user_id });
+    // Return a fresh supabaseToken so clients always have a valid JWT for RLS
+    const { data: user } = await supabaseAdmin
+      .from("users")
+      .select("phone, role")
+      .eq("id", data.user_id)
+      .single();
+    const supabaseToken = (user && SUPABASE_JWT_SECRET)
+      ? signSupabaseJwt(data.user_id, user.phone, user.role)
+      : "";
+    res.json({ valid: true, userId: data.user_id, supabaseToken });
   });
 
   // Admin login route — also creates session so client never calls Supabase directly

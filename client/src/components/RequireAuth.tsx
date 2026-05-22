@@ -42,6 +42,12 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
         return;
       }
 
+      // Refresh supabaseToken on every protected page load so RLS queries always work
+      const data = await res.json();
+      if (data.supabaseToken) {
+        localStorage.setItem("supabaseToken", data.supabaseToken);
+      }
+
       setChecking(false);
       setVerified(true);
     }
