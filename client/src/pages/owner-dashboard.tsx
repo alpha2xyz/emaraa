@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { supabase } from "../lib/supabase";
 
 export default function OwnerDashboard() {
   useAuthGuard("owner");
@@ -16,33 +15,14 @@ export default function OwnerDashboard() {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
-  // 1. جلب العقارات والطلبات بناءً على المستخدم
   const { data: dashboardData, isError } = useQuery({
     queryKey: ["owner-stats", phone],
     queryFn: async () => {
-      if (!phone) return { properties: [], requests: [] };
-
-      const { data: userData } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-
-      if (!userData) return { properties: [], requests: [] };
-
-      // جلب العقارات
-      const { data: props } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("owner_id", userData.id);
-
-      // جلب الطلبات (تأكد أن اسم الجدول هو requests وعمود المالك هو owner_id)
-      const { data: reqs } = await supabase
-        .from("requests")
-        .select("*")
-        .eq("owner_id", userData.id);
-
-      return { properties: props || [], requests: reqs || [] };
+      const token = localStorage.getItem("sessionToken");
+      if (!token) return { properties: [], requests: [] };
+      const res = await fetch("/api/owner/stats", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return { properties: [], requests: [] };
+      return res.json();
     },
     enabled: !!phone,
   });

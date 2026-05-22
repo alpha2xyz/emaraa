@@ -127,8 +127,13 @@ export async function registerRoutes(
   // Properties routes (requireSession guards all data routes)
   app.get("/api/properties", requireSession, async (req, res) => {
     try {
-      const properties = await storage.getProperties();
-      res.json(properties);
+      const { data, error } = await supabaseAdmin
+        .from("properties")
+        .select("*")
+        .eq("owner_id", (req as any).userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      res.json(data || []);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch properties" });
     }
@@ -136,10 +141,13 @@ export async function registerRoutes(
 
   app.get("/api/properties/:id", requireSession, async (req, res) => {
     try {
-      const property = await storage.getProperty((req.params.id as string));
-      if (!property) {
-        return res.status(404).json({ error: "Property not found" });
-      }
+      const { data: property, error } = await supabaseAdmin
+        .from("properties")
+        .select("*")
+        .eq("id", req.params.id)
+        .single();
+      if (error || !property) return res.status(404).json({ error: "Property not found" });
+      if (property.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
       res.json(property);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch property" });
@@ -148,7 +156,6 @@ export async function registerRoutes(
 
   app.post("/api/properties", requireSession, async (req, res) => {
     try {
-      // Server-side 1-property-per-owner limit
       const { count: propertyCount } = await supabaseAdmin
         .from("properties")
         .select("id", { count: "exact", head: true })
@@ -159,7 +166,12 @@ export async function registerRoutes(
 
       const data = insertPropertySchema.parse(req.body);
       data.owner_id = (req as any).userId;
-      const property = await storage.createProperty(data);
+      const { data: property, error } = await supabaseAdmin
+        .from("properties")
+        .insert([data])
+        .select()
+        .single();
+      if (error || !property) throw error;
       res.status(201).json(property);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -169,31 +181,83 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/properties/:id", requireSession, async (req, res) => {
+    try {
+      const { data: existing, error: fetchError } = await supabaseAdmin
+        .from("properties")
+        .select("owner_id")
+        .eq("id", req.params.id)
+        .single();
+      if (fetchError || !existing) return res.status(404).json({ error: "Property not found" });
+      if (existing.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+
+      const updateSchema = z.object({
+        name: z.string().optional(),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        building_type: z.string().optional(),
+        units_count: z.number().nullable().optional(),
+        map_url: z.string().nullable().optional(),
+        national_address: z.string().nullable().optional(),
+      });
+      const data = updateSchema.parse(req.body);
+      const { data: updated, error } = await supabaseAdmin
+        .from("properties")
+        .update(data)
+        .eq("id", req.params.id)
+        .select()
+        .single();
+      if (error) throw error;
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ error: "Invalid property data" });
+      res.status(500).json({ error: "Failed to update property" });
+    }
+  });
+
   app.delete("/api/properties/:id", requireSession, async (req, res) => {
     try {
-      const property = await storage.getProperty((req.params.id as string));
-      if (!property) {
-        return res.status(404).json({ error: "Property not found" });
-      }
-      if (property.owner_id !== (req as any).userId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
+      const { data: property, error: fetchError } = await supabaseAdmin
+        .from("properties")
+        .select("owner_id")
+        .eq("id", req.params.id)
+        .single();
+      if (fetchError || !property) return res.status(404).json({ error: "Property not found" });
+      if (property.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
 
-      // Delete associated service requests
-      await storage.deleteServiceRequestsByProperty((req.params.id as string));
-      await storage.deleteProperty((req.params.id as string));
-
+      await supabaseAdmin.from("requests").delete().eq("property_id", req.params.id);
+      const { error } = await supabaseAdmin.from("properties").delete().eq("id", req.params.id);
+      if (error) throw error;
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete property" });
     }
   });
 
+  // Owner stats — dashboard summary
+  app.get("/api/owner/stats", requireSession, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const [{ data: properties }, { data: requests }] = await Promise.all([
+        supabaseAdmin.from("properties").select("*").eq("owner_id", userId),
+        supabaseAdmin.from("requests").select("*").eq("owner_id", userId),
+      ]);
+      res.json({ properties: properties || [], requests: requests || [] });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   // Service Requests routes
   app.get("/api/requests", requireSession, async (req, res) => {
     try {
-      const requests = await storage.getServiceRequests();
-      res.json(requests);
+      const { data, error } = await supabaseAdmin
+        .from("requests")
+        .select("*, properties(id, name, city)")
+        .eq("owner_id", (req as any).userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      res.json(data || []);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch service requests" });
     }
@@ -201,10 +265,13 @@ export async function registerRoutes(
 
   app.get("/api/requests/:id", requireSession, async (req, res) => {
     try {
-      const request = await storage.getServiceRequest((req.params.id as string));
-      if (!request) {
-        return res.status(404).json({ error: "Service request not found" });
-      }
+      const { data: request, error } = await supabaseAdmin
+        .from("requests")
+        .select("*")
+        .eq("id", req.params.id)
+        .single();
+      if (error || !request) return res.status(404).json({ error: "Service request not found" });
+      if (request.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
       res.json(request);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch service request" });
@@ -213,7 +280,6 @@ export async function registerRoutes(
 
   app.post("/api/requests", requireSession, async (req, res) => {
     try {
-      // Block new request if owner already has an accepted offer
       const { count: acceptedCount } = await supabaseAdmin
         .from("requests")
         .select("id", { count: "exact", head: true })
@@ -225,8 +291,12 @@ export async function registerRoutes(
 
       const data = insertRequestSchema.parse(req.body);
       data.owner_id = (req as any).userId;
-      (data as any).status = undefined;
-      const request = await storage.createServiceRequest(data);
+      const { data: request, error } = await supabaseAdmin
+        .from("requests")
+        .insert([{ ...data, status: "pending" }])
+        .select()
+        .single();
+      if (error || !request) throw error;
       res.status(201).json(request);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -238,22 +308,27 @@ export async function registerRoutes(
 
   app.patch("/api/requests/:id", requireSession, async (req, res) => {
     try {
-      const existing = await storage.getServiceRequest((req.params.id as string));
-      if (!existing) {
-        return res.status(404).json({ error: "Service request not found" });
-      }
-      if (existing.owner_id !== (req as any).userId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
+      const { data: existing, error: fetchError } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", req.params.id)
+        .single();
+      if (fetchError || !existing) return res.status(404).json({ error: "Service request not found" });
+      if (existing.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
 
       const updateSchema = z.object({
-        status: z.string().optional(),
-        description: z.string().optional(),
+        description: z.string().nullable().optional(),
+        property_id: z.string().optional(),
         service_category: z.string().optional(),
       });
-
       const data = updateSchema.parse(req.body);
-      const updated = await storage.updateServiceRequest((req.params.id as string), data);
+      const { data: updated, error } = await supabaseAdmin
+        .from("requests")
+        .update(data)
+        .eq("id", req.params.id)
+        .select()
+        .single();
+      if (error) throw error;
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -265,15 +340,16 @@ export async function registerRoutes(
 
   app.delete("/api/requests/:id", requireSession, async (req, res) => {
     try {
-      const request = await storage.getServiceRequest((req.params.id as string));
-      if (!request) {
-        return res.status(404).json({ error: "Service request not found" });
-      }
-      if (request.owner_id !== (req as any).userId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
+      const { data: request, error: fetchError } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", req.params.id)
+        .single();
+      if (fetchError || !request) return res.status(404).json({ error: "Service request not found" });
+      if (request.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
 
-      await storage.deleteServiceRequest((req.params.id as string));
+      const { error } = await supabaseAdmin.from("requests").delete().eq("id", req.params.id);
+      if (error) throw error;
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete service request" });

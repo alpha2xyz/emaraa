@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FileText, Plus, Edit, Building2, Calendar, Eye, Trash2 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Requests() {
@@ -59,45 +58,25 @@ export default function Requests() {
 
   const t = content[lang];
 
-  // جلب طلبات المستخدم
   const { data: requests, isLoading, isError } = useQuery({
     queryKey: ["/api/requests"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-
-      if (!user) throw new Error("User not found");
-
-      const { data, error } = await supabase
-        .from("requests")
-        .select(
-          `
-          *,
-          properties (
-            id,
-            name,
-            city
-          )
-        `,
-        )
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+      const res = await fetch("/api/requests", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Failed to load");
+      return res.json();
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const { error } = await supabase.from("requests").delete().eq("id", requestId);
-      if (error) throw error;
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete");
     },
     onSuccess: () => {
       setDeleteId(null);
@@ -217,7 +196,7 @@ export default function Requests() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {requests.map((request) => {
+            {requests.map((request: any) => {
               return (
                 <Card
                   key={request.id}

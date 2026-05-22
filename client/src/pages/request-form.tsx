@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileText, Building2, Save, Loader2, ArrowLeft, ArrowRight, AlertCircle, ClipboardList } from "lucide-react"
 import { useLang } from "@/hooks/use-lang"
-import { supabase } from "../lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function RequestForm() {
@@ -77,17 +76,11 @@ export default function RequestForm() {
   const { data: properties } = useQuery({
     queryKey: ["/api/properties"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone")
-      if (!phone) throw new Error("Not logged in")
-      const { data: user } = await supabase.from("users").select("id").eq("phone", phone).single()
-      if (!user) throw new Error("User not found")
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false })
-      if (error) throw error
-      return data
+      const token = localStorage.getItem("sessionToken")
+      if (!token) throw new Error("Not logged in")
+      const res = await fetch("/api/properties", { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) throw new Error("Failed to load properties")
+      return res.json()
     },
   })
 
@@ -95,9 +88,10 @@ export default function RequestForm() {
     queryKey: ["request", requestId],
     enabled: !!requestId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("requests").select("*").eq("id", requestId).single()
-      if (error) throw error
-      return data
+      const token = localStorage.getItem("sessionToken")
+      const res = await fetch(`/api/requests/${requestId}`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) return null
+      return res.json()
     },
   })
 
@@ -116,43 +110,43 @@ export default function RequestForm() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const phone = localStorage.getItem("userPhone")
-      if (!phone) throw new Error("Not logged in")
-      const { data: user } = await supabase.from("users").select("id").eq("phone", phone).single()
-      if (!user) throw new Error("User not found")
+      const token = localStorage.getItem("sessionToken")
+      if (!token) throw new Error("Not logged in")
 
-      // Riyadh-only filter (new requests only)
+      // Riyadh-only filter (new requests only, client-side guard)
       if (!requestId && selectedProperty && selectedProperty.city !== "الرياض") {
         throw new Error("riyadh_only")
       }
 
-      if (!requestId) {
-        const { count } = await supabase
-          .from("requests")
-          .select("id", { count: "exact", head: true })
-          .eq("owner_id", user.id)
-        if ((count ?? 0) >= 1) throw new Error("limit_reached")
+      const payload = {
+        property_id: formData.property_id,
+        service_category: "standard",
+        description: formData.description || null,
       }
 
       if (requestId) {
-        const { error } = await supabase.from("requests").update({
-          owner_id: user.id,
-          property_id: formData.property_id,
-          service_category: "standard",
-          description: formData.description || null,
-        }).eq("id", requestId)
-        if (error) throw error
+        const res = await fetch(`/api/requests/${requestId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.error || `HTTP ${res.status}`)
+        }
         return null
       } else {
-        const { data: inserted, error } = await supabase.from("requests").insert({
-          owner_id: user.id,
-          property_id: formData.property_id,
-          service_category: "standard",
-          description: formData.description || null,
-          status: "pending",
-        }).select("id").single()
-        if (error) throw error
-        return inserted?.id ?? null
+        const res = await fetch("/api/requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.error || `HTTP ${res.status}`)
+        }
+        const data = await res.json()
+        return data?.id ?? null
       }
     },
     onSuccess: (newRequestId) => {

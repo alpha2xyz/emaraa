@@ -25,7 +25,6 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Properties() {
@@ -79,55 +78,33 @@ export default function Properties() {
 
   const t = content[lang];
 
-  // جلب العقارات
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["/api/properties"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Please login first");
-
-      // جلب user_id
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-
-      if (!user) throw new Error("User not found");
-
-      // جلب العقارات
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+      const res = await fetch("/api/properties", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Failed to load");
+      return res.json();
     },
   });
 
-  // حذف عقار
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("properties").delete().eq("id", id);
-
-      if (error) throw error;
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/properties/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
-      toast({
-        title: t.deleteSuccess,
-        variant: "default",
-      });
+      toast({ title: t.deleteSuccess, variant: "default" });
       setDeleteId(null);
     },
-    onError: (error) => {
-      if (import.meta.env.DEV) console.error("Delete error:", error);
-      toast({
-        title: t.deleteError,
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: t.deleteError, variant: "destructive" });
     },
   });
 

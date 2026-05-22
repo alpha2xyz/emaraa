@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Building2, Save, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function PropertyForm() {
@@ -92,13 +91,12 @@ export default function PropertyForm() {
     queryKey: ["/api/property", propertyId],
     queryFn: async () => {
       if (!propertyId) return null;
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("id", propertyId)
-        .single();
-      if (error) throw error;
-      return data;
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/properties/${propertyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
     },
     enabled: isEdit,
   });
@@ -119,19 +117,10 @@ export default function PropertyForm() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-
-      if (!user) throw new Error("User not found");
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
 
       const payload = {
-        owner_id: user.id,
         name: formData.name,
         address: formData.address,
         city: formData.city,
@@ -141,17 +130,18 @@ export default function PropertyForm() {
         national_address: formData.national_address.trim() || null,
       };
 
-      if (isEdit) {
-        const { error } = await supabase
-          .from("properties")
-          .update(payload)
-          .eq("id", propertyId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("properties")
-          .insert([payload]);
-        if (error) throw error;
+      const url = isEdit ? `/api/properties/${propertyId}` : "/api/properties";
+      const method = isEdit ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
       }
     },
     onSuccess: () => {
@@ -160,8 +150,11 @@ export default function PropertyForm() {
       setLocation("/dashboard/owner/properties");
     },
     onError: (error: any) => {
-      console.error("[property-form] save error:", error?.code, error?.message, error);
-      toast({ title: t.error, variant: "destructive" });
+      console.error("[property-form] save error:", error?.message, error);
+      const msg = error?.message === "limit_reached"
+        ? (lang === "ar" ? "لديك عقار مسجّل بالفعل" : "You already have a registered property")
+        : t.error;
+      toast({ title: msg, variant: "destructive" });
     },
   });
 
