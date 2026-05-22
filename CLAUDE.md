@@ -148,6 +148,189 @@ Do this once per session before the first code edit — not before every single 
 - `migrations/` inside this project is only for versioned Drizzle-tracked schema changes (e.g. `001_sprint1.sql`).
 - When writing any new `.sql` file for Supabase, always save it to `~/Documents/Emaraa with claude/_work/sql/`.
 
+## Slash Commands
+
+### `/competitive-analysis`
+
+Map competitors in the KSA/GCC facility management and PropTech space. Deliver a structured report saved to `Reports/competitive-analysis-[date].html`.
+
+**Methodology:**
+
+1. **Frame** — Ask user: what specifically they want to analyze (full landscape, one competitor, fundraising prep). Treat any competitor name they give as confirmed — don't try to verify before researching.
+
+2. **Search strategy — KSA-first:**
+   - Always search in Arabic: `منصات إدارة المرافق`, `سوق خدمات الصيانة`, `تطبيق خدمات العقارات السعودية`
+   - English searches: `facility management marketplace Saudi Arabia`, `property services app KSA`
+   - Check: Google Play Arabic region, Apple App Store KSA (`apps.apple.com/sa/`), Maroof platform (`maroof.sa`), Zid, Jahez ecosystem
+   - Check international FM players with KSA presence: JLL, CBRE, Emrill, Ejadah
+   - Check PropTech: Bayut, Property Finder, Aqarmap — do any overlap with services?
+
+3. **Per-competitor dossier (limit 5–7):**
+   - Positioning one-liner (their homepage H1 or App Store description)
+   - Pricing model (free/subscription/commission)
+   - Top 3 strengths (from reviews or their own copy)
+   - Top 3 weaknesses (from 1–3 star reviews, or gaps inferred from what they don't mention)
+   - Funding/team size (Crunchbase, LinkedIn, MAGNiTT for MENA)
+   - Platform: app-only, web-only, or both
+   - Whether they're approved/registered on Maroof (معروف) — signals legitimacy in KSA
+
+4. **For SPA/JS-rendered competitor sites:** use `curl` to extract meta tags and bundle strings — don't rely on `webFetch` alone.
+
+5. **Positioning synthesis (April Dunford format):**
+   - For [target customer] who [need], Emaraa is a [category] that [key benefit]. Unlike [primary alternative], we [key differentiator].
+
+6. **Feature matrix:** rows = capabilities (provider vetting, proposal PDF, offer acceptance, payment, contract signing, ratings), columns = competitors + Emaraa, cells = ✓/✗/partial.
+
+7. **White space:** gaps no competitor serves well. Frame around Vision 2030 + REGA context.
+
+8. **Recommendations:** 3 specific actions. If for Cityscape Global, frame around investor narrative.
+
+**Output:**
+- Save report to `Reports/competitive-analysis-[YYYY-MM-DD].html` — dark-themed, RTL-aware, professional
+- Save monitoring brief to `Reports/competitor-monitoring.md` — Google Alert URLs per competitor, monthly ritual checklist
+- Always offer to set up Google Alerts at the end
+
+**Regional blind spots to acknowledge:** G2/Capterra/Product Hunt have near-zero MENA coverage. An app can have 50,000 KSA users and zero English web presence. Empty search results ≠ no competition.
+
+---
+
+### `/seo-audit`
+
+Audit Emaraa's public pages for SEO issues and deliver a prioritized fix list saved to `Reports/seo-audit-[date].html`.
+
+**Default target:** `https://emaraa.vercel.app` (switch to custom domain once live).
+
+**Step 1: SPA vs SSR reality check (critical for Emaraa)**
+
+Emaraa is a hybrid: React SPA for authenticated dashboard routes, Express SSR for public pages. Googlebot only indexes the SSR pages.
+
+Public/indexable pages: `/` (landing), `/about`, `/contact`, `/terms`, `/privacy`, `/auth`
+Dashboard routes (`/dashboard/**`): SPA — invisible to search engines, expected, leave them.
+
+Verify with: `curl -s https://emaraa.vercel.app/[page] | grep "<h1"` — if no H1 returned, page is SPA-rendered.
+
+**Step 2: Crawlability**
+- `curl -s https://emaraa.vercel.app/robots.txt` — confirm it returns `User-agent:` text, not `<!DOCTYPE html>`
+- `curl -s https://emaraa.vercel.app/sitemap.xml` — confirm it returns `<?xml`, not HTML fallback
+- Check: sitemap lists all public SSR pages, no dashboard routes included
+
+**Step 3: Arabic SEO specifics (Emaraa is Arabic-first)**
+- `<html lang="ar" dir="rtl">` on all public pages
+- `og:locale` must be `ar_SA` (not `en_US`)
+- Arabic title tags and meta descriptions — primary keyword in Arabic first
+- `hreflang` tags if any page has both Arabic and English versions
+- Google Search Console: ensure Arabic is the primary language signal
+
+**Step 4: On-page (per public page)**
+- Title: unique, 50–65 chars, Arabic primary keyword near start, brand name at end
+- Meta description: 150–160 chars, Arabic, clear CTA
+- H1: one per page, contains primary keyword in Arabic
+- Schema: `Organization` + `WebSite` on homepage; `LocalBusiness` (Saudi address) once CR is registered
+
+**Step 5: Technical**
+- Core Web Vitals: LCP < 2.5s, INP < 200ms, CLS < 0.1
+- Font loading: check `client/index.html` for render-blocking Google Fonts — apply async load pattern
+- Vercel handles: HTTPS, CDN, HSTS — no action needed
+- Image alt text in Arabic
+
+**Step 6: Shared shell optimization**
+Emaraa uses an Express SSR shell function — fixing it once applies to all public pages:
+- Add missing: `og:locale`, `og:site_name`, Twitter Card tags, `theme-color`
+- Add `WebSite` + `Organization` JSON-LD to homepage
+- Confirm canonical tags use correct per-page URLs
+
+**Output format:**
+```
+# SEO Audit — emaraa.vercel.app — [date]
+## Critical (blocking indexation)
+## High-impact (fix in shell function — applies to all pages)
+## Quick wins
+## Per-page analysis (/, /about, /contact, /terms, /privacy)
+## Arabic SEO checklist
+## Recommended action plan
+```
+Save to `Reports/seo-audit-[YYYY-MM-DD].html`.
+
+---
+
+### `/provider-acquisition`
+
+Research and build a shortlist of facility management companies in KSA to onboard as providers on Emaraa. Output a contact list + outreach templates saved to `Reports/provider-acquisition-[date].md`.
+
+**Context:** Emaraa needs vetted service providers (FM companies, maintenance, cleaning, AC, security, landscaping) in KSA. Target: 20–50 onboarded providers before Cityscape Global launch (Nov 16, 2026).
+
+**Step 1: Define target profile**
+Ask user (or default to):
+- Service categories needed: maintenance, cleaning, AC, electrical, plumbing, security, landscaping
+- Cities: Riyadh first, then Jeddah, Dammam
+- Company size: 5–200 employees (SME focus — enterprise FM won't need Emaraa)
+- Required: active CR (Commercial Registration), operational in KSA, willing to use digital platform
+
+**Step 2: Discovery channels (KSA-specific)**
+
+| Source | How to use |
+|---|---|
+| **Maroof (معروف)** | `webFetch("https://maroof.sa/businesses?category=facility-management")` — government-verified businesses, CR-confirmed |
+| **Google Maps** | Search `شركات صيانة الرياض`, `شركات نظافة جدة` — extract name, phone, rating, review count |
+| **Yellow Pages Saudi** | `webSearch("site:yellowpages.com.sa facility management")` |
+| **LinkedIn** | `webSearch("site:linkedin.com/company facility management Saudi Arabia")` |
+| **Wathiq (وثيق)** | Government business registry — verify CR numbers |
+| **App Store / Play Store** | Search for FM apps to find tech-forward providers already using digital tools |
+
+Target: 30–50 candidates, narrow to 20 for outreach.
+
+**Step 3: Evaluate each provider**
+
+| Criteria | Weight | How to check |
+|---|---|---|
+| CR registered + active | Must-have | Maroof badge or Wathiq lookup |
+| Google rating ≥ 3.5 | High | Google Maps reviews |
+| Years in business ≥ 2 | High | LinkedIn founding year, Google listing |
+| Has a phone/WhatsApp | Must-have | Google Maps, website |
+| Service category match | Must-have | Website or Maroof listing |
+| City coverage | High | Listing address |
+
+**Step 4: Shortlist table**
+
+| Company | City | Services | CR/Maroof | Phone | Rating | Notes |
+|---|---|---|---|---|---|---|
+
+**Step 5: Outreach templates**
+
+Generate two versions — WhatsApp (short, informal Arabic) and email (formal Arabic):
+
+**WhatsApp template:**
+```
+السلام عليكم، أنا [الاسم] من منصة عِمارة — منصة سعودية تربط ملاك العقارات بشركات الصيانة والإدارة.
+نودّ إضافة شركتكم كمزوّد معتمد على المنصة لتلقّي طلبات من ملاك عقارات في [المدينة].
+التسجيل مجاني، وتستلمون طلبات مباشرة مع تفاصيل العقار.
+هل يمكن نحدد وقت قصير للتعريف؟
+```
+
+**Email template:**
+```
+الموضوع: دعوة للانضمام إلى منصة عِمارة كمزوّد خدمات معتمد
+
+تحية طيبة،
+نودّ دعوة شركتكم للانضمام إلى منصة عِمارة، وهي منصة رقمية سعودية تتيح لملاك العقارات التجارية والسكنية الوصول إلى مزوّدي خدمات الصيانة والإدارة الموثوقين.
+مزايا الانضمام:
+- استقبال طلبات خدمة مباشرة من ملاك العقارات
+- التسجيل مجاني تمامًا
+- ظهور موثّق على المنصة برقم السجل التجاري
+يسعدنا ترتيب مكالمة تعريفية في الوقت الذي يناسبكم.
+مع خالص التحية،
+فريق عِمارة | emaraa.vercel.app
+```
+
+**Output:**
+Save to `Reports/provider-acquisition-[YYYY-MM-DD].md` with:
+- Full shortlist table (20+ companies)
+- Evaluation scores
+- Ready-to-send WhatsApp + email templates
+- Priority tier: Tier 1 (contact immediately) / Tier 2 (follow up) / Tier 3 (monitor)
+
+---
+
 ## Feature Backlog
 
 **Pre-launch (remaining):**
