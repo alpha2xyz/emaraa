@@ -172,7 +172,7 @@ export default function RequestForm() {
       setLocation("/dashboard/owner/requests")
     },
     onError: (error: any) => {
-      if (import.meta.env.DEV) console.error("Error:", error)
+      console.error("[request-form] save error:", error?.code, error?.message, error);
       let msg = t.error
       if (error?.message === "limit_reached") msg = t.limitReached
       else if (error?.message === "riyadh_only") msg = t.riyadhOnly

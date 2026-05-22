@@ -159,7 +159,8 @@ export default function PropertyForm() {
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
       setLocation("/dashboard/owner/properties");
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("[property-form] save error:", error?.code, error?.message, error);
       toast({ title: t.error, variant: "destructive" });
     },
   });
