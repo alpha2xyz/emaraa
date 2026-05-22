@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Emaraa** (إعمار) — Saudi B2B facility management marketplace. Property owners post service requests; service providers submit PDF proposals; admin approves providers and manages the platform.
+**Emaraa** (عِمارة) — Saudi B2B facility management marketplace. Property owners post service requests; service providers submit PDF proposals; admin approves providers and manages the platform.
 
 - Live: https://emaraa.vercel.app
 - Supabase project: https://txzbzpnrclkdodosbndy.supabase.co
@@ -127,6 +127,26 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 - Live URL: https://emaraa.vercel.app
 - GitHub repo: `git@github.com:alpha2xyz/emaraa.git` — Vercel auto-deploys on push to `main`
 - Env vars set in Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AUTHENTICA_API_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL`
+
+## Pre-Work Archive Rule
+
+**Before starting any new feature or large code change, create a dated ZIP backup of the project.**
+
+Run this from inside the Emaraa project folder:
+```bash
+cd "/Users/abdallahalfaraidi/Documents/Emaraa with claude" && zip -r "backups/Emaraa_$(date +%Y-%m-%d).zip" Emaraa --exclude "Emaraa/node_modules/*" --exclude "Emaraa/.git/*" --exclude "Emaraa/dist/*" --exclude "Emaraa/.next/*"
+```
+
+Archives are saved to `~/Documents/Emaraa with claude/backups/` with the format `Emaraa_YYYY-MM-DD.zip`.
+Do this once per session before the first code edit — not before every single file change.
+
+## SQL Files Rule
+
+**Ad-hoc Supabase SQL scripts go in `_work/sql/` — never in the project root.**
+
+- `_work/sql/` is for one-off scripts run manually in the Supabase Dashboard SQL Editor (RLS policies, security fixes, schema patches).
+- `migrations/` inside this project is only for versioned Drizzle-tracked schema changes (e.g. `001_sprint1.sql`).
+- When writing any new `.sql` file for Supabase, always save it to `~/Documents/Emaraa with claude/_work/sql/`.
 
 ## Feature Backlog
 

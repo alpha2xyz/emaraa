@@ -282,7 +282,10 @@ export default function ProviderOfferForm() {
         }])
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        await supabase.storage.from("provider-offers").remove([fileName]);
+        throw error;
+      }
       return data;
     },
     onSuccess: (data) => {

@@ -36,6 +36,8 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
         localStorage.removeItem("userId");
         localStorage.removeItem("userPhone");
         localStorage.removeItem("userRole");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("supabaseToken");
         setLocation(`/auth?role=${role ?? "owner"}&mode=login`);
         return;
       }

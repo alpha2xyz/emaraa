@@ -140,7 +140,6 @@ export default function RequestForm() {
           property_id: formData.property_id,
           service_category: "standard",
           description: formData.description || null,
-          status: "pending",
         }).eq("id", requestId)
         if (error) throw error
         return null

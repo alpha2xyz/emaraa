@@ -108,7 +108,7 @@ export default function PropertyForm() {
       setFormData({
         name: existingProperty.name || "",
         address: existingProperty.address || "",
-        city: "الرياض",
+        city: existingProperty.city || "الرياض",
         building_type: existingProperty.building_type || "residential",
         units_count: existingProperty.units_count?.toString() || "",
         map_url: existingProperty.map_url || "",

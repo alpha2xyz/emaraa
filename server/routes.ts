@@ -140,7 +140,7 @@ export async function registerRoutes(
   app.post("/api/properties", requireSession, async (req, res) => {
     try {
       // Server-side 1-property-per-owner limit
-      const { count: propertyCount } = await supabase
+      const { count: propertyCount } = await supabaseAdmin
         .from("properties")
         .select("id", { count: "exact", head: true })
         .eq("owner_id", (req as any).userId);
@@ -205,7 +205,7 @@ export async function registerRoutes(
   app.post("/api/requests", requireSession, async (req, res) => {
     try {
       // Block new request if owner already has an accepted offer
-      const { count: acceptedCount } = await supabase
+      const { count: acceptedCount } = await supabaseAdmin
         .from("requests")
         .select("id", { count: "exact", head: true })
         .eq("owner_id", (req as any).userId)
@@ -217,7 +217,8 @@ export async function registerRoutes(
       const data = insertRequestSchema.parse(req.body);
       data.owner_id = (req as any).userId;
       (data as any).status = undefined;
-      res.status(201).json(data);
+      const request = await storage.createServiceRequest(data);
+      res.status(201).json(request);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
