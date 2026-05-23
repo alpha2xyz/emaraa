@@ -42,7 +42,7 @@ export const insertPropertySchema = z.object({
   units_count: z.number().int().nullable().optional(),
   map_url: z.string().nullable().optional(),
   national_address: z.string().nullable().optional(),
-  owner_id: z.string().uuid(),
+  owner_id: z.string().uuid().optional(),
 });
 
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
@@ -60,7 +60,7 @@ export const requests = pgTable("requests", {
 });
 
 export const insertRequestSchema = z.object({
-  owner_id: z.string().uuid(),
+  owner_id: z.string().uuid().optional(),
   property_id: z.string().uuid(),
   service_category: z.string().optional(),
   description: z.string().nullable().optional(),

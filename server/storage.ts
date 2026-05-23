@@ -74,7 +74,7 @@ export class MemStorage implements IStorage {
       units_count: insertProperty.units_count ?? 0,
       map_url: insertProperty.map_url ?? null,
       national_address: insertProperty.national_address ?? null,
-      owner_id: insertProperty.owner_id,
+      owner_id: insertProperty.owner_id!,
       created_at: new Date(),
     };
     this.properties.set(id, property);
@@ -103,7 +103,7 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const request: Request = {
       id,
-      owner_id: insertRequest.owner_id,
+      owner_id: insertRequest.owner_id!,
       property_id: insertRequest.property_id,
       service_category: insertRequest.service_category ?? "standard",
       description: insertRequest.description ?? null,
