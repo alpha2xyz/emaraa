@@ -128,6 +128,15 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 - GitHub repo: `git@github.com:alpha2xyz/emaraa.git` — Vercel auto-deploys on push to `main`
 - Env vars set in Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AUTHENTICA_API_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL`
 
+## Domain & Contact Info (as of 2026-05-24)
+
+- **Domain:** emaraa.app — registered via Vercel, expires May 2027
+- **Support phone:** +966 501 315 725 (WhatsApp Business + call)
+- **Business email:** info@emaraa.app — Zoho Mail (mail.zoho.com)
+  - SMTP: smtppro.zoho.sa | Port 587 (TLS) or 465 (SSL) | Username: info@emaraa.app
+  - IMAP: imappro.zoho.sa | Port 993 | SSL: yes
+- **DNS managed by Vercel** — MX (zoho.sa), SPF, DKIM, DMARC all configured
+
 ## Pre-Work Archive Rule
 
 **Before starting any new feature or large code change, create a dated ZIP backup of the project.**
