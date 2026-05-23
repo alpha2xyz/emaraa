@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { supabase } from "../lib/supabase";
 
 export default function ProviderDashboard() {
   useAuthGuard("provider");
@@ -45,51 +44,31 @@ export default function ProviderDashboard() {
 
   const userPhone = localStorage.getItem("userPhone") || "";
 
-  const { data: providerData, isLoading: providerLoading, isError, refetch } = useQuery({
-    queryKey: ["/api/provider/profile"],
+  const { data, isLoading: providerLoading, isError, refetch } = useQuery({
+    queryKey: ["/api/provider/dashboard"],
     queryFn: async () => {
-      if (!userPhone) throw new Error("Not logged in");
-      const { data: user } = await supabase.from("users").select("id").eq("phone", userPhone).single();
-      if (!user) throw new Error("User not found");
-      const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
-      return { user, provider };
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+      const res = await fetch("/api/provider/dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to load");
+      return res.json();
     },
     enabled: !!userPhone,
     retry: 2,
     retryDelay: 1000,
   });
 
-  const { data: availableRequests } = useQuery({
-    queryKey: ["/api/requests/available"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("requests")
-        .select("id")
-        .eq("status", "pending");
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: myOffers } = useQuery({
-    queryKey: ["/api/provider/my-offers"],
-    queryFn: async () => {
-      if (!providerData?.provider?.id) return [];
-      const { data, error } = await supabase
-        .from("provider_offers")
-        .select("id, status")
-        .eq("provider_id", providerData.provider.id);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!providerData?.provider?.id,
-  });
+  const providerData = data ? { user: data.user, provider: data.provider } : undefined;
+  const availableRequests: any[] = data?.availableRequests || [];
+  const myOffers: any[] = data?.myOffers || [];
 
   const stats = [
-    { label: t.available, value: availableRequests?.length || 0, icon: FileText, accent: "#2E4A6B", iconBg: "#EEF2F7" },
-    { label: t.myOffers, value: myOffers?.length || 0, icon: Send, accent: "#7D3040", iconBg: "#FDF0F2" },
-    { label: t.pending, value: myOffers?.filter((o: any) => o.status === "pending").length || 0, icon: Clock, accent: "#C4694A", iconBg: "#FDF3EF" },
-    { label: t.accepted, value: myOffers?.filter((o: any) => o.status === "accepted").length || 0, icon: CheckCircle2, accent: "#6B7C5E", iconBg: "#F3F5F1" },
+    { label: t.available, value: availableRequests.length, icon: FileText, accent: "#2E4A6B", iconBg: "#EEF2F7" },
+    { label: t.myOffers, value: myOffers.length, icon: Send, accent: "#7D3040", iconBg: "#FDF0F2" },
+    { label: t.pending, value: myOffers.filter((o: any) => o.status === "pending").length, icon: Clock, accent: "#C4694A", iconBg: "#FDF3EF" },
+    { label: t.accepted, value: myOffers.filter((o: any) => o.status === "accepted").length, icon: CheckCircle2, accent: "#6B7C5E", iconBg: "#F3F5F1" },
   ];
 
   const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;

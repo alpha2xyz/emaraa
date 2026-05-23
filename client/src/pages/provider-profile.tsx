@@ -17,7 +17,10 @@ export default function ProviderProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const [userData, setUserData] = useState({ name: "", phone: "" });
+  const [userData, setUserData] = useState({
+    name: localStorage.getItem("userName") || "",
+    phone: localStorage.getItem("userPhone") || "",
+  });
   const [formData, setFormData] = useState({
     company_name: "",
     email: "",

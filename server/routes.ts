@@ -248,6 +248,29 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/provider/dashboard", requireSession, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const [{ data: user }, { data: provider }, { data: availableRequests }] = await Promise.all([
+        supabaseAdmin.from("users").select("id, name, phone").eq("id", userId).single(),
+        supabaseAdmin.from("providers").select("*").eq("user_id", userId).maybeSingle(),
+        supabaseAdmin.from("requests").select("id").eq("status", "pending"),
+      ]);
+      const providerId = provider?.id ?? null;
+      const { data: myOffers } = providerId
+        ? await supabaseAdmin.from("provider_offers").select("id, status").eq("provider_id", providerId)
+        : { data: [] };
+      res.json({
+        user: user || null,
+        provider: provider || null,
+        availableRequests: availableRequests || [],
+        myOffers: myOffers || [],
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch provider dashboard" });
+    }
+  });
+
   // Service Requests routes
   app.get("/api/requests", requireSession, async (req, res) => {
     try {
