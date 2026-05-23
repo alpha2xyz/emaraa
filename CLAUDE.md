@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Emaraa** (عِمارة) — Saudi B2B facility management marketplace. Property owners post service requests; service providers submit PDF proposals; admin approves providers and manages the platform.
 
-- Live: https://emaraa.vercel.app
+- Live: https://emaraa.app (also: https://emaraa.vercel.app)
 - Supabase project: https://txzbzpnrclkdodosbndy.supabase.co
 
 ## Commands
@@ -124,7 +124,7 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 
 ## Vercel Deployment (Live as of 2026-05-13)
 
-- Live URL: https://emaraa.vercel.app
+- Live URL: https://emaraa.app (also: https://emaraa.vercel.app)
 - GitHub repo: `git@github.com:alpha2xyz/emaraa.git` — Vercel auto-deploys on push to `main`
 - Env vars set in Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AUTHENTICA_API_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL`
 
@@ -139,6 +139,23 @@ cd "/Users/abdallahalfaraidi/Documents/Emaraa with claude" && zip -r "backups/Em
 
 Archives are saved to `~/Documents/Emaraa with claude/backups/` with the format `Emaraa_YYYY-MM-DD.zip`.
 Do this once per session before the first code edit — not before every single file change.
+
+## Reports Folder Rule
+
+**Always save reports inside the correct subfolder under `~/Documents/Emaraa with claude/Reports/`.**
+
+| Subfolder | What goes in it |
+|---|---|
+| `business/` | Investor decks, market analysis, consultation docs, LinkedIn content, insurance/legal research |
+| `claude study reports in HTML/` | AI-generated study reports: feasibility studies, competitive analysis, SEO audit, provider acquisition, pre-launch audit |
+| `flowcharts/` | Page flow diagrams, architecture diagrams, system maps |
+| `master-plan/` | Master plan and roadmap documents |
+| `technical/` | Technical comparison reports, feature planning docs, structured offer plans |
+| `archived/` | Old or superseded reports — never save new reports here |
+
+**Never save a report to the Reports root folder directly.** Always pick the matching subfolder. If unsure, default to `claude study reports in HTML/` for AI-generated outputs.
+
+---
 
 ## SQL Files Rule
 
@@ -198,7 +215,7 @@ Map competitors in the KSA/GCC facility management and PropTech space. Deliver a
 
 Audit Emaraa's public pages for SEO issues and deliver a prioritized fix list saved to `Reports/seo-audit-[date].html`.
 
-**Default target:** `https://emaraa.vercel.app` (switch to custom domain once live).
+**Default target:** `https://emaraa.app`
 
 **Step 1: SPA vs SSR reality check (critical for Emaraa)**
 
@@ -207,11 +224,11 @@ Emaraa is a hybrid: React SPA for authenticated dashboard routes, Express SSR fo
 Public/indexable pages: `/` (landing), `/about`, `/contact`, `/terms`, `/privacy`, `/auth`
 Dashboard routes (`/dashboard/**`): SPA — invisible to search engines, expected, leave them.
 
-Verify with: `curl -s https://emaraa.vercel.app/[page] | grep "<h1"` — if no H1 returned, page is SPA-rendered.
+Verify with: `curl -s https://emaraa.app/[page] | grep "<h1"` — if no H1 returned, page is SPA-rendered.
 
 **Step 2: Crawlability**
-- `curl -s https://emaraa.vercel.app/robots.txt` — confirm it returns `User-agent:` text, not `<!DOCTYPE html>`
-- `curl -s https://emaraa.vercel.app/sitemap.xml` — confirm it returns `<?xml`, not HTML fallback
+- `curl -s https://emaraa.app/robots.txt` — confirm it returns `User-agent:` text, not `<!DOCTYPE html>`
+- `curl -s https://emaraa.app/sitemap.xml` — confirm it returns `<?xml`, not HTML fallback
 - Check: sitemap lists all public SSR pages, no dashboard routes included
 
 **Step 3: Arabic SEO specifics (Emaraa is Arabic-first)**
@@ -241,7 +258,7 @@ Emaraa uses an Express SSR shell function — fixing it once applies to all publ
 
 **Output format:**
 ```
-# SEO Audit — emaraa.vercel.app — [date]
+# SEO Audit — emaraa.app — [date]
 ## Critical (blocking indexation)
 ## High-impact (fix in shell function — applies to all pages)
 ## Quick wins
@@ -255,79 +272,93 @@ Save to `Reports/seo-audit-[YYYY-MM-DD].html`.
 
 ### `/provider-acquisition`
 
-Research and build a shortlist of facility management companies in KSA to onboard as providers on Emaraa. Output a contact list + outreach templates saved to `Reports/provider-acquisition-[date].md`.
+Build a provider acquisition report from the official REGA FAL license dataset. Output saved as `Reports/provider-acquisition-[date].html`.
 
-**Context:** Emaraa needs vetted service providers (FM companies, maintenance, cleaning, AC, security, landscaping) in KSA. Target: 20–50 onboarded providers before Cityscape Global launch (Nov 16, 2026).
+**Data source:** `~/Documents/Emaraa with claude/Resources/FAL accounts.xlsx`
+- Sheet1: 302 active FAL-licensed FM companies extracted from rega.gov.sa
+- All entries: `رخصة فال لإدارة المرافق` (FAL FM Management license), all status `سارية` (active)
+- Columns: نوع الوسيط, اسم الوسيط, الرقم الموحد للمنشأة, رقم الجوال, البريد الإلكتروني, المنطقة, المدينة, الحي, الشارع, الرمز البريدي, رقم المبنى, الرمز الإضافي, نوع الرخصة, رقم الرخصة, تاريخ انتهاء الرخصة, حالة الرخصة, تاريخ الإنشاء
 
-**Step 1: Define target profile**
-Ask user (or default to):
-- Service categories needed: maintenance, cleaning, AC, electrical, plumbing, security, landscaping
-- Cities: Riyadh first, then Jeddah, Dammam
-- Company size: 5–200 employees (SME focus — enterprise FM won't need Emaraa)
-- Required: active CR (Commercial Registration), operational in KSA, willing to use digital platform
+**Target profile:** FAL-licensed **comprehensive FM management companies** only — not specialists (not HVAC-only, cleaning-only, security-only, etc.). These are companies licensed by REGA to manage all facility operations, which is exactly the provider type Emaraa needs.
 
-**Step 2: Discovery channels (KSA-specific)**
+**Step 1: Read and parse the Excel file**
 
-| Source | How to use |
-|---|---|
-| **Maroof (معروف)** | `webFetch("https://maroof.sa/businesses?category=facility-management")` — government-verified businesses, CR-confirmed |
-| **Google Maps** | Search `شركات صيانة الرياض`, `شركات نظافة جدة` — extract name, phone, rating, review count |
-| **Yellow Pages Saudi** | `webSearch("site:yellowpages.com.sa facility management")` |
-| **LinkedIn** | `webSearch("site:linkedin.com/company facility management Saudi Arabia")` |
-| **Wathiq (وثيق)** | Government business registry — verify CR numbers |
-| **App Store / Play Store** | Search for FM apps to find tech-forward providers already using digital tools |
-
-Target: 30–50 candidates, narrow to 20 for outreach.
-
-**Step 3: Evaluate each provider**
-
-| Criteria | Weight | How to check |
-|---|---|---|
-| CR registered + active | Must-have | Maroof badge or Wathiq lookup |
-| Google rating ≥ 3.5 | High | Google Maps reviews |
-| Years in business ≥ 2 | High | LinkedIn founding year, Google listing |
-| Has a phone/WhatsApp | Must-have | Google Maps, website |
-| Service category match | Must-have | Website or Maroof listing |
-| City coverage | High | Listing address |
-
-**Step 4: Shortlist table**
-
-| Company | City | Services | CR/Maroof | Phone | Rating | Notes |
-|---|---|---|---|---|---|---|
-
-**Step 5: Outreach templates**
-
-Generate two versions — WhatsApp (short, informal Arabic) and email (formal Arabic):
-
-**WhatsApp template:**
-```
-السلام عليكم، أنا [الاسم] من منصة عِمارة — منصة سعودية تربط ملاك العقارات بشركات الصيانة والإدارة.
-نودّ إضافة شركتكم كمزوّد معتمد على المنصة لتلقّي طلبات من ملاك عقارات في [المدينة].
-التسجيل مجاني، وتستلمون طلبات مباشرة مع تفاصيل العقار.
-هل يمكن نحدد وقت قصير للتعريف؟
+```python
+import openpyxl
+wb = openpyxl.load_workbook('~/Documents/Emaraa with claude/Resources/FAL accounts.xlsx')
+ws = wb['Sheet1']
+# Row 1 = headers, rows 2–303 = data
 ```
 
-**Email template:**
-```
-الموضوع: دعوة للانضمام إلى منصة عِمارة كمزوّد خدمات معتمد
+Extract all 302 records into a list. Fields to capture per company:
+- `اسم الوسيط` — company name
+- `الرقم الموحد للمنشأة` — unified establishment number (CR)
+- `رقم الجوال` — mobile/WhatsApp number
+- `البريد الإلكتروني` — email
+- `المنطقة` — region
+- `المدينة` — city
+- `الحي` — district
+- `رقم الرخصة` — FAL license number
+- `تاريخ انتهاء الرخصة` — license expiry date
+- `تاريخ الإنشاء` — account creation date
 
-تحية طيبة،
-نودّ دعوة شركتكم للانضمام إلى منصة عِمارة، وهي منصة رقمية سعودية تتيح لملاك العقارات التجارية والسكنية الوصول إلى مزوّدي خدمات الصيانة والإدارة الموثوقين.
-مزايا الانضمام:
-- استقبال طلبات خدمة مباشرة من ملاك العقارات
-- التسجيل مجاني تمامًا
-- ظهور موثّق على المنصة برقم السجل التجاري
-يسعدنا ترتيب مكالمة تعريفية في الوقت الذي يناسبكم.
-مع خالص التحية،
-فريق عِمارة | emaraa.vercel.app
+**Step 2: Tier by contact completeness and city priority**
+
+- **Tier 1:** Has both phone AND email + city is Riyadh or Jeddah
+- **Tier 2:** Has phone only OR email only + Riyadh/Jeddah, OR has both + other city
+- **Tier 3:** Missing both phone and email (needs manual lookup)
+
+City priority order: **الرياض only** — filter out all other cities. Jeddah and Dammam will be targeted in future phases.
+
+**Step 3: Stats summary**
+Compute and display:
+- Total companies: 302
+- By city (top 10)
+- By region
+- Tier 1 / Tier 2 / Tier 3 counts
+- Companies with email vs phone-only vs neither
+
+**Step 4: Outreach templates (Arabic)**
+
+**WhatsApp (short, informal):**
+```
+السلام عليكم ورحمة الله،
+أنا [الاسم] من منصة عِمارة — منصة سعودية تربط ملاك العقارات بشركات إدارة المرافق.
+نودّ إضافة شركتكم كمزوّد معتمد لاستقبال طلبات من ملاك عقارات في [المدينة].
+✅ التسجيل مجاني  ✅ طلبات مباشرة مع تفاصيل العقار  ✅ أنتم تتحكمون في القبول والتسعير
+هل يمكن نحدد 15 دقيقة للتعريف؟
 ```
 
-**Output:**
-Save to `Reports/provider-acquisition-[YYYY-MM-DD].md` with:
-- Full shortlist table (20+ companies)
-- Evaluation scores
-- Ready-to-send WhatsApp + email templates
-- Priority tier: Tier 1 (contact immediately) / Tier 2 (follow up) / Tier 3 (monitor)
+**Email (formal):**
+```
+الموضوع: دعوة للانضمام إلى منصة عِمارة كمزوّد خدمات
+
+السادة / [اسم الشركة]،
+يسعدنا دعوة شركتكم للانضمام إلى منصة عِمارة، المنصة السعودية التي تربط ملاك العقارات بشركات إدارة المرافق.
+المنصة توفر نظام طلبات رقمي واضح يصلكم فيه العميل مع كامل تفاصيل العقار والطلب.
+المزايا: التسجيل مجاني — استقبال طلبات موثّقة — تحكم كامل في القبول والتسعير.
+ندعوكم للانضمام مبكراً قبل إطلاق المنصة في سيتي سكيب جلوبال نوفمبر 2026.
+للتواصل: [رقم الهاتف] | [البريد الإلكتروني]
+فريق عِمارة | emaraa.app
+```
+
+**Follow-up WhatsApp (Day 3):**
+```
+السلام عليكم، أعود للتواصل بخصوص منصة عِمارة.
+هل وصلتكم رسالتي السابقة؟ يسعدني الإجابة على أي استفسار.
+[الاسم] — عِمارة
+```
+
+**Step 5: Generate HTML report**
+
+Save to `Reports/provider-acquisition-[YYYY-MM-DD].html` as a self-contained dark-themed HTML file with:
+- Header: title, date, total count (302 companies), data source credit (REGA FAL registry)
+- Stats dashboard: cards showing totals by tier and city
+- Full filterable table: all 302 companies with columns — #, اسم الوسيط, المدينة, الحي, رقم الجوال, البريد الإلكتروني, رقم الرخصة, انتهاء الرخصة, Tier badge
+- Tier 1 highlighted section at top (ready-to-contact list)
+- Outreach templates section (copy-paste ready)
+- JS search/filter on company name and city (no external dependencies)
+- RTL-aware Arabic text rendering
 
 ---
 

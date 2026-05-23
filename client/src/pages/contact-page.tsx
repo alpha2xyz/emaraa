@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowLeft, ArrowRight, MessageCircle } from 'lucide-react';
 import { Link } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLang } from '../hooks/use-lang';
@@ -7,12 +7,13 @@ export default function ContactPage() {
   const { lang } = useLang();
   const isRTL = lang === 'ar';
   const t = lang === 'ar'
-    ? { title: 'تواصل معنا', subtitle: 'نحن هنا للمساعدة. تواصل معنا عبر أي وسيلة.', email: 'البريد الإلكتروني', phone: 'الهاتف', location: 'الموقع', loc: 'الرياض، المملكة العربية السعودية', back: 'العودة للرئيسية' }
-    : { title: 'Contact Us', subtitle: 'We are here to help. Reach us through any channel.', email: 'Email', phone: 'Phone', location: 'Location', loc: 'Riyadh, Saudi Arabia', back: 'Back to Home' };
+    ? { title: 'تواصل معنا', subtitle: 'نحن هنا للمساعدة. تواصل معنا عبر أي وسيلة.', email: 'البريد الإلكتروني', phone: 'الهاتف', whatsapp: 'واتساب', location: 'الموقع', loc: 'الرياض، المملكة العربية السعودية', back: 'العودة للرئيسية' }
+    : { title: 'Contact Us', subtitle: 'We are here to help. Reach us through any channel.', email: 'Email', phone: 'Phone', whatsapp: 'WhatsApp', location: 'Location', loc: 'Riyadh, Saudi Arabia', back: 'Back to Home' };
 
   const contacts = [
     { icon: Mail, label: t.email, value: 'aallfaraidi@gmail.com', href: 'mailto:aallfaraidi@gmail.com', external: false },
-    { icon: Phone, label: t.phone, value: '0543977679', href: 'tel:0543977679', external: false },
+    { icon: Phone, label: t.phone, value: '0501315725', href: 'tel:+966501315725', external: false },
+    { icon: MessageCircle, label: t.whatsapp, value: '0501315725', href: 'https://wa.me/966501315725', external: true },
     { icon: MapPin, label: t.location, value: t.loc, href: 'https://maps.google.com/?q=Riyadh,Saudi+Arabia', external: true },
   ];
 
