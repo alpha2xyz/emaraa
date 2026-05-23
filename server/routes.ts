@@ -487,6 +487,11 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid phone number" });
       }
 
+      // Bypass mode: skip Authentica — accept any 4-digit code for testing
+      if (process.env.OTP_BYPASS === "true") {
+        return res.json({ success: true, bypass: true });
+      }
+
       // Rate limit: max 3 OTPs per phone per 10 minutes
       const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { count } = await supabaseAdmin
@@ -544,17 +549,20 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid role" });
       }
 
-      const e164 = "+966" + phone.substring(1);
-      const r = await fetch(`${AUTHENTICA_BASE}/verify-otp`, {
-        method: "POST",
-        headers: authenticaHeaders,
-        body: JSON.stringify({ phone: e164, otp: code }),
-      });
+      // Bypass mode: accept any 4-digit code without calling Authentica
+      if (process.env.OTP_BYPASS !== "true") {
+        const e164 = "+966" + phone.substring(1);
+        const r = await fetch(`${AUTHENTICA_BASE}/verify-otp`, {
+          method: "POST",
+          headers: authenticaHeaders,
+          body: JSON.stringify({ phone: e164, otp: code }),
+        });
 
-      if (!r.ok) {
-        // Record failed verify attempt in DB so rate limit persists across cold starts
-        await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
-        return res.status(400).json({ error: "Invalid OTP" });
+        if (!r.ok) {
+          // Record failed verify attempt in DB so rate limit persists across cold starts
+          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          return res.status(400).json({ error: "Invalid OTP" });
+        }
       }
 
       // OTP verified — create or find user
