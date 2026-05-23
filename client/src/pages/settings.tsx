@@ -19,8 +19,8 @@ export default function Settings() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   const [profileData, setProfileData] = useState({
-    name: "",
-    phone: "",
+    name: localStorage.getItem("userName") || "",
+    phone: localStorage.getItem("userPhone") || "",
     company_name: "",
     city: "",
   });

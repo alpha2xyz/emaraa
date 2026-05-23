@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { FileText, Clock, CheckCircle2, Send, AlertCircle, Package, Phone, Info } from "lucide-react";
+import { FileText, Clock, CheckCircle2, Send, AlertCircle, Package, Phone, Info, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { supabase } from "../lib/supabase";
@@ -44,7 +45,7 @@ export default function ProviderDashboard() {
 
   const userPhone = localStorage.getItem("userPhone") || "";
 
-  const { data: providerData, isLoading: providerLoading, isError } = useQuery({
+  const { data: providerData, isLoading: providerLoading, isError, refetch } = useQuery({
     queryKey: ["/api/provider/profile"],
     queryFn: async () => {
       if (!userPhone) throw new Error("Not logged in");
@@ -53,6 +54,9 @@ export default function ProviderDashboard() {
       const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
       return { user, provider };
     },
+    enabled: !!userPhone,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: availableRequests } = useQuery({
@@ -91,10 +95,28 @@ export default function ProviderDashboard() {
   const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;
   const isApproved = providerData?.provider?.approved;
 
+  if (providerLoading) {
+    return (
+      <div className="container mx-auto p-4 space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-5 w-32" />
+        <div className="grid grid-cols-2 gap-4">
+          {[1,2,3,4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+  }
+
   if (isError) {
     return (
-      <div className="text-center py-10 text-red-500">
-        {lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <p className="text-red-500 text-sm">
+          {lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}
+        </p>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 me-2" />
+          {lang === "ar" ? "إعادة المحاولة" : "Retry"}
+        </Button>
       </div>
     );
   }

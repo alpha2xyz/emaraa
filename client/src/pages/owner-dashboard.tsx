@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, FileText, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -15,7 +16,7 @@ export default function OwnerDashboard() {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
-  const { data: dashboardData, isError } = useQuery({
+  const { data: dashboardData, isLoading, isError } = useQuery({
     queryKey: ["owner-stats", phone],
     queryFn: async () => {
       const token = localStorage.getItem("sessionToken");
@@ -89,7 +90,7 @@ export default function OwnerDashboard() {
               <Building2 className="w-5 h-5 text-[#2E4A6B]" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{properties.length}</div>
+              {isLoading ? <Skeleton className="h-9 w-12" /> : <div className="text-3xl font-bold">{properties.length}</div>}
             </CardContent>
           </Card>
 
@@ -102,7 +103,7 @@ export default function OwnerDashboard() {
               <FileText className="w-5 h-5 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{requests.length}</div>
+              {isLoading ? <Skeleton className="h-9 w-12" /> : <div className="text-3xl font-bold">{requests.length}</div>}
             </CardContent>
           </Card>
         </div>

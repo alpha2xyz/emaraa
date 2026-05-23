@@ -33,6 +33,8 @@ export default function AuthPage() {
 
   const content = {
     ar: {
+      ownerTab: "مالك عقار",
+      providerTab: "مزود خدمة",
       ownerRegisterTitle: "إنشاء حساب مالك عقار",
       ownerLoginTitle: "تسجيل دخول مالك عقار",
       providerRegisterTitle: "إنشاء حساب مزود خدمة",
@@ -64,6 +66,8 @@ export default function AuthPage() {
       otpSendFailed: "فشل إرسال رمز التحقق، حاول مرة أخرى",
     },
     en: {
+      ownerTab: "Property Owner",
+      providerTab: "Service Provider",
       ownerRegisterTitle: "Create Property Owner Account",
       ownerLoginTitle: "Property Owner Login",
       providerRegisterTitle: "Create Service Provider Account",
@@ -258,6 +262,30 @@ export default function AuthPage() {
             {t.back}
           </button>
 
+        {/* Role selector tabs */}
+        <div className="flex rounded-xl bg-gray-100 p-1 mb-4">
+          {(["owner", "provider"] as const).map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => {
+                setStep("phone");
+                setOtpCode("");
+                setError("");
+                setValidationErrors({ name: "", phone: "" });
+                setLocation(`/auth?role=${r}&mode=${mode}`);
+              }}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                role === r
+                  ? "bg-[#2E4A6B] text-white shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {r === "owner" ? t.ownerTab : t.providerTab}
+            </button>
+          ))}
+        </div>
+
         <div className="rounded-[20px] shadow-xl bg-white overflow-hidden">
           <div className="px-6 pt-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
@@ -284,7 +312,6 @@ export default function AuthPage() {
                         setValidationErrors({ ...validationErrors, name: "" });
                       }}
                       maxLength={25}
-                      required
                       className={`rounded-xl text-base ${validationErrors.name ? "border-red-500" : ""}`}
                     />
                     {validationErrors.name && (
@@ -309,7 +336,6 @@ export default function AuthPage() {
                       setValidationErrors({ ...validationErrors, phone: "" });
                     }}
                     maxLength={10}
-                    required
                     className={`rounded-xl text-base ${validationErrors.phone ? "border-red-500" : ""}`}
                   />
                   {validationErrors.phone && (
