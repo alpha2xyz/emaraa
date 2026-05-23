@@ -101,7 +101,7 @@ const arSections: Section[] = [
   {
     title: 'التواصل بشأن الخصوصية',
     body: [
-      'أي استفسار أو طلب متعلق بخصوصيتك يُرسَل إلى: aallfaraidi@gmail.com',
+      'أي استفسار أو طلب متعلق بخصوصيتك يُرسَل إلى: info@emaraa.app',
       'آخر تحديث لهذه السياسة: مايو 2026.',
     ],
   },
@@ -204,7 +204,7 @@ const enSections: Section[] = [
   {
     title: 'Privacy Contact',
     body: [
-      'Any privacy-related inquiries or requests should be sent to: aallfaraidi@gmail.com',
+      'Any privacy-related inquiries or requests should be sent to: info@emaraa.app',
       'Last updated: May 2026.',
     ],
   },
@@ -259,8 +259,8 @@ export default function PrivacyPage() {
 
         <div className="mt-10 text-center text-xs text-gray-400">
           {isRTL ? 'للاستفسار: ' : 'Inquiries: '}
-          <a href="mailto:aallfaraidi@gmail.com" className="hover:text-[#2E4A6B] transition-colors">
-            aallfaraidi@gmail.com
+          <a href="mailto:info@emaraa.app" className="hover:text-[#2E4A6B] transition-colors">
+            info@emaraa.app
           </a>
         </div>
       </div>

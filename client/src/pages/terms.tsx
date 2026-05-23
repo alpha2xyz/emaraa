@@ -141,7 +141,7 @@ const arSections: Section[] = [
     title: 'التواصل والشكاوى',
     body: [
       'تلتزم عِمارة بمعالجة الشكاوى بسرعة ونزاهة.',
-      'لأي استفسار أو شكوى تواصل معنا عبر البريد الإلكتروني: aallfaraidi@gmail.com',
+      'لأي استفسار أو شكوى تواصل معنا عبر البريد الإلكتروني: info@emaraa.app',
     ],
   },
 ];
@@ -283,7 +283,7 @@ const enSections: Section[] = [
     title: 'Contact & Complaints',
     body: [
       'EMARAA is committed to handling complaints promptly and fairly.',
-      'For any inquiries or complaints contact us at: aallfaraidi@gmail.com',
+      'For any inquiries or complaints contact us at: info@emaraa.app',
     ],
   },
 ];
@@ -337,8 +337,8 @@ export default function TermsPage() {
 
         <div className="mt-10 text-center text-xs text-gray-400">
           {isRTL ? 'للاستفسار: ' : 'Inquiries: '}
-          <a href="mailto:aallfaraidi@gmail.com" className="hover:text-[#2E4A6B] transition-colors">
-            aallfaraidi@gmail.com
+          <a href="mailto:info@emaraa.app" className="hover:text-[#2E4A6B] transition-colors">
+            info@emaraa.app
           </a>
         </div>
       </div>

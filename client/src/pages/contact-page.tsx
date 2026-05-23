@@ -11,7 +11,7 @@ export default function ContactPage() {
     : { title: 'Contact Us', subtitle: 'We are here to help. Reach us through any channel.', email: 'Email', phone: 'Phone', whatsapp: 'WhatsApp', location: 'Location', loc: 'Riyadh, Saudi Arabia', back: 'Back to Home' };
 
   const contacts = [
-    { icon: Mail, label: t.email, value: 'aallfaraidi@gmail.com', href: 'mailto:aallfaraidi@gmail.com', external: false },
+    { icon: Mail, label: t.email, value: 'info@emaraa.app', href: 'mailto:info@emaraa.app', external: false },
     { icon: Phone, label: t.phone, value: '0501315725', href: 'tel:+966501315725', external: false },
     { icon: MessageCircle, label: t.whatsapp, value: '0501315725', href: 'https://wa.me/966501315725', external: true },
     { icon: MapPin, label: t.location, value: t.loc, href: 'https://maps.google.com/?q=Riyadh,Saudi+Arabia', external: true },
