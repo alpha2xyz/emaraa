@@ -248,17 +248,25 @@ export async function registerRoutes(
     }
   });
 
-  // Signed upload URL — client calls this to get a short-lived URL for direct Storage upload
-  app.post("/api/upload/signed-url", requireSession, async (req, res) => {
-    const { folder, filename } = req.body;
-    if (!folder || !filename) return res.status(400).json({ error: "folder and filename required" });
-    const path = `${folder}/${filename}`;
-    const { data, error } = await supabaseAdmin.storage
-      .from("provider-documents")
-      .createSignedUploadUrl(path);
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ signedUrl: data.signedUrl, path: data.path ?? path });
-  });
+  // Server-side file upload — receives raw file bytes, uploads via supabaseAdmin (no JWT needed)
+  app.post("/api/upload/provider-document",
+    requireSession,
+    (req, res, next) => {
+      // Apply raw body parser only for this route to avoid breaking JSON routes
+      (require("express") as any).raw({ type: "*/*", limit: "20mb" })(req, res, next);
+    },
+    async (req, res) => {
+      const folder = req.query.folder as string;
+      const filename = req.query.filename as string;
+      if (!folder || !filename) return res.status(400).json({ error: "folder and filename required" });
+      const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
+      const { data, error } = await supabaseAdmin.storage
+        .from("provider-documents")
+        .upload(`${folder}/${filename}`, req.body as Buffer, { contentType, upsert: true });
+      if (error) return res.status(500).json({ error: error.message });
+      res.json({ path: data.path });
+    }
+  );
 
   app.get("/api/provider/dashboard", requireSession, async (req, res) => {
     try {

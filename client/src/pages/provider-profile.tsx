@@ -201,31 +201,24 @@ export default function ProviderProfile() {
       const userId = localStorage.getItem("userId");
       if (!userId) throw new Error("User not found");
 
-      // رفع الملفات إلى Supabase Storage عبر signed upload URL
+      // رفع الملفات إلى Supabase Storage عبر الخادم (supabaseAdmin — لا حاجة لـ JWT)
       const uploadFile = async (file: File, folder: string) => {
         const token = localStorage.getItem("sessionToken");
         const fileExt = file.name.split(".").pop();
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
-
-        // الحصول على رابط رفع موقّع من الخادم
-        const urlRes = await fetch("/api/upload/signed-url", {
+        const res = await fetch(`/api/upload/provider-document?folder=${encodeURIComponent(folder)}&filename=${encodeURIComponent(fileName)}`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
+            "Content-Type": file.type || "application/octet-stream",
           },
-          body: JSON.stringify({ folder, filename: fileName }),
-        });
-        if (!urlRes.ok) throw new Error("Failed to get upload URL");
-        const { signedUrl, path } = await urlRes.json();
-
-        // رفع الملف مباشرةً إلى Supabase عبر الرابط الموقّع — لا حاجة لـ JWT
-        const uploadRes = await fetch(signedUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type || "application/octet-stream" },
           body: file,
         });
-        if (!uploadRes.ok) throw new Error("File upload failed");
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "File upload failed");
+        }
+        const { path } = await res.json();
         return path;
       };
 
