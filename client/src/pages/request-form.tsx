@@ -44,7 +44,7 @@ export default function RequestForm() {
       noProperties: "لا توجد عقارات! أضف عقاراً أولاً",
       addProperty: "إضافة عقار",
       propertyRequired: "يرجى اختيار العقار",
-      limitReached: "لديك طلب واحد بالفعل. احذف طلبك الحالي من صفحة الطلبات لتتمكن من إنشاء طلب جديد.",
+      limitReached: "لا يمكن إضافة أكثر من طلبين نشطين لنفس العقار",
       riyadhOnly: "عِماره متاحة حالياً للعقارات في الرياض فقط. عقارك مسجّل في مدينة أخرى.",
     },
     en: {
@@ -66,7 +66,7 @@ export default function RequestForm() {
       noProperties: "No properties! Add a property first",
       addProperty: "Add Property",
       propertyRequired: "Please select a property",
-      limitReached: "You already have an active request. Delete it from the Requests page to submit a new one.",
+      limitReached: "Cannot add more than 2 active requests for the same property",
       riyadhOnly: "Emaraa is currently available for properties in Riyadh only. Your property is registered in another city.",
     },
   }
@@ -136,6 +136,18 @@ export default function RequestForm() {
         }
         return null
       } else {
+        // Client-side guard: count active (non-closed) requests for this property
+        const checkRes = await fetch("/api/requests", { headers: { Authorization: `Bearer ${token}` } })
+        if (checkRes.ok) {
+          const allRequests = await checkRes.json()
+          const activeForProperty = (allRequests as any[]).filter(
+            (r: any) => r.property_id === formData.property_id && r.status !== "closed"
+          )
+          if (activeForProperty.length >= 2) {
+            throw new Error("active_requests_limit")
+          }
+        }
+
         const res = await fetch("/api/requests", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -168,7 +180,7 @@ export default function RequestForm() {
     onError: (error: any) => {
       console.error("[request-form] save error:", error?.code, error?.message, error);
       let msg = t.error
-      if (error?.message === "limit_reached") msg = t.limitReached
+      if (error?.message === "limit_reached" || error?.message === "active_requests_limit") msg = t.limitReached
       else if (error?.message === "riyadh_only") msg = t.riyadhOnly
       toast({ title: msg, variant: "destructive" })
     },

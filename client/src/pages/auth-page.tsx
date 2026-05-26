@@ -21,7 +21,6 @@ export default function AuthPage() {
   });
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [otpCode, setOtpCode] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // جلب role و mode من URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -40,7 +39,7 @@ export default function AuthPage() {
       providerRegisterTitle: "إنشاء حساب مزود خدمة",
       providerLoginTitle: "تسجيل دخول مزود خدمة",
       ownerDesc: "أدير عقاراتي وأطلب خدمات الصيانة والنظافة",
-      providerDesc: "أقدم خدمات صيانة ونظافة للعقارات",
+      providerDesc: "تقديم خدمات إدارة المرافق والصيانة والنظافة",
       nameLabel: "الاسم الكامل",
       phoneLabel: "رقم الجوال",
       loginButton: "دخول",
@@ -73,7 +72,7 @@ export default function AuthPage() {
       providerRegisterTitle: "Create Service Provider Account",
       providerLoginTitle: "Service Provider Login",
       ownerDesc: "Manage my properties and request maintenance services",
-      providerDesc: "Provide maintenance and cleaning services",
+      providerDesc: "Provide facility management, maintenance and cleaning services",
       nameLabel: "Full Name",
       phoneLabel: "Phone Number",
       loginButton: "Login",
@@ -286,7 +285,7 @@ export default function AuthPage() {
           ))}
         </div>
 
-        <div className="rounded-[20px] shadow-xl bg-white overflow-hidden">
+        <div className={`rounded-[20px] shadow-xl bg-white overflow-hidden border-t-4 ${role === "provider" ? "border-[#0E7C66]" : "border-[#2E4A6B]"}`}>
           <div className="px-6 pt-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
               <Building2 className="w-8 h-8 text-[#2E4A6B]" />
@@ -353,37 +352,29 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                {mode === "register" && (
-                  <label className="flex items-start gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={termsAccepted}
-                      onChange={(e) => setTermsAccepted(e.target.checked)}
-                      className="mt-0.5 accent-[#2E4A6B] w-4 h-4 flex-shrink-0"
-                    />
-                    <span className="text-sm text-gray-600 leading-snug">
-                      {lang === "ar" ? (
-                        <>
-                          أوافق على{' '}
-                          <a href="/terms" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">شروط الاستخدام</a>
-                          {' '}و{' '}
-                          <a href="/privacy" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">سياسة الخصوصية</a>
-                        </>
-                      ) : (
-                        <>
-                          I agree to the{' '}
-                          <a href="/terms" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">Terms of Use</a>
-                          {' '}and{' '}
-                          <a href="/privacy" target="_blank" className="text-[#2E4A6B] underline hover:opacity-80">Privacy Policy</a>
-                        </>
-                      )}
-                    </span>
-                  </label>
-                )}
-
-                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading || (mode === "register" && !termsAccepted)}>
+                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading}>
                   {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
                 </Button>
+
+                {mode === "register" && (
+                  <p className="text-xs text-gray-400 text-center leading-relaxed">
+                    {lang === "ar" ? (
+                      <>
+                        بالنقر على تسجيل، أنت توافق على{' '}
+                        <a href="/terms" target="_blank" className="underline hover:opacity-80">شروط الاستخدام</a>
+                        {' '}و{' '}
+                        <a href="/privacy" target="_blank" className="underline hover:opacity-80">سياسة الخصوصية</a>
+                      </>
+                    ) : (
+                      <>
+                        By clicking Register, you agree to the{' '}
+                        <a href="/terms" target="_blank" className="underline hover:opacity-80">Terms of Use</a>
+                        {' '}and{' '}
+                        <a href="/privacy" target="_blank" className="underline hover:opacity-80">Privacy Policy</a>
+                      </>
+                    )}
+                  </p>
+                )}
 
                 <div className="text-center">
                   <button
@@ -391,7 +382,6 @@ export default function AuthPage() {
                     onClick={() => {
                       const newMode = mode === "login" ? "register" : "login";
                       setMode(newMode);
-                      setTermsAccepted(false);
                       setLocation(`/auth?role=${role}&mode=${newMode}`);
                     }}
                     className="text-sm text-[#2E4A6B] hover:underline"

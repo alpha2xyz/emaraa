@@ -158,6 +158,8 @@ Do this **once per session** before the first code edit, not before every file c
 
 ### Reports Folder
 
+**Before generating any HTML report, read `~/Documents/Emaraa with claude/Reports/STYLE.md`.** It defines the color system, typography, templates, and subfolder routing for all reports.
+
 **Always save reports inside the correct subfolder under `~/Documents/Emaraa with claude/Reports/`.**
 
 | Subfolder | What goes in it |
@@ -171,45 +173,43 @@ Do this **once per session** before the first code edit, not before every file c
 
 Never save a report to the Reports root folder directly. If unsure, default to `claude study reports in HTML/`.
 
+### Project Folder is Code-Only
+
+**Never create files or folders inside `~/Documents/Emaraa with claude/Emaraa/` unless they are part of the website code.**
+
+This folder is a git repo deployed to Vercel — it must stay clean. Everything else goes in the parent workspace:
+
+| What | Where |
+|---|---|
+| Ad-hoc SQL scripts (RLS policies, schema patches, security fixes — run manually in Supabase Dashboard) | `~/Documents/Emaraa with claude/_work/archived/sql/` |
+| Generated HTML reports — feasibility studies, competitive analysis, SEO audits, master plans, flowcharts, investor decks | `~/Documents/Emaraa with claude/Reports/` |
+| Per-session work logs (dated `.md` files) | `~/Documents/Emaraa with claude/_work/sessions/` |
+| Feature backlog and pending tasks | `~/Documents/Emaraa with claude/_work/TODO.md` |
+| Product and technical decisions log | `~/Documents/Emaraa with claude/_work/decisions-log.md` |
+| Old planning docs, completed phases, legacy files | `~/Documents/Emaraa with claude/_work/archived/` |
+| ZIP snapshots of the project (taken once per session before major changes) | `~/Documents/Emaraa with claude/backups/` |
+| Raw market data — REGA annual reports (PDF + MD), FAL Excel, provider datasets, REGA stats summaries | `~/Documents/Emaraa with claude/Resources/` |
+
+If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file — it doesn't belong here.
+
 ### SQL Files
 
-**Ad-hoc Supabase SQL scripts go in `_work/sql/` — never in the project root.**
+**Ad-hoc Supabase SQL scripts go in `~/Documents/Emaraa with claude/_work/archived/sql/` — never in the project root.**
 
-- `_work/sql/` is for one-off scripts run manually in the Supabase Dashboard SQL Editor (RLS policies, security fixes, schema patches).
+- `_work/archived/sql/` is for one-off scripts run manually in the Supabase Dashboard SQL Editor (RLS policies, security fixes, schema patches).
 - `migrations/` inside this project is only for versioned Drizzle-tracked schema changes (e.g. `001_sprint1.sql`).
-- When writing any new `.sql` file for Supabase, always save it to `~/Documents/Emaraa with claude/_work/sql/`.
+- When writing any new `.sql` file for Supabase, always save it to `~/Documents/Emaraa with claude/_work/archived/sql/`.
 
 ---
 
 ## Feature Backlog
 
-**Pre-launch (remaining):**
-- Provider notified via SMS when admin approves their account (`routes.ts:318` — SMS fires on offer/request events only, not on approval)
-- `map_url` URL validation — currently stores raw strings; validate `https://maps.google.com` prefix before save
-- Admin password minimum complexity (currently no length/complexity check at `routes.ts:558`)
+> Full backlog lives in `~/Documents/Emaraa with claude/_work/TODO.md`. This section is a quick reference for items with specific code locations.
 
-**Already shipped (pre-launch):**
-- Second admin account — `POST /api/admin/create` (`routes.ts:549`) + full UI in `admin-dashboard.tsx:226`
-- OTP storage moved to Supabase `otp_rate_limits` table (no in-memory Map)
-- Phone-sharing consent checkbox at provider offer submission (`provider-offer-form.tsx:35`)
-- 1 property per owner — server-side check exists (`routes.ts:127`) ⚠️ bypassed by direct Supabase writes; needs RLS enforcement
-- Lock new requests once an offer is accepted — server-side check exists (`routes.ts:192`) ⚠️ bypassed by direct Supabase writes; needs RLS enforcement
-- SLA/Terms acceptance checkbox at registration (`auth-page.tsx:331`)
-- File MIME validation — magic bytes checked client-side before upload (`provider-offer-form.tsx:236`, `provider-profile.tsx:175`)
-- Owner offers empty state — SVG illustration + CTA to requests page (`owner-offers-page.tsx:146`)
-- Admin impersonation — `POST /api/admin/impersonate` + UI in `admin-dashboard.tsx:197`
-- Provider IBAN + bank name storage (`provider-profile.tsx`, `migrations/001_sprint1.sql`)
-- FAL license document upload (3rd required doc for providers — `provider-profile.tsx:195`)
-- `price_total` field on provider offers (`provider-offer-form.tsx:37`)
-- Approval status banner on provider profile (`provider-profile.tsx:323`)
-- Settings page (`settings.tsx`) + About page (`about-page.tsx`)
-
-**Stage 1:**
-- Owner email OTP via Resend
-
-**Stage 3 (requires CR):**
-- Contract signing via **Signit API** (signit.sa) — Saudi-native, SDGA-licensed
-- Subscription payments via **Moyasar**
+**All pre-launch items shipped as of 2026-05-21.** Open items tracked in TODO.md by stage:
+- **Launch Prep** — 15 UX/business-rule/admin items
+- **Stage 2** — Rate limiting, audit log, IBAN RLS, DDL migrations, role enforcement, fake refresh_token fix, MemStorage cleanup
+- **Stage 3** — Contract signing (Signit API), subscription payments (Moyasar)
 
 ---
 
@@ -237,11 +237,16 @@ Never save a report to the Reports root folder directly. If unsure, default to `
 
 ## Slash Commands (Project)
 
+Commands are namespaced `emaraa:` so they appear grouped in the `/` menu.
+
 | Command | What it does |
 |---|---|
-| `/competitive-analysis` | KSA/GCC FM & PropTech competitor research → HTML report |
-| `/seo-audit` | Public-page SEO audit for emaraa.app → HTML report |
-| `/provider-acquisition` | Parse REGA FAL Excel, tier 302 companies, generate outreach HTML |
-| `/html-report` | Build a complete RTL Arabic single-file HTML business doc in one shot |
+| `/emaraa:competitive-analysis` | KSA/GCC FM & PropTech competitor research → HTML report |
+| `/emaraa:seo-audit` | Public-page SEO audit for emaraa.app → HTML report |
+| `/emaraa:provider-acquisition` | Parse REGA FAL Excel, tier 302 companies, generate outreach HTML |
+| `/emaraa:html-report` | Build a complete RTL Arabic single-file HTML business doc in one shot |
+| `/emaraa:master-plan` | Generate a new versioned Emaraa master plan (5-year roadmap, SWOT, financials, exit strategy) |
+| `/emaraa:decision` | Log a product, architecture, or technical decision to `_work/decisions-log.md` |
+| `/emaraa:session` | Manage daily session log — start with a goal, end with a summary |
 
-Full command definitions live in `.claude/commands/`.
+Full command definitions live in `~/Documents/Emaraa with claude/.claude/commands/emaraa/`.

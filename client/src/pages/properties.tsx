@@ -26,12 +26,14 @@ import {
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export default function Properties() {
   const { lang } = useLang();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [checkingOffers, setCheckingOffers] = useState(false);
 
   const content = {
     ar: {
@@ -53,6 +55,7 @@ export default function Properties() {
       confirmDelete: "نعم، احذف",
       deleteSuccess: "تم حذف العقار بنجاح",
       deleteError: "حدث خطأ أثناء الحذف",
+      deleteBlocked: "لا يمكن حذف هذا العنصر — تم تقديم عروض عليه",
     },
     en: {
       title: "My Properties",
@@ -73,10 +76,36 @@ export default function Properties() {
       confirmDelete: "Yes, Delete",
       deleteSuccess: "Property deleted successfully",
       deleteError: "Error occurred while deleting",
+      deleteBlocked: "Cannot delete — offers have been submitted on this item",
     },
   };
 
   const t = content[lang];
+
+  const handleDeleteClick = async (propertyId: string) => {
+    setCheckingOffers(true);
+    try {
+      const { data: reqs } = await supabase
+        .from("requests")
+        .select("id")
+        .eq("property_id", propertyId);
+      const reqIds = (reqs || []).map((r: { id: string }) => r.id);
+      if (reqIds.length > 0) {
+        const { data: offers } = await supabase
+          .from("provider_offers")
+          .select("id")
+          .in("request_id", reqIds)
+          .limit(1);
+        if (offers && offers.length > 0) {
+          toast({ title: t.deleteBlocked, variant: "destructive" });
+          return;
+        }
+      }
+      setDeleteId(propertyId);
+    } finally {
+      setCheckingOffers(false);
+    }
+  };
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["/api/properties"],
@@ -258,7 +287,8 @@ export default function Properties() {
                       variant="outline"
                       size="sm"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => setDeleteId(property.id)}
+                      onClick={() => handleDeleteClick(property.id)}
+                      disabled={checkingOffers}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

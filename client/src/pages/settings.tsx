@@ -24,13 +24,14 @@ export default function Settings() {
     company_name: "",
     city: "",
   });
+  const [nameError, setNameError] = useState("");
 
   const t = {
     ar: {
       title: "الإعدادات",
       subtitle: "إدارة حسابك وتفضيلاتك",
       profile: "الملف الشخصي",
-      name: "الاسم الكامل",
+      name: "الاسم",
       phone: "رقم الجوال",
       companyName: "اسم الشركة",
       city: "المدينة",
@@ -39,12 +40,13 @@ export default function Settings() {
       saving: "جاري الحفظ...",
       success: "تم حفظ التغييرات بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
+      nameRequired: "الاسم مطلوب",
     },
     en: {
       title: "Settings",
       subtitle: "Manage your account and preferences",
       profile: "Profile",
-      name: "Full Name",
+      name: "Name",
       phone: "Phone Number",
       companyName: "Company Name",
       city: "City",
@@ -53,6 +55,7 @@ export default function Settings() {
       saving: "Saving...",
       success: "Changes saved successfully!",
       error: "An error occurred, please try again",
+      nameRequired: "Name is required",
     },
   }[lang];
 
@@ -124,7 +127,20 @@ export default function Settings() {
             {isLoading ? (
               <Skeleton className="h-10 w-full rounded-xl" />
             ) : (
-              <Input id="name" value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} />
+              <Input
+                id="name"
+                value={profileData.name}
+                onChange={(e) => {
+                  setProfileData({ ...profileData, name: e.target.value });
+                  if (e.target.value.trim()) setNameError("");
+                }}
+                className={nameError ? "border-red-500 focus-visible:ring-red-400" : ""}
+              />
+            )}
+            {nameError && (
+              <div className="border border-red-300 bg-red-50 text-red-700 text-sm rounded-md px-3 py-2">
+                {nameError}
+              </div>
             )}
           </div>
 
@@ -163,7 +179,18 @@ export default function Settings() {
             </>
           )}
 
-          <Button onClick={() => mutation.mutate()} className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={mutation.isPending || isLoading}>
+          <Button
+            onClick={() => {
+              if (!profileData.name.trim()) {
+                setNameError(t.nameRequired);
+                return;
+              }
+              setNameError("");
+              mutation.mutate();
+            }}
+            className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
+            disabled={mutation.isPending || isLoading}
+          >
             {mutation.isPending ? (
               <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.saving}</>
             ) : (

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { supabase } from "@/lib/supabase";
 
 export default function OwnerDashboard() {
   useAuthGuard("owner");
@@ -31,6 +32,24 @@ export default function OwnerDashboard() {
   const properties = dashboardData?.properties || [];
   const requests = dashboardData?.requests || [];
 
+  const requestIds: string[] = requests.map((r: any) => r.id);
+  const { data: offerCounts } = useQuery({
+    queryKey: ["offer-counts", requestIds],
+    queryFn: async () => {
+      if (requestIds.length === 0) return {} as Record<string, number>;
+      const { data } = await supabase
+        .from("provider_offers")
+        .select("request_id")
+        .in("request_id", requestIds);
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: { request_id: string }) => {
+        counts[row.request_id] = (counts[row.request_id] || 0) + 1;
+      });
+      return counts;
+    },
+    enabled: requestIds.length > 0,
+  });
+
   const t = {
     ar: {
       title: "لوحة التحكم",
@@ -45,6 +64,9 @@ export default function OwnerDashboard() {
       offers: "العروض",
       cleaning: "خدمات النظافة",
       maintenance: "خدمات الصيانة",
+      noOffers: "لا يوجد عروض",
+      oneOffer: "عرض واحد",
+      manyOffers: (n: number) => `${n} عروض`,
     },
     en: {
       title: "Dashboard",
@@ -59,10 +81,20 @@ export default function OwnerDashboard() {
       offers: "Offers",
       cleaning: "Cleaning",
       maintenance: "Maintenance",
+      noOffers: "No proposals",
+      oneOffer: "1 proposal",
+      manyOffers: (n: number) => `${n} proposals`,
     },
   };
 
   const content = lang === "ar" ? t.ar : t.en;
+
+  const getOfferLabel = (requestId: string) => {
+    const count = offerCounts?.[requestId] ?? 0;
+    if (count === 0) return content.noOffers;
+    if (count === 1) return content.oneOffer;
+    return content.manyOffers(count);
+  };
 
   return (
     <div
@@ -191,6 +223,13 @@ export default function OwnerDashboard() {
                       <p className="text-xs text-gray-500">
                         {new Date(r.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}
                       </p>
+                      <span className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        (offerCounts?.[r.id] ?? 0) > 0
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {getOfferLabel(r.id)}
+                      </span>
                     </div>
                     <Link href={`/dashboard/owner/requests/${r.id}/offers`}>
                       <Button variant="ghost" size="sm" className="text-[#2E4A6B]">

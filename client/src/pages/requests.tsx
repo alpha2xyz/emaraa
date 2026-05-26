@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { FileText, Plus, Edit, Building2, Calendar, Eye, Trash2 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export default function Requests() {
   const { lang } = useLang();
@@ -16,6 +17,7 @@ export default function Requests() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [checkingOffers, setCheckingOffers] = useState(false);
 
   const content = {
     ar: {
@@ -35,6 +37,7 @@ export default function Requests() {
       deleteConfirm: "هل أنت متأكد من حذف هذا الطلب؟",
       deleteSuccess: "تم حذف الطلب بنجاح",
       deleteError: "حدث خطأ أثناء الحذف",
+      deleteBlocked: "لا يمكن حذف هذا العنصر — تم تقديم عروض عليه",
     },
     en: {
       title: "Service Requests",
@@ -53,10 +56,29 @@ export default function Requests() {
       deleteConfirm: "Are you sure you want to delete this request?",
       deleteSuccess: "Request deleted successfully",
       deleteError: "An error occurred while deleting",
+      deleteBlocked: "Cannot delete — offers have been submitted on this item",
     },
   };
 
   const t = content[lang];
+
+  const handleDeleteClick = async (requestId: string) => {
+    setCheckingOffers(true);
+    try {
+      const { data: offers } = await supabase
+        .from("provider_offers")
+        .select("id")
+        .eq("request_id", requestId)
+        .limit(1);
+      if (offers && offers.length > 0) {
+        toast({ title: t.deleteBlocked, variant: "destructive" });
+        return;
+      }
+      setDeleteId(requestId);
+    } finally {
+      setCheckingOffers(false);
+    }
+  };
 
   const { data: requests, isLoading, isError } = useQuery({
     queryKey: ["/api/requests"],
@@ -266,8 +288,8 @@ export default function Requests() {
                           variant="outline"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:border-red-300"
-                          onClick={() => setDeleteId(request.id)}
-                          disabled={deleteMutation.isPending}
+                          onClick={() => handleDeleteClick(request.id)}
+                          disabled={deleteMutation.isPending || checkingOffers}
                         >
                           <Trash2 className="w-4 h-4 me-2" />
                           {lang === "ar" ? "حذف" : "Delete"}

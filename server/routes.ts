@@ -303,13 +303,22 @@ export async function registerRoutes(
 
   app.post("/api/requests", requireSession, async (req, res) => {
     try {
-      const { count: acceptedCount } = await supabaseAdmin
+      const { property_id } = req.body;
+      if (!property_id) {
+        return res.status(400).json({ error: "property_id is required" });
+      }
+      const { count: activeCount } = await supabaseAdmin
         .from("requests")
         .select("id", { count: "exact", head: true })
         .eq("owner_id", (req as any).userId)
-        .eq("status", "accepted");
-      if ((acceptedCount ?? 0) >= 1) {
-        return res.status(400).json({ error: "accepted_exists" });
+        .eq("property_id", property_id)
+        .neq("status", "closed");
+      if ((activeCount ?? 0) >= 2) {
+        return res.status(400).json({
+          error: "active_requests_limit",
+          messageAr: "لا يمكن إضافة أكثر من طلبين نشطين لنفس العقار",
+          messageEn: "Cannot add more than 2 active requests for the same property",
+        });
       }
 
       const data = insertRequestSchema.parse(req.body);
@@ -713,14 +722,15 @@ export async function registerRoutes(
     }
   });
 
-  // Create a new admin account. Requires a valid admin session token.
+  // Bootstrap endpoint — only allowed when zero admins exist (first-time setup only).
   app.post("/api/admin/create", async (req, res) => {
     try {
-      const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-      if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
-
-      const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-      if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
+      const { count: adminCount } = await supabaseAdmin
+        .from("admins")
+        .select("id", { count: "exact", head: true });
+      if ((adminCount ?? 0) > 0) {
+        return res.status(403).json({ error: "Admin already exists. Use ADMIN_USERNAME/ADMIN_PASSWORD env vars to manage admins." });
+      }
 
       const { username, password } = req.body;
       if (!username || typeof username !== "string" || !username.trim()) {
@@ -733,18 +743,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "password_too_short" });
       }
 
-      // Check for duplicate username
-      const { data: existing } = await supabase
-        .from("admins")
-        .select("id")
-        .eq("username", username.trim())
-        .maybeSingle();
-      if (existing) {
-        return res.status(400).json({ error: "username_taken" });
-      }
-
       const hashedPassword = await bcrypt.hash(password, 12);
-
       const { error: insertError } = await supabaseAdmin
         .from("admins")
         .insert([{ username: username.trim(), password_hash: hashedPassword }]);
@@ -822,4 +821,43 @@ export async function registerRoutes(
   });
 
   return httpServer;
+}
+
+// Seed admin from env vars on startup. Upserts by username, only re-hashes if password changed.
+export async function seedAdmin(): Promise<void> {
+  const username = process.env.ADMIN_USERNAME?.trim();
+  const password = process.env.ADMIN_PASSWORD?.trim();
+  if (!username || !password) return;
+
+  try {
+    const { data: existing } = await supabaseAdmin
+      .from("admins")
+      .select("id, password_hash")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (existing) {
+      const matches = await bcrypt.compare(password, existing.password_hash);
+      if (!matches) {
+        const newHash = await bcrypt.hash(password, 12);
+        await supabaseAdmin
+          .from("admins")
+          .update({ password_hash: newHash })
+          .eq("id", existing.id);
+        console.log("[seedAdmin] password updated for", username);
+      }
+    } else {
+      const hash = await bcrypt.hash(password, 12);
+      const { error } = await supabaseAdmin
+        .from("admins")
+        .insert([{ username, password_hash: hash }]);
+      if (error) {
+        console.error("[seedAdmin] insert error:", error.message);
+      } else {
+        console.log("[seedAdmin] admin created:", username);
+      }
+    }
+  } catch (err: any) {
+    console.error("[seedAdmin] exception:", err?.message);
+  }
 }

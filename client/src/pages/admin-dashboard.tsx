@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import {
   Users, Building2, FileText, LogOut, CheckCircle2, XCircle,
-  Clock, Shield, ExternalLink, ChevronDown, ChevronUp, Package
+  Shield, ExternalLink, ChevronDown, ChevronUp, Package, RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,8 @@ export default function AdminDashboard() {
   const isRTL = lang === 'ar';
   const { toast } = useToast();
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
-  const [newAdmin, setNewAdmin] = useState({ username: '', password: '' });
-  const [adminCreateLoading, setAdminCreateLoading] = useState(false);
+  const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const abortRef = useRef<AbortController | null>(null);
 
   const t = lang === 'ar'
     ? {
@@ -118,6 +118,34 @@ export default function AdminDashboard() {
     'Authorization': `Bearer ${localStorage.getItem('adminSessionToken')}`,
   });
 
+  // ── Live DB connection indicator ───────────────────────────────────────────
+  useEffect(() => {
+    const checkDb = async () => {
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      try {
+        const res = await fetch('/api/admin/stats', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminSessionToken')}` },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        setDbStatus(res.ok ? 'connected' : 'error');
+      } catch {
+        clearTimeout(timeoutId);
+        setDbStatus('error');
+      }
+    };
+
+    checkDb();
+    const interval = setInterval(checkDb, 30_000);
+    return () => {
+      clearInterval(interval);
+      abortRef.current?.abort();
+    };
+  }, []);
+
   // ── Stats ──────────────────────────────────────────────────────────────────
   const { data: stats } = useQuery({
     queryKey: ['admin', 'stats'],
@@ -141,7 +169,7 @@ export default function AdminDashboard() {
   });
 
   // ── Providers ──────────────────────────────────────────────────────────────
-  const { data: allProviders, isLoading: providersLoading } = useQuery({
+  const { data: allProviders, isLoading: providersLoading, refetch: refetchProviders } = useQuery({
     queryKey: ['admin', 'all-providers'],
     queryFn: async () => {
       const res = await fetch('/api/admin/providers', { headers: adminHeaders() });
@@ -215,30 +243,6 @@ export default function AdminDashboard() {
     setLocation('/admin');
   }
 
-  const handleCreateAdmin = async () => {
-    if (!newAdmin.username.trim() || !newAdmin.password.trim()) return;
-    setAdminCreateLoading(true);
-    try {
-      const token = localStorage.getItem('adminSessionToken');
-      const res = await fetch('/api/admin/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ username: newAdmin.username, password: newAdmin.password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'failed');
-      toast({ title: 'تم إنشاء المشرف بنجاح', description: `اسم المستخدم: ${newAdmin.username}` });
-      setNewAdmin({ username: '', password: '' });
-    } catch (err: any) {
-      toast({
-        title: err.message === 'username_taken' ? 'اسم المستخدم مستخدم بالفعل' : 'حدث خطأ',
-        variant: 'destructive',
-      });
-    } finally {
-      setAdminCreateLoading(false);
-    }
-  };
-
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
@@ -261,6 +265,22 @@ export default function AdminDashboard() {
           <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs font-medium">
+            <span className={`w-2 h-2 rounded-full ${
+              dbStatus === 'connected' ? 'bg-green-500' :
+              dbStatus === 'error' ? 'bg-red-500' : 'bg-yellow-400 animate-pulse'
+            }`} />
+            <span className={
+              dbStatus === 'connected' ? 'text-green-700' :
+              dbStatus === 'error' ? 'text-red-600' : 'text-yellow-600'
+            }>
+              {dbStatus === 'connected'
+                ? (lang === 'ar' ? 'متصل' : 'Connected')
+                : dbStatus === 'error'
+                ? (lang === 'ar' ? 'خطأ في الاتصال' : 'Connection error')
+                : (lang === 'ar' ? 'جارٍ الفحص…' : 'Checking…')}
+            </span>
+          </div>
           <LanguageToggle className="text-gray-500" />
           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-600 hover:text-red-700">
             <LogOut className="w-4 h-4 me-2" />{t.logout}
@@ -300,7 +320,15 @@ export default function AdminDashboard() {
           {/* ── Providers ─────────────────────────────────────────────── */}
           <TabsContent value="providers">
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-orange-500" />{t.providers}</CardTitle></CardHeader>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-orange-500" />{t.providers}</CardTitle>
+                  <Button size="sm" variant="outline" onClick={() => refetchProviders()} disabled={providersLoading} className="h-8 gap-1.5 text-xs">
+                    <RefreshCw className={`h-3 w-3 ${providersLoading ? 'animate-spin' : ''}`} />
+                    {lang === 'ar' ? 'تحديث' : 'Refresh'}
+                  </Button>
+                </div>
+              </CardHeader>
               <CardContent>
                 {providersLoading ? <p className="text-center py-8 text-muted-foreground">{t.loading}</p>
                   : !allProviders?.length ? <p className="text-center py-8 text-muted-foreground">{t.noData}</p>
@@ -482,36 +510,6 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* ── Create Admin ──────────────────────────────────────────── */}
-        <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#2E4A6B]" />
-            إضافة مشرف جديد
-          </h3>
-          <div className="flex flex-col sm:flex-row gap-3 max-w-lg">
-            <input
-              type="text"
-              placeholder="اسم المستخدم"
-              value={newAdmin.username}
-              onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E4A6B]/20"
-            />
-            <input
-              type="password"
-              placeholder="كلمة المرور"
-              value={newAdmin.password}
-              onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E4A6B]/20"
-            />
-            <button
-              onClick={handleCreateAdmin}
-              disabled={adminCreateLoading || !newAdmin.username || !newAdmin.password}
-              className="px-5 py-2.5 bg-[#2E4A6B] text-white rounded-xl text-sm font-medium hover:bg-[#243A56] disabled:opacity-50 transition-colors whitespace-nowrap"
-            >
-              {adminCreateLoading ? '...' : 'إنشاء'}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

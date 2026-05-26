@@ -256,7 +256,9 @@ export default function ProviderProfile() {
       const existingId = existingProvider?.provider?.id;
       let dbError;
       if (existingId) {
-        const { error } = await supabase.from("providers").update(profilePayload).eq("id", existingId);
+        // Exclude user_id from update payload — it must not change and triggers RLS violations
+        const { user_id: _omit, ...updatePayload } = profilePayload;
+        const { error } = await supabase.from("providers").update(updatePayload).eq("id", existingId);
         dbError = error;
       } else {
         const { error } = await supabase.from("providers").insert([profilePayload]);
@@ -280,6 +282,8 @@ export default function ProviderProfile() {
         errorMessage = t.errorDocuments;
       } else if (error.message === "iban_invalid") {
         errorMessage = t.errorIban;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       toast({

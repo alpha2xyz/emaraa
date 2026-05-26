@@ -13,6 +13,7 @@ import {
   Package,
   CheckCircle2,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,8 @@ export default function ProviderRequests() {
       completeProfile: "أكمل ملف شركتك أولاً",
       completeNow: "إكمال الآن",
       filterByType: "النوع",
+      teaserBanner: "أكمل ملفك الشخصي للاطلاع على تفاصيل الطلبات وتقديم عروضك",
+      teaserRequestsAvailable: "طلبات متاحة",
     },
     en: {
       title: "Available Requests",
@@ -85,6 +88,8 @@ export default function ProviderRequests() {
       completeProfile: "Complete Your Company Profile First",
       completeNow: "Complete Now",
       filterByType: "Type",
+      teaserBanner: "Complete your profile to view request details and submit offers",
+      teaserRequestsAvailable: "requests available",
     },
   };
 
@@ -131,7 +136,13 @@ export default function ProviderRequests() {
     },
   });
 
-  const isProfileComplete = providerData?.provider?.company_name && providerData?.provider?.city;
+  const isProfileComplete =
+    providerData?.provider &&
+    providerData.provider.company_name &&
+    providerData.provider.city &&
+    providerData.provider.commercial_register_url &&
+    providerData.provider.company_profile_url &&
+    providerData.provider.fal_license_url;
   const isApproved = providerData?.provider?.approved;
 
   const { data: myOffers } = useQuery({
@@ -193,9 +204,9 @@ export default function ProviderRequests() {
 
       {!isProfileComplete && (
         <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-5 py-4">
-          <AlertCircle className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
+          <Lock className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">{t.completeProfile}</h3>
+            <h3 className="font-semibold text-gray-900 mb-1">{t.teaserBanner}</h3>
             <Button
               size="sm"
               onClick={() => setLocation("/dashboard/provider/profile")}
@@ -312,6 +323,67 @@ export default function ProviderRequests() {
             </div>
           </CardContent>
         </Card>
+      ) : !isProfileComplete ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRequests.map((request: any) => {
+            const isCommercial = request.properties?.building_type === 'commercial';
+            return (
+              <Card
+                key={request.id}
+                className="border-2 opacity-90"
+              >
+                <CardContent className="pt-6">
+                  <div className="space-y-3">
+                    {/* City + building type — visible */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="outline" className="gap-1 w-fit">
+                          <MapPin className="h-3 w-3" />
+                          {request.properties?.city}
+                        </Badge>
+                        {isCommercial ? (
+                          <Badge className="bg-[#FDF3EF] text-[#C4694A] border border-[#EDB99F] text-xs w-fit">
+                            {t.commercialBadge}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-[#FDF0F2] text-[#7D3040] border border-[#F0C5CF] text-xs w-fit">
+                            {t.residentialBadge}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Request count indicator */}
+                      <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-1">
+                        1 {t.teaserRequestsAvailable}
+                      </span>
+                    </div>
+
+                    {/* Property name — blurred */}
+                    <div className="flex items-center gap-2 text-sm select-none">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium blur-sm text-muted-foreground">████████████</span>
+                    </div>
+
+                    {/* Description — blurred */}
+                    <div className="space-y-1 select-none">
+                      <p className="text-sm blur-sm text-muted-foreground line-clamp-3">
+                        ████████ ████ ████████ ████████ ████ ██████ ████████ ████ ████████
+                      </p>
+                    </div>
+
+                    {/* Submit Offer — hidden, replaced with lock CTA */}
+                    <Button
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                      onClick={() => setLocation("/dashboard/provider/profile")}
+                    >
+                      <Lock className="h-4 w-4 me-2" />
+                      {t.completeNow}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRequests.map((request: any) => {

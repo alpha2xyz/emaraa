@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
-import { registerRoutes } from "../server/routes.js";
+import { registerRoutes, seedAdmin } from "../server/routes.js";
 
 const app = express();
 
@@ -24,6 +24,8 @@ const ready = (async () => {
       const status = err.status || err.statusCode || 500;
       res.status(status).json({ message: err.message || "Internal Server Error" });
     });
+    // Seed admin from env vars — fire-and-forget, never blocks startup
+    seedAdmin().catch((e) => console.error("[seedAdmin] unexpected error:", e?.message));
   } catch (e: any) {
     initError = e;
     console.error("[emaraa] init failed:", e?.message, e?.stack);
