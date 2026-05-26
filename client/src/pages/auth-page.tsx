@@ -25,6 +25,13 @@ export default function AuthPage() {
   // جلب role و mode من URL
   const urlParams = new URLSearchParams(window.location.search);
   const role = urlParams.get("role") || "owner";
+
+  const isProvider = role === "provider";
+  const themeColor  = isProvider ? "#0E7C66" : "#2E4A6B";
+  const themeMid    = isProvider ? "#19a688" : "#3F6690";
+  const themeDark   = isProvider ? "#0a5e4e" : "#243A56";
+  const themeDeep   = isProvider ? "#063d2e" : "#162534";
+  const themeBtnBg  = `linear-gradient(to right, ${themeColor}, ${themeMid})`;
   const urlMode = urlParams.get("mode");
   const [mode, setMode] = useState<"login" | "register">(
     urlMode === "login" ? "login" : "register",
@@ -234,20 +241,24 @@ export default function AuthPage() {
   return (
     <div className="page-enter min-h-screen bg-white flex">
       {/* Left marketing panel — desktop only */}
-      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-[#2E4A6B] via-[#243A56] to-[#162534] flex-col justify-center p-14 text-white" dir={lang === "ar" ? "rtl" : "ltr"}>
-        <Building2 className="w-12 h-12 mb-8 text-[#8AAABF]" />
+      <div
+        className="hidden lg:flex w-5/12 flex-col justify-center p-14 text-white"
+        style={{ background: `linear-gradient(135deg, ${themeColor} 0%, ${themeDark} 55%, ${themeDeep} 100%)` }}
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        <Building2 className="w-12 h-12 mb-8" style={{ color: `${themeColor}aa` }} />
         <h1 className="text-4xl font-extrabold mb-3">{lang === "ar" ? "عمارة" : "Emaraa"}</h1>
-        <p className="text-lg text-blue-100 mb-2">
+        <p className="text-lg text-white/80 mb-2">
           {lang === "ar" ? "منصة إدارة المرافق العقارية" : "Facility Management Platform"}
         </p>
-        <p className="text-blue-300 text-sm mb-10">
+        <p className="text-white/60 text-sm mb-10">
           {lang === "ar" ? "ربط مالكي العقارات بمزودي الخدمات في المملكة" : "Connecting property owners with service providers in Saudi Arabia"}
         </p>
         <div className="space-y-4">
           {marketingFeatures.map(item => (
             <div key={item} className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-blue-300 flex-shrink-0" />
-              <span className="text-blue-100">{item}</span>
+              <CheckCircle2 className="w-5 h-5 text-white/60 flex-shrink-0" />
+              <span className="text-white/80">{item}</span>
             </div>
           ))}
         </div>
@@ -276,9 +287,10 @@ export default function AuthPage() {
               }}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                 role === r
-                  ? "bg-[#2E4A6B] text-white shadow"
+                  ? "text-white shadow"
                   : "text-gray-500 hover:text-gray-700"
               }`}
+              style={role === r ? { background: themeColor } : undefined}
             >
               {r === "owner" ? t.ownerTab : t.providerTab}
             </button>
@@ -288,7 +300,7 @@ export default function AuthPage() {
         <div className="rounded-[20px] shadow-xl bg-white overflow-hidden border-t-4" style={{ borderTopColor: role === "provider" ? "#0E7C66" : "#2E4A6B" }}>
           <div className="px-6 pt-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
-              <Building2 className="w-8 h-8 text-[#2E4A6B]" />
+              <Building2 className="w-8 h-8" style={{ color: themeColor }} />
               <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
             </div>
             <p className="text-sm text-gray-500">{getDescription()}</p>
@@ -352,7 +364,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading}>
+                <Button type="submit" className="w-full text-white hover:opacity-90 transition-opacity" style={{ background: themeBtnBg }} disabled={loading}>
                   {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
                 </Button>
 
@@ -384,7 +396,8 @@ export default function AuthPage() {
                       setMode(newMode);
                       setLocation(`/auth?role=${role}&mode=${newMode}`);
                     }}
-                    className="text-sm text-[#2E4A6B] hover:underline"
+                    className="text-sm hover:underline"
+                    style={{ color: themeColor }}
                   >
                     {mode === "login" ? t.switchToRegister : t.switchToLogin}
                   </button>
@@ -419,7 +432,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white" disabled={loading || otpCode.length < 4}>
+                <Button type="submit" className="w-full text-white hover:opacity-90 transition-opacity" style={{ background: themeBtnBg }} disabled={loading || otpCode.length < 4}>
                   {loading ? t.loading : t.otpVerify}
                 </Button>
 
@@ -427,7 +440,8 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => { setStep("phone"); setOtpCode(""); setError(""); }}
-                    className="text-sm text-[#2E4A6B] hover:underline"
+                    className="text-sm hover:underline"
+                    style={{ color: themeColor }}
                   >
                     {t.otpResend}
                   </button>
