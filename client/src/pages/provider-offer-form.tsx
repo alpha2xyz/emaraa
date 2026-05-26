@@ -266,10 +266,19 @@ export default function ProviderOfferForm() {
       }
 
       const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
-      const { error: uploadError } = await supabase.storage
-        .from("provider-offers")
-        .upload(fileName, offerFile);
-      if (uploadError) throw uploadError;
+      const token = localStorage.getItem("sessionToken");
+      const uploadRes = await fetch(`/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/pdf",
+        },
+        body: offerFile,
+      });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || "File upload failed");
+      }
 
       const { data, error } = await supabase
         .from("provider_offers")

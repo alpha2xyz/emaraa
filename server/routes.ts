@@ -317,6 +317,30 @@ export async function registerRoutes(
     }
   );
 
+  // Offer PDF upload — server-side via supabaseAdmin, PDF only
+  app.post("/api/upload/offer-document",
+    requireSession,
+    (req, res, next) => {
+      (require("express") as any).raw({ type: "*/*", limit: "11mb" })(req, res, next);
+    },
+    async (req, res) => {
+      const { filename } = req.query;
+      if (!filename || typeof filename !== "string") return res.status(400).json({ error: "filename required" });
+      if (!/^[\w\-]+\.pdf$/i.test(filename)) return res.status(400).json({ error: "Invalid filename" });
+      if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: "Empty file" });
+      if (req.body.length > 10 * 1024 * 1024) return res.status(413).json({ error: "File too large (max 10MB)" });
+      const b = req.body;
+      if (!(b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46)) {
+        return res.status(415).json({ error: "Invalid file type — PDF required" });
+      }
+      const { data, error } = await supabaseAdmin.storage
+        .from("provider-offers")
+        .upload(filename, req.body as Buffer, { contentType: "application/pdf", upsert: false });
+      if (error) return res.status(500).json({ error: error.message });
+      res.json({ path: data.path });
+    }
+  );
+
   app.get("/api/provider/dashboard", requireSession, async (req, res) => {
     try {
       const userId = (req as any).userId;
