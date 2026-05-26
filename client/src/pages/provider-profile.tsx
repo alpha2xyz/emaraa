@@ -201,16 +201,32 @@ export default function ProviderProfile() {
       const userId = localStorage.getItem("userId");
       if (!userId) throw new Error("User not found");
 
-      // رفع الملفات إلى Supabase Storage
+      // رفع الملفات إلى Supabase Storage عبر signed upload URL
       const uploadFile = async (file: File, folder: string) => {
+        const token = localStorage.getItem("sessionToken");
         const fileExt = file.name.split(".").pop();
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
-        const { data, error } = await supabase.storage
-          .from("provider-documents")
-          .upload(`${folder}/${fileName}`, file);
 
-        if (error) throw error;
-        return data.path;
+        // الحصول على رابط رفع موقّع من الخادم
+        const urlRes = await fetch("/api/upload/signed-url", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ folder, filename: fileName }),
+        });
+        if (!urlRes.ok) throw new Error("Failed to get upload URL");
+        const { signedUrl, path } = await urlRes.json();
+
+        // رفع الملف مباشرةً إلى Supabase عبر الرابط الموقّع — لا حاجة لـ JWT
+        const uploadRes = await fetch(signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!uploadRes.ok) throw new Error("File upload failed");
+        return path;
       };
 
       const commercialRegisterPath = files.commercial_register

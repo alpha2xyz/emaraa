@@ -248,6 +248,18 @@ export async function registerRoutes(
     }
   });
 
+  // Signed upload URL — client calls this to get a short-lived URL for direct Storage upload
+  app.post("/api/upload/signed-url", requireSession, async (req, res) => {
+    const { folder, filename } = req.body;
+    if (!folder || !filename) return res.status(400).json({ error: "folder and filename required" });
+    const path = `${folder}/${filename}`;
+    const { data, error } = await supabaseAdmin.storage
+      .from("provider-documents")
+      .createSignedUploadUrl(path);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ signedUrl: data.signedUrl, path: data.path ?? path });
+  });
+
   app.get("/api/provider/dashboard", requireSession, async (req, res) => {
     try {
       const userId = (req as any).userId;
