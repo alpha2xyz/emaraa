@@ -427,7 +427,7 @@ export default function LandingPage() {
                   <Link href="/about" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.aboutUs}</Link>
                 </li>
                 <li>
-                  <a href="/Emaraa-Demo.html" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.viewDemo}</a>
+                  <a href="/emaraa-guide.html" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.viewDemo}</a>
                 </li>
                 <li>
                   <Link href="/terms" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.termsOfUse}</Link>

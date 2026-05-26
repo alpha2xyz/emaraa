@@ -208,7 +208,7 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 
 **All pre-launch items shipped as of 2026-05-21.** Open items tracked in TODO.md by stage:
 - **Launch Prep** — 15 UX/business-rule/admin items
-- **Stage 2** — Rate limiting, audit log, IBAN RLS, DDL migrations, role enforcement, fake refresh_token fix, MemStorage cleanup
+- **Stage 2** — Rate limiting, audit log, DDL migrations, role enforcement, fake refresh_token fix, MemStorage cleanup
 - **Stage 3** — Contract signing (Signit API), subscription payments (Moyasar)
 
 ---
@@ -228,7 +228,6 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 
 ### MEDIUM
 - **No global rate limiting** — Only OTP and admin login are rate-limited. SMS trigger endpoints (`/api/sms/*`) are unprotected.
-- **IBAN stored and served in plaintext** — `providers` table RLS allows any authenticated user to SELECT all IBANs. Restrict column access to provider + admin only.
 - **Session/admin/rate-limit table DDL missing from repo** — `sessions`, `admin_login_attempts`, `otp_rate_limits`, `admins` exist in production but have no `CREATE TABLE` in any migration file.
 - **`MemStorage` is dead code in production** (`server/storage.ts`) — All Express property/request routes use in-memory storage that is empty on every cold start (Vercel = serverless). These routes return empty data in production.
 - **`.env.example` missing vars** — `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL` are required but absent from `.env.example`.

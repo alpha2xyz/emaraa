@@ -61,9 +61,6 @@ export default function AdminDashboard() {
         cleaning: 'نظافة',
         maintenance: 'صيانة',
         notes: 'ملاحظات',
-        bank: 'البنك',
-        iban: 'الآيبان',
-        noBankInfo: 'لم يُدخل بيانات بنكية',
         price: 'السعر الإجمالي',
         neighborhood: 'الحي',
         nationalAddress: 'العنوان الوطني',
@@ -105,9 +102,6 @@ export default function AdminDashboard() {
         cleaning: 'Cleaning',
         maintenance: 'Maintenance',
         notes: 'Notes',
-        bank: 'Bank',
-        iban: 'IBAN',
-        noBankInfo: 'No bank info entered',
         price: 'Total Price',
         neighborhood: 'Neighborhood',
         nationalAddress: 'National Address',
@@ -358,13 +352,6 @@ export default function AdminDashboard() {
                               {profile?.city && <p className="text-sm text-muted-foreground">{profile.city}</p>}
                               <p className="text-sm text-muted-foreground">{p.name} · {p.phone}</p>
                               {profile?.description && <p className="text-sm text-gray-600 mt-1">{profile.description}</p>}
-                              {profile && (
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {profile.bank_name || profile.iban
-                                    ? <span>{t.bank}: {profile.bank_name ?? '—'} · {t.iban}: {profile.iban ?? '—'}</span>
-                                    : <span className="italic">{t.noBankInfo}</span>}
-                                </div>
-                              )}
                               <p className="text-xs text-muted-foreground">{formatDate(p.created_at)}</p>
                             </div>
                             {profile && !profile.approved && (

@@ -887,7 +887,7 @@ export async function registerRoutes(
     if (!await verifyAdminToken(req, res)) return;
     const { data, error } = await supabaseAdmin
       .from("users")
-      .select("id, name, phone, created_at, providers(id, company_name, city, approved, commercial_register_url, company_profile_url, fal_license_url, description, bank_name, iban)")
+      .select("id, name, phone, created_at, providers(id, company_name, city, approved, commercial_register_url, company_profile_url, fal_license_url, description)")
       .eq("role", "provider")
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch providers" });
