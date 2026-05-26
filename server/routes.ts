@@ -865,13 +865,13 @@ export async function registerRoutes(
 
   app.get("/api/admin/stats", async (req, res) => {
     if (!await verifyAdminToken(req, res)) return;
-    const [users, properties, requests, providers] = await Promise.all([
-      supabaseAdmin.from("users").select("id", { count: "exact", head: true }),
+    const [owners, properties, requests, providers] = await Promise.all([
+      supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "owner"),
       supabaseAdmin.from("properties").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("requests").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("providers").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "provider"),
     ]);
-    res.json({ users: users.count ?? 0, properties: properties.count ?? 0, requests: requests.count ?? 0, providers: providers.count ?? 0 });
+    res.json({ users: owners.count ?? 0, properties: properties.count ?? 0, requests: requests.count ?? 0, providers: providers.count ?? 0 });
   });
 
   app.get("/api/admin/users", async (req, res) => {
@@ -926,12 +926,12 @@ export async function seedAdmin(): Promise<void> {
   try {
     const { data: existing } = await supabaseAdmin
       .from("admins")
-      .select("id, password_hash")
+      .select("id, password")
       .eq("username", username)
       .maybeSingle();
 
     if (existing) {
-      const matches = await bcrypt.compare(password, existing.password_hash);
+      const matches = await bcrypt.compare(password, existing.password);
       if (!matches) {
         const newHash = await bcrypt.hash(password, 12);
         await supabaseAdmin
