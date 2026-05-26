@@ -118,20 +118,14 @@ export default function ProviderProfile() {
   const { data: existingProvider } = useQuery({
     queryKey: ["/api/provider/profile/edit"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) return null;
-      const { data: user } = await supabase.from("users").select("id, name, phone").eq("phone", phone).single();
-      if (!user) return null;
-      const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
-      return { user, provider };
+      const userId = localStorage.getItem("userId");
+      if (!userId) return null;
+      const { data: provider } = await supabase.from("providers").select("*").eq("user_id", userId).single();
+      return { provider };
     },
   });
 
   useEffect(() => {
-    if (existingProvider?.user) {
-      const u = existingProvider.user;
-      setUserData({ name: u.name || "", phone: u.phone });
-    }
     if (existingProvider?.provider) {
       const p = existingProvider.provider;
       setFormData({
@@ -204,22 +198,13 @@ export default function ProviderProfile() {
         throw new Error("iban_invalid");
       }
 
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("User not found");
-
-      // جلب user_id
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-
-      if (!user) throw new Error("User not found");
+      const userId = localStorage.getItem("userId");
+      if (!userId) throw new Error("User not found");
 
       // رفع الملفات إلى Supabase Storage
       const uploadFile = async (file: File, folder: string) => {
         const fileExt = file.name.split(".").pop();
-        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        const fileName = `${userId}_${Date.now()}.${fileExt}`;
         const { data, error } = await supabase.storage
           .from("provider-documents")
           .upload(`${folder}/${fileName}`, file);
@@ -239,7 +224,7 @@ export default function ProviderProfile() {
         : existingProvider?.provider?.fal_license_url || null;
 
       const profilePayload: any = {
-        user_id: user.id,
+        user_id: userId,
         company_name: formData.company_name,
         email: formData.email || null,
         city: formData.city,
