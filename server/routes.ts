@@ -253,13 +253,62 @@ export async function registerRoutes(
     requireSession,
     (req, res, next) => {
       // Apply raw body parser only for this route to avoid breaking JSON routes
-      (require("express") as any).raw({ type: "*/*", limit: "20mb" })(req, res, next);
+      // Limit matches server-side cap (10MB) with a small buffer for request overhead
+      (require("express") as any).raw({ type: "*/*", limit: "11mb" })(req, res, next);
     },
     async (req, res) => {
-      const folder = req.query.folder as string;
-      const filename = req.query.filename as string;
-      if (!folder || !filename) return res.status(400).json({ error: "folder and filename required" });
-      const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
+      // --- (a) Folder whitelist ---
+      const ALLOWED_FOLDERS = ["commercial-registers", "company-profiles", "fal-licenses"] as const;
+      const folder = req.query.folder;
+      if (typeof folder !== "string" || !(ALLOWED_FOLDERS as readonly string[]).includes(folder)) {
+        return res.status(400).json({ error: "Invalid or missing folder. Must be one of: commercial-registers, company-profiles, fal-licenses" });
+      }
+
+      // --- (b & c) File extension whitelist + filename sanitization ---
+      const filename = req.query.filename;
+      if (typeof filename !== "string") {
+        return res.status(400).json({ error: "filename required" });
+      }
+      // Only allow: word chars, hyphens, then a whitelisted extension — no path separators
+      const SAFE_FILENAME_RE = /^[\w\-]+\.(pdf|jpg|jpeg|png)$/i;
+      if (!SAFE_FILENAME_RE.test(filename)) {
+        return res.status(400).json({ error: "Invalid filename. Only alphanumeric chars, underscores, hyphens, and extensions .pdf/.jpg/.jpeg/.png are allowed." });
+      }
+
+      // --- (d) File size cap (10 MB) ---
+      const MAX_BYTES = 10 * 1024 * 1024;
+      if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+        return res.status(400).json({ error: "Request body must be a non-empty file" });
+      }
+      if (req.body.length > MAX_BYTES) {
+        return res.status(413).json({ error: "File exceeds maximum size of 10 MB" });
+      }
+
+      // --- (e) Magic bytes MIME check ---
+      const ext = filename.split(".").pop()!.toLowerCase();
+      const b = req.body;
+      const isPdf  = b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46; // %PDF
+      const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
+      const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+
+      const magicMatches =
+        (ext === "pdf"  && isPdf)  ||
+        ((ext === "jpg" || ext === "jpeg") && isJpeg) ||
+        (ext === "png"  && isPng);
+
+      if (!magicMatches) {
+        return res.status(415).json({ error: "Invalid file type" });
+      }
+
+      // Derive content-type from validated extension — never trust the client header
+      const CONTENT_TYPE_MAP: Record<string, string> = {
+        pdf:  "application/pdf",
+        jpg:  "image/jpeg",
+        jpeg: "image/jpeg",
+        png:  "image/png",
+      };
+      const contentType = CONTENT_TYPE_MAP[ext];
+
       const { data, error } = await supabaseAdmin.storage
         .from("provider-documents")
         .upload(`${folder}/${filename}`, req.body as Buffer, { contentType, upsert: true });
