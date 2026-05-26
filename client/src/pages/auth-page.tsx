@@ -297,7 +297,7 @@ export default function AuthPage() {
           ))}
         </div>
 
-        <div className="rounded-[20px] shadow-xl bg-white overflow-hidden border-t-4" style={{ borderTopColor: role === "provider" ? "#0E7C66" : "#2E4A6B" }}>
+        <div className="rounded-2xl shadow-sm bg-white overflow-hidden border-t-4" style={{ borderTopColor: themeColor }}>
           <div className="px-6 pt-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
               <Building2 className="w-8 h-8" style={{ color: themeColor }} />
