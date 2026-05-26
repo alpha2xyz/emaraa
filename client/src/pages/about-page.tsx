@@ -148,7 +148,7 @@ export default function AboutPage() {
           </p>
           <Link href="/auth">
             <button className="bg-[#2E4A6B] hover:bg-[#1A2E42] text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm">
-              {isRTL ? "ابدأ مجاناً" : "Get Started Free"}
+              {isRTL ? "ابدأ الآن" : "Get Started"}
             </button>
           </Link>
         </div>
