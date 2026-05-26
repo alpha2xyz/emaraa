@@ -68,6 +68,7 @@ export default function AdminDashboard() {
         neighborhood: 'الحي',
         nationalAddress: 'العنوان الوطني',
         sar: 'ريال',
+        profileIncomplete: 'لم يكتمل الملف الشخصي',
       }
     : {
         title: 'Admin Dashboard',
@@ -111,6 +112,7 @@ export default function AdminDashboard() {
         neighborhood: 'Neighborhood',
         nationalAddress: 'National Address',
         sar: 'SAR',
+        profileIncomplete: 'Profile not completed',
       };
 
   const adminHeaders = () => ({
@@ -333,58 +335,71 @@ export default function AdminDashboard() {
                 {providersLoading ? <p className="text-center py-8 text-muted-foreground">{t.loading}</p>
                   : !allProviders?.length ? <p className="text-center py-8 text-muted-foreground">{t.noData}</p>
                   : <div className="space-y-3">
-                    {allProviders.map((p: any) => (
+                    {allProviders.map((p: any) => {
+                      const profile = Array.isArray(p.providers) ? p.providers[0] : p.providers;
+                      return (
                         <div key={p.id} className="p-4 border rounded-lg bg-gray-50/40 space-y-3">
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <button onClick={() => impersonate(p.user_id)} className="font-semibold hover:text-[#2E4A6B] hover:underline text-start">{p.company_name}</button>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${p.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                  {p.approved ? t.approved : t.pending}
-                                </span>
+                                <button onClick={() => impersonate(p.id)} className="font-semibold hover:text-[#2E4A6B] hover:underline text-start">
+                                  {profile?.company_name ?? p.name}
+                                </button>
+                                {profile ? (
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${profile.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                    {profile.approved ? t.approved : t.pending}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                    {t.profileIncomplete}
+                                  </span>
+                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground">{p.city}</p>
-                              <p className="text-sm text-muted-foreground">{(p.users as any)?.name} · {(p.users as any)?.phone}</p>
-                              {p.description && <p className="text-sm text-gray-600 mt-1">{p.description}</p>}
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {p.bank_name || p.iban
-                                  ? <span>{t.bank}: {p.bank_name ?? '—'} · {t.iban}: {p.iban ?? '—'}</span>
-                                  : <span className="italic">{t.noBankInfo}</span>}
-                              </div>
+                              {profile?.city && <p className="text-sm text-muted-foreground">{profile.city}</p>}
+                              <p className="text-sm text-muted-foreground">{p.name} · {p.phone}</p>
+                              {profile?.description && <p className="text-sm text-gray-600 mt-1">{profile.description}</p>}
+                              {profile && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {profile.bank_name || profile.iban
+                                    ? <span>{t.bank}: {profile.bank_name ?? '—'} · {t.iban}: {profile.iban ?? '—'}</span>
+                                    : <span className="italic">{t.noBankInfo}</span>}
+                                </div>
+                              )}
                               <p className="text-xs text-muted-foreground">{formatDate(p.created_at)}</p>
                             </div>
-                            {!p.approved && (
+                            {profile && !profile.approved && (
                               <div className="flex gap-2 shrink-0">
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate({ id: p.id, approved: true })}>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate({ id: profile.id, approved: true })}>
                                   <CheckCircle2 className="h-3 w-3 me-1" />{t.approve}
                                 </Button>
-                                <Button size="sm" variant="destructive" className="h-8" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate({ id: p.id, approved: false })}>
+                                <Button size="sm" variant="destructive" className="h-8" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate({ id: profile.id, approved: false })}>
                                   <XCircle className="h-3 w-3 me-1" />{t.reject}
                                 </Button>
                               </div>
                             )}
                           </div>
-                          {(p.commercial_register_url || p.company_profile_url || p.fal_license_url) && (
+                          {profile && (profile.commercial_register_url || profile.company_profile_url || profile.fal_license_url) && (
                             <div className="flex gap-2 flex-wrap pt-1 border-t">
-                              {p.commercial_register_url && (
-                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', p.commercial_register_url)}>
+                              {profile.commercial_register_url && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', profile.commercial_register_url)}>
                                   <ExternalLink className="h-3 w-3" />{t.crDoc}
                                 </Button>
                               )}
-                              {p.company_profile_url && (
-                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', p.company_profile_url)}>
+                              {profile.company_profile_url && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', profile.company_profile_url)}>
                                   <ExternalLink className="h-3 w-3" />{t.profileDoc}
                                 </Button>
                               )}
-                              {p.fal_license_url && (
-                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', p.fal_license_url)}>
+                              {profile.fal_license_url && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openSignedPdf('provider-documents', profile.fal_license_url)}>
                                   <ExternalLink className="h-3 w-3" />{t.falDoc}
                                 </Button>
                               )}
                             </div>
                           )}
                         </div>
-                    ))}
+                      );
+                    })}
                   </div>}
               </CardContent>
             </Card>
