@@ -118,6 +118,12 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 
 ---
 
+### Communication Rules (permanent until explicitly changed)
+
+- **Replies:** Always respond in **English only** — never reply in Arabic
+- **Markdown files:** Write all `.md` files in **English only** — no Arabic content in any `.md` file
+- **UI copy:** User-facing strings in the app still require both Arabic and English (Arabic is primary) — this rule applies to code, not to Claude's replies or docs
+
 ### Bilingual / RTL
 
 Language state is managed by `client/src/hooks/use-lang.ts` using a module-level global + listener pattern (no React Context). Default language is Arabic (`ar`). RTL is applied at the `DashboardLayout` level. All UI text should have both Arabic and English strings; Arabic is the primary.
