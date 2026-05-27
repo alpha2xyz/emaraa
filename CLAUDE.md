@@ -81,7 +81,42 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 4. `POST /api/sms/new-request` — fire-and-forget
 5. `queryClient.invalidateQueries` → redirect to `/dashboard/owner/requests`
 
-**What was NOT changed:** `property-form.tsx` (still used for editing existing property), `request-form.tsx` (still used for adding a second request), `server/routes.ts`, `shared/schema.ts`
+**What was NOT changed (as of v1):** `property-form.tsx`, `request-form.tsx`, `server/routes.ts`, `shared/schema.ts`
+
+---
+
+### Owner Dashboard — Planned Consolidation (v2, 2026-05-27) ⚠️ NOT YET IMPLEMENTED
+
+**Decision:** Retire all separate owner pages — consolidate into one unified `owner-dashboard.tsx`.
+
+**Files to be RETIRED (pending implementation):**
+- `client/src/pages/properties.tsx`
+- `client/src/pages/property-form.tsx`
+- `client/src/pages/requests.tsx`
+- `client/src/pages/request-form.tsx`
+- `client/src/pages/owner-offers-page.tsx`
+
+**New `owner-dashboard.tsx` structure (single scrollable page):**
+1. **Property section** — shows all property info, inline editable (replaces property-form.tsx)
+2. **Request status section** — shows current request status, read-only (1 owner = 1 request, no add button)
+3. **Provider offers section** — lists all offers received (replaces owner-offers-page.tsx)
+
+**Routes to be removed from `App.tsx`:**
+- `/dashboard/owner/properties`
+- `/dashboard/owner/properties/new`
+- `/dashboard/owner/properties/:id/edit`
+- `/dashboard/owner/requests`
+- `/dashboard/owner/requests/new`
+- `/dashboard/owner/requests/:id/edit`
+- `/dashboard/owner/requests/:id/offers`
+
+**Bottom nav simplified:** الرئيسية | الإعدادات (2 tabs only — was 4)
+
+**No "New Request" or "New Property" buttons** — business rule: 1 owner = 1 property = 1 request (server-enforced).
+
+**Plan document:** `Reports/technical/owner-onboarding-plan-2026-05-26-v2.html`
+
+---
 
 ### Bilingual / RTL
 
