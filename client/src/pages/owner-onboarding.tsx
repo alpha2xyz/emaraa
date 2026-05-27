@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Info } from "lucide-react";
+import { Loader2, AlertCircle, Building2, ClipboardList, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // ---------------------------------------------------------------------------
@@ -94,11 +94,19 @@ const MAP_URL_PREFIXES: string[] = [
   "https://goo.gl/maps",
 ];
 
-const SERVICE_SCOPE: Record<string, string> = {
-  residential:
-    "نظافة المبنى والمشاعات والمداخل · العناية بالمصاعد · خدمات الحراسة · صيانة الكهرباء والسباكة · إدارة النفايات · متابعة المعدات المشتركة",
-  commercial:
-    "نظافة المكاتب والمداخل والمرافق · صيانة الأنظمة الكهربائية والميكانيكية · إدارة مواقف السيارات · خدمات الأمن والحراسة · العناية بالواجهات الخارجية",
+const SERVICE_SCOPE: Record<string, { part1: string; part2: string }> = {
+  residential: {
+    part1:
+      "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.",
+    part2:
+      "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
+  },
+  commercial: {
+    part1:
+      "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق.",
+    part2:
+      "متطلبات العرض: السعر لكل طابق أو وحدة تجارية، إجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -274,7 +282,7 @@ export default function OwnerOnboarding() {
     });
 
     // Step 9 — navigate
-    setLocation("/dashboard/owner/requests");
+    setLocation("/dashboard/owner");
   }
 
   // ---------------------------------------------------------------------------
@@ -347,7 +355,7 @@ export default function OwnerOnboarding() {
                 <div className="space-y-1.5">
                   <Label>نوع المبنى *</Label>
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Residential card */}
+                    {/* Residential card — Sage color (#6B7C5E) */}
                     <button
                       type="button"
                       onClick={() => setBuildingType("residential")}
@@ -355,8 +363,8 @@ export default function OwnerOnboarding() {
                       style={
                         buildingType === "residential"
                           ? {
-                              border: "2px solid #2E4A6B",
-                              background: "#EEF2F7",
+                              border: "2px solid #6B7C5E",
+                              background: "#F3F5F1",
                             }
                           : {
                               border: "1px solid #E5E7EB",
@@ -368,14 +376,14 @@ export default function OwnerOnboarding() {
                       <span
                         className="text-sm font-medium"
                         style={{
-                          color: buildingType === "residential" ? "#2E4A6B" : "#374151",
+                          color: buildingType === "residential" ? "#6B7C5E" : "#374151",
                         }}
                       >
                         سكني
                       </span>
                     </button>
 
-                    {/* Commercial card */}
+                    {/* Commercial card — Navy color (#2E4A6B) */}
                     <button
                       type="button"
                       onClick={() => setBuildingType("commercial")}
@@ -516,15 +524,6 @@ export default function OwnerOnboarding() {
                       الرابط غير صحيح — استخدم رابطاً من Google Maps
                     </p>
                   )}
-                  <a
-                    href="https://maps.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs hover:underline"
-                    style={{ color: "#2E4A6B" }}
-                  >
-                    كيف أحصل على الرابط؟ ↗
-                  </a>
                 </div>
 
                 {/* National address — optional */}
@@ -532,12 +531,6 @@ export default function OwnerOnboarding() {
                   <Label htmlFor="nationalAddress" className="flex items-center gap-1.5">
                     العنوان الوطني{" "}
                     <span className="text-gray-400 font-normal text-xs">(اختياري)</span>
-                    <span
-                      title="رمز موقعك من أبشر أو بريد السعودية — مثال: RTHA1234"
-                      className="cursor-help inline-flex"
-                    >
-                      <Info className="w-3.5 h-3.5 text-gray-400" />
-                    </span>
                   </Label>
                   <Input
                     id="nationalAddress"
@@ -580,19 +573,16 @@ export default function OwnerOnboarding() {
                     className="w-5 h-5 mt-0.5 flex-shrink-0"
                     style={{ color: "#2E4A6B" }}
                   />
-                  <p className="text-sm font-medium text-gray-700">نطاق الخدمة (يتحدد تلقائياً)</p>
+                  <p className="text-sm font-medium text-gray-700">نطاق الخدمات المطلوبة</p>
                 </div>
-                {/* Scope chips */}
-                <div className="flex flex-wrap gap-2">
-                  {SERVICE_SCOPE[buildingType].split(" · ").map((chip) => (
-                    <span
-                      key={chip}
-                      className="rounded-full px-3 py-1 text-xs"
-                      style={{ background: "#EEF2F7", color: "#2E4A6B" }}
-                    >
-                      {chip}
-                    </span>
-                  ))}
+                <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
+                  <p>{SERVICE_SCOPE[buildingType].part1}</p>
+                  <p
+                    className="text-xs leading-relaxed pt-2 border-t"
+                    style={{ color: "#5A6880", borderColor: "#DDE4EE" }}
+                  >
+                    {SERVICE_SCOPE[buildingType].part2}
+                  </p>
                 </div>
               </CardContent>
             </Card>

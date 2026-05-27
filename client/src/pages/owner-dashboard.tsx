@@ -443,7 +443,7 @@ export default function OwnerDashboard() {
 
         {/* ── Greeting header ── */}
         <div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-900">
             {lang === "ar"
               ? `أهلاً${userName ? `، ${userName}` : ""}`
               : `Hello${userName ? `, ${userName}` : ""}`}
@@ -467,10 +467,22 @@ export default function OwnerDashboard() {
                   {property.address}
                 </span>
               )}
-              {property.building_type && (
+              {property.city && (
                 <span
                   className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border"
                   style={{ background: "#F3F4F6", borderColor: "#E5E7EB", color: "#6B7280" }}
+                >
+                  {property.city}
+                </span>
+              )}
+              {property.building_type && (
+                <span
+                  className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border"
+                  style={
+                    property.building_type === "residential"
+                      ? { background: "#F3F5F1", borderColor: "#C0CCB8", color: "#6B7C5E" }
+                      : { background: "#EEF2F7", borderColor: "#C8D8E8", color: "#2E4A6B" }
+                  }
                 >
                   {property.building_type === "residential"
                     ? lang === "ar"
@@ -486,13 +498,13 @@ export default function OwnerDashboard() {
         </div>
 
         {/* ══════════════════════════════════════════════════
-            SECTION 1 — Property Info
+            SECTION 1 — Property + Service Request (merged)
         ══════════════════════════════════════════════════ */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <SectionBadge number={1} />
             <span className="text-sm font-semibold text-gray-700">
-              {lang === "ar" ? "بيانات العقار" : "Property Info"}
+              {lang === "ar" ? "العقار وطلب الخدمة" : "Property & Service Request"}
             </span>
           </div>
 
@@ -536,8 +548,12 @@ export default function OwnerDashboard() {
                     }
                   />
                   <PropertyRow
-                    label={lang === "ar" ? "الحي / العنوان" : "Neighborhood"}
+                    label={lang === "ar" ? "الحي" : "Neighborhood"}
                     value={property?.address}
+                  />
+                  <PropertyRow
+                    label={lang === "ar" ? "المدينة" : "City"}
+                    value={property?.city}
                   />
                   <PropertyRow
                     label={lang === "ar" ? "عدد الوحدات" : "Units Count"}
@@ -596,26 +612,47 @@ export default function OwnerDashboard() {
                     />
                   </div>
 
-                  {/* Building type */}
+                  {/* Building type — clickable cards matching onboarding style */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="editBuildingType">
-                      {lang === "ar" ? "نوع المبنى" : "Building Type"} *
-                    </Label>
-                    <select
-                      id="editBuildingType"
-                      value={editBuildingType}
-                      onChange={(e) =>
-                        setEditBuildingType(e.target.value as "residential" | "commercial")
-                      }
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      <option value="residential">
-                        {lang === "ar" ? "سكني (Residential)" : "Residential (سكني)"}
-                      </option>
-                      <option value="commercial">
-                        {lang === "ar" ? "تجاري (Commercial)" : "Commercial (تجاري)"}
-                      </option>
-                    </select>
+                    <Label>{lang === "ar" ? "نوع المبنى" : "Building Type"} *</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditBuildingType("residential")}
+                        className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
+                        style={
+                          editBuildingType === "residential"
+                            ? { border: "2px solid #6B7C5E", background: "#F3F5F1" }
+                            : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
+                        }
+                      >
+                        <span className="text-2xl">🏠</span>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: editBuildingType === "residential" ? "#6B7C5E" : "#374151" }}
+                        >
+                          {lang === "ar" ? "سكني" : "Residential"}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditBuildingType("commercial")}
+                        className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
+                        style={
+                          editBuildingType === "commercial"
+                            ? { border: "2px solid #2E4A6B", background: "#EEF2F7" }
+                            : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
+                        }
+                      >
+                        <span className="text-2xl">🏢</span>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: editBuildingType === "commercial" ? "#2E4A6B" : "#374151" }}
+                        >
+                          {lang === "ar" ? "تجاري" : "Commercial"}
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Neighborhood */}
@@ -758,94 +795,41 @@ export default function OwnerDashboard() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ══════════════════════════════════════════════════
-            SECTION 2 — Service Request Status
-        ══════════════════════════════════════════════════ */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <SectionBadge number={2} />
-            <span className="text-sm font-semibold text-gray-700">
-              {lang === "ar" ? "حالة طلب الخدمة" : "Service Request Status"}
-            </span>
-          </div>
-
-          <Card className="rounded-xl shadow-sm border border-gray-100">
-            <CardContent className="pt-5 pb-5">
-              {!request ? (
-                <div className="text-center py-4">
-                  <ClipboardList className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {lang === "ar" ? "لا يوجد طلب نشط" : "No active request"}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Status badge */}
+              {/* ── Request status (merged into same card) ── */}
+              {request && (
+                <div
+                  className="mt-5 pt-5 space-y-3"
+                  style={{ borderTop: "1px solid #DDE4EE" }}
+                >
                   <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 flex-shrink-0" style={{ color: "#2E4A6B" }} />
+                    <span className="text-sm font-medium text-gray-700">
+                      {lang === "ar" ? "حالة الطلب" : "Request Status"}
+                    </span>
                     <span
-                      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        background: statusConfig?.bg,
-                        color: statusConfig?.color,
-                      }}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      style={{ background: statusConfig?.bg, color: statusConfig?.color }}
                     >
                       {lang === "ar" ? statusConfig?.label : statusConfig?.labelEn}
                     </span>
-                  </div>
-
-                  {/* Date */}
-                  {request.created_at && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-xs text-gray-400 w-28 flex-shrink-0">
-                        {lang === "ar" ? "تاريخ الطلب" : "Request Date"}
-                      </span>
-                      <span>
+                    {request.created_at && (
+                      <span className="text-xs text-gray-400 mr-auto">
                         {new Date(request.created_at).toLocaleDateString(
                           lang === "ar" ? "ar-SA" : "en-US",
-                          { year: "numeric", month: "long", day: "numeric" }
+                          { year: "numeric", month: "short", day: "numeric" }
                         )}
                       </span>
-                    </div>
-                  )}
-
-                  {/* Scope */}
-                  <div className="flex items-start gap-2 text-sm">
-                    <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">
-                      {lang === "ar" ? "نطاق الخدمة" : "Scope"}
-                    </span>
-                    <span className="text-gray-700">
-                      {lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services Required"}
-                    </span>
+                    )}
                   </div>
 
-                  {/* Notes */}
                   {request.description && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">
-                        {lang === "ar" ? "الملاحظات" : "Notes"}
+                    <div className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
+                      <span className="text-gray-400 block mb-1">
+                        {lang === "ar" ? "ملاحظاتك للمزودين" : "Your notes to providers"}
                       </span>
-                      <span className="text-gray-700 bg-gray-50 rounded px-2 py-1 flex-1 text-xs leading-relaxed">
-                        {request.description}
-                      </span>
+                      {request.description}
                     </div>
                   )}
-
-                  {/* Info note */}
-                  <div
-                    className="flex items-start gap-2 rounded-lg px-3 py-2 text-xs mt-2"
-                    style={{ background: "#F9F9FF", border: "1px solid #E5E7EB", color: "#6B7280" }}
-                  >
-                    <span>ℹ️</span>
-                    <span>
-                      {lang === "ar"
-                        ? "لا يمكن إضافة طلب ثانٍ — مالك واحد = طلب واحد نشط"
-                        : "Cannot add a second request — one owner = one active request"}
-                    </span>
-                  </div>
                 </div>
               )}
             </CardContent>
@@ -853,11 +837,11 @@ export default function OwnerDashboard() {
         </div>
 
         {/* ══════════════════════════════════════════════════
-            SECTION 3 — Provider Offers
+            SECTION 2 — Provider Offers
         ══════════════════════════════════════════════════ */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <SectionBadge number={3} />
+            <SectionBadge number={2} />
             <span className="text-sm font-semibold text-gray-700">
               {lang === "ar" ? "عروض المزودين" : "Provider Offers"}
             </span>

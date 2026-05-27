@@ -66,32 +66,14 @@ export function Navbar() {
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-2 rounded-xl shadow-md" align="end">
-              {/* Section 1 — Language */}
-              <p className="text-xs text-gray-400 px-2 mb-1">اللغة / Language</p>
-              <div className="flex gap-1 px-2 mb-1">
-                <button
-                  onClick={() => setLang("ar")}
-                  className="flex-1 text-sm py-1 rounded-lg font-medium transition-colors"
-                  style={
-                    lang === "ar"
-                      ? { backgroundColor: "#2E4A6B", color: "#fff" }
-                      : { backgroundColor: "#f3f4f6", color: "#4b5563" }
-                  }
-                >
-                  العربية
-                </button>
-                <button
-                  onClick={() => setLang("en")}
-                  className="flex-1 text-sm py-1 rounded-lg font-medium transition-colors"
-                  style={
-                    lang === "en"
-                      ? { backgroundColor: "#2E4A6B", color: "#fff" }
-                      : { backgroundColor: "#f3f4f6", color: "#4b5563" }
-                  }
-                >
-                  EN
-                </button>
-              </div>
+              {/* Section 1 — Language toggle (compact) */}
+              <button
+                onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+                className="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-50 flex items-center gap-2 w-full transition-colors text-gray-700"
+              >
+                <span className="text-base">🌐</span>
+                <span>{lang === "ar" ? "English" : "العربية"}</span>
+              </button>
 
               <div className="border-t my-1" />
 
