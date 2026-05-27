@@ -689,9 +689,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // OTP — Send SMS OTP via Authentica
   app.post("/api/otp/send", async (req, res) => {
     try {
-      const { phone } = req.body;
+      const { phone, mode } = req.body;
       if (!phone || !/^05\d{8}$/.test(phone)) {
         return res.status(400).json({ error: "Invalid phone number" });
+      }
+
+      // Check phone existence BEFORE sending OTP (saves SMS credit + gives instant feedback)
+      const { data: existingUser } = await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .maybeSingle();
+
+      if (mode === "login" && !existingUser) {
+        return res.status(404).json({ error: "Phone not registered" });
+      }
+      if (mode === "register" && existingUser) {
+        return res.status(409).json({ error: "Phone already registered" });
       }
 
       // Bypass mode: skip Authentica — accept any 4-digit code for testing

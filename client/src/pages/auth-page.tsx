@@ -146,15 +146,17 @@ export default function AuthPage() {
     }
 
     try {
-      // Send OTP via WhatsApp
+      // Send OTP via SMS — also checks phone existence before sending
       const res = await fetch("/api/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone }),
+        body: JSON.stringify({ phone: formData.phone, mode }),
       });
 
       if (!res.ok) {
-        setError(t.otpSendFailed);
+        if (res.status === 404) setError(t.phoneNotFound);
+        else if (res.status === 409) setError(t.phoneExists);
+        else setError(t.otpSendFailed);
         setLoading(false);
         return;
       }
