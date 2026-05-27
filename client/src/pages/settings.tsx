@@ -99,13 +99,21 @@ export default function Settings() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-      const { error: userError } = await supabase
-        .from("users")
-        .update({ name: profileData.name })
-        .eq("phone", phone);
-      if (userError) throw userError;
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+
+      // Update name via server (bypasses RLS)
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: profileData.name }),
+      });
+      if (!res.ok) throw new Error("update_failed");
+
+      // Update localStorage so navbar reflects new name immediately
+      localStorage.setItem("userName", profileData.name);
+
+      // Provider-specific fields — still via Supabase (providers table has RLS for owners)
       if (userRole === "provider" && userData) {
         const { error: providerError } = await supabase
           .from("providers")
@@ -210,30 +218,32 @@ export default function Settings() {
             </>
           )}
 
-          <Button
-            onClick={() => {
-              if (!profileData.name.trim()) {
-                setNameError(t.nameRequired);
-                return;
-              }
-              setNameError("");
-              mutation.mutate();
-            }}
-            className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
-            disabled={mutation.isPending || isLoading}
-          >
-            {mutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                {t.saving}
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 me-2" />
-                {t.save}
-              </>
-            )}
-          </Button>
+          <div className="pt-2 flex justify-end">
+            <Button
+              onClick={() => {
+                if (!profileData.name.trim()) {
+                  setNameError(t.nameRequired);
+                  return;
+                }
+                setNameError("");
+                mutation.mutate();
+              }}
+              className="bg-[#2E4A6B] hover:bg-[#243A56] text-white"
+              disabled={mutation.isPending || isLoading}
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                  {t.saving}
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 me-2" />
+                  {t.save}
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

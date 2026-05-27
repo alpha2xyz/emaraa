@@ -96,6 +96,25 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ valid: true, userId: data.user_id, supabaseToken });
   });
 
+  // Update current user's profile (name)
+  app.put("/api/user/profile", requireSession, async (req, res) => {
+    try {
+      const { name } = req.body;
+      if (!name || !String(name).trim()) {
+        return res.status(400).json({ error: "name_required" });
+      }
+      const userId = (req as any).userId;
+      const { error } = await supabaseAdmin
+        .from("users")
+        .update({ name: String(name).trim() })
+        .eq("id", userId);
+      if (error) throw error;
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message ?? "update_failed" });
+    }
+  });
+
   // Admin login route — also creates session so client never calls Supabase directly
   app.post("/api/admin/login", async (req, res) => {
     try {
