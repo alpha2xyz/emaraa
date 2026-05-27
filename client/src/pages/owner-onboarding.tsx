@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertCircle, Building2, ClipboardList, FileText } from "lucide-react";
+import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // ---------------------------------------------------------------------------
@@ -131,6 +131,7 @@ export default function OwnerOnboarding() {
   // UI state
   const [showValidation, setShowValidation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mapUrlTouched, setMapUrlTouched] = useState(false);
 
   // Derived validation
   const isMapUrlValid = mapUrl.trim() === "" || isValidMapUrl(mapUrl.trim());
@@ -302,9 +303,20 @@ export default function OwnerOnboarding() {
           ──────────────────────────────────────────────── */}
           <div>
             <p
-              className="text-xs font-semibold uppercase tracking-widest mb-3"
+              className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
               style={{ color: "#2E4A6B" }}
             >
+              <span
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{
+                  width: "1.5rem",
+                  height: "1.5rem",
+                  background: "#2E4A6B",
+                  flexShrink: 0,
+                }}
+              >
+                1
+              </span>
               بيانات العقار
             </p>
             <Card className="rounded-xl shadow-sm">
@@ -331,20 +343,66 @@ export default function OwnerOnboarding() {
                   )}
                 </div>
 
-                {/* Building type */}
+                {/* Building type — clickable cards */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="buildingType">نوع المبنى *</Label>
-                  <select
-                    id="buildingType"
-                    value={buildingType}
-                    onChange={(e) =>
-                      setBuildingType(e.target.value as "residential" | "commercial")
-                    }
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  >
-                    <option value="residential">سكني (Residential)</option>
-                    <option value="commercial">تجاري (Commercial)</option>
-                  </select>
+                  <Label>نوع المبنى *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Residential card */}
+                    <button
+                      type="button"
+                      onClick={() => setBuildingType("residential")}
+                      className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
+                      style={
+                        buildingType === "residential"
+                          ? {
+                              border: "2px solid #2E4A6B",
+                              background: "#EEF2F7",
+                            }
+                          : {
+                              border: "1px solid #E5E7EB",
+                              background: "#FFFFFF",
+                            }
+                      }
+                    >
+                      <span className="text-2xl">🏠</span>
+                      <span
+                        className="text-sm font-medium"
+                        style={{
+                          color: buildingType === "residential" ? "#2E4A6B" : "#374151",
+                        }}
+                      >
+                        سكني
+                      </span>
+                    </button>
+
+                    {/* Commercial card */}
+                    <button
+                      type="button"
+                      onClick={() => setBuildingType("commercial")}
+                      className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
+                      style={
+                        buildingType === "commercial"
+                          ? {
+                              border: "2px solid #2E4A6B",
+                              background: "#EEF2F7",
+                            }
+                          : {
+                              border: "1px solid #E5E7EB",
+                              background: "#FFFFFF",
+                            }
+                      }
+                    >
+                      <span className="text-2xl">🏢</span>
+                      <span
+                        className="text-sm font-medium"
+                        style={{
+                          color: buildingType === "commercial" ? "#2E4A6B" : "#374151",
+                        }}
+                      >
+                        تجاري
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Neighborhood */}
@@ -399,7 +457,14 @@ export default function OwnerOnboarding() {
                     ))}
                     <option value="other">أخرى / Other</option>
                   </select>
-                  {unitsCount === "other" && (
+                  {/* Smooth slide-in for custom units */}
+                  <div
+                    className="overflow-hidden transition-all duration-200"
+                    style={{
+                      maxHeight: unitsCount === "other" ? "80px" : "0",
+                      opacity: unitsCount === "other" ? 1 : 0,
+                    }}
+                  >
                     <Input
                       type="number"
                       min="1"
@@ -407,10 +472,12 @@ export default function OwnerOnboarding() {
                       value={customUnits}
                       onChange={(e) => setCustomUnits(e.target.value)}
                       className={`mt-2 ${
-                        showValidation && customUnits.trim() === "" ? "border-red-500" : ""
+                        showValidation && unitsCount === "other" && customUnits.trim() === ""
+                          ? "border-red-500"
+                          : ""
                       }`}
                     />
-                  )}
+                  </div>
                   {showValidation && !isUnitsValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
@@ -430,31 +497,47 @@ export default function OwnerOnboarding() {
                     placeholder="https://maps.google.com/..."
                     value={mapUrl}
                     onChange={(e) => setMapUrl(e.target.value)}
+                    onBlur={() => setMapUrlTouched(true)}
                     className={
-                      showValidation && (!isMapUrlPresent || !isMapUrlValid)
+                      (showValidation || mapUrlTouched) && (!isMapUrlPresent || !isMapUrlValid)
                         ? "border-red-500 focus-visible:ring-red-400"
                         : ""
                     }
                   />
-                  {showValidation && !isMapUrlPresent && (
+                  {(showValidation || mapUrlTouched) && !isMapUrlPresent && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
                       رابط الخريطة مطلوب
                     </p>
                   )}
-                  {showValidation && isMapUrlPresent && !isMapUrlValid && (
+                  {(showValidation || mapUrlTouched) && isMapUrlPresent && !isMapUrlValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
                       الرابط غير صحيح — استخدم رابطاً من Google Maps
                     </p>
                   )}
+                  <a
+                    href="https://maps.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs hover:underline"
+                    style={{ color: "#2E4A6B" }}
+                  >
+                    كيف أحصل على الرابط؟ ↗
+                  </a>
                 </div>
 
                 {/* National address — optional */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="nationalAddress">
+                  <Label htmlFor="nationalAddress" className="flex items-center gap-1.5">
                     العنوان الوطني{" "}
                     <span className="text-gray-400 font-normal text-xs">(اختياري)</span>
+                    <span
+                      title="رمز موقعك من أبشر أو بريد السعودية — مثال: RTHA1234"
+                      className="cursor-help inline-flex"
+                    >
+                      <Info className="w-3.5 h-3.5 text-gray-400" />
+                    </span>
                   </Label>
                   <Input
                     id="nationalAddress"
@@ -474,9 +557,20 @@ export default function OwnerOnboarding() {
           ──────────────────────────────────────────────── */}
           <div>
             <p
-              className="text-xs font-semibold uppercase tracking-widest mb-3"
+              className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
               style={{ color: "#2E4A6B" }}
             >
+              <span
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{
+                  width: "1.5rem",
+                  height: "1.5rem",
+                  background: "#2E4A6B",
+                  flexShrink: 0,
+                }}
+              >
+                2
+              </span>
               نطاق الخدمة (يتحدد تلقائياً)
             </p>
             <Card className="rounded-xl shadow-sm">
@@ -488,15 +582,17 @@ export default function OwnerOnboarding() {
                   />
                   <p className="text-sm font-medium text-gray-700">نطاق الخدمة (يتحدد تلقائياً)</p>
                 </div>
-                <div
-                  className="rounded-lg border px-4 py-3 text-sm leading-7 text-gray-700"
-                  style={{
-                    background: buildingType === "commercial" ? "#FDF3EF" : "#F4F7FB",
-                    borderColor: buildingType === "commercial" ? "#EDB99F" : "#C8D8E8",
-                    color: buildingType === "commercial" ? "#5A2D1E" : "#374151",
-                  }}
-                >
-                  {SERVICE_SCOPE[buildingType]}
+                {/* Scope chips */}
+                <div className="flex flex-wrap gap-2">
+                  {SERVICE_SCOPE[buildingType].split(" · ").map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full px-3 py-1 text-xs"
+                      style={{ background: "#EEF2F7", color: "#2E4A6B" }}
+                    >
+                      {chip}
+                    </span>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -507,9 +603,20 @@ export default function OwnerOnboarding() {
           ──────────────────────────────────────────────── */}
           <div>
             <p
-              className="text-xs font-semibold uppercase tracking-widest mb-3"
+              className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
               style={{ color: "#2E4A6B" }}
             >
+              <span
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{
+                  width: "1.5rem",
+                  height: "1.5rem",
+                  background: "#2E4A6B",
+                  flexShrink: 0,
+                }}
+              >
+                3
+              </span>
               ملاحظات للمزودين (اختياري)
             </p>
             <Card className="rounded-xl shadow-sm">
@@ -535,24 +642,29 @@ export default function OwnerOnboarding() {
           </div>
 
           {/* ── Submit ── */}
-          <Button
-            type="submit"
-            className="w-full py-6 text-base font-semibold text-white rounded-xl shadow-md"
-            style={{ background: "#2E4A6B" }}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                جاري الإرسال...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />
-                أرسل طلبي — ينشئ عقاراً وطلباً في خطوة واحدة
-              </span>
-            )}
-          </Button>
+          <div>
+            <Button
+              type="submit"
+              className="w-full py-6 text-base font-semibold text-white rounded-xl shadow-md"
+              style={{ background: "#2E4A6B" }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  جاري الإرسال...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  أرسل طلبي — ينشئ عقاراً وطلباً في خطوة واحدة
+                </span>
+              )}
+            </Button>
+            <p className="text-xs text-center text-gray-400 mt-2">
+              ستُنشأ تلقائياً: عقار + طلب خدمة + إشعار للمزودين
+            </p>
+          </div>
         </form>
       </div>
     </div>
