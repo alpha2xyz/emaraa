@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/hooks/use-lang";
-import { Home, Building2, FileText, Settings, User, Send } from "lucide-react";
+import { Home, FileText, Settings, User, Send } from "lucide-react";
 
 export function BottomNav() {
   const [location] = useLocation();
@@ -16,24 +16,9 @@ export function BottomNav() {
     return null;
 
   const isOwner = location.startsWith("/dashboard/owner");
-  const isProvider = location.startsWith("/dashboard/provider");
+  if (isOwner) return null;
 
-  const ownerLinks = [
-    { href: "/dashboard/owner", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
-    {
-      href: "/dashboard/owner/properties",
-      icon: Building2,
-      labelAr: "عقاراتي",
-      labelEn: "Properties",
-    },
-    { href: "/dashboard/owner/requests", icon: FileText, labelAr: "طلباتي", labelEn: "Requests" },
-    {
-      href: "/dashboard/owner/settings",
-      icon: Settings,
-      labelAr: "الإعدادات",
-      labelEn: "Settings",
-    },
-  ];
+  const isProvider = location.startsWith("/dashboard/provider");
 
   const providerLinks = [
     { href: "/dashboard/provider", icon: Home, labelAr: "لوحة التحكم", labelEn: "Dashboard" },
@@ -47,7 +32,7 @@ export function BottomNav() {
     { href: "/dashboard/provider/profile", icon: User, labelAr: "الملف", labelEn: "Profile" },
   ];
 
-  const links = isOwner ? ownerLinks : isProvider ? providerLinks : [];
+  const links = isProvider ? providerLinks : [];
   if (!links.length) return null;
 
   return (
@@ -55,7 +40,7 @@ export function BottomNav() {
       <div className="flex items-center h-16">
         {links.map(({ href, icon: Icon, labelAr, labelEn }) => {
           const active =
-            href === "/dashboard/owner" || href === "/dashboard/provider"
+            href === "/dashboard/provider"
               ? location === href
               : location.startsWith(href);
           return (
