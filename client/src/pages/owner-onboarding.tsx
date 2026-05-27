@@ -6,8 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertCircle, Building2, ClipboardList, FileText } from "lucide-react";
+import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -271,9 +278,10 @@ export default function OwnerOnboarding() {
       }).catch(() => {});
     }
 
-    // Step 7 — invalidate query cache
+    // Step 7 — invalidate query cache (include "owner-property" so dashboard loads fresh data)
     queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
     queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+    queryClient.invalidateQueries({ queryKey: ["owner-property"] });
 
     // Step 8 — success toast
     toast({
@@ -355,57 +363,47 @@ export default function OwnerOnboarding() {
                 <div className="space-y-1.5">
                   <Label>نوع المبنى *</Label>
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Residential card — Sage color (#6B7C5E) */}
+                    {/* Residential card — Burgundy #7D3040 */}
                     <button
                       type="button"
                       onClick={() => setBuildingType("residential")}
                       className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                       style={
                         buildingType === "residential"
-                          ? {
-                              border: "2px solid #6B7C5E",
-                              background: "#F3F5F1",
-                            }
-                          : {
-                              border: "1px solid #E5E7EB",
-                              background: "#FFFFFF",
-                            }
+                          ? { border: "2px solid #7D3040", background: "#FDF0F2" }
+                          : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
                       }
                     >
-                      <span className="text-2xl">🏠</span>
+                      <Home
+                        className="w-6 h-6"
+                        style={{ color: buildingType === "residential" ? "#7D3040" : "#9CA3AF" }}
+                      />
                       <span
                         className="text-sm font-medium"
-                        style={{
-                          color: buildingType === "residential" ? "#6B7C5E" : "#374151",
-                        }}
+                        style={{ color: buildingType === "residential" ? "#7D3040" : "#374151" }}
                       >
                         سكني
                       </span>
                     </button>
 
-                    {/* Commercial card — Navy color (#2E4A6B) */}
+                    {/* Commercial card — Terracotta #C4694A */}
                     <button
                       type="button"
                       onClick={() => setBuildingType("commercial")}
                       className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                       style={
                         buildingType === "commercial"
-                          ? {
-                              border: "2px solid #2E4A6B",
-                              background: "#EEF2F7",
-                            }
-                          : {
-                              border: "1px solid #E5E7EB",
-                              background: "#FFFFFF",
-                            }
+                          ? { border: "2px solid #C4694A", background: "#FDF3EF" }
+                          : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
                       }
                     >
-                      <span className="text-2xl">🏢</span>
+                      <Building2
+                        className="w-6 h-6"
+                        style={{ color: buildingType === "commercial" ? "#C4694A" : "#9CA3AF" }}
+                      />
                       <span
                         className="text-sm font-medium"
-                        style={{
-                          color: buildingType === "commercial" ? "#2E4A6B" : "#374151",
-                        }}
+                        style={{ color: buildingType === "commercial" ? "#C4694A" : "#374151" }}
                       >
                         تجاري
                       </span>
@@ -415,24 +413,23 @@ export default function OwnerOnboarding() {
 
                 {/* Neighborhood */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="neighborhood">الحي *</Label>
-                  <select
-                    id="neighborhood"
-                    value={neighborhood}
-                    onChange={(e) => setNeighborhood(e.target.value)}
-                    className={`w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                      showValidation && !isNeighborhoodValid ? "border-red-500" : "border-input"
-                    }`}
-                  >
-                    <option value="" disabled>
-                      اختر الحي...
-                    </option>
-                    {NEIGHBORHOODS.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
+                  <Label>الحي *</Label>
+                  <Select value={neighborhood} onValueChange={setNeighborhood}>
+                    <SelectTrigger
+                      className={`w-full h-10 text-sm${
+                        showValidation && !isNeighborhoodValid ? " border-red-500 ring-red-400" : ""
+                      }`}
+                    >
+                      <SelectValue placeholder="اختر الحي..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {NEIGHBORHOODS.map((n) => (
+                        <SelectItem key={n} value={n}>
+                          {n}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {showValidation && !isNeighborhoodValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
@@ -443,28 +440,30 @@ export default function OwnerOnboarding() {
 
                 {/* Units count */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="unitsCount">عدد الوحدات *</Label>
-                  <select
-                    id="unitsCount"
+                  <Label>عدد الوحدات *</Label>
+                  <Select
                     value={unitsCount}
-                    onChange={(e) => {
-                      setUnitsCount(e.target.value);
-                      if (e.target.value !== "other") setCustomUnits("");
+                    onValueChange={(v) => {
+                      setUnitsCount(v);
+                      if (v !== "other") setCustomUnits("");
                     }}
-                    className={`w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                      showValidation && unitsCount === "" ? "border-red-500" : "border-input"
-                    }`}
                   >
-                    <option value="" disabled>
-                      اختر عدد الوحدات...
-                    </option>
-                    {UNIT_OPTIONS.map((n) => (
-                      <option key={n} value={String(n)}>
-                        {n}
-                      </option>
-                    ))}
-                    <option value="other">أخرى / Other</option>
-                  </select>
+                    <SelectTrigger
+                      className={`w-full h-10 text-sm${
+                        showValidation && unitsCount === "" ? " border-red-500 ring-red-400" : ""
+                      }`}
+                    >
+                      <SelectValue placeholder="اختر عدد الوحدات..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIT_OPTIONS.map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n} وحدة
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="other">أخرى / Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                   {/* Smooth slide-in for custom units */}
                   <div
                     className="overflow-hidden transition-all duration-200"

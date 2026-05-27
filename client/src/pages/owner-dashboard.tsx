@@ -259,17 +259,19 @@ export default function OwnerDashboard() {
     },
   });
 
-  // Determine if there is an active request (blocks property edit)
+  // Determine request display config
   const requestStatus = request?.status ?? null;
   const statusConfig = requestStatus ? getRequestStatusConfig(requestStatus) : null;
-  const hasActiveRequest = statusConfig?.isActive ?? false;
+
+  // Block property editing only when an offer has been ACCEPTED (not just when request is pending)
+  const hasAcceptedOffer = (offers ?? []).some((o: any) => o.status === "accepted");
 
   // ---------------------------------------------------------------------------
   // Edit mode init — populate form fields from property
   // ---------------------------------------------------------------------------
 
   function enterEditMode() {
-    if (hasActiveRequest) {
+    if (hasAcceptedOffer) {
       setShowEditLocked(true);
       return;
     }
@@ -480,17 +482,13 @@ export default function OwnerDashboard() {
                   className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border"
                   style={
                     property.building_type === "residential"
-                      ? { background: "#F3F5F1", borderColor: "#C0CCB8", color: "#6B7C5E" }
-                      : { background: "#EEF2F7", borderColor: "#C8D8E8", color: "#2E4A6B" }
+                      ? { background: "#FDF0F2", borderColor: "#C9929E", color: "#7D3040" }
+                      : { background: "#FDF3EF", borderColor: "#E8B49E", color: "#C4694A" }
                   }
                 >
                   {property.building_type === "residential"
-                    ? lang === "ar"
-                      ? "سكني"
-                      : "Residential"
-                    : lang === "ar"
-                      ? "تجاري"
-                      : "Commercial"}
+                    ? lang === "ar" ? "سكني" : "Residential"
+                    : lang === "ar" ? "تجاري" : "Commercial"}
                 </span>
               )}
             </div>
@@ -520,8 +518,8 @@ export default function OwnerDashboard() {
                   <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
                     {lang === "ar"
-                      ? "التعديل محجوب — لديك طلب خدمة نشط"
-                      : "Editing locked — you have an active service request"}
+                      ? "التعديل محجوب — لديك عرضاً مقبولاً من مزود خدمة"
+                      : "Editing locked — you have an accepted offer from a provider"}
                   </span>
                 </div>
               )}
@@ -533,19 +531,10 @@ export default function OwnerDashboard() {
                     label={lang === "ar" ? "اسم العقار" : "Property Name"}
                     value={property?.name}
                   />
-                  <PropertyRow
+                  <PropertyRowTyped
                     label={lang === "ar" ? "نوع المبنى" : "Building Type"}
-                    value={
-                      property?.building_type === "residential"
-                        ? lang === "ar"
-                          ? "سكني"
-                          : "Residential"
-                        : property?.building_type === "commercial"
-                          ? lang === "ar"
-                            ? "تجاري"
-                            : "Commercial"
-                          : property?.building_type
-                    }
+                    buildingType={property?.building_type}
+                    lang={lang}
                   />
                   <PropertyRow
                     label={lang === "ar" ? "الحي" : "Neighborhood"}
@@ -616,38 +605,40 @@ export default function OwnerDashboard() {
                   <div className="space-y-1.5">
                     <Label>{lang === "ar" ? "نوع المبنى" : "Building Type"} *</Label>
                     <div className="grid grid-cols-2 gap-3">
+                      {/* Residential — Burgundy #7D3040 */}
                       <button
                         type="button"
                         onClick={() => setEditBuildingType("residential")}
                         className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                         style={
                           editBuildingType === "residential"
-                            ? { border: "2px solid #6B7C5E", background: "#F3F5F1" }
+                            ? { border: "2px solid #7D3040", background: "#FDF0F2" }
                             : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
                         }
                       >
                         <span className="text-2xl">🏠</span>
                         <span
                           className="text-sm font-medium"
-                          style={{ color: editBuildingType === "residential" ? "#6B7C5E" : "#374151" }}
+                          style={{ color: editBuildingType === "residential" ? "#7D3040" : "#374151" }}
                         >
                           {lang === "ar" ? "سكني" : "Residential"}
                         </span>
                       </button>
+                      {/* Commercial — Terracotta #C4694A */}
                       <button
                         type="button"
                         onClick={() => setEditBuildingType("commercial")}
                         className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                         style={
                           editBuildingType === "commercial"
-                            ? { border: "2px solid #2E4A6B", background: "#EEF2F7" }
+                            ? { border: "2px solid #C4694A", background: "#FDF3EF" }
                             : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
                         }
                       >
                         <span className="text-2xl">🏢</span>
                         <span
                           className="text-sm font-medium"
-                          style={{ color: editBuildingType === "commercial" ? "#2E4A6B" : "#374151" }}
+                          style={{ color: editBuildingType === "commercial" ? "#C4694A" : "#374151" }}
                         >
                           {lang === "ar" ? "تجاري" : "Commercial"}
                         </span>
@@ -1073,6 +1064,38 @@ function PropertyRow({ label, value }: { label: string; value?: string | null })
     <div className="flex items-start gap-3">
       <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">{label}</span>
       <span className="text-sm text-gray-800">{value}</span>
+    </div>
+  );
+}
+
+// Building type row with brand color badge
+function PropertyRowTyped({
+  label,
+  buildingType,
+  lang,
+}: {
+  label: string;
+  buildingType?: string | null;
+  lang: string;
+}) {
+  if (!buildingType) return null;
+  const isResidential = buildingType === "residential";
+  const displayText = isResidential
+    ? lang === "ar" ? "سكني" : "Residential"
+    : lang === "ar" ? "تجاري" : "Commercial";
+  return (
+    <div className="flex items-start gap-3">
+      <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">{label}</span>
+      <span
+        className="text-xs font-medium px-2.5 py-0.5 rounded-full"
+        style={
+          isResidential
+            ? { background: "#FDF0F2", color: "#7D3040", border: "1px solid #C9929E" }
+            : { background: "#FDF3EF", color: "#C4694A", border: "1px solid #E8B49E" }
+        }
+      >
+        {displayText}
+      </span>
     </div>
   );
 }
