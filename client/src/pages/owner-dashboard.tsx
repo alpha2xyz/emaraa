@@ -432,6 +432,9 @@ export default function OwnerDashboard() {
   // Render
   // ---------------------------------------------------------------------------
 
+  // Guard: redirect in flight — don't render partial content
+  if (!isLoading && !property) return null;
+
   const offersList = offers ?? [];
 
   return (
