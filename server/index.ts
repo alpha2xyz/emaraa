@@ -14,10 +14,12 @@ const allowedOrigins = process.env.FRONTEND_URL
   ? [process.env.FRONTEND_URL]
   : ["http://localhost:5000"];
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 declare module "http" {
   interface IncomingMessage {
@@ -30,7 +32,7 @@ app.use(
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
-  }),
+  })
 );
 
 app.use(express.urlencoded({ extended: false }));

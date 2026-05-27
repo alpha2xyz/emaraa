@@ -27,14 +27,14 @@ export default function AuthPage() {
   const role = urlParams.get("role") || "owner";
 
   const isProvider = role === "provider";
-  const themeColor  = isProvider ? "#0E7C66" : "#2E4A6B";
-  const themeMid    = isProvider ? "#19a688" : "#3F6690";
-  const themeDark   = isProvider ? "#0a5e4e" : "#243A56";
-  const themeDeep   = isProvider ? "#063d2e" : "#162534";
-  const themeBtnBg  = `linear-gradient(to right, ${themeColor}, ${themeMid})`;
+  const themeColor = isProvider ? "#0E7C66" : "#2E4A6B";
+  const themeMid = isProvider ? "#19a688" : "#3F6690";
+  const themeDark = isProvider ? "#0a5e4e" : "#243A56";
+  const themeDeep = isProvider ? "#063d2e" : "#162534";
+  const themeBtnBg = `linear-gradient(to right, ${themeColor}, ${themeMid})`;
   const urlMode = urlParams.get("mode");
   const [mode, setMode] = useState<"login" | "register">(
-    urlMode === "login" ? "login" : "register",
+    urlMode === "login" ? "login" : "register"
   );
 
   const content = {
@@ -194,7 +194,14 @@ export default function AuthPage() {
         return;
       }
 
-      const { token, userId, phone, role: userRole, name: returnedName, supabaseToken } = await res.json();
+      const {
+        token,
+        userId,
+        phone,
+        role: userRole,
+        name: returnedName,
+        supabaseToken,
+      } = await res.json();
 
       localStorage.removeItem("adminSessionToken");
       localStorage.removeItem("adminId");
@@ -211,7 +218,7 @@ export default function AuthPage() {
       }
 
       if (userRole === "owner") {
-        setLocation(mode === "register" ? "/dashboard/owner/properties/new" : "/dashboard/owner");
+        setLocation(mode === "register" ? "/dashboard/owner/onboarding" : "/dashboard/owner");
       } else {
         setLocation(mode === "register" ? "/dashboard/provider/profile" : "/dashboard/provider");
       }
@@ -234,16 +241,19 @@ export default function AuthPage() {
     return role === "provider" ? t.providerDesc : t.ownerDesc;
   };
 
-  const marketingFeatures = lang === "ar"
-    ? ["إدارة سهلة لعقاراتك", "موردون معتمدون ومراجَعون", "عروض شفافة وموثوقة"]
-    : ["Easy property management", "Vetted service providers", "Transparent, reliable offers"];
+  const marketingFeatures =
+    lang === "ar"
+      ? ["إدارة سهلة لعقاراتك", "موردون معتمدون ومراجَعون", "عروض شفافة وموثوقة"]
+      : ["Easy property management", "Vetted service providers", "Transparent, reliable offers"];
 
   return (
     <div className="page-enter min-h-screen bg-white flex">
       {/* Left marketing panel — desktop only */}
       <div
         className="hidden lg:flex w-5/12 flex-col justify-center p-14 text-white"
-        style={{ background: `linear-gradient(135deg, ${themeColor} 0%, ${themeDark} 55%, ${themeDeep} 100%)` }}
+        style={{
+          background: `linear-gradient(135deg, ${themeColor} 0%, ${themeDark} 55%, ${themeDeep} 100%)`,
+        }}
         dir={lang === "ar" ? "rtl" : "ltr"}
       >
         <Building2 className="w-12 h-12 mb-8" style={{ color: `${themeColor}aa` }} />
@@ -252,10 +262,12 @@ export default function AuthPage() {
           {lang === "ar" ? "منصة إدارة المرافق العقارية" : "Facility Management Platform"}
         </p>
         <p className="text-white/60 text-sm mb-10">
-          {lang === "ar" ? "ربط مالكي العقارات بمزودي الخدمات في المملكة" : "Connecting property owners with service providers in Saudi Arabia"}
+          {lang === "ar"
+            ? "ربط مالكي العقارات بمزودي الخدمات في المملكة"
+            : "Connecting property owners with service providers in Saudi Arabia"}
         </p>
         <div className="space-y-4">
-          {marketingFeatures.map(item => (
+          {marketingFeatures.map((item) => (
             <div key={item} className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-white/60 flex-shrink-0" />
               <span className="text-white/80">{item}</span>
@@ -265,191 +277,222 @@ export default function AuthPage() {
       </div>
 
       {/* Form panel */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div
+        className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12"
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
         <div className="w-full max-w-md">
-          <button type="button" onClick={() => setLocation("/")} disabled={loading} className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+          <button
+            type="button"
+            onClick={() => setLocation("/")}
+            disabled={loading}
+            className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+          >
             {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t.back}
           </button>
 
-        {/* Role selector tabs */}
-        <div className="flex rounded-xl bg-gray-100 p-1 mb-4">
-          {(["owner", "provider"] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => {
-                setStep("phone");
-                setOtpCode("");
-                setError("");
-                setValidationErrors({ name: "", phone: "" });
-                setLocation(`/auth?role=${r}&mode=${mode}`);
-              }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                role === r
-                  ? "text-white shadow"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-              style={role === r ? { background: themeColor } : undefined}
-            >
-              {r === "owner" ? t.ownerTab : t.providerTab}
-            </button>
-          ))}
-        </div>
-
-        <div className="rounded-2xl shadow-sm bg-white overflow-hidden border-t-4" style={{ borderTopColor: themeColor }}>
-          <div className="px-6 pt-6 pb-2">
-            <div className="flex items-center gap-3 mb-2">
-              <Building2 className="w-8 h-8" style={{ color: themeColor }} />
-              <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
-            </div>
-            <p className="text-sm text-gray-500">{getDescription()}</p>
+          {/* Role selector tabs */}
+          <div className="flex rounded-xl bg-gray-100 p-1 mb-4">
+            {(["owner", "provider"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => {
+                  setStep("phone");
+                  setOtpCode("");
+                  setError("");
+                  setValidationErrors({ name: "", phone: "" });
+                  setLocation(`/auth?role=${r}&mode=${mode}`);
+                }}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  role === r ? "text-white shadow" : "text-gray-500 hover:text-gray-700"
+                }`}
+                style={role === r ? { background: themeColor } : undefined}
+              >
+                {r === "owner" ? t.ownerTab : t.providerTab}
+              </button>
+            ))}
           </div>
 
-          <div className="px-6 pb-6">
-            {step === "phone" ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name Field - only for register */}
-                {mode === "register" && (
+          <div
+            className="rounded-2xl shadow-sm bg-white overflow-hidden border-t-4"
+            style={{ borderTopColor: themeColor }}
+          >
+            <div className="px-6 pt-6 pb-2">
+              <div className="flex items-center gap-3 mb-2">
+                <Building2 className="w-8 h-8" style={{ color: themeColor }} />
+                <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
+              </div>
+              <p className="text-sm text-gray-500">{getDescription()}</p>
+            </div>
+
+            <div className="px-6 pb-6">
+              {step === "phone" ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Name Field - only for register */}
+                  {mode === "register" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="name">{t.nameLabel}</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder={t.namePlaceholder}
+                        value={formData.name}
+                        onChange={(e) => {
+                          setFormData({ ...formData, name: e.target.value });
+                          setValidationErrors({ ...validationErrors, name: "" });
+                        }}
+                        maxLength={25}
+                        className={`rounded-xl text-base ${validationErrors.name ? "border-red-500" : ""}`}
+                      />
+                      {validationErrors.name && (
+                        <div className="flex items-center gap-2 text-red-600 text-sm">
+                          <AlertCircle className="w-4 h-4" />
+                          {validationErrors.name}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Phone Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="name">{t.nameLabel}</Label>
+                    <Label htmlFor="phone">{t.phoneLabel}</Label>
                     <Input
-                      id="name"
-                      type="text"
-                      placeholder={t.namePlaceholder}
-                      value={formData.name}
+                      id="phone"
+                      type="tel"
+                      placeholder={t.phonePlaceholder}
+                      value={formData.phone}
                       onChange={(e) => {
-                        setFormData({ ...formData, name: e.target.value });
-                        setValidationErrors({ ...validationErrors, name: "" });
+                        setFormData({ ...formData, phone: e.target.value });
+                        setValidationErrors({ ...validationErrors, phone: "" });
                       }}
-                      maxLength={25}
-                      className={`rounded-xl text-base ${validationErrors.name ? "border-red-500" : ""}`}
+                      maxLength={10}
+                      className={`rounded-xl text-base ${validationErrors.phone ? "border-red-500" : ""}`}
                     />
-                    {validationErrors.name && (
+                    {validationErrors.phone && (
                       <div className="flex items-center gap-2 text-red-600 text-sm">
                         <AlertCircle className="w-4 h-4" />
-                        {validationErrors.name}
+                        {validationErrors.phone}
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Phone Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t.phoneLabel}</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder={t.phonePlaceholder}
-                    value={formData.phone}
-                    onChange={(e) => {
-                      setFormData({ ...formData, phone: e.target.value });
-                      setValidationErrors({ ...validationErrors, phone: "" });
-                    }}
-                    maxLength={10}
-                    className={`rounded-xl text-base ${validationErrors.phone ? "border-red-500" : ""}`}
-                  />
-                  {validationErrors.phone && (
-                    <div className="flex items-center gap-2 text-red-600 text-sm">
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-md text-sm">
                       <AlertCircle className="w-4 h-4" />
-                      {validationErrors.phone}
+                      {error}
                     </div>
                   )}
-                </div>
 
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-md text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    {error}
-                  </div>
-                )}
-
-                <Button type="submit" className="w-full text-white hover:opacity-90 transition-opacity" style={{ background: themeBtnBg }} disabled={loading}>
-                  {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
-                </Button>
-
-                {mode === "register" && (
-                  <p className="text-xs text-gray-400 text-center leading-relaxed">
-                    {lang === "ar" ? (
-                      <>
-                        بالنقر على تسجيل، أنت توافق على{' '}
-                        <a href="/terms" target="_blank" className="underline hover:opacity-80">شروط الاستخدام</a>
-                        {' '}و{' '}
-                        <a href="/privacy" target="_blank" className="underline hover:opacity-80">سياسة الخصوصية</a>
-                      </>
-                    ) : (
-                      <>
-                        By clicking Register, you agree to the{' '}
-                        <a href="/terms" target="_blank" className="underline hover:opacity-80">Terms of Use</a>
-                        {' '}and{' '}
-                        <a href="/privacy" target="_blank" className="underline hover:opacity-80">Privacy Policy</a>
-                      </>
-                    )}
-                  </p>
-                )}
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newMode = mode === "login" ? "register" : "login";
-                      setMode(newMode);
-                      setLocation(`/auth?role=${role}&mode=${newMode}`);
-                    }}
-                    className="text-sm hover:underline"
-                    style={{ color: themeColor }}
+                  <Button
+                    type="submit"
+                    className="w-full text-white hover:opacity-90 transition-opacity"
+                    style={{ background: themeBtnBg }}
+                    disabled={loading}
                   >
-                    {mode === "login" ? t.switchToRegister : t.switchToLogin}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleOtpVerify} className="space-y-4">
-                <div className="text-center p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                  {t.otpDesc}
-                  <span className="block font-bold mt-1 dir-ltr">{formData.phone}</span>
-                </div>
+                    {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
+                  </Button>
 
-                <div className="space-y-2">
-                  <Label htmlFor="otp">{t.otpPlaceholder}</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="xxxx"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    maxLength={4}
-                    required
-                    className="rounded-xl text-base text-center tracking-widest text-xl"
-                  />
-                </div>
+                  {mode === "register" && (
+                    <p className="text-xs text-gray-400 text-center leading-relaxed">
+                      {lang === "ar" ? (
+                        <>
+                          بالنقر على تسجيل، أنت توافق على{" "}
+                          <a href="/terms" target="_blank" className="underline hover:opacity-80">
+                            شروط الاستخدام
+                          </a>{" "}
+                          و{" "}
+                          <a href="/privacy" target="_blank" className="underline hover:opacity-80">
+                            سياسة الخصوصية
+                          </a>
+                        </>
+                      ) : (
+                        <>
+                          By clicking Register, you agree to the{" "}
+                          <a href="/terms" target="_blank" className="underline hover:opacity-80">
+                            Terms of Use
+                          </a>{" "}
+                          and{" "}
+                          <a href="/privacy" target="_blank" className="underline hover:opacity-80">
+                            Privacy Policy
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  )}
 
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-md text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    {error}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newMode = mode === "login" ? "register" : "login";
+                        setMode(newMode);
+                        setLocation(`/auth?role=${role}&mode=${newMode}`);
+                      }}
+                      className="text-sm hover:underline"
+                      style={{ color: themeColor }}
+                    >
+                      {mode === "login" ? t.switchToRegister : t.switchToLogin}
+                    </button>
                   </div>
-                )}
+                </form>
+              ) : (
+                <form onSubmit={handleOtpVerify} className="space-y-4">
+                  <div className="text-center p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                    {t.otpDesc}
+                    <span className="block font-bold mt-1 dir-ltr">{formData.phone}</span>
+                  </div>
 
-                <Button type="submit" className="w-full text-white hover:opacity-90 transition-opacity" style={{ background: themeBtnBg }} disabled={loading || otpCode.length < 4}>
-                  {loading ? t.loading : t.otpVerify}
-                </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="otp">{t.otpPlaceholder}</Label>
+                    <Input
+                      id="otp"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="xxxx"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      maxLength={4}
+                      required
+                      className="rounded-xl text-base text-center tracking-widest text-xl"
+                    />
+                  </div>
 
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => { setStep("phone"); setOtpCode(""); setError(""); }}
-                    className="text-sm hover:underline"
-                    style={{ color: themeColor }}
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full text-white hover:opacity-90 transition-opacity"
+                    style={{ background: themeBtnBg }}
+                    disabled={loading || otpCode.length < 4}
                   >
-                    {t.otpResend}
-                  </button>
-                </div>
-              </form>
-            )}
+                    {loading ? t.loading : t.otpVerify}
+                  </Button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep("phone");
+                        setOtpCode("");
+                        setError("");
+                      }}
+                      className="text-sm hover:underline"
+                      style={{ color: themeColor }}
+                    >
+                      {t.otpResend}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </div>

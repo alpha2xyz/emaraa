@@ -1,28 +1,42 @@
-
-import type React from 'react'
-import { useState, useEffect } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useLocation, useRoute } from "wouter"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileText, Building2, Save, Loader2, ArrowLeft, ArrowRight, AlertCircle, ClipboardList } from "lucide-react"
-import { useLang } from "@/hooks/use-lang"
-import { useToast } from "@/hooks/use-toast"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useRoute } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  FileText,
+  Building2,
+  Save,
+  Loader2,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  ClipboardList,
+} from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RequestForm() {
-  const { lang } = useLang()
-  const [, setLocation] = useLocation()
-  const { toast } = useToast()
-  const queryClient = useQueryClient()
-  const [, params] = useRoute("/dashboard/owner/requests/:id/edit")
-  const requestId = params?.id
+  const { lang } = useLang();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, params] = useRoute("/dashboard/owner/requests/:id/edit");
+  const requestId = params?.id;
   const [formData, setFormData] = useState({
     property_id: "",
     description: "",
-  })
-  const [showValidation, setShowValidation] = useState(false)
+  });
+  const [showValidation, setShowValidation] = useState(false);
 
   const content = {
     ar: {
@@ -31,8 +45,10 @@ export default function RequestForm() {
       selectProperty: "اختر العقار",
       propertyPlaceholder: "اختر العقار",
       scopeTitle: "نطاق الخدمات المطلوبة",
-      scopeShort: "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
-      commercialScopeShort: "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. متطلبات العرض: تفصيل السعر لكل طابق أو وحدة تجارية، الإجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
+      scopeShort:
+        "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
+      commercialScopeShort:
+        "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. متطلبات العرض: تفصيل السعر لكل طابق أو وحدة تجارية، الإجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
       description: "تفاصيل إضافية",
       descriptionPlaceholder: "اكتب أي تفاصيل أو ملاحظات إضافية...",
       submit: "إرسال الطلب",
@@ -53,8 +69,10 @@ export default function RequestForm() {
       selectProperty: "Select Property",
       propertyPlaceholder: "Select property",
       scopeTitle: "Scope of Services Required",
-      scopeShort: "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
-      commercialScopeShort: "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable contract.",
+      scopeShort:
+        "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
+      commercialScopeShort:
+        "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable contract.",
       description: "Additional Details",
       descriptionPlaceholder: "Write any additional details or notes...",
       submit: "Submit Request",
@@ -67,84 +85,89 @@ export default function RequestForm() {
       addProperty: "Add Property",
       propertyRequired: "Please select a property",
       limitReached: "Cannot add more than 2 active requests for the same property",
-      riyadhOnly: "Emaraa is currently available for properties in Riyadh only. Your property is registered in another city.",
+      riyadhOnly:
+        "Emaraa is currently available for properties in Riyadh only. Your property is registered in another city.",
     },
-  }
+  };
 
-  const t = content[lang]
+  const t = content[lang];
 
   const { data: properties } = useQuery({
     queryKey: ["/api/properties"],
     queryFn: async () => {
-      const token = localStorage.getItem("sessionToken")
-      if (!token) throw new Error("Not logged in")
-      const res = await fetch("/api/properties", { headers: { Authorization: `Bearer ${token}` } })
-      if (!res.ok) throw new Error("Failed to load properties")
-      return res.json()
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+      const res = await fetch("/api/properties", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Failed to load properties");
+      return res.json();
     },
-  })
+  });
 
   const { data: existingRequest } = useQuery({
     queryKey: ["request", requestId],
     enabled: !!requestId,
     queryFn: async () => {
-      const token = localStorage.getItem("sessionToken")
-      const res = await fetch(`/api/requests/${requestId}`, { headers: { Authorization: `Bearer ${token}` } })
-      if (!res.ok) return null
-      return res.json()
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/requests/${requestId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
     },
-  })
+  });
 
   useEffect(() => {
     if (existingRequest) {
       setFormData({
         property_id: existingRequest.property_id || "",
         description: existingRequest.description || "",
-      })
+      });
     }
-  }, [existingRequest])
+  }, [existingRequest]);
 
-  const selectedProperty = properties?.find((p: any) => p.id === formData.property_id)
-  const isCommercial = selectedProperty?.building_type === 'commercial'
-  const isPropertyValid = formData.property_id !== ""
+  const selectedProperty = properties?.find((p: any) => p.id === formData.property_id);
+  const isCommercial = selectedProperty?.building_type === "commercial";
+  const isPropertyValid = formData.property_id !== "";
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem("sessionToken")
-      if (!token) throw new Error("Not logged in")
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
 
       // Riyadh-only filter (new requests only, client-side guard)
       if (!requestId && selectedProperty && selectedProperty.city !== "الرياض") {
-        throw new Error("riyadh_only")
+        throw new Error("riyadh_only");
       }
 
       const payload = {
         property_id: formData.property_id,
         service_category: "standard",
         description: formData.description || null,
-      }
+      };
 
       if (requestId) {
         const res = await fetch(`/api/requests/${requestId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
-        })
+        });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}))
-          throw new Error(body.error || `HTTP ${res.status}`)
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `HTTP ${res.status}`);
         }
-        return null
+        return null;
       } else {
         // Client-side guard: count active (non-closed) requests for this property
-        const checkRes = await fetch("/api/requests", { headers: { Authorization: `Bearer ${token}` } })
+        const checkRes = await fetch("/api/requests", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (checkRes.ok) {
-          const allRequests = await checkRes.json()
+          const allRequests = await checkRes.json();
           const activeForProperty = (allRequests as any[]).filter(
             (r: any) => r.property_id === formData.property_id && r.status !== "closed"
-          )
+          );
           if (activeForProperty.length >= 2) {
-            throw new Error("active_requests_limit")
+            throw new Error("active_requests_limit");
           }
         }
 
@@ -152,52 +175,61 @@ export default function RequestForm() {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
-        })
+        });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}))
-          throw new Error(body.error || `HTTP ${res.status}`)
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `HTTP ${res.status}`);
         }
-        const data = await res.json()
-        return data?.id ?? null
+        const data = await res.json();
+        return data?.id ?? null;
       }
     },
     onSuccess: (newRequestId) => {
-      toast({ title: requestId ? t.updateSuccess : t.success, variant: "default" })
+      toast({ title: requestId ? t.updateSuccess : t.success, variant: "default" });
       queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
       // Notify Riyadh providers about the new request (fire-and-forget)
       if (!requestId && newRequestId) {
-        const token = localStorage.getItem("sessionToken")
+        const token = localStorage.getItem("sessionToken");
         if (token) {
           fetch("/api/sms/new-request", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify({ requestId: newRequestId }),
-          }).catch(() => {})
+          }).catch(() => {});
         }
       }
-      setLocation("/dashboard/owner/requests")
+      setLocation("/dashboard/owner/requests");
     },
     onError: (error: any) => {
       console.error("[request-form] save error:", error?.code, error?.message, error);
-      let msg = t.error
-      if (error?.message === "limit_reached" || error?.message === "active_requests_limit") msg = t.limitReached
-      else if (error?.message === "riyadh_only") msg = t.riyadhOnly
-      toast({ title: msg, variant: "destructive" })
+      let msg = t.error;
+      if (error?.message === "limit_reached" || error?.message === "active_requests_limit")
+        msg = t.limitReached;
+      else if (error?.message === "riyadh_only") msg = t.riyadhOnly;
+      toast({ title: msg, variant: "destructive" });
     },
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setShowValidation(true)
-    if (!isPropertyValid) return
-    mutation.mutate()
-  }
+    e.preventDefault();
+    setShowValidation(true);
+    if (!isPropertyValid) return;
+    mutation.mutate();
+  };
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div
+      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/owner/requests")} className="mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation("/dashboard/owner/requests")}
+            className="mb-4"
+          >
             {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t.cancel}
           </Button>
@@ -222,7 +254,9 @@ export default function RequestForm() {
                 value={formData.property_id}
                 onValueChange={(value) => setFormData({ ...formData, property_id: value })}
               >
-                <SelectTrigger className={showValidation && !isPropertyValid ? "border-red-500" : ""}>
+                <SelectTrigger
+                  className={showValidation && !isPropertyValid ? "border-red-500" : ""}
+                >
                   <SelectValue placeholder={t.propertyPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,12 +300,16 @@ export default function RequestForm() {
                 <Textarea
                   placeholder={t.descriptionPlaceholder}
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value.slice(0, 500) })
+                  }
                   rows={4}
                   maxLength={500}
                   className="text-base resize-none"
                 />
-                <p className="text-xs text-gray-500 text-end mt-1">{formData.description.length} / 500</p>
+                <p className="text-xs text-gray-500 text-end mt-1">
+                  {formData.description.length} / 500
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -283,17 +321,27 @@ export default function RequestForm() {
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (
-                <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.submitting}</>
+                <>
+                  <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                  {t.submitting}
+                </>
               ) : (
-                <><Save className="w-4 h-4 me-2" />{t.submit}</>
+                <>
+                  <Save className="w-4 h-4 me-2" />
+                  {t.submit}
+                </>
               )}
             </Button>
-            <Button type="button" variant="outline" onClick={() => setLocation("/dashboard/owner/requests")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLocation("/dashboard/owner/requests")}
+            >
               {t.cancel}
             </Button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

@@ -43,14 +43,18 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByPhone(phone: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.phone === phone,
-    );
+    return Array.from(this.users.values()).find((user) => user.phone === phone);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, role: insertUser.role ?? "owner", name: insertUser.name ?? null, id, created_at: new Date() };
+    const user: User = {
+      ...insertUser,
+      role: insertUser.role ?? "owner",
+      name: insertUser.name ?? null,
+      id,
+      created_at: new Date(),
+    };
     this.users.set(id, user);
     return user;
   }
@@ -117,7 +121,7 @@ export class MemStorage implements IStorage {
   async updateServiceRequest(id: string, data: Partial<Request>): Promise<Request | undefined> {
     const existing = this.serviceRequests.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Request = { ...existing, ...data, id };
     this.serviceRequests.set(id, updated);
     return updated;

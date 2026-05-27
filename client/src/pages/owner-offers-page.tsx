@@ -1,78 +1,98 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRoute, useLocation } from 'wouter';
-import { ArrowLeft, ArrowRight, FileText, CheckCircle2, XCircle, Building2, Phone } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useLang } from '../hooks/use-lang';
-import { useToast } from '../hooks/use-toast';
-import { supabase } from '../lib/supabase';
-import { StatusBadge } from '@/components/StatusBadge';
-import { openSignedPdf } from '../lib/storage';
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRoute, useLocation } from "wouter";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Building2,
+  Phone,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useLang } from "../hooks/use-lang";
+import { useToast } from "../hooks/use-toast";
+import { supabase } from "../lib/supabase";
+import { StatusBadge } from "@/components/StatusBadge";
+import { openSignedPdf } from "../lib/storage";
 
 export default function OwnerOffersPage() {
   const { lang } = useLang();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [, params] = useRoute<{ id: string }>('/dashboard/owner/requests/:id/offers');
+  const [, params] = useRoute<{ id: string }>("/dashboard/owner/requests/:id/offers");
   const requestId = params?.id;
   const queryClient = useQueryClient();
-  const isRTL = lang === 'ar';
+  const isRTL = lang === "ar";
   const [acceptingOfferId, setAcceptingOfferId] = useState<string | null>(null);
 
-  const t = lang === 'ar'
-    ? {
-        title: 'العروض المقدمة',
-        back: 'رجوع',
-        notes: 'الملاحظات',
-        viewOffer: 'عرض الملف',
-        accept: 'قبول',
-        reject: 'رفض',
-        noOffers: 'لم يتم تقديم أي عروض بعد',
-        acceptSuccess: 'تم قبول العرض بنجاح',
-        rejectSuccess: 'تم رفض العرض',
-        error: 'حدث خطأ',
-        confirmTitle: 'تأكيد القبول',
-        confirmMsg: 'قبول هذا العرض يظهر لك رقم مزود الخدمة للتواصل معه وسيؤدي تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟',
-        confirmBtn: 'نعم، قبول',
-        cancelBtn: 'إلغاء',
-        phone: 'رقم التواصل',
-        priceTotal: 'السعر الإجمالي',
-        pricePerUnit: 'السعر لكل وحدة',
-        sar: 'ريال',
-      }
-    : {
-        title: 'Submitted Offers',
-        back: 'Back',
-        notes: 'Notes',
-        viewOffer: 'View Offer',
-        accept: 'Accept',
-        reject: 'Reject',
-        noOffers: 'No offers submitted yet',
-        acceptSuccess: 'Offer accepted successfully',
-        rejectSuccess: 'Offer rejected',
-        error: 'An error occurred',
-        confirmTitle: 'Confirm Accept',
-        confirmMsg: "Accepting this offer will reveal the provider's phone number for direct contact and will automatically reject all other offers. Are you sure?",
-        confirmBtn: 'Yes, Accept',
-        cancelBtn: 'Cancel',
-        phone: 'Contact Number',
-        priceTotal: 'Total Price',
-        pricePerUnit: 'Price per Unit',
-        sar: 'SAR',
-      };
+  const t =
+    lang === "ar"
+      ? {
+          title: "العروض المقدمة",
+          back: "رجوع",
+          notes: "الملاحظات",
+          viewOffer: "عرض الملف",
+          accept: "قبول",
+          reject: "رفض",
+          noOffers: "لم يتم تقديم أي عروض بعد",
+          acceptSuccess: "تم قبول العرض بنجاح",
+          rejectSuccess: "تم رفض العرض",
+          error: "حدث خطأ",
+          confirmTitle: "تأكيد القبول",
+          confirmMsg:
+            "قبول هذا العرض يظهر لك رقم مزود الخدمة للتواصل معه وسيؤدي تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟",
+          confirmBtn: "نعم، قبول",
+          cancelBtn: "إلغاء",
+          phone: "رقم التواصل",
+          priceTotal: "السعر الإجمالي",
+          pricePerUnit: "السعر لكل وحدة",
+          sar: "ريال",
+        }
+      : {
+          title: "Submitted Offers",
+          back: "Back",
+          notes: "Notes",
+          viewOffer: "View Offer",
+          accept: "Accept",
+          reject: "Reject",
+          noOffers: "No offers submitted yet",
+          acceptSuccess: "Offer accepted successfully",
+          rejectSuccess: "Offer rejected",
+          error: "An error occurred",
+          confirmTitle: "Confirm Accept",
+          confirmMsg:
+            "Accepting this offer will reveal the provider's phone number for direct contact and will automatically reject all other offers. Are you sure?",
+          confirmBtn: "Yes, Accept",
+          cancelBtn: "Cancel",
+          phone: "Contact Number",
+          priceTotal: "Total Price",
+          pricePerUnit: "Price per Unit",
+          sar: "SAR",
+        };
 
   // Issue 4: fetch request + property for context subtitle
   const { data: requestContext } = useQuery({
-    queryKey: ['owner', 'request-context', requestId],
+    queryKey: ["owner", "request-context", requestId],
     enabled: !!requestId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('requests')
-        .select('id, properties(name, city, units_count)')
-        .eq('id', requestId!)
+        .from("requests")
+        .select("id, properties(name, city, units_count)")
+        .eq("id", requestId!)
         .single();
       if (error) throw error;
       return data;
@@ -80,55 +100,70 @@ export default function OwnerOffersPage() {
   });
 
   const { data: offers, isLoading } = useQuery({
-    queryKey: ['owner', 'offers', requestId],
+    queryKey: ["owner", "offers", requestId],
     enabled: !!requestId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('provider_offers')
+        .from("provider_offers")
         // Issue 5A: include users(phone) via providers join
-        .select('id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, users(phone))')
-        .eq('request_id', requestId!)
-        .order('created_at', { ascending: false });
+        .select(
+          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, users(phone))"
+        )
+        .eq("request_id", requestId!)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const statusMutation = useMutation({
-    mutationFn: async ({ offerId, status }: { offerId: string; status: 'accepted' | 'rejected' }) => {
-      const token = localStorage.getItem('sessionToken');
-      if (!token) throw new Error('Unauthorized');
+    mutationFn: async ({
+      offerId,
+      status,
+    }: {
+      offerId: string;
+      status: "accepted" | "rejected";
+    }) => {
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Unauthorized");
       const res = await fetch(`/api/offers/${offerId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Failed');
+        throw new Error(body.error || "Failed");
       }
     },
     onSuccess: (_, { status }) => {
-      toast({ title: status === 'accepted' ? t.acceptSuccess : t.rejectSuccess });
-      queryClient.invalidateQueries({ queryKey: ['owner', 'offers', requestId] });
-      queryClient.invalidateQueries({ queryKey: ['api', 'requests'] });
+      toast({ title: status === "accepted" ? t.acceptSuccess : t.rejectSuccess });
+      queryClient.invalidateQueries({ queryKey: ["owner", "offers", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["api", "requests"] });
     },
-    onError: () => toast({ title: t.error, variant: 'destructive' }),
+    onError: () => toast({ title: t.error, variant: "destructive" }),
   });
 
-  const property = (requestContext?.properties as any);
+  const property = requestContext?.properties as any;
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard/owner/requests')} className="mb-4">
-          {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}{t.back}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setLocation("/dashboard/owner/requests")}
+          className="mb-4"
+        >
+          {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+          {t.back}
         </Button>
 
         {/* Issue 4: property name + city subtitle */}
         <div className="mb-6">
           <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-[#2E4A6B]" />{t.title}
+            <FileText className="w-8 h-8 text-[#2E4A6B]" />
+            {t.title}
           </h1>
           {property && (
             <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
@@ -140,31 +175,42 @@ export default function OwnerOffersPage() {
 
         {isLoading ? (
           <div className="space-y-4">
-            {[1, 2].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className="h-36 rounded-xl" />
+            ))}
           </div>
         ) : !offers?.length ? (
           <div className="flex flex-col items-center justify-center text-center py-16 px-6">
             <svg width="96" height="96" viewBox="0 0 96 96" fill="none" className="mb-6 opacity-80">
-              <rect x="16" y="8" width="52" height="68" rx="6" fill="#EEF2F7" stroke="#B8CCD9" strokeWidth="2"/>
-              <rect x="24" y="20" width="36" height="4" rx="2" fill="#B8CCD9"/>
-              <rect x="24" y="30" width="28" height="4" rx="2" fill="#D1DCE9"/>
-              <rect x="24" y="40" width="20" height="4" rx="2" fill="#D1DCE9"/>
-              <circle cx="68" cy="68" r="20" fill="#2E4A6B"/>
-              <path d="M60 68h16M68 60v16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <rect
+                x="16"
+                y="8"
+                width="52"
+                height="68"
+                rx="6"
+                fill="#EEF2F7"
+                stroke="#B8CCD9"
+                strokeWidth="2"
+              />
+              <rect x="24" y="20" width="36" height="4" rx="2" fill="#B8CCD9" />
+              <rect x="24" y="30" width="28" height="4" rx="2" fill="#D1DCE9" />
+              <rect x="24" y="40" width="20" height="4" rx="2" fill="#D1DCE9" />
+              <circle cx="68" cy="68" r="20" fill="#2E4A6B" />
+              <path d="M60 68h16M68 60v16" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             <h3 className="text-lg font-bold text-gray-800 mb-2">
-              {lang === 'ar' ? 'لا توجد عروض بعد' : 'No offers yet'}
+              {lang === "ar" ? "لا توجد عروض بعد" : "No offers yet"}
             </h3>
             <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
-              {lang === 'ar'
-                ? 'سيظهر هنا أي عرض يقدمه مزودو الخدمات على طلبك. تأكد من أن طلبك منشور ومرئي للمزودين.'
-                : 'Any offers submitted by providers will appear here. Make sure your request is published and visible to providers.'}
+              {lang === "ar"
+                ? "سيظهر هنا أي عرض يقدمه مزودو الخدمات على طلبك. تأكد من أن طلبك منشور ومرئي للمزودين."
+                : "Any offers submitted by providers will appear here. Make sure your request is published and visible to providers."}
             </p>
             <a
               href="/dashboard/owner/requests"
               className="inline-flex items-center gap-2 rounded-full bg-[#2E4A6B] text-white text-sm font-medium px-5 py-2.5 hover:bg-[#243A56] transition-colors"
             >
-              {lang === 'ar' ? '← طلباتي' : 'My Requests →'}
+              {lang === "ar" ? "← طلباتي" : "My Requests →"}
             </a>
           </div>
         ) : (
@@ -195,14 +241,17 @@ export default function OwnerOffersPage() {
                       <div>
                         <p className="text-xs text-gray-500">{t.priceTotal}</p>
                         <p className="font-bold text-gray-800">
-                          {Number(offer.price_total).toLocaleString('ar-SA')} {t.sar}
+                          {Number(offer.price_total).toLocaleString("ar-SA")} {t.sar}
                         </p>
                       </div>
                       {(property as any)?.units_count && (
                         <div className="border-s border-gray-200 ps-4">
                           <p className="text-xs text-gray-500">{t.pricePerUnit}</p>
                           <p className="font-bold text-[#2E4A6B]">
-                            {Math.round(Number(offer.price_total) / (property as any).units_count).toLocaleString('ar-SA')} {t.sar}
+                            {Math.round(
+                              Number(offer.price_total) / (property as any).units_count
+                            ).toLocaleString("ar-SA")}{" "}
+                            {t.sar}
                           </p>
                         </div>
                       )}
@@ -210,7 +259,7 @@ export default function OwnerOffersPage() {
                   )}
 
                   {/* Issue 5A: show provider phone on accepted card */}
-                  {offer.status === 'accepted' && offer.providers?.users?.phone && (
+                  {offer.status === "accepted" && offer.providers?.users?.phone && (
                     <div className="flex items-center gap-2 bg-[#F3F5F1] border border-[#C0CCB8] rounded-lg px-3 py-2">
                       <Phone className="w-4 h-4 text-[#6B7C5E] flex-shrink-0" />
                       <div>
@@ -227,11 +276,16 @@ export default function OwnerOffersPage() {
 
                   <div className="flex gap-3 flex-wrap">
                     {offer.offer_file_url && (
-                      <Button variant="outline" size="sm" onClick={() => openSignedPdf('provider-offers', offer.offer_file_url)}>
-                        <FileText className="w-4 h-4 me-2" />{t.viewOffer}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openSignedPdf("provider-offers", offer.offer_file_url)}
+                      >
+                        <FileText className="w-4 h-4 me-2" />
+                        {t.viewOffer}
                       </Button>
                     )}
-                    {offer.status === 'pending' && (
+                    {offer.status === "pending" && (
                       <>
                         {/* Issue 5A: accept opens dialog instead of direct mutation */}
                         <Button
@@ -240,15 +294,19 @@ export default function OwnerOffersPage() {
                           disabled={statusMutation.isPending}
                           onClick={() => setAcceptingOfferId(offer.id)}
                         >
-                          <CheckCircle2 className="w-4 h-4 me-2" />{t.accept}
+                          <CheckCircle2 className="w-4 h-4 me-2" />
+                          {t.accept}
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           disabled={statusMutation.isPending}
-                          onClick={() => statusMutation.mutate({ offerId: offer.id, status: 'rejected' })}
+                          onClick={() =>
+                            statusMutation.mutate({ offerId: offer.id, status: "rejected" })
+                          }
                         >
-                          <XCircle className="w-4 h-4 me-2" />{t.reject}
+                          <XCircle className="w-4 h-4 me-2" />
+                          {t.reject}
                         </Button>
                       </>
                     )}
@@ -261,19 +319,26 @@ export default function OwnerOffersPage() {
       </div>
 
       {/* Issue 5A: confirmation dialog */}
-      <AlertDialog open={!!acceptingOfferId} onOpenChange={(open) => { if (!open) setAcceptingOfferId(null); }}>
+      <AlertDialog
+        open={!!acceptingOfferId}
+        onOpenChange={(open) => {
+          if (!open) setAcceptingOfferId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmTitle}</AlertDialogTitle>
             <AlertDialogDescription>{t.confirmMsg}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAcceptingOfferId(null)}>{t.cancelBtn}</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setAcceptingOfferId(null)}>
+              {t.cancelBtn}
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-green-600 hover:bg-green-700"
               onClick={() => {
                 if (acceptingOfferId) {
-                  statusMutation.mutate({ offerId: acceptingOfferId, status: 'accepted' });
+                  statusMutation.mutate({ offerId: acceptingOfferId, status: "accepted" });
                   setAcceptingOfferId(null);
                 }
               }}

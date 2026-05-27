@@ -108,12 +108,24 @@ function HeroIllustration() {
       <rect x="344" y="122" width="66" height="7" rx="3.5" fill="#e2e8f0" />
       <rect x="310" y="150" width="70" height="22" rx="11" fill="#2E4A6B" />
       <circle cx="402" cy="151" r="14" fill="#dcfce7" />
-      <path d="M396 151 L400.5 155.5 L409 144" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M396 151 L400.5 155.5 L409 144"
+        stroke="#16a34a"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
 
       {/* Floating approved pill */}
       <rect x="40" y="146" width="124" height="48" rx="24" fill="white" filter="url(#pill-glow)" />
       <circle cx="64" cy="170" r="14" fill="#dcfce7" />
-      <path d="M58 170 L62.5 175 L71.5 163" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M58 170 L62.5 175 L71.5 163"
+        stroke="#16a34a"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <rect x="84" y="162" width="66" height="9" rx="4.5" fill="#f0fdf4" />
       <rect x="84" y="175" width="50" height="7" rx="3.5" fill="#dcfce7" />
 
@@ -145,9 +157,19 @@ export default function LandingPage() {
       whoTitle: "من يستفيد من عِمارة؟",
       whoSubtitle: "سواء كنت مالك مبنى سكني أو تجاري، عِمارة تُيسّر عليك إدارة مرافقك",
       residentialTitle: "المباني السكنية",
-      residentialItems: ["أبراج سكنية ومجمعات", "فلل وملاحق", "خدمات نظافة يومية", "صيانة دورية للمرافق"],
+      residentialItems: [
+        "أبراج سكنية ومجمعات",
+        "فلل وملاحق",
+        "خدمات نظافة يومية",
+        "صيانة دورية للمرافق",
+      ],
       commercialTitle: "المباني التجارية",
-      commercialItems: ["مكاتب وأبراج تجارية", "مراكز تسوق ومحلات", "مستودعات ومصانع", "HVAC · مصاعد · مواقف · إطفاء"],
+      commercialItems: [
+        "مكاتب وأبراج تجارية",
+        "مراكز تسوق ومحلات",
+        "مستودعات ومصانع",
+        "HVAC · مصاعد · مواقف · إطفاء",
+      ],
       startNow: "ابدأ الآن",
       howItWorksTitle: "كيف تعمل المنصة",
       howItWorksDesc: "العثور على مزود الخدمة المناسب لم يكن أسهل من أي وقت مضى. ابدأ في دقائق.",
@@ -181,14 +203,26 @@ export default function LandingPage() {
       getStarted: "Get Started Free",
       learnMore: "Learn More",
       whoTitle: "Who is EMARAA for?",
-      whoSubtitle: "Whether you own a residential or commercial building, EMARAA streamlines your facility management",
+      whoSubtitle:
+        "Whether you own a residential or commercial building, EMARAA streamlines your facility management",
       residentialTitle: "Residential Buildings",
-      residentialItems: ["Apartment towers & complexes", "Villas & annexes", "Daily cleaning services", "Periodic facility maintenance"],
+      residentialItems: [
+        "Apartment towers & complexes",
+        "Villas & annexes",
+        "Daily cleaning services",
+        "Periodic facility maintenance",
+      ],
       commercialTitle: "Commercial Buildings",
-      commercialItems: ["Office towers & commercial buildings", "Shopping centers & retail", "Warehouses & factories", "HVAC · Elevators · Parking · Fire systems"],
+      commercialItems: [
+        "Office towers & commercial buildings",
+        "Shopping centers & retail",
+        "Warehouses & factories",
+        "HVAC · Elevators · Parking · Fire systems",
+      ],
       startNow: "Get Started",
       howItWorksTitle: "How It Works",
-      howItWorksDesc: "Finding the right service provider has never been easier. Get started in minutes.",
+      howItWorksDesc:
+        "Finding the right service provider has never been easier. Get started in minutes.",
       step1Title: "List Your Property",
       step1Desc: "Add your building details (residential or commercial) and the services you need",
       step2Title: "Get Matched",
@@ -215,7 +249,6 @@ export default function LandingPage() {
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
-
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="container mx-auto px-4 py-3">
@@ -234,7 +267,11 @@ export default function LandingPage() {
                 {lang === "ar" ? "EN" : "عربي"}
               </Button>
               <Link href="/auth?mode=login">
-                <Button variant="outline" size="sm" className="rounded-xl text-gray-700 border-gray-200 hover:border-[#2E4A6B] hover:text-[#2E4A6B]">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl text-gray-700 border-gray-200 hover:border-[#2E4A6B] hover:text-[#2E4A6B]"
+                >
                   {t.login}
                 </Button>
               </Link>
@@ -247,7 +284,6 @@ export default function LandingPage() {
       <section className="bg-[#F9F9FF] py-20 md:py-28">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-
             {/* Text side */}
             <div className="flex flex-col gap-6">
               <div className="inline-flex">
@@ -263,12 +299,13 @@ export default function LandingPage() {
                   {t.heroHighlight}
                 </h1>
               </div>
-              <p className="text-lg text-gray-500 leading-relaxed max-w-lg">
-                {t.heroDesc}
-              </p>
+              <p className="text-lg text-gray-500 leading-relaxed max-w-lg">{t.heroDesc}</p>
               <div className="flex gap-3 flex-wrap">
                 <Link href="/auth?role=owner">
-                  <Button size="lg" className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-8 active:scale-95 transition-transform shadow-md hover:shadow-lg">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-8 active:scale-95 transition-transform shadow-md hover:shadow-lg"
+                  >
                     {t.getStarted}
                   </Button>
                 </Link>
@@ -304,7 +341,6 @@ export default function LandingPage() {
             <p className="text-base md:text-lg text-gray-500 max-w-2xl mx-auto">{t.whoSubtitle}</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-
             {/* Residential */}
             <Card className="hover:shadow-md transition-shadow duration-200">
               <CardContent className="p-8">
@@ -358,22 +394,46 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{t.howItWorksTitle}</h2>
-            <p className="text-base md:text-lg text-gray-500 max-w-xl mx-auto">{t.howItWorksDesc}</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+              {t.howItWorksTitle}
+            </h2>
+            <p className="text-base md:text-lg text-gray-500 max-w-xl mx-auto">
+              {t.howItWorksDesc}
+            </p>
           </div>
 
           {/* Steps */}
           <div className="max-w-4xl mx-auto">
-
             <div className="grid lg:grid-cols-3 gap-16 lg:gap-8">
               {[
-                { num: "1", icon: ClipboardList, title: t.step1Title, desc: t.step1Desc, color: "#2E4A6B" },
-                { num: "2", icon: Search,        title: t.step2Title, desc: t.step2Desc, color: "#7D3040" },
-                { num: "3", icon: BarChart3,      title: t.step3Title, desc: t.step3Desc, color: "#6B7C5E" },
+                {
+                  num: "1",
+                  icon: ClipboardList,
+                  title: t.step1Title,
+                  desc: t.step1Desc,
+                  color: "#2E4A6B",
+                },
+                {
+                  num: "2",
+                  icon: Search,
+                  title: t.step2Title,
+                  desc: t.step2Desc,
+                  color: "#7D3040",
+                },
+                {
+                  num: "3",
+                  icon: BarChart3,
+                  title: t.step3Title,
+                  desc: t.step3Desc,
+                  color: "#6B7C5E",
+                },
               ].map(({ num, icon: Icon, title, desc, color }) => (
                 <div key={num} className="flex flex-col items-center text-center lg:items-center">
                   <Icon className="w-12 h-12 mb-4" strokeWidth={1.25} style={{ color }} />
-                  <span className="text-7xl font-extrabold leading-none mb-5 tracking-tight" style={{ color }}>
+                  <span
+                    className="text-7xl font-extrabold leading-none mb-5 tracking-tight"
+                    style={{ color }}
+                  >
                     {num}
                   </span>
                   <h3 className="text-lg font-bold text-gray-900 mb-3">{title}</h3>
@@ -390,17 +450,28 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-sm px-10 py-14 text-center">
             <Wrench className="w-12 h-12 text-[#6B7C5E] mx-auto mb-6" strokeWidth={1.25} />
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{t.providerCTATitle}</h2>
-            <p className="text-base md:text-lg text-gray-500 mb-10 max-w-xl mx-auto">{t.providerCTADesc}</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+              {t.providerCTATitle}
+            </h2>
+            <p className="text-base md:text-lg text-gray-500 mb-10 max-w-xl mx-auto">
+              {t.providerCTADesc}
+            </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link href="/auth?role=provider">
-                <Button size="lg" className="bg-[#6B7C5E] hover:bg-[#576649] text-white px-10 active:scale-95 transition-transform">
+                <Button
+                  size="lg"
+                  className="bg-[#6B7C5E] hover:bg-[#576649] text-white px-10 active:scale-95 transition-transform"
+                >
                   <Users className="h-4 w-4 me-2" />
                   {t.joinProvider}
                 </Button>
               </Link>
               <Link href="/auth?role=provider&mode=login">
-                <Button size="lg" variant="outline" className="border-gray-200 text-gray-700 hover:border-[#6B7C5E] hover:text-[#6B7C5E] px-10">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-gray-200 text-gray-700 hover:border-[#6B7C5E] hover:text-[#6B7C5E] px-10"
+                >
                   {t.providerLogin}
                 </Button>
               </Link>
@@ -421,19 +492,46 @@ export default function LandingPage() {
               <h4 className="font-semibold text-gray-900 mb-3">{t.quickLinks}</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/contact" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.contactUs}</Link>
+                  <Link
+                    href="/contact"
+                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                  >
+                    {t.contactUs}
+                  </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.aboutUs}</Link>
+                  <Link
+                    href="/about"
+                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                  >
+                    {t.aboutUs}
+                  </Link>
                 </li>
                 <li>
-                  <a href="/emaraa-guide.html" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.viewDemo}</a>
+                  <a
+                    href="/emaraa-guide.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                  >
+                    {t.viewDemo}
+                  </a>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.termsOfUse}</Link>
+                  <Link
+                    href="/terms"
+                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                  >
+                    {t.termsOfUse}
+                  </Link>
                 </li>
                 <li>
-                  <Link href="/privacy" className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline">{t.privacyPolicy}</Link>
+                  <Link
+                    href="/privacy"
+                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                  >
+                    {t.privacyPolicy}
+                  </Link>
                 </li>
               </ul>
             </div>

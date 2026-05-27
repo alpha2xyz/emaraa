@@ -11,3 +11,8 @@ vite.config.ts.*
 .local/
 env.ts
 .vercel
+
+# Playwright — generated artifacts and stored auth state
+test-results/
+playwright-report/
+tests/.auth/

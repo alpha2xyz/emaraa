@@ -14,15 +14,24 @@ export default function OwnerDashboard() {
   const phone = localStorage.getItem("userPhone");
   const userName = localStorage.getItem("userName") || "";
   const today = new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
-  const { data: dashboardData, isLoading, isError } = useQuery({
+  const {
+    data: dashboardData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["owner-stats", phone],
     queryFn: async () => {
       const token = localStorage.getItem("sessionToken");
       if (!token) return { properties: [], requests: [] };
-      const res = await fetch("/api/owner/stats", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/owner/stats", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) return { properties: [], requests: [] };
       return res.json();
     },
@@ -97,10 +106,7 @@ export default function OwnerDashboard() {
   };
 
   return (
-    <div
-      className="page-enter min-h-screen bg-[#F9F9FF]"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
+    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="bg-white border-b px-6 py-5">
         <h1 className="text-2xl font-extrabold text-gray-900">
           {lang === "ar"
@@ -110,32 +116,40 @@ export default function OwnerDashboard() {
         <p className="text-sm text-muted-foreground mt-0.5">{today}</p>
       </div>
 
-      {isError && <div className="text-center py-10 text-red-500">{lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}</div>}
+      {isError && (
+        <div className="text-center py-10 text-red-500">
+          {lang === "ar" ? "حدث خطأ في تحميل البيانات" : "Failed to load data"}
+        </div>
+      )}
       <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* كرت العقارات */}
           <Card className="border-t-4 border-t-[#2E4A6B]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                {content.myProperties}
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">{content.myProperties}</CardTitle>
               <Building2 className="w-5 h-5 text-[#2E4A6B]" />
             </CardHeader>
             <CardContent>
-              {isLoading ? <Skeleton className="h-9 w-12" /> : <div className="text-3xl font-bold">{properties.length}</div>}
+              {isLoading ? (
+                <Skeleton className="h-9 w-12" />
+              ) : (
+                <div className="text-3xl font-bold">{properties.length}</div>
+              )}
             </CardContent>
           </Card>
 
           {/* كرت الطلبات */}
           <Card className="border-t-4 border-t-green-600">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                {content.myRequests}
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">{content.myRequests}</CardTitle>
               <FileText className="w-5 h-5 text-green-600" />
             </CardHeader>
             <CardContent>
-              {isLoading ? <Skeleton className="h-9 w-12" /> : <div className="text-3xl font-bold">{requests.length}</div>}
+              {isLoading ? (
+                <Skeleton className="h-9 w-12" />
+              ) : (
+                <div className="text-3xl font-bold">{requests.length}</div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -166,9 +180,7 @@ export default function OwnerDashboard() {
           </CardHeader>
           <CardContent>
             {properties.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">
-                {content.noProperties}
-              </p>
+              <p className="text-center text-gray-500 py-4">{content.noProperties}</p>
             ) : (
               <div className="space-y-3">
                 {properties.slice(0, 3).map((p: any) => (
@@ -204,9 +216,7 @@ export default function OwnerDashboard() {
           </CardHeader>
           <CardContent>
             {requests.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">
-                {content.noRequests}
-              </p>
+              <p className="text-center text-gray-500 py-4">{content.noRequests}</p>
             ) : (
               <div className="space-y-3">
                 {requests.slice(0, 3).map((r: any) => (
@@ -217,17 +227,25 @@ export default function OwnerDashboard() {
                     <div>
                       <p className="font-bold text-sm">
                         {r.service_category === "standard"
-                          ? (lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services")
-                          : (r.service_category === "cleaning" ? content.cleaning : content.maintenance)}
+                          ? lang === "ar"
+                            ? "نطاق الخدمات المطلوبة"
+                            : "Scope of Services"
+                          : r.service_category === "cleaning"
+                            ? content.cleaning
+                            : content.maintenance}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(r.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}
+                        {new Date(r.created_at).toLocaleDateString(
+                          lang === "ar" ? "ar-SA" : "en-US"
+                        )}
                       </p>
-                      <span className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        (offerCounts?.[r.id] ?? 0) > 0
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}>
+                      <span
+                        className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          (offerCounts?.[r.id] ?? 0) > 0
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
                         {getOfferLabel(r.id)}
                       </span>
                     </div>

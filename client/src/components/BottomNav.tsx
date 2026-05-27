@@ -7,21 +7,42 @@ export function BottomNav() {
   const [location] = useLocation();
   const { lang } = useLang();
 
-  if (location === "/" || location === "/auth" || location === "/contact" || location.startsWith("/admin")) return null;
+  if (
+    location === "/" ||
+    location === "/auth" ||
+    location === "/contact" ||
+    location.startsWith("/admin")
+  )
+    return null;
 
   const isOwner = location.startsWith("/dashboard/owner");
   const isProvider = location.startsWith("/dashboard/provider");
 
   const ownerLinks = [
     { href: "/dashboard/owner", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
-    { href: "/dashboard/owner/properties", icon: Building2, labelAr: "عقاراتي", labelEn: "Properties" },
+    {
+      href: "/dashboard/owner/properties",
+      icon: Building2,
+      labelAr: "عقاراتي",
+      labelEn: "Properties",
+    },
     { href: "/dashboard/owner/requests", icon: FileText, labelAr: "طلباتي", labelEn: "Requests" },
-    { href: "/dashboard/owner/settings", icon: Settings, labelAr: "الإعدادات", labelEn: "Settings" },
+    {
+      href: "/dashboard/owner/settings",
+      icon: Settings,
+      labelAr: "الإعدادات",
+      labelEn: "Settings",
+    },
   ];
 
   const providerLinks = [
     { href: "/dashboard/provider", icon: Home, labelAr: "لوحة التحكم", labelEn: "Dashboard" },
-    { href: "/dashboard/provider/requests", icon: FileText, labelAr: "الطلبات", labelEn: "Requests" },
+    {
+      href: "/dashboard/provider/requests",
+      icon: FileText,
+      labelAr: "الطلبات",
+      labelEn: "Requests",
+    },
     { href: "/dashboard/provider/offers", icon: Send, labelAr: "عروضي", labelEn: "My Offers" },
     { href: "/dashboard/provider/profile", icon: User, labelAr: "الملف", labelEn: "Profile" },
   ];
@@ -33,9 +54,10 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-safe">
       <div className="flex items-center h-16">
         {links.map(({ href, icon: Icon, labelAr, labelEn }) => {
-          const active = href === "/dashboard/owner" || href === "/dashboard/provider"
-            ? location === href
-            : location.startsWith(href);
+          const active =
+            href === "/dashboard/owner" || href === "/dashboard/provider"
+              ? location === href
+              : location.startsWith(href);
           return (
             <div key={href} className="relative flex-1 flex justify-center">
               <AnimatePresence>
@@ -50,8 +72,10 @@ export function BottomNav() {
                   />
                 )}
               </AnimatePresence>
-              <Link href={href}
-                className={`relative z-10 flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors ${active ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+              <Link
+                href={href}
+                className={`relative z-10 flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors ${active ? "text-primary font-semibold" : "text-muted-foreground"}`}
+              >
                 <Icon size={20} />
                 <span>{lang === "ar" ? labelAr : labelEn}</span>
               </Link>

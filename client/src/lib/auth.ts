@@ -4,7 +4,11 @@ import type { QueryClient } from "@tanstack/react-query";
 export function logoutUser(queryClient: QueryClient, setLocation: (path: string) => void) {
   const token = localStorage.getItem("sessionToken");
   if (token) {
-    supabase.from("sessions").delete().eq("token", token).then(() => {});
+    supabase
+      .from("sessions")
+      .delete()
+      .eq("token", token)
+      .then(() => {});
   }
   supabase.auth.signOut();
   localStorage.removeItem("sessionToken");

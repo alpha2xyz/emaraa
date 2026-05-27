@@ -170,9 +170,12 @@ export default function PropertyForm() {
     },
     onError: (error: any) => {
       console.error("[property-form] save error:", error?.message, error);
-      const msg = error?.message === "limit_reached"
-        ? (lang === "ar" ? "لديك عقار مسجّل بالفعل" : "You already have a registered property")
-        : t.error;
+      const msg =
+        error?.message === "limit_reached"
+          ? lang === "ar"
+            ? "لديك عقار مسجّل بالفعل"
+            : "You already have a registered property"
+          : t.error;
       toast({ title: msg, variant: "destructive" });
     },
   });
@@ -184,8 +187,19 @@ export default function PropertyForm() {
       return;
     }
     const url = formData.map_url.trim();
-    if (url && !url.startsWith("https://maps.google.com") && !url.startsWith("https://maps.app.goo.gl") && !url.startsWith("https://goo.gl/maps")) {
-      toast({ title: lang === "ar" ? "رابط الخريطة غير صحيح. استخدم رابطاً من Google Maps" : "Invalid map URL. Use a Google Maps link.", variant: "destructive" });
+    if (
+      url &&
+      !url.startsWith("https://maps.google.com") &&
+      !url.startsWith("https://maps.app.goo.gl") &&
+      !url.startsWith("https://goo.gl/maps")
+    ) {
+      toast({
+        title:
+          lang === "ar"
+            ? "رابط الخريطة غير صحيح. استخدم رابطاً من Google Maps"
+            : "Invalid map URL. Use a Google Maps link.",
+        variant: "destructive",
+      });
       return;
     }
     mutation.mutate();
@@ -236,12 +250,7 @@ export default function PropertyForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">{t.city}</Label>
-                <Input
-                  id="city"
-                  value="الرياض"
-                  disabled
-                  className="bg-gray-100 text-gray-500"
-                />
+                <Input id="city" value="الرياض" disabled className="bg-gray-100 text-gray-500" />
               </div>
 
               <div className="space-y-2">

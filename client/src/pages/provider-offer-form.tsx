@@ -100,7 +100,8 @@ export default function ProviderOfferForm() {
       commercial: "تجاري",
       residential: "سكني",
       notApproved: "حسابك لم يتم قبوله بعد من قِبل الإدارة — لا يمكنك تقديم عروض حتى يتم القبول.",
-      phoneDisclosure: "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
+      phoneDisclosure:
+        "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
       invalidFileType: "يجب أن يكون الملف بصيغة PDF فقط",
       fileTooLarge: "حجم الملف يتجاوز 10 ميغابايت",
     },
@@ -148,7 +149,8 @@ export default function ProviderOfferForm() {
 6. Clear description of holidays and work procedures during national holidays and special occasions.
 
 **Proposal Requirements:** The submitted proposal must include the following: a full breakdown of services, the price per residential unit, the total contract amount including tax, payment terms, commercial registration and certifications, and references from previous clients or a portfolio. The contract term is one year and is renewable for similar periods.`,
-      alreadySubmitted: "You have already submitted an offer for this request. Only one offer per request is allowed.",
+      alreadySubmitted:
+        "You have already submitted an offer for this request. Only one offer per request is allowed.",
       commercialScopeText: `Please provide a comprehensive price quote for the following services:
 
 1. Cleaning Services: Daily cleaning of entrances and lobbies, cleaning of floors, parking areas, and common facilities, daily waste collection and removal, facade cleaning as needed.
@@ -167,8 +169,10 @@ export default function ProviderOfferForm() {
       buildingType: "Building Type",
       commercial: "Commercial",
       residential: "Residential",
-      notApproved: "Your account has not been approved by admin yet — you cannot submit offers until approved.",
-      phoneDisclosure: "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
+      notApproved:
+        "Your account has not been approved by admin yet — you cannot submit offers until approved.",
+      phoneDisclosure:
+        "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
       invalidFileType: "Only PDF files are accepted",
       fileTooLarge: "File size exceeds 10MB",
     },
@@ -202,7 +206,8 @@ export default function ProviderOfferForm() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("requests")
-        .select(`
+        .select(
+          `
           *,
           properties (
             id,
@@ -213,7 +218,8 @@ export default function ProviderOfferForm() {
             map_url,
             units_count
           )
-        `)
+        `
+        )
         .eq("id", requestId)
         .single();
       if (error) throw error;
@@ -249,7 +255,11 @@ export default function ProviderOfferForm() {
       if (!offerFile) throw new Error("no_file");
       if (!providerData?.user || !providerData?.provider?.id) throw new Error("provider_not_found");
       if (!providerData.provider.approved) {
-        throw new Error(lang === "ar" ? "حسابك لم يتم قبوله بعد من قِبل الإدارة" : "Your account has not been approved by admin yet");
+        throw new Error(
+          lang === "ar"
+            ? "حسابك لم يتم قبوله بعد من قِبل الإدارة"
+            : "Your account has not been approved by admin yet"
+        );
       }
       const { count: existingCount } = await supabase
         .from("provider_offers")
@@ -258,23 +268,29 @@ export default function ProviderOfferForm() {
         .eq("provider_id", providerData.provider.id);
       if ((existingCount ?? 0) > 0) throw new Error("already_submitted");
 
-      if (!['application/pdf'].includes(offerFile.type) && !offerFile.name.toLowerCase().endsWith('.pdf')) {
-        throw new Error('invalid_file_type')
+      if (
+        !["application/pdf"].includes(offerFile.type) &&
+        !offerFile.name.toLowerCase().endsWith(".pdf")
+      ) {
+        throw new Error("invalid_file_type");
       }
       if (offerFile.size > 10 * 1024 * 1024) {
-        throw new Error('file_too_large')
+        throw new Error("file_too_large");
       }
 
       const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
       const token = localStorage.getItem("sessionToken");
-      const uploadRes = await fetch(`/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/pdf",
-        },
-        body: offerFile,
-      });
+      const uploadRes = await fetch(
+        `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/pdf",
+          },
+          body: offerFile,
+        }
+      );
       if (!uploadRes.ok) {
         const err = await uploadRes.json().catch(() => ({}));
         throw new Error(err.error || "File upload failed");
@@ -282,13 +298,15 @@ export default function ProviderOfferForm() {
 
       const { data, error } = await supabase
         .from("provider_offers")
-        .insert([{
-          request_id: requestId,
-          provider_id: providerData.provider.id,
-          offer_file_url: fileName,
-          notes: notes || null,
-          price_total: priceTotal ? parseFloat(priceTotal) : null,
-        }])
+        .insert([
+          {
+            request_id: requestId,
+            provider_id: providerData.provider.id,
+            offer_file_url: fileName,
+            notes: notes || null,
+            price_total: priceTotal ? parseFloat(priceTotal) : null,
+          },
+        ])
         .select()
         .single();
       if (error) {
@@ -306,7 +324,7 @@ export default function ProviderOfferForm() {
         if (token) {
           fetch("/api/sms/offer-submitted", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify({ offerId: data.id }),
           }).catch(() => {});
         }
@@ -321,9 +339,15 @@ export default function ProviderOfferForm() {
       else if (error.message === "file_too_large") errorMessage = t.fileTooLarge;
       else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
       else if (error.message === "provider_not_found" || error.message === "profile_incomplete")
-        errorMessage = lang === "ar" ? "يرجى إكمال ملف شركتك أولاً" : "Please complete your company profile first";
+        errorMessage =
+          lang === "ar"
+            ? "يرجى إكمال ملف شركتك أولاً"
+            : "Please complete your company profile first";
       else if (error.message === "user_not_found")
-        errorMessage = lang === "ar" ? "لم يتم التعرف على حسابك، حاول تسجيل الدخول مجدداً" : "Account not recognized, please log in again";
+        errorMessage =
+          lang === "ar"
+            ? "لم يتم التعرف على حسابك، حاول تسجيل الدخول مجدداً"
+            : "Account not recognized, please log in again";
       else if (error?.message) errorMessage = error.message;
       toast({ title: errorMessage, variant: "destructive" });
     },
@@ -339,7 +363,9 @@ export default function ProviderOfferForm() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-[#2E4A6B]" />
         <p className="text-gray-500">{t.loading}</p>
-        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">{lang === "ar" ? "رجوع" : "Back"}</button>
+        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">
+          {lang === "ar" ? "رجوع" : "Back"}
+        </button>
       </div>
     );
   }
@@ -349,7 +375,9 @@ export default function ProviderOfferForm() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <AlertCircle className="w-8 h-8 text-red-500" />
         <p className="text-gray-500">{t.error}</p>
-        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">{lang === "ar" ? "رجوع" : "Back"}</button>
+        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">
+          {lang === "ar" ? "رجوع" : "Back"}
+        </button>
       </div>
     );
   }
@@ -357,8 +385,16 @@ export default function ProviderOfferForm() {
   return (
     <div className="min-h-screen bg-[#F9F9FF]" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="container mx-auto p-4 max-w-4xl py-8">
-        <Button variant="ghost" onClick={() => setLocation("/dashboard/provider/requests")} className="mb-4">
-          {lang === "ar" ? <ArrowRight className="w-4 h-4 me-2" /> : <ArrowLeft className="w-4 h-4 me-2" />}
+        <Button
+          variant="ghost"
+          onClick={() => setLocation("/dashboard/provider/requests")}
+          className="mb-4"
+        >
+          {lang === "ar" ? (
+            <ArrowRight className="w-4 h-4 me-2" />
+          ) : (
+            <ArrowLeft className="w-4 h-4 me-2" />
+          )}
           {t.back}
         </Button>
 
@@ -384,10 +420,13 @@ export default function ProviderOfferForm() {
             onChange={(e) => setPhoneConsent(e.target.checked)}
             className="mt-1 h-4 w-4 accent-[#2E4A6B] flex-shrink-0 cursor-pointer"
           />
-          <label htmlFor="phoneConsent" className="text-sm text-[#1A2E42] cursor-pointer leading-relaxed">
-            {lang === 'ar'
-              ? 'أوافق على مشاركة رقم جوالي المسجّل مع مالك العقار في حال قبول عرضي'
-              : 'I agree to share my registered phone number with the property owner if my offer is accepted'}
+          <label
+            htmlFor="phoneConsent"
+            className="text-sm text-[#1A2E42] cursor-pointer leading-relaxed"
+          >
+            {lang === "ar"
+              ? "أوافق على مشاركة رقم جوالي المسجّل مع مالك العقار في حال قبول عرضي"
+              : "I agree to share my registered phone number with the property owner if my offer is accepted"}
           </label>
         </div>
 
@@ -403,13 +442,19 @@ export default function ProviderOfferForm() {
         )}
 
         {/* Scope of services */}
-        <div className={`mb-6 rounded-2xl border-s-4 p-6 ${request.properties?.building_type === 'commercial' ? 'border-[#C4694A] bg-[#FDF3EF]/60' : 'border-[#7D3040] bg-[#FDF0F2]/60'}`}>
-          <div className={`flex items-center gap-2 font-bold mb-3 ${request.properties?.building_type === 'commercial' ? 'text-[#5A2D1E]' : 'text-[#5A2030]'}`}>
+        <div
+          className={`mb-6 rounded-2xl border-s-4 p-6 ${request.properties?.building_type === "commercial" ? "border-[#C4694A] bg-[#FDF3EF]/60" : "border-[#7D3040] bg-[#FDF0F2]/60"}`}
+        >
+          <div
+            className={`flex items-center gap-2 font-bold mb-3 ${request.properties?.building_type === "commercial" ? "text-[#5A2D1E]" : "text-[#5A2030]"}`}
+          >
             <ClipboardList className="w-5 h-5" />
             {t.scopeTitle}
           </div>
           <div className="whitespace-pre-line text-sm text-gray-800 leading-relaxed">
-            {request.properties?.building_type === 'commercial' ? t.commercialScopeText : t.scopeText}
+            {request.properties?.building_type === "commercial"
+              ? t.commercialScopeText
+              : t.scopeText}
           </div>
         </div>
 
@@ -455,7 +500,9 @@ export default function ProviderOfferForm() {
               <div>
                 <p className="text-sm text-muted-foreground">{t.buildingType}:</p>
                 <p className="font-medium">
-                  {request.properties?.building_type === 'commercial' ? t.commercial : t.residential}
+                  {request.properties?.building_type === "commercial"
+                    ? t.commercial
+                    : t.residential}
                 </p>
               </div>
 
@@ -505,7 +552,9 @@ export default function ProviderOfferForm() {
                             <FileText className="h-12 w-12 mx-auto text-green-500 mb-2" />
                             <p className="text-sm font-medium text-green-600">{t.fileSelected}</p>
                             <p className="text-xs text-muted-foreground mt-1">{offerFile.name}</p>
-                            <p className="text-xs text-muted-foreground">({(offerFile.size / 1024 / 1024).toFixed(2)} MB)</p>
+                            <p className="text-xs text-muted-foreground">
+                              ({(offerFile.size / 1024 / 1024).toFixed(2)} MB)
+                            </p>
                           </>
                         ) : (
                           <>
@@ -524,7 +573,9 @@ export default function ProviderOfferForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="price-total">{t.priceTotal} <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="price-total">
+                    {t.priceTotal} <span className="text-red-500">*</span>
+                  </Label>
                   <div className="relative mt-2">
                     <input
                       id="price-total"
@@ -566,12 +617,24 @@ export default function ProviderOfferForm() {
                   <Button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
-                    disabled={mutation.isPending || !offerFile || !!isNotApproved || !phoneConsent || !priceTotal}
+                    disabled={
+                      mutation.isPending ||
+                      !offerFile ||
+                      !!isNotApproved ||
+                      !phoneConsent ||
+                      !priceTotal
+                    }
                   >
                     {mutation.isPending ? (
-                      <><Loader2 className="h-4 w-4 me-2 animate-spin" />{t.submitting}</>
+                      <>
+                        <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                        {t.submitting}
+                      </>
                     ) : (
-                      <><Send className="h-4 w-4 me-2" />{t.submit}</>
+                      <>
+                        <Send className="h-4 w-4 me-2" />
+                        {t.submit}
+                      </>
                     )}
                   </Button>
                 </div>

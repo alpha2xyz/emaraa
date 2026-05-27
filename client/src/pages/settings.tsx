@@ -68,10 +68,18 @@ export default function Settings() {
     queryFn: async () => {
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error("Not logged in");
-      const { data: user, error } = await supabase.from("users").select("*").eq("phone", phone).single();
+      const { data: user, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("phone", phone)
+        .single();
       if (error) throw error;
       if (user.role === "provider") {
-        const { data: provider } = await supabase.from("providers").select("*").eq("user_id", user.id).single();
+        const { data: provider } = await supabase
+          .from("providers")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
         return { ...user, provider };
       }
       return user;
@@ -93,10 +101,16 @@ export default function Settings() {
     mutationFn: async () => {
       const phone = localStorage.getItem("userPhone");
       if (!phone) throw new Error("Not logged in");
-      const { error: userError } = await supabase.from("users").update({ name: profileData.name }).eq("phone", phone);
+      const { error: userError } = await supabase
+        .from("users")
+        .update({ name: profileData.name })
+        .eq("phone", phone);
       if (userError) throw userError;
       if (userRole === "provider" && userData) {
-        const { error: providerError } = await supabase.from("providers").update({ company_name: profileData.company_name, city: profileData.city }).eq("user_id", (userData as any).id);
+        const { error: providerError } = await supabase
+          .from("providers")
+          .update({ company_name: profileData.company_name, city: profileData.city })
+          .eq("user_id", (userData as any).id);
         if (providerError) throw providerError;
       }
     },
@@ -105,7 +119,10 @@ export default function Settings() {
   });
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div
+      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <SettingsIcon className="w-8 h-8 text-gray-700" />
@@ -161,7 +178,13 @@ export default function Settings() {
                 {isLoading ? (
                   <Skeleton className="h-10 w-full rounded-xl" />
                 ) : (
-                  <Input id="company_name" value={profileData.company_name} onChange={(e) => setProfileData({ ...profileData, company_name: e.target.value })} />
+                  <Input
+                    id="company_name"
+                    value={profileData.company_name}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, company_name: e.target.value })
+                    }
+                  />
                 )}
               </div>
               <div className="space-y-2">
@@ -169,10 +192,18 @@ export default function Settings() {
                 {isLoading ? (
                   <Skeleton className="h-10 w-full rounded-xl" />
                 ) : (
-                  <Input id="city" value={profileData.city} onChange={(e) => setProfileData({ ...profileData, city: e.target.value })} />
+                  <Input
+                    id="city"
+                    value={profileData.city}
+                    onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
+                  />
                 )}
               </div>
-              <Button variant="outline" className="w-full" onClick={() => setLocation("/dashboard/provider/profile")}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setLocation("/dashboard/provider/profile")}
+              >
                 <Building2 className="w-4 h-4 me-2" />
                 {t.completeProfile}
               </Button>
@@ -192,9 +223,15 @@ export default function Settings() {
             disabled={mutation.isPending || isLoading}
           >
             {mutation.isPending ? (
-              <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t.saving}</>
+              <>
+                <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                {t.saving}
+              </>
             ) : (
-              <><Save className="w-4 h-4 me-2" />{t.save}</>
+              <>
+                <Save className="w-4 h-4 me-2" />
+                {t.save}
+              </>
             )}
           </Button>
         </CardContent>

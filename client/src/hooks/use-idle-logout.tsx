@@ -6,7 +6,7 @@ import { useLang } from "@/hooks/use-lang";
 import { logoutUser } from "@/lib/auth";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-const WARN_BEFORE_MS = 2 * 60 * 1000;   // warn 2 minutes before logout
+const WARN_BEFORE_MS = 2 * 60 * 1000; // warn 2 minutes before logout
 
 const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"] as const;
 

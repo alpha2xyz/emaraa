@@ -42,8 +42,10 @@ export default function ProviderRequests() {
       units: "وحدة",
       viewMap: "عرض الموقع",
       scopeTitle: "نطاق الخدمات المطلوبة",
-      scopeShort: "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. | متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
-      commercialScopeShort: "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. | متطلبات العرض: السعر لكل طابق أو وحدة تجارية، إجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
+      scopeShort:
+        "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. | متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
+      commercialScopeShort:
+        "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. | متطلبات العرض: السعر لكل طابق أو وحدة تجارية، إجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
       commercialBadge: "تجاري",
       residentialBadge: "سكني",
       description: "الوصف",
@@ -72,8 +74,10 @@ export default function ProviderRequests() {
       units: "units",
       viewMap: "View Location",
       scopeTitle: "Scope of Services Required",
-      scopeShort: "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. | Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
-      commercialScopeShort: "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. | Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable.",
+      scopeShort:
+        "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. | Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
+      commercialScopeShort:
+        "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. | Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable.",
       commercialBadge: "Commercial",
       residentialBadge: "Residential",
       description: "Description",
@@ -117,7 +121,8 @@ export default function ProviderRequests() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("requests")
-        .select(`
+        .select(
+          `
           *,
           properties (
             id,
@@ -128,7 +133,8 @@ export default function ProviderRequests() {
             map_url,
             units_count
           )
-        `)
+        `
+        )
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -175,7 +181,7 @@ export default function ProviderRequests() {
   });
 
   const availableCities = Array.from(
-    new Set(requests?.map((r: any) => r.properties?.city).filter(Boolean)),
+    new Set(requests?.map((r: any) => r.properties?.city).filter(Boolean))
   );
 
   const formatDate = (dateString: string) => {
@@ -196,7 +202,10 @@ export default function ProviderRequests() {
   const hasActiveFilters = searchQuery || cityFilter !== "all" || typeFilter !== "all";
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6 space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div
+      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6 space-y-6"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
       <div>
         <h1 className="text-3xl font-extrabold">{t.title}</h1>
         <p className="text-muted-foreground mt-2">{t.subtitle}</p>
@@ -242,7 +251,12 @@ export default function ProviderRequests() {
             <p className="text-xs text-muted-foreground mb-1.5 font-medium">{t.filterByType}</p>
             <div className="flex flex-wrap gap-2">
               {(["all", "residential", "commercial"] as const).map((type) => {
-                const label = type === "all" ? t.all : type === "residential" ? t.residentialBadge : t.commercialBadge;
+                const label =
+                  type === "all"
+                    ? t.all
+                    : type === "residential"
+                      ? t.residentialBadge
+                      : t.commercialBadge;
                 return (
                   <button
                     key={type}
@@ -305,7 +319,9 @@ export default function ProviderRequests() {
 
       {isLoading ? (
         <div className="space-y-4">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
         </div>
       ) : !filteredRequests || filteredRequests.length === 0 ? (
         <Card>
@@ -326,12 +342,9 @@ export default function ProviderRequests() {
       ) : !isProfileComplete ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRequests.map((request: any) => {
-            const isCommercial = request.properties?.building_type === 'commercial';
+            const isCommercial = request.properties?.building_type === "commercial";
             return (
-              <Card
-                key={request.id}
-                className="border-2 opacity-90"
-              >
+              <Card key={request.id} className="border-2 opacity-90">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     {/* City + building type — visible */}
@@ -360,7 +373,9 @@ export default function ProviderRequests() {
                     {/* Property name — blurred */}
                     <div className="flex items-center gap-2 text-sm select-none">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium blur-sm text-muted-foreground">████████████</span>
+                      <span className="font-medium blur-sm text-muted-foreground">
+                        ████████████
+                      </span>
                     </div>
 
                     {/* Description — blurred */}
@@ -387,11 +402,11 @@ export default function ProviderRequests() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRequests.map((request: any) => {
-            const isCommercial = request.properties?.building_type === 'commercial';
+            const isCommercial = request.properties?.building_type === "commercial";
             return (
               <Card
                 key={request.id}
-                className={`hover:shadow-lg transition-all border-2 ${isCommercial ? 'hover:border-[#C4694A]' : 'hover:border-primary'}`}
+                className={`hover:shadow-lg transition-all border-2 ${isCommercial ? "hover:border-[#C4694A]" : "hover:border-primary"}`}
               >
                 <CardContent className="pt-6">
                   <div className="space-y-3">
@@ -423,7 +438,9 @@ export default function ProviderRequests() {
 
                     {/* Property name */}
                     <div className="flex items-center gap-2 text-sm">
-                      <Building2 className={`h-4 w-4 ${isCommercial ? 'text-[#C4694A]' : 'text-[#7D3040]'}`} />
+                      <Building2
+                        className={`h-4 w-4 ${isCommercial ? "text-[#C4694A]" : "text-[#7D3040]"}`}
+                      />
                       <span className="font-medium">{request.properties?.name}</span>
                     </div>
 
@@ -433,7 +450,9 @@ export default function ProviderRequests() {
                         <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                         <span>
                           {request.properties?.address}
-                          {request.properties?.units_count ? ` · ${request.properties.units_count} ${t.units}` : ""}
+                          {request.properties?.units_count
+                            ? ` · ${request.properties.units_count} ${t.units}`
+                            : ""}
                         </span>
                       </div>
                     )}
@@ -446,7 +465,9 @@ export default function ProviderRequests() {
                     {request.description && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">{t.description}:</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {request.description}
+                        </p>
                       </div>
                     )}
 
@@ -465,14 +486,20 @@ export default function ProviderRequests() {
 
                     {/* Action */}
                     {submittedRequestIds.has(request.id) ? (
-                      <Button className="w-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-50 cursor-default" variant="outline" disabled>
+                      <Button
+                        className="w-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-50 cursor-default"
+                        variant="outline"
+                        disabled
+                      >
                         <CheckCircle2 className="h-4 w-4 me-2 text-green-600" />
                         {lang === "ar" ? "تم تقديم العرض" : "Offer Submitted"}
                       </Button>
                     ) : (
                       <Button
                         className="w-full"
-                        onClick={() => setLocation(`/dashboard/provider/requests/${request.id}/offer`)}
+                        onClick={() =>
+                          setLocation(`/dashboard/provider/requests/${request.id}/offer`)
+                        }
                         disabled={!isProfileComplete || !isApproved}
                       >
                         <Send className="h-4 w-4 me-2" />

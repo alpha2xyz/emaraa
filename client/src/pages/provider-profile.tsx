@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
@@ -17,7 +16,7 @@ export default function ProviderProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const [userData, setUserData] = useState({
+  const [userData] = useState({
     name: localStorage.getItem("userName") || "",
     phone: localStorage.getItem("userPhone") || "",
   });
@@ -80,8 +79,7 @@ export default function ProviderProfile() {
       city: "City",
       cityPlaceholder: "Example: Riyadh",
       description: "Company Description",
-      descriptionPlaceholder:
-        "Write a brief description of your company and services...",
+      descriptionPlaceholder: "Write a brief description of your company and services...",
       documents: "Required Documents (Mandatory)",
       commercialRegister: "Commercial Register",
       companyProfile: "Company Profile",
@@ -92,7 +90,8 @@ export default function ProviderProfile() {
       saving: "Saving...",
       success: "Data saved successfully!",
       error: "An error occurred, please try again",
-      errorDocuments: "All required documents must be uploaded (Commercial Register, Company Profile, FAL License)",
+      errorDocuments:
+        "All required documents must be uploaded (Commercial Register, Company Profile, FAL License)",
     },
   };
 
@@ -104,7 +103,11 @@ export default function ProviderProfile() {
     queryFn: async () => {
       const userId = localStorage.getItem("userId");
       if (!userId) return null;
-      const { data: provider } = await supabase.from("providers").select("*").eq("user_id", userId).single();
+      const { data: provider } = await supabase
+        .from("providers")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
       return { provider };
     },
   });
@@ -123,7 +126,7 @@ export default function ProviderProfile() {
 
   const handleFileChange = async (
     field: "commercial_register" | "company_profile" | "fal_license",
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -134,7 +137,10 @@ export default function ProviderProfile() {
     if (!allowedTypes.includes(file.type) && !allowedExts.includes(ext)) {
       toast({
         title: lang === "ar" ? "نوع الملف غير مدعوم" : "Unsupported file type",
-        description: lang === "ar" ? "يُقبل PDF أو صورة (JPG, PNG) فقط" : "Only PDF or images (JPG, PNG) are accepted",
+        description:
+          lang === "ar"
+            ? "يُقبل PDF أو صورة (JPG, PNG) فقط"
+            : "Only PDF or images (JPG, PNG) are accepted",
         variant: "destructive",
       });
       return;
@@ -151,13 +157,16 @@ export default function ProviderProfile() {
 
     const buf = await file.slice(0, 8).arrayBuffer();
     const b = new Uint8Array(buf);
-    const isPdf  = b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
-    const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
-    const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+    const isPdf = b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
+    const isJpeg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+    const isPng = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
     if (!isPdf && !isJpeg && !isPng) {
       toast({
         title: lang === "ar" ? "الملف تالف أو غير صالح" : "File is corrupt or invalid",
-        description: lang === "ar" ? "تأكد من أن الملف سليم ومن النوع الصحيح" : "Make sure the file is valid and of the correct type",
+        description:
+          lang === "ar"
+            ? "تأكد من أن الملف سليم ومن النوع الصحيح"
+            : "Make sure the file is valid and of the correct type",
         variant: "destructive",
       });
       return;
@@ -175,7 +184,7 @@ export default function ProviderProfile() {
         throw new Error("documents_required");
       }
 
-const userId = localStorage.getItem("userId");
+      const userId = localStorage.getItem("userId");
       if (!userId) throw new Error("User not found");
 
       // رفع الملفات إلى Supabase Storage عبر الخادم (supabaseAdmin — لا حاجة لـ JWT)
@@ -183,14 +192,17 @@ const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("sessionToken");
         const fileExt = file.name.split(".").pop();
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
-        const res = await fetch(`/api/upload/provider-document?folder=${encodeURIComponent(folder)}&filename=${encodeURIComponent(fileName)}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": file.type || "application/octet-stream",
-          },
-          body: file,
-        });
+        const res = await fetch(
+          `/api/upload/provider-document?folder=${encodeURIComponent(folder)}&filename=${encodeURIComponent(fileName)}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": file.type || "application/octet-stream",
+            },
+            body: file,
+          }
+        );
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.error || "File upload failed");
@@ -227,7 +239,10 @@ const userId = localStorage.getItem("userId");
       if (existingId) {
         // Exclude user_id from update payload — it must not change and triggers RLS violations
         const { user_id: _omit, ...updatePayload } = profilePayload;
-        const { error } = await supabase.from("providers").update(updatePayload).eq("id", existingId);
+        const { error } = await supabase
+          .from("providers")
+          .update(updatePayload)
+          .eq("id", existingId);
         dbError = error;
       } else {
         const { error } = await supabase.from("providers").insert([profilePayload]);
@@ -273,8 +288,10 @@ const userId = localStorage.getItem("userId");
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md"
-            style={{ background: 'linear-gradient(135deg, #2E4A6B 0%, #243A56 100%)' }}>
+          <div
+            className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md"
+            style={{ background: "linear-gradient(135deg, #2E4A6B 0%, #243A56 100%)" }}
+          >
             {formData.company_name ? (
               <span className="text-3xl font-extrabold text-white select-none">
                 {formData.company_name.trim().charAt(0).toUpperCase()}
@@ -288,15 +305,17 @@ const userId = localStorage.getItem("userId");
           )}
           <h1 className="text-3xl font-bold text-gray-900">
             {existingProvider?.provider
-              ? (lang === "ar" ? "تعديل ملف الشركة" : "Edit Company Profile")
+              ? lang === "ar"
+                ? "تعديل ملف الشركة"
+                : "Edit Company Profile"
               : t.title}
           </h1>
           <p className="text-gray-600 mt-2">{t.subtitle}</p>
         </div>
 
         {/* Approval Status Banner */}
-        {existingProvider?.provider && (
-          existingProvider.provider.approved ? (
+        {existingProvider?.provider &&
+          (existingProvider.provider.approved ? (
             <div className="flex items-center gap-3 rounded-xl border-s-4 border-green-500 bg-green-50/80 px-4 py-3 text-green-800 mb-6">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
               <div>
@@ -304,7 +323,9 @@ const userId = localStorage.getItem("userId");
                   {lang === "ar" ? "تم قبول حسابك ✓" : "Your account is approved ✓"}
                 </p>
                 <p className="text-sm opacity-75">
-                  {lang === "ar" ? "يمكنك الآن تصفح الطلبات وتقديم عروضك" : "You can now browse requests and submit offers"}
+                  {lang === "ar"
+                    ? "يمكنك الآن تصفح الطلبات وتقديم عروضك"
+                    : "You can now browse requests and submit offers"}
                 </p>
               </div>
             </div>
@@ -316,12 +337,13 @@ const userId = localStorage.getItem("userId");
                   {lang === "ar" ? "طلبك قيد المراجعة" : "Your registration is under review"}
                 </p>
                 <p className="text-sm opacity-75">
-                  {lang === "ar" ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة" : "You will be notified once your account is approved by admin"}
+                  {lang === "ar"
+                    ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة"
+                    : "You will be notified once your account is approved by admin"}
                 </p>
               </div>
             </div>
-          )
-        )}
+          ))}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* المعلومات الشخصية */}
@@ -333,19 +355,11 @@ const userId = localStorage.getItem("userId");
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t.name}</Label>
-                  <Input
-                    value={userData.name}
-                    disabled
-                    className="bg-gray-100"
-                  />
+                  <Input value={userData.name} disabled className="bg-gray-100" />
                 </div>
                 <div className="space-y-2">
                   <Label>{t.phone}</Label>
-                  <Input
-                    value={userData.phone}
-                    disabled
-                    className="bg-gray-100"
-                  />
+                  <Input value={userData.phone} disabled className="bg-gray-100" />
                 </div>
               </div>
             </CardContent>
@@ -364,9 +378,7 @@ const userId = localStorage.getItem("userId");
                   type="text"
                   placeholder={t.companyPlaceholder}
                   value={formData.company_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, company_name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                   required
                 />
               </div>
@@ -379,9 +391,7 @@ const userId = localStorage.getItem("userId");
                     type="email"
                     placeholder={t.emailPlaceholder}
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -391,9 +401,7 @@ const userId = localStorage.getItem("userId");
                     type="text"
                     placeholder={t.cityPlaceholder}
                     value={formData.city}
-                    onChange={(e) =>
-                      setFormData({ ...formData, city: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     required
                   />
                 </div>
@@ -405,9 +413,7 @@ const userId = localStorage.getItem("userId");
                   id="description"
                   placeholder={t.descriptionPlaceholder}
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
                   required
                 />
@@ -426,10 +432,7 @@ const userId = localStorage.getItem("userId");
             <CardContent className="space-y-4">
               {/* السجل التجاري */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="commercial_register"
-                  className="flex items-center gap-2"
-                >
+                <Label htmlFor="commercial_register" className="flex items-center gap-2">
                   {t.commercialRegister}
                   <span className="text-red-500">*</span>
                 </Label>
@@ -462,10 +465,7 @@ const userId = localStorage.getItem("userId");
 
               {/* بروفايل الشركة */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="company_profile"
-                  className="flex items-center gap-2"
-                >
+                <Label htmlFor="company_profile" className="flex items-center gap-2">
                   {t.companyProfile}
                   <span className="text-red-500">*</span>
                 </Label>
@@ -498,10 +498,7 @@ const userId = localStorage.getItem("userId");
 
               {/* رخصة فال */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="fal_license"
-                  className="flex items-center gap-2"
-                >
+                <Label htmlFor="fal_license" className="flex items-center gap-2">
                   {t.falLicense}
                   <span className="text-red-500">*</span>
                 </Label>

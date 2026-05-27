@@ -58,6 +58,31 @@ Wouter (`wouter`) handles client-side routing. Route groups in `App.tsx`:
 
 `DashboardLayout` wraps all authenticated routes: applies `RequireAuth`, renders `Navbar` + `BottomNav`, and sets `dir="rtl"` when language is Arabic.
 
+### Owner Onboarding Flow (added 2026-05-26)
+
+New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboarding`) immediately after OTP verification — not the old property form.
+
+**File:** `client/src/pages/owner-onboarding.tsx`
+
+**Flow:**
+1. Owner registers → OTP → `auth-page.tsx` redirects to `/dashboard/owner/onboarding` (login still goes to `/dashboard/owner`)
+2. Single form creates **property + service request in one submit**
+3. After success → redirect to `/dashboard/owner/requests` + SMS fire-and-forget to approved providers
+
+**Form fields:**
+- Property name, building type (residential/commercial), neighborhood (dropdown — 44 Riyadh neighborhoods hardcoded), units count (2/4/6…26 + "Other" with free input), Google Maps URL (validated against allowed prefixes), national address (optional)
+- Service scope — read-only, auto-updates based on building type
+- Notes for providers — optional, 500 char max
+
+**API sequence on submit:**
+1. `POST /api/properties` → if `limit_reached` error → toast + redirect to dashboard
+2. Extract `property_id` from response
+3. `POST /api/requests` with `service_category: "standard"` — soft failure (property already created)
+4. `POST /api/sms/new-request` — fire-and-forget
+5. `queryClient.invalidateQueries` → redirect to `/dashboard/owner/requests`
+
+**What was NOT changed:** `property-form.tsx` (still used for editing existing property), `request-form.tsx` (still used for adding a second request), `server/routes.ts`, `shared/schema.ts`
+
 ### Bilingual / RTL
 
 Language state is managed by `client/src/hooks/use-lang.ts` using a module-level global + listener pattern (no React Context). Default language is Arabic (`ar`). RTL is applied at the `DashboardLayout` level. All UI text should have both Arabic and English strings; Arabic is the primary.
@@ -119,7 +144,7 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 - **Send:** `POST /api/otp/send` — calls `https://api.authentica.sa/api/v2/send-otp`
 - **Verify:** `POST /api/otp/verify` — calls `https://api.authentica.sa/api/v2/verify-otp`
 - OTPs are **4 digits**, 5-min expiry. Auth UI: `maxLength=4`, `disabled` until 4 chars entered.
-- **Twilio is fully removed** — no Twilio imports, env vars, or SDK calls anywhere.
+
 - OTP rate-limiting state persists in the `otp_rate_limits` Supabase table (no in-memory Map).
 
 ---
@@ -207,30 +232,11 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 > Full backlog lives in `~/Documents/Emaraa with claude/_work/TODO.md`. This section is a quick reference for items with specific code locations.
 
 **All pre-launch items shipped as of 2026-05-21.** Open items tracked in TODO.md by stage:
-- **Launch Prep** — 15 UX/business-rule/admin items
-- **Stage 2** — Rate limiting, audit log, DDL migrations, role enforcement, fake refresh_token fix, MemStorage cleanup
+- **Launch Prep** — end-to-end smoke test on real iPhone
+- **Stage 2** — Rate limiting, audit log, DDL migrations, role enforcement, MemStorage cleanup, .env.example vars
 - **Stage 3** — Contract signing (Signit API), subscription payments (Moyasar)
 
----
-
-## Security Issues (Audit 2026-05-20)
-
-### CRITICAL
-- **Open RLS policies** (`security_fixes.sql:72–90`) — All tables have `USING (true)` for the anon role, meaning any browser with the public anon key can read/write any row. Must rewrite policies to use `auth.uid() = owner_id` / `auth.uid() = user_id` patterns.
-- **Business rules bypassed** (`property-form.tsx:151`, `request-form.tsx:148`) — 1-property limit and offer-lock are enforced on the Express server, but both pages write directly to Supabase, bypassing the server entirely. Enforcement must move to RLS or DB triggers.
-
-### HIGH
-- **CORS wildcard fallback** (`server/index.ts:11`) — `origin: true` when `FRONTEND_URL` is unset reflects any origin with credentials. Fix: explicit fallback to `["http://localhost:5000"]`.
-- **No role enforcement on API endpoints** (`server/routes.ts:46`) — `requireSession` validates the session but never checks `role`. Providers can call owner-only endpoints.
-- **Admin impersonation has no audit log** (`routes.ts:523`) — No DB record of who impersonated whom. Add an `audit_log` table entry on every impersonation.
-- **Fake `refresh_token`** (`client/src/lib/supabase.ts:10`) — `setSession` is called with the JWT as both `access_token` and `refresh_token`. This will silently break if Supabase SDK attempts a real token refresh.
-- **No security headers / no Helmet** (`server/index.ts`) — No CSP, X-Frame-Options, or HSTS. Add `helmet()` as first middleware.
-
-### MEDIUM
-- **No global rate limiting** — Only OTP and admin login are rate-limited. SMS trigger endpoints (`/api/sms/*`) are unprotected.
-- **Session/admin/rate-limit table DDL missing from repo** — `sessions`, `admin_login_attempts`, `otp_rate_limits`, `admins` exist in production but have no `CREATE TABLE` in any migration file.
-- **`MemStorage` is dead code in production** (`server/storage.ts`) — All Express property/request routes use in-memory storage that is empty on every cold start (Vercel = serverless). These routes return empty data in production.
-- **`.env.example` missing vars** — `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL` are required but absent from `.env.example`.
+> Security audit (2026-05-20) verified 2026-05-27 — 7/11 issues fixed. Open items in Stage 2 above. Full report in `_work/sessions/2026-05-27.md`.
 
 ---
 

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Building2, Calendar, Send, Phone, Info } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
@@ -17,7 +17,8 @@ export default function ProviderOffers() {
     ar: {
       title: "عروضي المقدمة",
       subtitle: "تتبع جميع العروض التي قدمتها",
-      phoneDisclosure: "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
+      phoneDisclosure:
+        "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
       noOffers: "لم تقدم أي عروض بعد",
       browseRequests: "تصفح الطلبات",
       request: "الطلب",
@@ -52,7 +53,8 @@ export default function ProviderOffers() {
       rejected: "Rejected",
       cleaning: "Cleaning",
       maintenance: "Maintenance",
-      phoneDisclosure: "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
+      phoneDisclosure:
+        "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
     },
   }[lang];
 
@@ -82,13 +84,15 @@ export default function ProviderOffers() {
 
       const { data, error } = await supabase
         .from("provider_offers")
-        .select(`
+        .select(
+          `
           id, offer_file_url, notes, status, created_at,
           requests (
             id, service_category,
             properties ( name, city )
           )
-        `)
+        `
+        )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
 
@@ -128,7 +132,9 @@ export default function ProviderOffers() {
               {userPhone && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Phone className="h-3.5 w-3.5 text-[#2E4A6B]" />
-                  <span className="text-sm font-semibold text-blue-700" dir="ltr">{userPhone}</span>
+                  <span className="text-sm font-semibold text-blue-700" dir="ltr">
+                    {userPhone}
+                  </span>
                 </div>
               )}
             </div>
@@ -138,7 +144,9 @@ export default function ProviderOffers() {
         {/* Loading */}
         {isLoading && (
           <div className="space-y-4">
-            {[1,2].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
           </div>
         )}
 
@@ -149,20 +157,33 @@ export default function ProviderOffers() {
               <div className="relative mb-6">
                 <div className="w-28 h-28 bg-[#F3F5F1] rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
-                    <rect x="8" y="16" width="48" height="60" rx="5" fill="#DCFCE7"/>
-                    <rect x="16" y="28" width="32" height="4" rx="2" fill="#86EFAC"/>
-                    <rect x="16" y="37" width="24" height="4" rx="2" fill="#86EFAC"/>
-                    <rect x="16" y="46" width="28" height="4" rx="2" fill="#86EFAC"/>
-                    <circle cx="58" cy="54" r="16" fill="#22C55E"/>
-                    <path d="M50 54l6 6 10-10" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="8" y="16" width="48" height="60" rx="5" fill="#DCFCE7" />
+                    <rect x="16" y="28" width="32" height="4" rx="2" fill="#86EFAC" />
+                    <rect x="16" y="37" width="24" height="4" rx="2" fill="#86EFAC" />
+                    <rect x="16" y="46" width="28" height="4" rx="2" fill="#86EFAC" />
+                    <circle cx="58" cy="54" r="16" fill="#22C55E" />
+                    <path
+                      d="M50 54l6 6 10-10"
+                      stroke="white"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
                 <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-[#DDE4D8] rounded-full" />
                 <div className="absolute -left-2 top-3 w-5 h-5 bg-[#DDE4D8] rounded-full" />
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-1">{t.noOffers}</h2>
-              <p className="text-gray-400 text-sm mb-6">{lang === "ar" ? "ابدأ بتصفح الطلبات وتقديم عروضك" : "Browse available requests and start submitting"}</p>
-              <Button onClick={() => setLocation("/dashboard/provider/requests")} className="bg-[#6B7C5E] hover:bg-[#576649]">
+              <p className="text-gray-400 text-sm mb-6">
+                {lang === "ar"
+                  ? "ابدأ بتصفح الطلبات وتقديم عروضك"
+                  : "Browse available requests and start submitting"}
+              </p>
+              <Button
+                onClick={() => setLocation("/dashboard/provider/requests")}
+                className="bg-[#6B7C5E] hover:bg-[#576649]"
+              >
                 <Send className="w-4 h-4 me-2" />
                 {t.browseRequests}
               </Button>
@@ -182,8 +203,12 @@ export default function ProviderOffers() {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-lg">
                           {offer.requests?.service_category === "standard"
-                            ? (lang === "ar" ? "نطاق الخدمات المطلوبة" : "Scope of Services")
-                            : (offer.requests?.service_category === "cleaning" ? t.cleaning : t.maintenance)}
+                            ? lang === "ar"
+                              ? "نطاق الخدمات المطلوبة"
+                              : "Scope of Services"
+                            : offer.requests?.service_category === "cleaning"
+                              ? t.cleaning
+                              : t.maintenance}
                         </span>
                         <StatusBadge status={offer.status} lang={lang} />
                       </div>
@@ -212,7 +237,11 @@ export default function ProviderOffers() {
 
                     {/* Actions */}
                     {offer.offer_file_url && (
-                      <Button variant="outline" size="sm" onClick={() => openSignedPdf('provider-offers', offer.offer_file_url)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openSignedPdf("provider-offers", offer.offer_file_url)}
+                      >
                         <FileText className="w-4 h-4 me-2" />
                         {t.viewFile}
                       </Button>

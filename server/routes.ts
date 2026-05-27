@@ -1,5 +1,6 @@
+import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import { createHmac } from "crypto";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage.js";
@@ -13,22 +14,35 @@ const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET ?? "";
 const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY ?? "";
 
 function b64url(s: string): string {
-  return Buffer.from(s).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  return Buffer.from(s)
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 }
 
 function signSupabaseJwt(sub: string, phone: string, role: string): string {
   const now = Math.floor(Date.now() / 1000);
   const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = b64url(JSON.stringify({
-    aud: "authenticated", iss: `${SUPABASE_URL}/auth/v1`,
-    sub, role: "authenticated", phone,
-    app_metadata: { provider: "phone", providers: ["phone"], user_role: role },
-    user_metadata: {}, iat: now, exp: now + 30 * 24 * 3600,
-  }));
+  const payload = b64url(
+    JSON.stringify({
+      aud: "authenticated",
+      iss: `${SUPABASE_URL}/auth/v1`,
+      sub,
+      role: "authenticated",
+      phone,
+      app_metadata: { provider: "phone", providers: ["phone"], user_role: role },
+      user_metadata: {},
+      iat: now,
+      exp: now + 30 * 24 * 3600,
+    })
+  );
   const sig = createHmac("sha256", SUPABASE_JWT_SECRET)
     .update(`${header}.${payload}`)
     .digest("base64")
-    .replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
   return `${header}.${payload}.${sig}`;
 }
 
@@ -38,7 +52,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 const AUTHENTICA_BASE = "https://api.authentica.sa/api/v2";
 const authenticaHeaders = {
   "X-Authorization": AUTHENTICA_API_KEY,
-  "Accept": "application/json",
+  Accept: "application/json",
   "Content-Type": "application/json",
 };
 
@@ -58,10 +72,7 @@ async function requireSession(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
+export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // Session verification — used by RequireAuth.tsx (bypasses RLS via supabaseAdmin)
   app.get("/api/session/verify", async (req, res) => {
     const token = req.headers.authorization?.replace("Bearer ", "").trim();
@@ -80,9 +91,8 @@ export async function registerRoutes(
       .select("phone, role")
       .eq("id", data.user_id)
       .single();
-    const supabaseToken = (user && SUPABASE_JWT_SECRET)
-      ? signSupabaseJwt(data.user_id, user.phone, user.role)
-      : "";
+    const supabaseToken =
+      user && SUPABASE_JWT_SECRET ? signSupabaseJwt(data.user_id, user.phone, user.role) : "";
     res.json({ valid: true, userId: data.user_id, supabaseToken });
   });
 
@@ -105,7 +115,7 @@ export async function registerRoutes(
       if (!username || !password) {
         return res.status(400).json({ error: "Username and password required" });
       }
-      const { data, error } = await supabase.rpc('check_admin_login', {
+      const { data, error } = await supabase.rpc("check_admin_login", {
         p_username: username.trim(),
         p_password: password,
       });
@@ -113,8 +123,9 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Invalid username or password" });
       }
       const admin = data[0];
-      const { data: token, error: tokenError } = await supabase
-        .rpc('create_admin_session', { p_admin_id: admin.id });
+      const { data: token, error: tokenError } = await supabase.rpc("create_admin_session", {
+        p_admin_id: admin.id,
+      });
       if (tokenError || !token) {
         return res.status(500).json({ error: "Failed to create session" });
       }
@@ -147,7 +158,8 @@ export async function registerRoutes(
         .eq("id", req.params.id)
         .single();
       if (error || !property) return res.status(404).json({ error: "Property not found" });
-      if (property.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+      if (property.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden" });
       res.json(property);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch property" });
@@ -189,7 +201,8 @@ export async function registerRoutes(
         .eq("id", req.params.id)
         .single();
       if (fetchError || !existing) return res.status(404).json({ error: "Property not found" });
-      if (existing.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+      if (existing.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden" });
 
       const updateSchema = z.object({
         name: z.string().optional(),
@@ -210,7 +223,8 @@ export async function registerRoutes(
       if (error) throw error;
       res.json(updated);
     } catch (error) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: "Invalid property data" });
+      if (error instanceof z.ZodError)
+        return res.status(400).json({ error: "Invalid property data" });
       res.status(500).json({ error: "Failed to update property" });
     }
   });
@@ -223,7 +237,8 @@ export async function registerRoutes(
         .eq("id", req.params.id)
         .single();
       if (fetchError || !property) return res.status(404).json({ error: "Property not found" });
-      if (property.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+      if (property.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden" });
 
       await supabaseAdmin.from("requests").delete().eq("property_id", req.params.id);
       const { error } = await supabaseAdmin.from("properties").delete().eq("id", req.params.id);
@@ -249,19 +264,23 @@ export async function registerRoutes(
   });
 
   // Server-side file upload — receives raw file bytes, uploads via supabaseAdmin (no JWT needed)
-  app.post("/api/upload/provider-document",
+  app.post(
+    "/api/upload/provider-document",
     requireSession,
     (req, res, next) => {
       // Apply raw body parser only for this route to avoid breaking JSON routes
       // Limit matches server-side cap (10MB) with a small buffer for request overhead
-      (require("express") as any).raw({ type: "*/*", limit: "11mb" })(req, res, next);
+      express.raw({ type: "*/*", limit: "11mb" })(req, res, next);
     },
     async (req, res) => {
       // --- (a) Folder whitelist ---
       const ALLOWED_FOLDERS = ["commercial-registers", "company-profiles", "fal-licenses"] as const;
       const folder = req.query.folder;
       if (typeof folder !== "string" || !(ALLOWED_FOLDERS as readonly string[]).includes(folder)) {
-        return res.status(400).json({ error: "Invalid or missing folder. Must be one of: commercial-registers, company-profiles, fal-licenses" });
+        return res.status(400).json({
+          error:
+            "Invalid or missing folder. Must be one of: commercial-registers, company-profiles, fal-licenses",
+        });
       }
 
       // --- (b & c) File extension whitelist + filename sanitization ---
@@ -272,7 +291,10 @@ export async function registerRoutes(
       // Only allow: word chars, hyphens, then a whitelisted extension — no path separators
       const SAFE_FILENAME_RE = /^[\w\-]+\.(pdf|jpg|jpeg|png)$/i;
       if (!SAFE_FILENAME_RE.test(filename)) {
-        return res.status(400).json({ error: "Invalid filename. Only alphanumeric chars, underscores, hyphens, and extensions .pdf/.jpg/.jpeg/.png are allowed." });
+        return res.status(400).json({
+          error:
+            "Invalid filename. Only alphanumeric chars, underscores, hyphens, and extensions .pdf/.jpg/.jpeg/.png are allowed.",
+        });
       }
 
       // --- (d) File size cap (10 MB) ---
@@ -287,14 +309,14 @@ export async function registerRoutes(
       // --- (e) Magic bytes MIME check ---
       const ext = filename.split(".").pop()!.toLowerCase();
       const b = req.body;
-      const isPdf  = b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46; // %PDF
-      const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
-      const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+      const isPdf = b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46; // %PDF
+      const isJpeg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+      const isPng = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
 
       const magicMatches =
-        (ext === "pdf"  && isPdf)  ||
+        (ext === "pdf" && isPdf) ||
         ((ext === "jpg" || ext === "jpeg") && isJpeg) ||
-        (ext === "png"  && isPng);
+        (ext === "png" && isPng);
 
       if (!magicMatches) {
         return res.status(415).json({ error: "Invalid file type" });
@@ -302,10 +324,10 @@ export async function registerRoutes(
 
       // Derive content-type from validated extension — never trust the client header
       const CONTENT_TYPE_MAP: Record<string, string> = {
-        pdf:  "application/pdf",
-        jpg:  "image/jpeg",
+        pdf: "application/pdf",
+        jpg: "image/jpeg",
         jpeg: "image/jpeg",
-        png:  "image/png",
+        png: "image/png",
       };
       const contentType = CONTENT_TYPE_MAP[ext];
 
@@ -318,17 +340,22 @@ export async function registerRoutes(
   );
 
   // Offer PDF upload — server-side via supabaseAdmin, PDF only
-  app.post("/api/upload/offer-document",
+  app.post(
+    "/api/upload/offer-document",
     requireSession,
     (req, res, next) => {
-      (require("express") as any).raw({ type: "*/*", limit: "11mb" })(req, res, next);
+      express.raw({ type: "*/*", limit: "11mb" })(req, res, next);
     },
     async (req, res) => {
       const { filename } = req.query;
-      if (!filename || typeof filename !== "string") return res.status(400).json({ error: "filename required" });
-      if (!/^[\w\-]+\.pdf$/i.test(filename)) return res.status(400).json({ error: "Invalid filename" });
-      if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: "Empty file" });
-      if (req.body.length > 10 * 1024 * 1024) return res.status(413).json({ error: "File too large (max 10MB)" });
+      if (!filename || typeof filename !== "string")
+        return res.status(400).json({ error: "filename required" });
+      if (!/^[\w\-]+\.pdf$/i.test(filename))
+        return res.status(400).json({ error: "Invalid filename" });
+      if (!Buffer.isBuffer(req.body) || req.body.length === 0)
+        return res.status(400).json({ error: "Empty file" });
+      if (req.body.length > 10 * 1024 * 1024)
+        return res.status(413).json({ error: "File too large (max 10MB)" });
       const b = req.body;
       if (!(b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46)) {
         return res.status(415).json({ error: "Invalid file type — PDF required" });
@@ -351,7 +378,10 @@ export async function registerRoutes(
       ]);
       const providerId = provider?.id ?? null;
       const { data: myOffers } = providerId
-        ? await supabaseAdmin.from("provider_offers").select("id, status").eq("provider_id", providerId)
+        ? await supabaseAdmin
+            .from("provider_offers")
+            .select("id, status")
+            .eq("provider_id", providerId)
         : { data: [] };
       res.json({
         user: user || null,
@@ -387,7 +417,8 @@ export async function registerRoutes(
         .eq("id", req.params.id)
         .single();
       if (error || !request) return res.status(404).json({ error: "Service request not found" });
-      if (request.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+      if (request.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden" });
       res.json(request);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch service request" });
@@ -438,8 +469,10 @@ export async function registerRoutes(
         .select("owner_id")
         .eq("id", req.params.id)
         .single();
-      if (fetchError || !existing) return res.status(404).json({ error: "Service request not found" });
-      if (existing.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+      if (fetchError || !existing)
+        return res.status(404).json({ error: "Service request not found" });
+      if (existing.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden" });
 
       const updateSchema = z.object({
         description: z.string().nullable().optional(),
@@ -470,8 +503,10 @@ export async function registerRoutes(
         .select("owner_id")
         .eq("id", req.params.id)
         .single();
-      if (fetchError || !request) return res.status(404).json({ error: "Service request not found" });
-      if (request.owner_id !== (req as any).userId) return res.status(403).json({ error: "Forbidden" });
+      if (fetchError || !request)
+        return res.status(404).json({ error: "Service request not found" });
+      if (request.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden" });
 
       const { error } = await supabaseAdmin.from("requests").delete().eq("id", req.params.id);
       if (error) throw error;
@@ -492,7 +527,7 @@ export async function registerRoutes(
       const { data: offer, error: offerError } = await supabaseAdmin
         .from("provider_offers")
         .select("id, request_id")
-        .eq("id", (req.params.id as string))
+        .eq("id", req.params.id as string)
         .single();
       if (offerError || !offer) {
         return res.status(404).json({ error: "Offer not found" });
@@ -514,15 +549,19 @@ export async function registerRoutes(
       const { error: updateError } = await supabaseAdmin
         .from("provider_offers")
         .update({ status })
-        .eq("id", (req.params.id as string));
+        .eq("id", req.params.id as string);
       if (updateError) throw updateError;
 
       if (status === "accepted") {
-        await supabaseAdmin.from("requests").update({ status: "in_progress" }).eq("id", offer.request_id);
-        await supabaseAdmin.from("provider_offers")
+        await supabaseAdmin
+          .from("requests")
+          .update({ status: "in_progress" })
+          .eq("id", offer.request_id);
+        await supabaseAdmin
+          .from("provider_offers")
           .update({ status: "rejected" })
           .eq("request_id", offer.request_id)
-          .neq("id", (req.params.id as string));
+          .neq("id", req.params.id as string);
       }
 
       res.json({ success: true });
@@ -563,14 +602,30 @@ export async function registerRoutes(
       // Notify provider — offer confirmed
       const providerUserId = (offer.providers as any)?.user_id;
       if (providerUserId) {
-        const { data: pu } = await supabaseAdmin.from("users").select("phone").eq("id", providerUserId).single();
-        if (pu?.phone) sendSms(pu.phone, "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك.").catch(() => {});
+        const { data: pu } = await supabaseAdmin
+          .from("users")
+          .select("phone")
+          .eq("id", providerUserId)
+          .single();
+        if (pu?.phone)
+          sendSms(
+            pu.phone,
+            "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك."
+          ).catch(() => {});
       }
 
       // Notify owner — new offer arrived
       if (request?.owner_id) {
-        const { data: ou } = await supabaseAdmin.from("users").select("phone").eq("id", request.owner_id).single();
-        if (ou?.phone) sendSms(ou.phone, "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app").catch(() => {});
+        const { data: ou } = await supabaseAdmin
+          .from("users")
+          .select("phone")
+          .eq("id", request.owner_id)
+          .single();
+        if (ou?.phone)
+          sendSms(
+            ou.phone,
+            "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app"
+          ).catch(() => {});
       }
 
       res.json({ success: true });
@@ -593,8 +648,16 @@ export async function registerRoutes(
 
       if (providers?.length) {
         for (const p of providers) {
-          const { data: u } = await supabaseAdmin.from("users").select("phone").eq("id", p.user_id).single();
-          if (u?.phone) sendSms(u.phone, "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app").catch(() => {});
+          const { data: u } = await supabaseAdmin
+            .from("users")
+            .select("phone")
+            .eq("id", p.user_id)
+            .single();
+          if (u?.phone)
+            sendSms(
+              u.phone,
+              "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app"
+            ).catch(() => {});
         }
       }
 
@@ -765,19 +828,33 @@ export async function registerRoutes(
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     const { data: user } = await supabaseAdmin
-      .from("users").select("id, name, phone, role").eq("id", userId).single();
+      .from("users")
+      .select("id, name, phone, role")
+      .eq("id", userId)
+      .single();
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("sessions")
       .insert([{ user_id: user.id, expires_at: expiresAt.toISOString() }])
-      .select("token").single();
+      .select("token")
+      .single();
 
-    if (sessionError || !session) return res.status(500).json({ error: "Failed to create session" });
+    if (sessionError || !session)
+      return res.status(500).json({ error: "Failed to create session" });
 
-    const supabaseToken = SUPABASE_JWT_SECRET ? signSupabaseJwt(user.id, user.phone, user.role) : "";
-    res.json({ token: session.token, userId: user.id, phone: user.phone, role: user.role, name: user.name ?? "", supabaseToken });
+    const supabaseToken = SUPABASE_JWT_SECRET
+      ? signSupabaseJwt(user.id, user.phone, user.role)
+      : "";
+    res.json({
+      token: session.token,
+      userId: user.id,
+      phone: user.phone,
+      role: user.role,
+      name: user.name ?? "",
+      supabaseToken,
+    });
   });
 
   // Approve or reject a provider. Sends SMS to provider on approval.
@@ -804,8 +881,16 @@ export async function registerRoutes(
           .eq("id", id)
           .single();
         if (provider?.user_id) {
-          const { data: u } = await supabaseAdmin.from("users").select("phone").eq("id", provider.user_id).single();
-          if (u?.phone) sendSms(u.phone, "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app").catch(() => {});
+          const { data: u } = await supabaseAdmin
+            .from("users")
+            .select("phone")
+            .eq("id", provider.user_id)
+            .single();
+          if (u?.phone)
+            sendSms(
+              u.phone,
+              "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app"
+            ).catch(() => {});
         }
       }
 
@@ -822,7 +907,10 @@ export async function registerRoutes(
         .from("admins")
         .select("id", { count: "exact", head: true });
       if ((adminCount ?? 0) > 0) {
-        return res.status(403).json({ error: "Admin already exists. Use ADMIN_USERNAME/ADMIN_PASSWORD env vars to manage admins." });
+        return res.status(403).json({
+          error:
+            "Admin already exists. Use ADMIN_USERNAME/ADMIN_PASSWORD env vars to manage admins.",
+        });
       }
 
       const { username, password } = req.body;
@@ -839,7 +927,7 @@ export async function registerRoutes(
       const hashedPassword = await bcrypt.hash(password, 12);
       const { error: insertError } = await supabaseAdmin
         .from("admins")
-        .insert([{ username: username.trim(), password_hash: hashedPassword }]);
+        .insert([{ username: username.trim(), password: hashedPassword }]);
 
       if (insertError) {
         console.error("[admin/create] insert error:", insertError);
@@ -857,37 +945,55 @@ export async function registerRoutes(
 
   async function verifyAdminToken(req: Request, res: Response): Promise<boolean> {
     const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-    if (!adminToken) { res.status(401).json({ error: "Unauthorized" }); return false; }
+    if (!adminToken) {
+      res.status(401).json({ error: "Unauthorized" });
+      return false;
+    }
     const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-    if (!isValid) { res.status(401).json({ error: "Invalid admin session" }); return false; }
+    if (!isValid) {
+      res.status(401).json({ error: "Invalid admin session" });
+      return false;
+    }
     return true;
   }
 
   app.get("/api/admin/stats", async (req, res) => {
-    if (!await verifyAdminToken(req, res)) return;
+    if (!(await verifyAdminToken(req, res))) return;
     const [owners, properties, requests, providers] = await Promise.all([
       supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "owner"),
       supabaseAdmin.from("properties").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("requests").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "provider"),
+      supabaseAdmin
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "provider"),
     ]);
-    res.json({ users: owners.count ?? 0, properties: properties.count ?? 0, requests: requests.count ?? 0, providers: providers.count ?? 0 });
+    res.json({
+      users: owners.count ?? 0,
+      properties: properties.count ?? 0,
+      requests: requests.count ?? 0,
+      providers: providers.count ?? 0,
+    });
   });
 
   app.get("/api/admin/users", async (req, res) => {
-    if (!await verifyAdminToken(req, res)) return;
+    if (!(await verifyAdminToken(req, res))) return;
     const { data, error } = await supabaseAdmin
-      .from("users").select("id, name, phone, role, created_at").eq("role", "owner")
+      .from("users")
+      .select("id, name, phone, role, created_at")
+      .eq("role", "owner")
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch users" });
     res.json(data ?? []);
   });
 
   app.get("/api/admin/providers", async (req, res) => {
-    if (!await verifyAdminToken(req, res)) return;
+    if (!(await verifyAdminToken(req, res))) return;
     const { data, error } = await supabaseAdmin
       .from("users")
-      .select("id, name, phone, created_at, providers(id, company_name, city, approved, commercial_register_url, company_profile_url, fal_license_url, description)")
+      .select(
+        "id, name, phone, created_at, providers(id, company_name, city, approved, commercial_register_url, company_profile_url, fal_license_url, description)"
+      )
       .eq("role", "provider")
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch providers" });
@@ -895,20 +1001,24 @@ export async function registerRoutes(
   });
 
   app.get("/api/admin/properties", async (req, res) => {
-    if (!await verifyAdminToken(req, res)) return;
+    if (!(await verifyAdminToken(req, res))) return;
     const { data, error } = await supabaseAdmin
       .from("properties")
-      .select("id, name, city, address, national_address, building_type, units_count, created_at, users(name, phone)")
+      .select(
+        "id, name, city, address, national_address, building_type, units_count, created_at, users(name, phone)"
+      )
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch properties" });
     res.json(data ?? []);
   });
 
   app.get("/api/admin/requests", async (req, res) => {
-    if (!await verifyAdminToken(req, res)) return;
+    if (!(await verifyAdminToken(req, res))) return;
     const { data, error } = await supabaseAdmin
       .from("requests")
-      .select("id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))")
+      .select(
+        "id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))"
+      )
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch requests" });
     res.json(data ?? []);
@@ -934,17 +1044,14 @@ export async function seedAdmin(): Promise<void> {
       const matches = await bcrypt.compare(password, existing.password);
       if (!matches) {
         const newHash = await bcrypt.hash(password, 12);
-        await supabaseAdmin
-          .from("admins")
-          .update({ password_hash: newHash })
-          .eq("id", existing.id);
+        await supabaseAdmin.from("admins").update({ password: newHash }).eq("id", existing.id);
         console.log("[seedAdmin] password updated for", username);
       }
     } else {
       const hash = await bcrypt.hash(password, 12);
       const { error } = await supabaseAdmin
         .from("admins")
-        .insert([{ username, password_hash: hash }]);
+        .insert([{ username, password: hash }]);
       if (error) {
         console.error("[seedAdmin] insert error:", error.message);
       } else {

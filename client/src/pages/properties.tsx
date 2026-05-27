@@ -14,16 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Building2,
-  MapPin,
-  Plus,
-  Edit,
-  Trash2,
-  ExternalLink,
-  Home,
-  Briefcase,
-} from "lucide-react";
+import { Building2, MapPin, Plus, Edit, Trash2, ExternalLink, Home, Briefcase } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -49,8 +40,7 @@ export default function Properties() {
       residential: "سكني",
       commercial: "تجاري",
       deleteTitle: "تأكيد الحذف",
-      deleteDesc:
-        "هل أنت متأكد من حذف هذا العقار؟ لا يمكن التراجع عن هذا الإجراء.",
+      deleteDesc: "هل أنت متأكد من حذف هذا العقار؟ لا يمكن التراجع عن هذا الإجراء.",
       cancel: "إلغاء",
       confirmDelete: "نعم، احذف",
       deleteSuccess: "تم حذف العقار بنجاح",
@@ -70,8 +60,7 @@ export default function Properties() {
       residential: "Residential",
       commercial: "Commercial",
       deleteTitle: "Confirm Deletion",
-      deleteDesc:
-        "Are you sure you want to delete this property? This action cannot be undone.",
+      deleteDesc: "Are you sure you want to delete this property? This action cannot be undone.",
       cancel: "Cancel",
       confirmDelete: "Yes, Delete",
       deleteSuccess: "Property deleted successfully",
@@ -184,9 +173,9 @@ export default function Properties() {
           )}
           {(properties?.length ?? 0) > 0 && (
             <p className="text-sm text-gray-500 bg-gray-50 rounded-xl px-4 py-2 border border-gray-200">
-              {lang === 'ar'
-                ? 'عِماره تسمح بعقار واحد لكل حساب في المرحلة الحالية'
-                : 'Emaraa allows one property per account in the current phase'}
+              {lang === "ar"
+                ? "عِماره تسمح بعقار واحد لكل حساب في المرحلة الحالية"
+                : "Emaraa allows one property per account in the current phase"}
             </p>
           )}
         </div>
@@ -194,7 +183,9 @@ export default function Properties() {
         {/* Loading */}
         {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1,2,3].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-48 rounded-xl" />
+            ))}
           </div>
         )}
 
@@ -205,14 +196,14 @@ export default function Properties() {
               <div className="relative mb-6">
                 <div className="w-28 h-28 bg-[#EEF2F7] rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 80 80" fill="none" className="w-16 h-16">
-                    <rect x="10" y="30" width="60" height="42" rx="4" fill="#D0DCE8"/>
-                    <rect x="22" y="15" width="36" height="55" rx="3" fill="#B8CCD9"/>
-                    <rect x="28" y="35" width="10" height="10" rx="1.5" fill="#8AAABF"/>
-                    <rect x="42" y="35" width="10" height="10" rx="1.5" fill="#8AAABF"/>
-                    <rect x="28" y="50" width="10" height="10" rx="1.5" fill="#8AAABF"/>
-                    <rect x="42" y="50" width="10" height="10" rx="1.5" fill="#8AAABF"/>
-                    <rect x="32" y="62" width="16" height="10" rx="2" fill="#8AAABF"/>
-                    <polygon points="22,16 40,4 58,16" fill="#EEF2F7"/>
+                    <rect x="10" y="30" width="60" height="42" rx="4" fill="#D0DCE8" />
+                    <rect x="22" y="15" width="36" height="55" rx="3" fill="#B8CCD9" />
+                    <rect x="28" y="35" width="10" height="10" rx="1.5" fill="#8AAABF" />
+                    <rect x="42" y="35" width="10" height="10" rx="1.5" fill="#8AAABF" />
+                    <rect x="28" y="50" width="10" height="10" rx="1.5" fill="#8AAABF" />
+                    <rect x="42" y="50" width="10" height="10" rx="1.5" fill="#8AAABF" />
+                    <rect x="32" y="62" width="16" height="10" rx="2" fill="#8AAABF" />
+                    <polygon points="22,16 40,4 58,16" fill="#EEF2F7" />
                   </svg>
                 </div>
                 <div className="absolute -right-1 -bottom-1 w-7 h-7 bg-[#D8E4EE] rounded-full" />
@@ -234,25 +225,22 @@ export default function Properties() {
         {!isLoading && properties.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((property: any) => (
-              <Card
-                key={property.id}
-                className="hover:shadow-lg transition-shadow"
-              >
+              <Card key={property.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2 flex-1">
                       {getBuildingTypeIcon(property.building_type)}
-                      <CardTitle className="text-lg line-clamp-1">
-                        {property.name}
-                      </CardTitle>
+                      <CardTitle className="text-lg line-clamp-1">{property.name}</CardTitle>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      property.building_type === 'commercial'
-                        ? 'bg-[#FDF3EF] text-[#C4694A]'
-                        : 'bg-[#FDF0F2] text-[#7D3040]'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        property.building_type === "commercial"
+                          ? "bg-[#FDF3EF] text-[#C4694A]"
+                          : "bg-[#FDF0F2] text-[#7D3040]"
+                      }`}
+                    >
                       {getBuildingTypeText(property.building_type)}
                     </span>
                     {property.units_count && (
