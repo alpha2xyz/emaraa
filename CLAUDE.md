@@ -58,7 +58,7 @@ Wouter (`wouter`) handles client-side routing. Route groups in `App.tsx`:
 
 `DashboardLayout` wraps all authenticated routes: applies `RequireAuth`, renders `Navbar` + `BottomNav`, and sets `dir="rtl"` when language is Arabic.
 
-### Owner Onboarding Flow (added 2026-05-26)
+### Owner Onboarding Flow (added 2026-05-26, v3 2026-05-28)
 
 New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboarding`) immediately after OTP verification — not the old property form.
 
@@ -67,11 +67,11 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 **Flow:**
 1. Owner registers → OTP → `auth-page.tsx` redirects to `/dashboard/owner/onboarding` (login still goes to `/dashboard/owner`)
 2. Single form creates **property + service request in one submit**
-3. After success → redirect to `/dashboard/owner/requests` + SMS fire-and-forget to approved providers
+3. After success → redirect to `/dashboard/owner` + SMS fire-and-forget to approved providers
 
 **Form fields:**
-- Property name, building type (residential/commercial), neighborhood (dropdown — 44 Riyadh neighborhoods hardcoded), units count (2/4/6…26 + "Other" with free input), Google Maps URL (validated against allowed prefixes), national address (optional)
-- Service scope — read-only, auto-updates based on building type
+- Property name, building type (residential/commercial clickable cards), neighborhood (shadcn Select — 44 Riyadh neighborhoods hardcoded), units count (shadcn Select: 2/4/6…26 + "Other" with free input), Google Maps URL (validated against allowed prefixes), national address (optional)
+- Service scope — read-only two paragraphs (part1 + part2), auto-updates based on building type; exact text from `provider-requests.tsx`
 - Notes for providers — optional, 500 char max
 
 **API sequence on submit:**
@@ -79,42 +79,57 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 2. Extract `property_id` from response
 3. `POST /api/requests` with `service_category: "standard"` — soft failure (property already created)
 4. `POST /api/sms/new-request` — fire-and-forget
-5. `queryClient.invalidateQueries` → redirect to `/dashboard/owner/requests`
+5. `queryClient.invalidateQueries(["owner-stats", "/api/properties", "owner-property"])` → redirect to `/dashboard/owner`
+   - **All 3 cache keys must be invalidated** — the dashboard uses `["owner-property"]`, not `["/api/properties"]`. Missing this causes a redirect loop back to onboarding.
 
-**What was NOT changed (as of v1):** `property-form.tsx`, `request-form.tsx`, `server/routes.ts`, `shared/schema.ts`
+**Building type card colors (brand system — do not change):**
+- Residential (سكني) selected: border `#7D3040`, background `#FDF0F2`, text/icon `#7D3040` (Burgundy)
+- Commercial (تجاري) selected: border `#C4694A`, background `#FDF3EF`, text/icon `#C4694A` (Terracotta)
+- Unselected: border `#E5E7EB`, background `#FFFFFF`, icon `#9CA3AF`
 
 ---
 
-### Owner Dashboard — Planned Consolidation (v2, 2026-05-27) ⚠️ NOT YET IMPLEMENTED
+### Owner Dashboard — Unified (v2, implemented 2026-05-28) ✅
 
-**Decision:** Retire all separate owner pages — consolidate into one unified `owner-dashboard.tsx`.
+**Decision:** All separate owner pages consolidated into one unified `owner-dashboard.tsx`.
 
-**Files to be RETIRED (pending implementation):**
+**Files RETIRED (still in codebase, cleanup deferred to Stage 2):**
 - `client/src/pages/properties.tsx`
 - `client/src/pages/property-form.tsx`
 - `client/src/pages/requests.tsx`
 - `client/src/pages/request-form.tsx`
 - `client/src/pages/owner-offers-page.tsx`
 
-**New `owner-dashboard.tsx` structure (single scrollable page):**
-1. **Property section** — shows all property info, inline editable (replaces property-form.tsx)
-2. **Request status section** — shows current request status, read-only (1 owner = 1 request, no add button)
-3. **Provider offers section** — lists all offers received (replaces owner-offers-page.tsx)
+**`owner-dashboard.tsx` structure (single scrollable page):**
+1. **Greeting** — "أهلاً، [name]" small black text (`text-gray-900`); chips for city + building type
+2. **Section ① — العقار وطلب الخدمة** — property info (inline editable) merged with request status (shown below border-top divider with status badge + date + notes)
+3. **Section ② — عروض المزودين** — lists all offers received
 
-**Routes to be removed from `App.tsx`:**
-- `/dashboard/owner/properties`
-- `/dashboard/owner/properties/new`
-- `/dashboard/owner/properties/:id/edit`
-- `/dashboard/owner/requests`
-- `/dashboard/owner/requests/new`
-- `/dashboard/owner/requests/:id/edit`
-- `/dashboard/owner/requests/:id/offers`
+**Edit lock rule:** `hasAcceptedOffer = offers.some(o => o.status === "accepted")`
+- Edit is **ALLOWED** while request is pending with no accepted offer
+- Edit is **LOCKED** only when an offer has been accepted (a contract exists)
+- Amber locked notice: "التعديل محجوب — لديك عرضاً مقبولاً من مزود خدمة"
+- Do NOT lock based on request status (`pending`/`in_progress`) — this permanently locks the owner out after onboarding
 
-**Bottom nav simplified:** الرئيسية | الإعدادات (2 tabs only — was 4)
+**Bottom nav:** `if (isOwner) return null` — owners have no bottom nav; provider 4-tab nav unchanged
 
-**No "New Request" or "New Property" buttons** — business rule: 1 owner = 1 property = 1 request (server-enforced).
+**`App.tsx` padding:** `role === "owner" ? "pb-4" : "pb-20"` (owner has no bottom nav)
 
-**Plan document:** `Reports/technical/owner-onboarding-plan-2026-05-26-v2.html`
+**Technical documents:** `Reports/technical/owner-onboarding-plan-2026-05-27-v3.html`
+
+---
+
+### Brand Color System (applies to all owner pages)
+
+| Element | Color |
+|---|---|
+| Owner role (buttons, badges, section badges) | Navy `#2E4A6B` |
+| Provider role (buttons, badges) | Emerald `#0E7C66` |
+| Residential property type | Burgundy `#7D3040` / light `#FDF0F2` |
+| Commercial property type | Terracotta `#C4694A` / light `#FDF3EF` |
+| Sage `#6B7C5E` | **DEPRECATED** — old provider color, do not use |
+
+**Rule:** Navy is the owner ROLE color — never use it for building type cards or chips. Sage is retired. Building types always use Burgundy (residential) and Terracotta (commercial).
 
 ---
 

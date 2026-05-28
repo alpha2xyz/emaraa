@@ -943,19 +943,19 @@ export default function OwnerDashboard() {
                       <div
                         className="flex items-center gap-2 rounded-lg px-3 py-2"
                         style={{
-                          background: "#F3F5F1",
-                          border: "1px solid #C0CCB8",
+                          background: "#E6F4F1",
+                          border: "1px solid #A7D4CB",
                         }}
                       >
-                        <Phone className="w-4 h-4 flex-shrink-0" style={{ color: "#6B7C5E" }} />
+                        <Phone className="w-4 h-4 flex-shrink-0" style={{ color: "#0E7C66" }} />
                         <div>
-                          <p className="text-xs font-medium" style={{ color: "#576649" }}>
+                          <p className="text-xs font-medium" style={{ color: "#0E7C66" }}>
                             {lang === "ar" ? "رقم التواصل" : "Contact Number"}
                           </p>
                           <a
                             href={`tel:${offer.providers.users.phone}`}
                             className="text-sm font-bold hover:underline"
-                            style={{ color: "#576649" }}
+                            style={{ color: "#0A6355" }}
                           >
                             {offer.providers.users.phone}
                           </a>
@@ -983,7 +983,7 @@ export default function OwnerDashboard() {
                             disabled={offerStatusMutation.isPending}
                             onClick={() => setAcceptingOfferId(offer.id)}
                             className="gap-1.5 text-white"
-                            style={{ background: "#6B7C5E" }}
+                            style={{ background: "#2E4A6B" }}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             {lang === "ar" ? "قبول" : "Accept"}
