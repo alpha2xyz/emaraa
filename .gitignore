@@ -16,3 +16,6 @@ env.ts
 test-results/
 playwright-report/
 tests/.auth/
+
+# Supabase CLI temp files
+supabase/.temp/
