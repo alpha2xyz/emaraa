@@ -350,9 +350,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       };
       const contentType = CONTENT_TYPE_MAP[ext];
 
+      // Scope path to the authenticated user — prevents one provider overwriting another's documents
+      const userId = (req as any).userId as string;
       const { data, error } = await supabaseAdmin.storage
         .from("provider-documents")
-        .upload(`${folder}/${filename}`, req.body as Buffer, { contentType, upsert: true });
+        .upload(`${userId}/${folder}/${filename}`, req.body as Buffer, { contentType, upsert: true });
       if (error) return res.status(500).json({ error: error.message });
       res.json({ path: data.path });
     }
@@ -694,6 +696,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid phone number" });
       }
 
+      // Whitelist mode — reject anything that isn't login or register to prevent SMS abuse
+      if (mode !== "login" && mode !== "register") {
+        return res.status(400).json({ error: "Invalid mode. Must be 'login' or 'register'" });
+      }
+
       // Check phone existence BEFORE sending OTP (saves SMS credit + gives instant feedback)
       const { data: existingUser } = await supabaseAdmin
         .from("users")
@@ -750,6 +757,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/otp/verify", async (req, res) => {
     try {
       const phone = req.body.phone as string;
+      if (!phone || !/^05\d{8}$/.test(phone)) {
+        return res.status(400).json({ error: "Invalid phone number" });
+      }
 
       // Rate limit: max 5 OTP verify attempts per phone per 15 minutes (DB-backed, survives cold starts)
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();

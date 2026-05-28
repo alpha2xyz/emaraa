@@ -9,6 +9,7 @@ const app = express();
 const httpServer = createServer(app);
 
 app.use(helmet());
+app.disable("x-powered-by"); // don't reveal Express
 
 const allowedOrigins = process.env.FRONTEND_URL
   ? [process.env.FRONTEND_URL]
@@ -64,7 +65,14 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        // Redact sensitive fields before logging — never write tokens or phone numbers to logs
+        const REDACT_KEYS = new Set(["token", "sessionToken", "supabaseToken", "password", "phone", "session_token"]);
+        const redacted = Object.fromEntries(
+          Object.entries(capturedJsonResponse).map(([k, v]) =>
+            REDACT_KEYS.has(k) ? [k, "[redacted]"] : [k, v]
+          )
+        );
+        logLine += ` :: ${JSON.stringify(redacted)}`;
       }
 
       log(logLine);
