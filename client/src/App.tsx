@@ -79,6 +79,10 @@ const AdminLoginPage = React.lazy(() => import("@/pages/admin-login-page"));
 const AdminDashboard = React.lazy(() => import("@/pages/admin-dashboard"));
 const AdminAuth = React.lazy(() => import("@/pages/admin-auth"));
 
+// ── Sandbox pages (no auth, visual preview only) ───────────────────────────
+const SandboxOwnerOnboarding = React.lazy(() => import("@/pages/sandbox-owner-onboarding"));
+const SandboxProviderRequests = React.lazy(() => import("@/pages/sandbox-provider-requests"));
+
 // ── Shared Dashboard Shell ─────────────────────────────────────────────────
 function DashboardLayout({
   children,
@@ -223,6 +227,10 @@ function Router() {
             <ProviderOffers />
           </DashboardLayout>
         </Route>
+
+        {/* ── Sandbox (no auth, visual preview only) ──────────────────── */}
+        <Route path="/sandbox/owner-onboarding" component={SandboxOwnerOnboarding} />
+        <Route path="/sandbox/provider-requests" component={SandboxProviderRequests} />
 
         {/* ── 404 ─────────────────────────────────────────────────────── */}
         <Route component={NotFound} />
