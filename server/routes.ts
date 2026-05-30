@@ -910,7 +910,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       const { data: session, error: sessionError } = await supabaseAdmin
         .from("sessions")
-        .insert([{ user_id: userId, expires_at: expiresAt.toISOString() }])
+        .insert([{ user_id: userId, expires_at: expiresAt.toISOString(), role }])
         .select("token")
         .single();
 
@@ -948,7 +948,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("sessions")
-      .insert([{ user_id: user.id, expires_at: expiresAt.toISOString() }])
+      .insert([{ user_id: user.id, expires_at: expiresAt.toISOString(), role: user.role }])
       .select("token")
       .single();
 

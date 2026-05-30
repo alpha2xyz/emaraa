@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProviderProfile() {
@@ -98,15 +97,17 @@ export default function ProviderProfile() {
   // جلب بيانات المستخدم والشركة الموجودة
   const { data: existingProvider } = useQuery({
     queryKey: ["/api/provider/profile/edit"],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
-      const userId = localStorage.getItem("userId");
-      if (!userId) return null;
-      const { data: provider } = await supabase
-        .from("providers")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-      return { provider };
+      const token = localStorage.getItem("sessionToken");
+      if (!token) return null;
+      const res = await fetch("/api/provider/dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return { provider: data.provider ?? null };
     },
   });
 

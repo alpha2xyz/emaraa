@@ -134,6 +134,8 @@ export default function ProviderDashboard() {
     refetch,
   } = useQuery({
     queryKey: ["/api/provider/dashboard"],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const token = localStorage.getItem("sessionToken");
       if (!token) throw new Error("Not logged in");
@@ -144,7 +146,7 @@ export default function ProviderDashboard() {
       return res.json();
     },
     enabled: !!userPhone,
-    retry: 2,
+    retry: 1,
     retryDelay: 1000,
   });
 

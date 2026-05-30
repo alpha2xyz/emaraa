@@ -172,9 +172,9 @@ function Router() {
           </DashboardLayout>
         </Route>
         <Route path="/dashboard/provider/profile">
-          <DashboardLayout role="provider">
+          <RequireAuth role="provider">
             <ProviderProfile />
-          </DashboardLayout>
+          </RequireAuth>
         </Route>
 
         {/* ── 404 ─────────────────────────────────────────────────────── */}
