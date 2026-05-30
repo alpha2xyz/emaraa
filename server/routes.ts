@@ -788,6 +788,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.json({ success: true, bypass: true });
       }
 
+      // Per-number test bypass: hardcoded test phones always accept code 0100, no SMS sent
+      const TEST_PHONES = ["0501315725", "0543977679"];
+      if (TEST_PHONES.includes(phone)) {
+        return res.json({ success: true, bypass: true });
+      }
+
       // Rate limit: max 3 OTPs per phone per 10 minutes
       const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { count } = await supabaseAdmin
@@ -848,8 +854,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid role" });
       }
 
+      // Per-number test bypass: hardcoded test phones accept code 0100 without calling Authentica
+      const TEST_PHONES = ["0501315725", "0543977679"];
+      const isTestPhone = TEST_PHONES.includes(phone);
+      const isTestCode = code === "0100";
+
       // Bypass mode: accept any 4-digit code without calling Authentica
-      if (process.env.OTP_BYPASS !== "true") {
+      if (!isTestPhone && process.env.OTP_BYPASS !== "true") {
         const e164 = "+966" + phone.substring(1);
         const r = await fetch(`${AUTHENTICA_BASE}/verify-otp`, {
           method: "POST",
@@ -862,6 +873,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
           return res.status(400).json({ error: "Invalid OTP" });
         }
+      } else if (isTestPhone && !isTestCode) {
+        return res.status(400).json({ error: "Invalid OTP" });
       }
 
       // OTP verified — create or find user
