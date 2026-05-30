@@ -102,7 +102,7 @@ function DashboardLayout({
         </div>
       )}
       <div className="min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
-        <Navbar />
+        {role !== "provider" && <Navbar />}
         <main className={role === "owner" ? "pb-4" : "pb-20"}>{children}</main>
         <BottomNav />
       </div>

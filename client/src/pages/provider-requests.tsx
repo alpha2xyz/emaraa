@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
 
 // ---------------------------------------------------------------------------
 // Unified SOW — same text for both building types (LOCKED — do not change)
@@ -92,76 +91,42 @@ export default function ProviderRequests() {
 
   const t = content[lang];
 
-  // ── Real Supabase queries ──────────────────────────────────────────────────
+  // ── Server API queries (supabaseAdmin — bypasses RLS) ────────────────────
 
-  const { data: providerData } = useQuery({
-    queryKey: ["/api/provider/profile"],
-    queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-      const { data, error } = await supabase
-        .from("users")
-        .select("id, providers(*)")
-        .eq("phone", phone)
-        .single();
-      if (error || !data) throw new Error("User not found");
-      const user = { id: data.id };
-      const provider = (data as any).providers?.[0] ?? null;
-      return { user, provider };
-    },
-  });
-
-  const { data: requests, isLoading } = useQuery({
-    queryKey: ["/api/requests/all-available"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("requests")
-        .select(
-          `
-          *,
-          properties (
-            id,
-            name,
-            city,
-            address,
-            building_type,
-            map_url,
-            units_count
-          )
-        `
-        )
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const isProfileComplete =
-    providerData?.provider &&
-    providerData.provider.company_name &&
-    providerData.provider.city &&
-    providerData.provider.commercial_register_url &&
-    providerData.provider.company_profile_url &&
-    providerData.provider.fal_license_url;
-
-  const isApproved = providerData?.provider?.approved;
-
-  const { data: myOffers } = useQuery({
-    queryKey: ["/api/provider/submitted-offer-ids"],
+  const { data: dashData } = useQuery({
+    queryKey: ["/api/provider/dashboard"],
+    staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () => {
-      if (!providerData?.provider?.id) return [];
-      const { data } = await supabase
-        .from("provider_offers")
-        .select("request_id")
-        .eq("provider_id", providerData.provider.id);
-      return data || [];
+      const token = localStorage.getItem("sessionToken");
+      if (!token) return null;
+      const res = await fetch("/api/provider/dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
     },
-    enabled: !!providerData?.provider?.id,
   });
 
-  const submittedRequestIds = new Set(myOffers?.map((o: any) => o.request_id) || []);
+  const { data: requestsData, isLoading } = useQuery({
+    queryKey: ["/api/provider/requests"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const token = localStorage.getItem("sessionToken");
+      if (!token) return { requests: [], submittedRequestIds: [] };
+      const res = await fetch("/api/provider/requests", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return { requests: [], submittedRequestIds: [] };
+      return res.json();
+    },
+  });
+
+  const requests = requestsData?.requests || [];
+  const isProfileComplete = !!dashData?.provider?.company_name;
+  const isApproved = !!dashData?.provider?.approved;
+  const submittedRequestIds = new Set<string>(requestsData?.submittedRequestIds || []);
 
   // ── Filtering ──────────────────────────────────────────────────────────────
 

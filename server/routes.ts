@@ -483,6 +483,34 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Provider: all pending requests + submitted offer IDs (uses supabaseAdmin — bypasses RLS)
+  app.get("/api/provider/requests", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const [{ data: requests }, { data: provider }] = await Promise.all([
+        supabaseAdmin
+          .from("requests")
+          .select("*, properties(id, name, city, address, building_type, map_url, units_count)")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+        supabaseAdmin.from("providers").select("id").eq("user_id", userId).maybeSingle(),
+      ]);
+      const providerId = provider?.id ?? null;
+      const { data: myOffers } = providerId
+        ? await supabaseAdmin
+            .from("provider_offers")
+            .select("request_id")
+            .eq("provider_id", providerId)
+        : { data: [] };
+      res.json({
+        requests: requests || [],
+        submittedRequestIds: (myOffers || []).map((o: any) => o.request_id),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: "Failed to fetch provider requests" });
+    }
+  });
+
   // Service Requests routes
   app.get("/api/requests", requireSession, requireOwner, async (req, res) => {
     try {

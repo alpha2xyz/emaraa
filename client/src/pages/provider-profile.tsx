@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Save, Loader2, Upload, FileText, CheckCircle2, Clock, ChevronRight, ChevronLeft, Lock, AlertTriangle } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,6 +22,7 @@ export default function ProviderProfile() {
     company_name: "",
     email: "",
   });
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
   const [files, setFiles] = useState<{
     commercial_register: File | null;
@@ -265,8 +265,15 @@ export default function ProviderProfile() {
     },
   });
 
+  const isApproved = existingProvider?.provider?.approved ?? false;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isApproved && !awaitingConfirm) {
+      setAwaitingConfirm(true);
+      return;
+    }
+    setAwaitingConfirm(false);
     mutation.mutate();
   };
 
@@ -278,12 +285,20 @@ export default function ProviderProfile() {
       {/* Emerald gradient header strip */}
       <div
         style={{ background: "linear-gradient(135deg, #0E7C66, #0a5e4e)" }}
-        className="py-5 px-4 flex items-center justify-between"
+        className="py-5 px-4 flex items-center gap-3"
       >
-        <h1 className="text-lg font-bold text-white">
+        <button
+          type="button"
+          onClick={() => setLocation("/dashboard/provider")}
+          className="text-white p-1 rounded-lg hover:bg-white/10 flex-shrink-0"
+          aria-label={lang === "ar" ? "رجوع" : "Back"}
+        >
+          {lang === "ar" ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
+        </button>
+        <h1 className="text-lg font-bold text-white flex-1">
           {lang === "ar" ? "ملف الشركة" : "Company Profile"}
         </h1>
-        <div className="text-right">
+        <div className="text-end">
           <div className="text-white font-extrabold text-lg tracking-wide">عِمارة</div>
           <div className="text-white/80 text-xs">
             {lang === "ar" ? "مزود خدمات" : "Service Provider"}
@@ -392,6 +407,12 @@ export default function ProviderProfile() {
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
                 {t.documents}
+                {isApproved && (
+                  <span className="ms-auto flex items-center gap-1 text-xs font-normal text-amber-600">
+                    <Lock className="w-3.5 h-3.5" />
+                    {lang === "ar" ? "مقفل بعد الاعتماد" : "Locked after approval"}
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -399,7 +420,7 @@ export default function ProviderProfile() {
               <div className="space-y-2">
                 <Label htmlFor="commercial_register" className="flex items-center gap-2">
                   {t.commercialRegister}
-                  <span className="text-red-500">*</span>
+                  {!isApproved && <span className="text-red-500">*</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Input
@@ -408,15 +429,23 @@ export default function ProviderProfile() {
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleFileChange("commercial_register", e)}
                     className="hidden"
+                    disabled={isApproved}
                   />
-                  <Label
-                    htmlFor="commercial_register"
-                    className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t.chooseFile}
-                  </Label>
-                  {files.commercial_register ? (
+                  {isApproved ? (
+                    <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
+                      <Lock className="w-4 h-4" />
+                      {lang === "ar" ? "مقفل" : "Locked"}
+                    </span>
+                  ) : (
+                    <Label
+                      htmlFor="commercial_register"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {t.chooseFile}
+                    </Label>
+                  )}
+                  {!isApproved && files.commercial_register ? (
                     <span className="text-sm text-gray-600">{files.commercial_register.name}</span>
                   ) : existingProvider?.provider?.commercial_register_url ? (
                     <span className="text-sm text-green-600 flex items-center gap-1">
@@ -425,14 +454,14 @@ export default function ProviderProfile() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500">{t.fileTypes}</p>
+                {!isApproved && <p className="text-xs text-gray-500">{t.fileTypes}</p>}
               </div>
 
               {/* بروفايل الشركة */}
               <div className="space-y-2">
                 <Label htmlFor="company_profile" className="flex items-center gap-2">
                   {t.companyProfile}
-                  <span className="text-red-500">*</span>
+                  {!isApproved && <span className="text-red-500">*</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Input
@@ -441,15 +470,23 @@ export default function ProviderProfile() {
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleFileChange("company_profile", e)}
                     className="hidden"
+                    disabled={isApproved}
                   />
-                  <Label
-                    htmlFor="company_profile"
-                    className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t.chooseFile}
-                  </Label>
-                  {files.company_profile ? (
+                  {isApproved ? (
+                    <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
+                      <Lock className="w-4 h-4" />
+                      {lang === "ar" ? "مقفل" : "Locked"}
+                    </span>
+                  ) : (
+                    <Label
+                      htmlFor="company_profile"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {t.chooseFile}
+                    </Label>
+                  )}
+                  {!isApproved && files.company_profile ? (
                     <span className="text-sm text-gray-600">{files.company_profile.name}</span>
                   ) : existingProvider?.provider?.company_profile_url ? (
                     <span className="text-sm text-green-600 flex items-center gap-1">
@@ -458,14 +495,14 @@ export default function ProviderProfile() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500">{t.fileTypes}</p>
+                {!isApproved && <p className="text-xs text-gray-500">{t.fileTypes}</p>}
               </div>
 
               {/* رخصة فال */}
               <div className="space-y-2">
                 <Label htmlFor="fal_license" className="flex items-center gap-2">
                   {t.falLicense}
-                  <span className="text-red-500">*</span>
+                  {!isApproved && <span className="text-red-500">*</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Input
@@ -474,15 +511,23 @@ export default function ProviderProfile() {
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleFileChange("fal_license", e)}
                     className="hidden"
+                    disabled={isApproved}
                   />
-                  <Label
-                    htmlFor="fal_license"
-                    className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t.chooseFile}
-                  </Label>
-                  {files.fal_license ? (
+                  {isApproved ? (
+                    <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
+                      <Lock className="w-4 h-4" />
+                      {lang === "ar" ? "مقفل" : "Locked"}
+                    </span>
+                  ) : (
+                    <Label
+                      htmlFor="fal_license"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {t.chooseFile}
+                    </Label>
+                  )}
+                  {!isApproved && files.fal_license ? (
                     <span className="text-sm text-gray-600">{files.fal_license.name}</span>
                   ) : existingProvider?.provider?.fal_license_url ? (
                     <span className="text-sm text-green-600 flex items-center gap-1">
@@ -491,30 +536,74 @@ export default function ProviderProfile() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500">{t.fileTypes}</p>
+                {!isApproved && <p className="text-xs text-gray-500">{t.fileTypes}</p>}
               </div>
             </CardContent>
           </Card>
 
+          {/* Confirmation warning (shown only when editing an approved profile) */}
+          {awaitingConfirm && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4">
+              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900 text-sm mb-1">
+                  {lang === "ar"
+                    ? "ملفك الشخصي معتمد — التعديل يتطلب مراجعة جديدة"
+                    : "Your profile is approved — editing requires re-review"}
+                </p>
+                <p className="text-xs text-gray-600 mb-3">
+                  {lang === "ar"
+                    ? "بعد الحفظ، سيتم إعادة مراجعة حسابك من قِبل الإدارة قبل تفعيله مجدداً."
+                    : "After saving, your account will be re-reviewed by admin before it is reactivated."}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="text-white"
+                    style={{ background: "#C2410C" }}
+                    disabled={mutation.isPending}
+                  >
+                    {mutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      lang === "ar" ? "تأكيد التعديل" : "Confirm Edit"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAwaitingConfirm(false)}
+                  >
+                    {lang === "ar" ? "إلغاء" : "Cancel"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* زر الحفظ */}
-          <Button
-            type="submit"
-            className="w-full text-white"
-            style={{ background: "#0E7C66" }}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? (
-              <>
-                <Loader2 className="w-5 h-5 me-2 animate-spin" />
-                {t.saving}
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5 me-2" />
-                {t.save}
-              </>
-            )}
-          </Button>
+          {!awaitingConfirm && (
+            <Button
+              type="submit"
+              className="w-full text-white"
+              style={{ background: "#0E7C66" }}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="w-5 h-5 me-2 animate-spin" />
+                  {t.saving}
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 me-2" />
+                  {t.save}
+                </>
+              )}
+            </Button>
+          )}
         </form>
       </div>
       </div>
