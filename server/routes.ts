@@ -55,25 +55,20 @@ const authenticaHeaders = {
   "Content-Type": "application/json",
 };
 
-// Middleware: validate session token and attach userId + userRole to req
+// Middleware: validate session token and attach userId + userRole to req (single query)
 async function requireSession(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace("Bearer ", "").trim();
   if (!token) return res.status(401).json({ error: "Unauthorized" });
   const { data, error } = await supabaseAdmin
     .from("sessions")
-    .select("user_id, expires_at")
+    .select("user_id, expires_at, role")
     .eq("token", token)
     .single();
   if (error || !data || new Date(data.expires_at) < new Date()) {
     return res.status(401).json({ error: "Invalid or expired session" });
   }
   (req as any).userId = data.user_id;
-  const { data: user } = await supabaseAdmin
-    .from("users")
-    .select("role")
-    .eq("id", data.user_id)
-    .single();
-  (req as any).userRole = user?.role ?? null;
+  (req as any).userRole = data.role ?? null;
   next();
 }
 
