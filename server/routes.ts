@@ -389,6 +389,60 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   );
 
+  // Save provider profile (insert or update) — uses supabaseAdmin to bypass client-side auth issues
+  app.post("/api/provider/profile", requireSession, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { company_name, email, commercial_register_url, company_profile_url, fal_license_url } = req.body as {
+        company_name: string;
+        email?: string | null;
+        commercial_register_url?: string | null;
+        company_profile_url?: string | null;
+        fal_license_url?: string | null;
+      };
+
+      if (!company_name?.trim()) {
+        return res.status(400).json({ error: "اسم الشركة مطلوب" });
+      }
+
+      const { data: existing } = await supabaseAdmin
+        .from("providers")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await supabaseAdmin
+          .from("providers")
+          .update({
+            company_name: company_name.trim(),
+            email: email || null,
+            ...(commercial_register_url !== undefined && { commercial_register_url }),
+            ...(company_profile_url !== undefined && { company_profile_url }),
+            ...(fal_license_url !== undefined && { fal_license_url }),
+          })
+          .eq("id", existing.id);
+        if (error) return res.status(500).json({ error: error.message });
+      } else {
+        const { error } = await supabaseAdmin.from("providers").insert([{
+          user_id: userId,
+          company_name: company_name.trim(),
+          email: email || null,
+          services: [],
+          other_services: null,
+          commercial_register_url: commercial_register_url || null,
+          company_profile_url: company_profile_url || null,
+          fal_license_url: fal_license_url || null,
+        }]);
+        if (error) return res.status(500).json({ error: error.message });
+      }
+
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message ?? "Server error" });
+    }
+  });
+
   app.get("/api/provider/dashboard", requireSession, async (req, res) => {
     try {
       const userId = (req as any).userId;

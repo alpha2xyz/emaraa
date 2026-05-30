@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Save, Loader2, Upload, FileText, CheckCircle2, Clock } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -23,8 +23,6 @@ export default function ProviderProfile() {
   const [formData, setFormData] = useState({
     company_name: "",
     email: "",
-    city: "",
-    description: "",
   });
 
   const [files, setFiles] = useState<{
@@ -118,8 +116,6 @@ export default function ProviderProfile() {
       setFormData({
         company_name: p.company_name || "",
         email: p.email || "",
-        city: p.city || "",
-        description: p.description || "",
       });
     }
   }, [existingProvider]);
@@ -221,35 +217,25 @@ export default function ProviderProfile() {
         ? await uploadFile(files.fal_license, "fal-licenses")
         : existingProvider?.provider?.fal_license_url || null;
 
-      const profilePayload: any = {
-        user_id: userId,
-        company_name: formData.company_name,
-        email: formData.email || null,
-        city: formData.city,
-        description: formData.description,
-        services: [],
-        other_services: null,
-        commercial_register_url: commercialRegisterPath,
-        company_profile_url: companyProfilePath,
-        fal_license_url: falLicensePath,
-      };
-
-      const existingId = existingProvider?.provider?.id;
-      let dbError;
-      if (existingId) {
-        // Exclude user_id from update payload — it must not change and triggers RLS violations
-        const { user_id: _omit, ...updatePayload } = profilePayload;
-        const { error } = await supabase
-          .from("providers")
-          .update(updatePayload)
-          .eq("id", existingId);
-        dbError = error;
-      } else {
-        const { error } = await supabase.from("providers").insert([profilePayload]);
-        dbError = error;
+      const token = localStorage.getItem("sessionToken");
+      const profileRes = await fetch("/api/provider/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          company_name: formData.company_name,
+          email: formData.email || null,
+          commercial_register_url: commercialRegisterPath,
+          company_profile_url: companyProfilePath,
+          fal_license_url: falLicensePath,
+        }),
+      });
+      if (!profileRes.ok) {
+        const errBody = await profileRes.json().catch(() => ({}));
+        throw new Error((errBody as any).error || "فشل حفظ البيانات");
       }
-
-      if (dbError) throw dbError;
     },
     onSuccess: () => {
       toast({
@@ -304,30 +290,13 @@ export default function ProviderProfile() {
       <div className="p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div
-            className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md"
-            style={{ background: "linear-gradient(135deg, #2E4A6B 0%, #243A56 100%)" }}
-          >
-            {formData.company_name ? (
-              <span className="text-3xl font-extrabold text-white select-none">
-                {formData.company_name.trim().charAt(0).toUpperCase()}
-              </span>
-            ) : (
-              <Building2 className="w-10 h-10 text-white" />
-            )}
-          </div>
-          {formData.company_name && (
-            <p className="text-sm text-gray-500 mb-1">{formData.company_name}</p>
-          )}
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-gray-900">
             {existingProvider?.provider
-              ? lang === "ar"
-                ? "تعديل ملف الشركة"
-                : "Edit Company Profile"
+              ? lang === "ar" ? "تعديل ملف الشركة" : "Edit Company Profile"
               : t.title}
           </h1>
-          <p className="text-gray-600 mt-2">{t.subtitle}</p>
+          <p className="text-gray-500 text-sm mt-1">{t.subtitle}</p>
         </div>
 
         {/* Approval Status Banner */}
@@ -400,39 +369,14 @@ export default function ProviderProfile() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t.email}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t.emailPlaceholder}
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">{t.city}</Label>
-                  <Input
-                    id="city"
-                    type="text"
-                    placeholder={t.cityPlaceholder}
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="description">{t.description}</Label>
-                <Textarea
-                  id="description"
-                  placeholder={t.descriptionPlaceholder}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
-                  required
+                <Label htmlFor="email">{t.email}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder={t.emailPlaceholder}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
             </CardContent>

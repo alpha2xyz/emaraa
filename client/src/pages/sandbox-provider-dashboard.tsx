@@ -230,36 +230,34 @@ export default function SandboxProviderDashboard() {
         </div>
       </div>
 
-      {/* ── Tab bar ── */}
-      <div style={{ background: "#0a5e4e" }}>
-        <div className="max-w-2xl mx-auto flex">
+      {/* ── Tab content ── */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+
+        {/* ── Tab switcher ── */}
+        <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "#DDE4EE" }}>
           <button
             onClick={() => setActiveTab("overview")}
-            className="flex-1 py-3 text-sm font-semibold transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold transition-colors"
             style={
               activeTab === "overview"
-                ? { background: "white", color: "#0E7C66", borderRadius: "0" }
-                : { background: "transparent", color: "white", opacity: 0.75 }
+                ? { background: "#0E7C66", color: "white" }
+                : { background: "white", color: "#6B7280" }
             }
           >
             نظرة عامة
           </button>
           <button
             onClick={() => setActiveTab("offers")}
-            className="flex-1 py-3 text-sm font-semibold transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold transition-colors"
             style={
               activeTab === "offers"
-                ? { background: "white", color: "#0E7C66", borderRadius: "0" }
-                : { background: "transparent", color: "white", opacity: 0.75 }
+                ? { background: "#0E7C66", color: "white" }
+                : { background: "white", color: "#6B7280" }
             }
           >
             عروضي
           </button>
         </div>
-      </div>
-
-      {/* ── Tab content ── */}
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* TAB 1 — نظرة عامة                                              */}

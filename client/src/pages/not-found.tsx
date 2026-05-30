@@ -1,9 +1,9 @@
-import { SearchX } from "lucide-react";
+import { SearchX, Globe } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "@/hooks/use-lang";
 
 export default function NotFound() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
 
   return (
@@ -15,12 +15,17 @@ export default function NotFound() {
         dir="rtl"
       >
         <p className="font-bold text-xl">عِمارة</p>
-        <p
-          className="font-extrabold"
-          style={{ fontSize: "2.5rem", lineHeight: 1, opacity: 0.9 }}
-        >
-          ٤٠٤
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="font-extrabold" style={{ fontSize: "2.5rem", lineHeight: 1, opacity: 0.9 }}>٤٠٤</p>
+          <button
+            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+            className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1"
+            style={{ background: "rgba(255,255,255,0.15)", color: "white" }}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            {lang === "ar" ? "EN" : "ع"}
+          </button>
+        </div>
       </div>
 
       {/* Card */}

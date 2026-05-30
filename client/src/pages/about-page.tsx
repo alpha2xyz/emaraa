@@ -1,26 +1,13 @@
 import { useLang } from "@/hooks/use-lang";
-import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale } from "lucide-react";
+import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale, Globe } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AboutPage() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
-      {/* ── Header strip ── */}
-      <div
-        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
-        className="text-white py-6 px-4 flex items-center justify-between"
-        dir="rtl"
-      >
-        <p className="font-bold text-xl">عِمارة</p>
-        <div className="text-start">
-          <p className="text-xl font-bold">{isRTL ? "من نحن" : "About Us"}</p>
-          <p className="text-sm opacity-75">About Us</p>
-        </div>
-      </div>
-
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#243A56] text-white py-10 px-6 text-center relative overflow-hidden">
         <div
@@ -42,6 +29,14 @@ export default function AboutPage() {
               ? 'إدارة عقارك لا ينبغي أن تبدأ بـ "من يعرف شركة نظافة موثوقة؟" في مجموعة واتساب.'
               : 'Managing your building shouldn\'t start with "does anyone know a reliable cleaning company?" in a WhatsApp group.'}
           </p>
+          <button
+            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+            className="mt-4 inline-flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5"
+            style={{ background: "rgba(255,255,255,0.15)", color: "white" }}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            {lang === "ar" ? "English" : "العربية"}
+          </button>
         </div>
       </div>
 

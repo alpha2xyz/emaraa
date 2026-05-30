@@ -2,9 +2,10 @@ import { Mail, Phone, MapPin, ArrowLeft, ArrowRight, MessageCircle } from "lucid
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "../hooks/use-lang";
+import { Globe } from "lucide-react";
 
 export default function ContactPage() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
   const t =
     lang === "ar"
@@ -69,9 +70,19 @@ export default function ContactPage() {
         dir="rtl"
       >
         <p className="font-bold text-xl">عِمارة</p>
-        <div className="text-start">
-          <p className="text-xl font-bold">{t.title}</p>
-          <p className="text-sm opacity-75">Contact Us</p>
+        <div className="flex items-center gap-3">
+          <div className="text-start">
+            <p className="text-xl font-bold">{t.title}</p>
+            <p className="text-sm opacity-75">Contact Us</p>
+          </div>
+          <button
+            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+            className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1"
+            style={{ background: "rgba(255,255,255,0.15)", color: "white" }}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            {lang === "ar" ? "EN" : "ع"}
+          </button>
         </div>
       </div>
 

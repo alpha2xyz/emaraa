@@ -160,7 +160,10 @@ export default function OwnerOnboarding() {
 
     // Step 1 — validate
     setShowValidation(true);
-    if (!isFormValid) return;
+    if (!isFormValid) {
+      toast({ title: "يرجى إكمال جميع الحقول المطلوبة", variant: "destructive" });
+      return;
+    }
 
     // Step 2 — lock UI
     setIsSubmitting(true);
