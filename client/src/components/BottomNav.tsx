@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/hooks/use-lang";
-import { Home, FileText, Settings, User, Send } from "lucide-react";
+import { Home, FileText, User } from "lucide-react";
 
 export function BottomNav() {
   const [location] = useLocation();
@@ -28,7 +28,6 @@ export function BottomNav() {
       labelAr: "الطلبات",
       labelEn: "Requests",
     },
-    { href: "/dashboard/provider/offers", icon: Send, labelAr: "عروضي", labelEn: "My Offers" },
     { href: "/dashboard/provider/profile", icon: User, labelAr: "الملف", labelEn: "Profile" },
   ];
 

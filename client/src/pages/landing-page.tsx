@@ -12,6 +12,9 @@ import {
   Home,
   Building2,
   CheckCircle2,
+  ShieldCheck,
+  Bell,
+  MapPin,
 } from "lucide-react";
 
 // ── Building illustration ───────────────────────────────────────────────────
@@ -331,7 +334,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* TODO: add social proof strip when real numbers are ready */}
+      {/* ── Trust strip ─────────────────────────────────────────────────── */}
+      <div className="py-6 bg-white border-y border-gray-100">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: "#0E7C66" }} />
+              <span>{lang === "ar" ? "شركات معتمدة" : "Verified Companies"}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Home className="w-5 h-5 flex-shrink-0" style={{ color: "#7D3040" }} />
+              <span>{lang === "ar" ? "مرافق سكنية وتجارية" : "Residential & Commercial"}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "#2E4A6B" }} />
+              <span>{lang === "ar" ? "إشعارات فورية" : "Instant Notifications"}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#C4694A" }} />
+              <span>{lang === "ar" ? "الرياض — الإصدار الأول" : "Riyadh — V1"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── Who benefits ────────────────────────────────────────────────── */}
       <section className="py-20 bg-gray-50">
@@ -425,7 +450,7 @@ export default function LandingPage() {
                   icon: BarChart3,
                   title: t.step3Title,
                   desc: t.step3Desc,
-                  color: "#6B7C5E",
+                  color: "#374151",
                 },
               ].map(({ num, icon: Icon, title, desc, color }) => (
                 <div key={num} className="flex flex-col items-center text-center lg:items-center">
@@ -448,19 +473,22 @@ export default function LandingPage() {
       {/* ── Provider CTA ────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#F9F9FF]">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-sm px-10 py-14 text-center">
-            <Wrench className="w-12 h-12 text-[#6B7C5E] mx-auto mb-6" strokeWidth={1.25} />
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+          <div
+            className="max-w-3xl mx-auto rounded-3xl shadow-md px-10 py-14 text-center"
+            style={{ background: "linear-gradient(135deg, #0E7C66 0%, #0a5e4e 100%)" }}
+          >
+            <Wrench className="w-12 h-12 mx-auto mb-6" style={{ color: "rgba(255,255,255,0.85)" }} strokeWidth={1.25} />
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
               {t.providerCTATitle}
             </h2>
-            <p className="text-base md:text-lg text-gray-500 mb-10 max-w-xl mx-auto">
+            <p className="text-base md:text-lg mb-10 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.8)" }}>
               {t.providerCTADesc}
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link href="/auth?role=provider">
                 <Button
                   size="lg"
-                  className="bg-[#6B7C5E] hover:bg-[#576649] text-white px-10 active:scale-95 transition-transform"
+                  className="bg-white text-[#0E7C66] hover:bg-gray-100 px-10 active:scale-95 transition-transform font-semibold"
                 >
                   <Users className="h-4 w-4 me-2" />
                   {t.joinProvider}
@@ -470,7 +498,8 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-gray-200 text-gray-700 hover:border-[#6B7C5E] hover:text-[#6B7C5E] px-10"
+                  className="px-10 font-semibold"
+                  style={{ borderColor: "rgba(255,255,255,0.5)", color: "white" }}
                 >
                   {t.providerLogin}
                 </Button>

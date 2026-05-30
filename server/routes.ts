@@ -3,7 +3,6 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { createHmac } from "crypto";
 import bcrypt from "bcryptjs";
-import { storage } from "./storage.js";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
@@ -56,7 +55,7 @@ const authenticaHeaders = {
   "Content-Type": "application/json",
 };
 
-// Middleware: validate session token from Authorization header
+// Middleware: validate session token and attach userId + userRole to req
 async function requireSession(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace("Bearer ", "").trim();
   if (!token) return res.status(401).json({ error: "Unauthorized" });
@@ -69,6 +68,26 @@ async function requireSession(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ error: "Invalid or expired session" });
   }
   (req as any).userId = data.user_id;
+  const { data: user } = await supabaseAdmin
+    .from("users")
+    .select("role")
+    .eq("id", data.user_id)
+    .single();
+  (req as any).userRole = user?.role ?? null;
+  next();
+}
+
+function requireOwner(req: Request, res: Response, next: NextFunction) {
+  if ((req as any).userRole !== "owner") {
+    return res.status(403).json({ error: "Owner access required" });
+  }
+  next();
+}
+
+function requireProvider(req: Request, res: Response, next: NextFunction) {
+  if ((req as any).userRole !== "provider") {
+    return res.status(403).json({ error: "Provider access required" });
+  }
   next();
 }
 
@@ -155,7 +174,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Properties routes (requireSession guards all data routes)
-  app.get("/api/properties", requireSession, async (req, res) => {
+  app.get("/api/properties", requireSession, requireOwner, async (req, res) => {
     try {
       const { data, error } = await supabaseAdmin
         .from("properties")
@@ -169,7 +188,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.get("/api/properties/:id", requireSession, async (req, res) => {
+  app.get("/api/properties/:id", requireSession, requireOwner, async (req, res) => {
     try {
       const { data: property, error } = await supabaseAdmin
         .from("properties")
@@ -185,7 +204,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/properties", requireSession, async (req, res) => {
+  app.post("/api/properties", requireSession, requireOwner, async (req, res) => {
     try {
       const { count: propertyCount } = await supabaseAdmin
         .from("properties")
@@ -212,7 +231,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.put("/api/properties/:id", requireSession, async (req, res) => {
+  app.put("/api/properties/:id", requireSession, requireOwner, async (req, res) => {
     try {
       const { data: existing, error: fetchError } = await supabaseAdmin
         .from("properties")
@@ -248,7 +267,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/properties/:id", requireSession, async (req, res) => {
+  app.delete("/api/properties/:id", requireSession, requireOwner, async (req, res) => {
     try {
       const { data: property, error: fetchError } = await supabaseAdmin
         .from("properties")
@@ -269,7 +288,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Owner stats — dashboard summary
-  app.get("/api/owner/stats", requireSession, async (req, res) => {
+  app.get("/api/owner/stats", requireSession, requireOwner, async (req, res) => {
     try {
       const userId = (req as any).userId;
       const [{ data: properties }, { data: requests }] = await Promise.all([
@@ -286,6 +305,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post(
     "/api/upload/provider-document",
     requireSession,
+    requireProvider,
     (req, res, next) => {
       // Apply raw body parser only for this route to avoid breaking JSON routes
       // Limit matches server-side cap (10MB) with a small buffer for request overhead
@@ -364,6 +384,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post(
     "/api/upload/offer-document",
     requireSession,
+    requireProvider,
     (req, res, next) => {
       express.raw({ type: "*/*", limit: "11mb" })(req, res, next);
     },
@@ -390,7 +411,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   );
 
   // Save provider profile (insert or update) — uses supabaseAdmin to bypass client-side auth issues
-  app.post("/api/provider/profile", requireSession, async (req, res) => {
+  app.post("/api/provider/profile", requireSession, requireProvider, async (req, res) => {
     try {
       const userId = (req as any).userId as string;
       const { company_name, email, commercial_register_url, company_profile_url, fal_license_url } = req.body as {
@@ -443,7 +464,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.get("/api/provider/dashboard", requireSession, async (req, res) => {
+  app.get("/api/provider/dashboard", requireSession, requireProvider, async (req, res) => {
     try {
       const userId = (req as any).userId;
       const [{ data: user }, { data: provider }, { data: availableRequests }] = await Promise.all([
@@ -470,7 +491,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Service Requests routes
-  app.get("/api/requests", requireSession, async (req, res) => {
+  app.get("/api/requests", requireSession, requireOwner, async (req, res) => {
     try {
       const { data, error } = await supabaseAdmin
         .from("requests")
@@ -484,7 +505,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.get("/api/requests/:id", requireSession, async (req, res) => {
+  app.get("/api/requests/:id", requireSession, requireOwner, async (req, res) => {
     try {
       const { data: request, error } = await supabaseAdmin
         .from("requests")
@@ -500,7 +521,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/requests", requireSession, async (req, res) => {
+  app.post("/api/requests", requireSession, requireOwner, async (req, res) => {
     try {
       const { property_id } = req.body;
       if (!property_id) {
@@ -537,7 +558,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/requests/:id", requireSession, async (req, res) => {
+  app.patch("/api/requests/:id", requireSession, requireOwner, async (req, res) => {
     try {
       const { data: existing, error: fetchError } = await supabaseAdmin
         .from("requests")
@@ -571,7 +592,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/requests/:id", requireSession, async (req, res) => {
+  app.delete("/api/requests/:id", requireSession, requireOwner, async (req, res) => {
     try {
       const { data: request, error: fetchError } = await supabaseAdmin
         .from("requests")
@@ -592,7 +613,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Offer status — accept or reject an offer (server-enforced ownership check)
-  app.patch("/api/offers/:id/status", requireSession, async (req, res) => {
+  app.patch("/api/offers/:id/status", requireSession, requireOwner, async (req, res) => {
     try {
       const { status } = req.body;
       if (!["accepted", "rejected"].includes(status)) {
@@ -656,7 +677,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   }
 
   // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
-  app.post("/api/sms/offer-submitted", requireSession, async (req, res) => {
+  app.post("/api/sms/offer-submitted", requireSession, requireProvider, async (req, res) => {
     try {
       const { offerId } = req.body;
       if (!offerId) return res.status(400).json({ error: "offerId required" });
@@ -710,7 +731,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // SMS — notify all approved Riyadh providers when a new request is posted
-  app.post("/api/sms/new-request", requireSession, async (req, res) => {
+  app.post("/api/sms/new-request", requireSession, requireOwner, async (req, res) => {
     try {
       const { requestId } = req.body;
       if (!requestId) return res.status(400).json({ error: "requestId required" });
