@@ -449,8 +449,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           user_id: userId,
           company_name: company_name.trim(),
           email: email || null,
-          services: [],
-          other_services: null,
           commercial_register_url: commercial_register_url || null,
           company_profile_url: company_profile_url || null,
           fal_license_url: fal_license_url || null,
