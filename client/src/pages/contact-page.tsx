@@ -61,7 +61,21 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Header strip */}
+      <div
+        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        className="text-white py-6 px-4 flex items-center justify-between"
+        dir="rtl"
+      >
+        <p className="font-bold text-xl">عِمارة</p>
+        <div className="text-start">
+          <p className="text-xl font-bold">{t.title}</p>
+          <p className="text-sm opacity-75">Contact Us</p>
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-6">
       <div className="max-w-2xl mx-auto">
         <Link href="/">
           <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#2E4A6B] mb-6 transition-colors">
@@ -69,7 +83,6 @@ export default function ContactPage() {
             {t.back}
           </button>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.title}</h1>
         <p className="text-gray-600 mb-8">{t.subtitle}</p>
         <div className="space-y-4">
           {contacts.map(({ icon: Icon, label, value, href, external }) => (
@@ -92,6 +105,7 @@ export default function ContactPage() {
             </Card>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

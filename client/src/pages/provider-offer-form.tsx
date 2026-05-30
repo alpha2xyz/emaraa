@@ -14,7 +14,6 @@ import {
   Building2,
   AlertCircle,
   Send,
-  ClipboardList,
   MapPin,
   ExternalLink,
 } from "lucide-react";
@@ -64,38 +63,9 @@ export default function ProviderOfferForm() {
       errorFileSize: "حجم الملف كبير جداً (الحد الأقصى 10MB)",
       errorFileType: "يجب أن يكون الملف بصيغة PDF",
       loading: "جاري التحميل...",
-      scopeTitle: "نطاق الخدمات المطلوبة",
-      scopeText: `نرجو تقديم عرض سعر شامل للخدمات التالية:
-
-1. خدمات النظافة: تنظيف المناطق المشتركة يومياً، تنظيف الأسطح والخزانات بشكل دوري، جمع النفايات ونقلها بشكل يومي، تنظيف النوافذ والواجهات وقت الحاجة.
-
-2. خدمات الصيانة (وقت الحاجة والمتابعة بشكل دوري): صيانة الإنارة والكهرباء، صيانة المضخات والخزانات، صيانة الأبواب والمصاعد، متابعة كاميرات المراقبة.
-
-3. أعمال أخرى: رش المبيدات الحشرية، أعمال الزراعة والبستنة (وقت الحاجة وإن وجد أو طلب).
-
-4. خدمة التواصل للطوارئ على مدار الساعة.
-
-5. تسديد فواتير المرافق للمناطق المشتركة.
-
-6. توضيح أيام الاجازات والية العمل في فترات الأعياد والمناسبات الوطنية.
-
-**متطلبات العرض:** يجب أن يتضمن العرض المقدم ما يلي: تفصيل كامل للخدمات، السعر يقسم لكل وحدة سكنية وإجمالي العقد شاملاً الضريبة، وشروط الدفع، السجل التجاري وشهادات الاعتماد، مراجع من عملاء سابقين أو البورتوفوليو. تكون مدة العقد سنة وقابل للتجديد لمدد مماثلة.`,
+      scopePart1: "نظافة دورية للمناطق المشتركة والمداخل والأسطح والخزانات وإدارة النفايات، صيانة شاملة للإنارة والمضخات والتكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.",
+      scopePart2: "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، لمدة سنة قابلة للتجديد.",
       alreadySubmitted: "لقد قدمت عرضاً لهذا الطلب مسبقاً ولا يمكن تقديم أكثر من عرض واحد",
-      commercialScopeText: `نرجو تقديم عرض سعر شامل للخدمات التالية:
-
-1. خدمات النظافة: تنظيف المداخل والردهات يومياً، تنظيف الأدوار والمواقف والمرافق العامة، جمع النفايات ونقلها، تنظيف الواجهات عند الحاجة.
-
-2. خدمات الصيانة: صيانة أنظمة التكييف المركزي (HVAC)، صيانة المصاعد والسلالم المتحركة، متابعة منظومة الإطفاء والكاميرات، صيانة الإنارة والكهرباء.
-
-3. أعمال أخرى: رش المبيدات الحشرية، أعمال البستنة (إن وجدت)، إدارة مواقف السيارات (إن طُلب).
-
-4. خدمة الطوارئ على مدار الساعة لجميع الأعطال الحرجة.
-
-5. تسديد فواتير المرافق للمناطق المشتركة.
-
-6. توضيح آلية العمل في الإجازات والمناسبات الوطنية.
-
-**متطلبات العرض:** تفصيل كامل للخدمات، السعر لكل طابق أو وحدة تجارية وإجمالي العقد شاملاً الضريبة، شروط الدفع، السجل التجاري وشهادات الاعتماد، مراجع من عملاء تجاريين سابقين أو بورتفوليو لمشاريع مماثلة. مدة العقد سنة وقابل للتجديد.`,
       buildingType: "نوع المبنى",
       commercial: "تجاري",
       residential: "سكني",
@@ -133,39 +103,10 @@ export default function ProviderOfferForm() {
       errorFileSize: "File size is too large (max 10MB)",
       errorFileType: "File must be in PDF format",
       loading: "Loading...",
-      scopeTitle: "Scope of Services Required",
-      scopeText: `Please provide a comprehensive price quote for the following services:
-
-1. Cleaning Services: Daily cleaning of common areas, periodic cleaning of roofs and tanks, daily waste collection and removal, and window and facade cleaning as needed.
-
-2. Maintenance Services (as needed and on a regular basis): Lighting and electrical maintenance, pump and tank maintenance, door and elevator maintenance, and monitoring of security cameras.
-
-3. Other Services: Pest control, landscaping and gardening (as needed, if required, or upon request).
-
-4. 24/7 Emergency Contact Service.
-
-5. Payment of utility bills for common areas.
-
-6. Clear description of holidays and work procedures during national holidays and special occasions.
-
-**Proposal Requirements:** The submitted proposal must include the following: a full breakdown of services, the price per residential unit, the total contract amount including tax, payment terms, commercial registration and certifications, and references from previous clients or a portfolio. The contract term is one year and is renewable for similar periods.`,
+      scopePart1: "Periodic cleaning of common areas, entrances, rooftops, tanks, and waste management; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency response; utility bill payments; with clarification of holiday and national occasion work procedures.",
+      scopePart2: "Proposal requirements: detailed services and per-unit pricing plus total contract amount including VAT and payment terms, for a one-year renewable term.",
       alreadySubmitted:
         "You have already submitted an offer for this request. Only one offer per request is allowed.",
-      commercialScopeText: `Please provide a comprehensive price quote for the following services:
-
-1. Cleaning Services: Daily cleaning of entrances and lobbies, cleaning of floors, parking areas, and common facilities, daily waste collection and removal, facade cleaning as needed.
-
-2. Maintenance Services: Central HVAC system maintenance, elevator and escalator maintenance, fire suppression and camera monitoring, lighting and electrical maintenance.
-
-3. Other Services: Pest control, landscaping (if applicable), parking management (if requested).
-
-4. 24/7 emergency service for all critical faults.
-
-5. Payment of utility bills for common areas.
-
-6. Clear description of work procedures during holidays and national occasions.
-
-**Proposal Requirements:** Full service breakdown, per-floor or per-commercial-unit pricing plus total contract amount including VAT, payment terms, commercial registration and certifications, references from previous commercial clients or a portfolio of similar projects. Contract term is one year, renewable.`,
       buildingType: "Building Type",
       commercial: "Commercial",
       residential: "Residential",
@@ -382,8 +323,46 @@ export default function ProviderOfferForm() {
     );
   }
 
+  const buildingType = request?.properties?.building_type;
+  const buildingChipStyle =
+    buildingType === "commercial"
+      ? { background: "#FDF3EF", color: "#C4694A" }
+      : { background: "#FDF0F2", color: "#7D3040" };
+  const buildingLabel =
+    buildingType === "commercial"
+      ? lang === "ar"
+        ? "تجاري"
+        : "Commercial"
+      : lang === "ar"
+        ? "سكني"
+        : "Residential";
+
   return (
     <div className="min-h-screen bg-[#F9F9FF]" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* Emerald gradient header strip */}
+      <div
+        style={{ background: "linear-gradient(135deg, #0E7C66, #0a5e4e)" }}
+        className="py-5 px-4 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-2">
+          {request?.properties?.name && (
+            <span className="text-white font-bold text-lg">{request.properties.name}</span>
+          )}
+          {buildingType && (
+            <span
+              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={buildingChipStyle}
+            >
+              {buildingLabel}
+            </span>
+          )}
+        </div>
+        <div className="text-right">
+          <div className="text-white font-extrabold text-lg tracking-wide">عِمارة</div>
+          <div className="text-white/80 text-xs">{t.title}</div>
+        </div>
+      </div>
+
       <div className="container mx-auto p-4 max-w-4xl py-8">
         <Button
           variant="ghost"
@@ -397,11 +376,6 @@ export default function ProviderOfferForm() {
           )}
           {t.back}
         </Button>
-
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">{t.title}</h1>
-          <p className="text-muted-foreground mt-2">{t.subtitle}</p>
-        </div>
 
         {/* Issue 3: early approval gate banner */}
         {isNotApproved && (
@@ -441,21 +415,13 @@ export default function ProviderOfferForm() {
           </div>
         )}
 
-        {/* Scope of services */}
+        {/* Scope of services — unified read-only card */}
         <div
-          className={`mb-6 rounded-2xl border-s-4 p-6 ${request.properties?.building_type === "commercial" ? "border-[#C4694A] bg-[#FDF3EF]/60" : "border-[#7D3040] bg-[#FDF0F2]/60"}`}
+          className="mb-6 rounded-xl border p-4 text-sm"
+          style={{ background: "#F9F9FF", borderColor: "#DDE4EE" }}
         >
-          <div
-            className={`flex items-center gap-2 font-bold mb-3 ${request.properties?.building_type === "commercial" ? "text-[#5A2D1E]" : "text-[#5A2030]"}`}
-          >
-            <ClipboardList className="w-5 h-5" />
-            {t.scopeTitle}
-          </div>
-          <div className="whitespace-pre-line text-sm text-gray-800 leading-relaxed">
-            {request.properties?.building_type === "commercial"
-              ? t.commercialScopeText
-              : t.scopeText}
-          </div>
+          <p className="text-gray-800 leading-relaxed mb-3">{t.scopePart1}</p>
+          <p className="text-gray-700 leading-relaxed font-medium">{t.scopePart2}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -616,7 +582,8 @@ export default function ProviderOfferForm() {
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
+                    className="flex-1 text-white"
+                    style={{ background: "#0E7C66" }}
                     disabled={
                       mutation.isPending ||
                       !offerFile ||

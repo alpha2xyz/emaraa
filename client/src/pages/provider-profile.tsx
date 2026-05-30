@@ -282,9 +282,26 @@ export default function ProviderProfile() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
+      className="page-enter min-h-screen bg-[#F9F9FF]"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
+      {/* Emerald gradient header strip */}
+      <div
+        style={{ background: "linear-gradient(135deg, #0E7C66, #0a5e4e)" }}
+        className="py-5 px-4 flex items-center justify-between"
+      >
+        <h1 className="text-lg font-bold text-white">
+          {lang === "ar" ? "ملف الشركة" : "Company Profile"}
+        </h1>
+        <div className="text-right">
+          <div className="text-white font-extrabold text-lg tracking-wide">عِمارة</div>
+          <div className="text-white/80 text-xs">
+            {lang === "ar" ? "مزود خدمات" : "Service Provider"}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -534,7 +551,8 @@ export default function ProviderProfile() {
           {/* زر الحفظ */}
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white"
+            className="w-full text-white"
+            style={{ background: "#0E7C66" }}
             disabled={mutation.isPending}
           >
             {mutation.isPending ? (
@@ -550,6 +568,7 @@ export default function ProviderProfile() {
             )}
           </Button>
         </form>
+      </div>
       </div>
     </div>
   );

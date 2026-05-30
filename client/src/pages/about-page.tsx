@@ -8,8 +8,21 @@ export default function AboutPage() {
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+      {/* ── Header strip ── */}
+      <div
+        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        className="text-white py-6 px-4 flex items-center justify-between"
+        dir="rtl"
+      >
+        <p className="font-bold text-xl">عِمارة</p>
+        <div className="text-start">
+          <p className="text-xl font-bold">{isRTL ? "من نحن" : "About Us"}</p>
+          <p className="text-sm opacity-75">About Us</p>
+        </div>
+      </div>
+
       {/* ── Hero ── */}
-      <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#3A6A9E] text-white py-10 px-6 text-center relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#243A56] text-white py-10 px-6 text-center relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-5"
           style={{

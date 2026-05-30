@@ -347,6 +347,7 @@ export default function AuthPage() {
                         }}
                         maxLength={25}
                         className={`rounded-xl text-base ${validationErrors.name ? "border-red-500" : ""}`}
+                        style={{ backgroundColor: isProvider ? "#E8F5F2" : "#EEF2F7" }}
                       />
                       {validationErrors.name && (
                         <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -371,6 +372,7 @@ export default function AuthPage() {
                       }}
                       maxLength={10}
                       className={`rounded-xl text-base ${validationErrors.phone ? "border-red-500" : ""}`}
+                      style={{ backgroundColor: isProvider ? "#E8F5F2" : "#EEF2F7" }}
                     />
                     {validationErrors.phone && (
                       <div className="flex items-center gap-2 text-red-600 text-sm">

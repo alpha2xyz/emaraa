@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Settings as SettingsIcon, User, Save, Loader2, Building2 } from "lucide-react";
+import { User, Save, Loader2, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,16 +126,29 @@ export default function Settings() {
     onError: () => toast({ title: t.error, variant: "destructive" }),
   });
 
+  const headerGradient =
+    userRole === "provider"
+      ? "linear-gradient(135deg, #0E7C66, #0a5e4e)"
+      : "linear-gradient(135deg, #2E4A6B, #243A56)";
+
+  const brandColor = userRole === "provider" ? "#0E7C66" : "#2E4A6B";
+
   return (
     <div
-      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6"
+      className="page-enter min-h-screen bg-[#F9F9FF]"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
+      {/* Role-aware gradient header strip */}
+      <div
+        style={{ background: headerGradient }}
+        className="py-5 px-4 flex items-center justify-between"
+      >
+        <h1 className="text-xl font-bold text-white">{t.title}</h1>
+        <span className="text-white font-extrabold text-lg tracking-wide">عِمارة</span>
+      </div>
+
+      <div className="p-4 sm:p-6">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <SettingsIcon className="w-8 h-8 text-gray-700" />
-          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
-        </div>
         <p className="text-gray-600">{t.subtitle}</p>
       </div>
 
@@ -228,7 +241,8 @@ export default function Settings() {
                 setNameError("");
                 mutation.mutate();
               }}
-              className="bg-[#2E4A6B] hover:bg-[#243A56] text-white"
+              className="text-white"
+              style={{ background: brandColor }}
               disabled={mutation.isPending || isLoading}
             >
               {mutation.isPending ? (
@@ -246,6 +260,7 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

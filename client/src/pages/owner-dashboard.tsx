@@ -441,59 +441,57 @@ export default function OwnerDashboard() {
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
-        {/* ── Greeting header ── */}
-        <div>
-          <p className="text-sm text-gray-900">
-            {lang === "ar"
-              ? `أهلاً${userName ? `، ${userName}` : ""}`
-              : `Hello${userName ? `, ${userName}` : ""}`}
-          </p>
-          {property && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {property.name && (
-                <span
-                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border"
-                  style={{ background: "#EEF2F7", borderColor: "#C8D8E8", color: "#2E4A6B" }}
-                >
-                  <Building2 className="w-3 h-3" />
-                  {property.name}
-                </span>
-              )}
-              {property.address && (
-                <span
-                  className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border"
-                  style={{ background: "#F3F4F6", borderColor: "#E5E7EB", color: "#6B7280" }}
-                >
-                  {property.address}
-                </span>
-              )}
-              {property.city && (
-                <span
-                  className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border"
-                  style={{ background: "#F3F4F6", borderColor: "#E5E7EB", color: "#6B7280" }}
-                >
-                  {property.city}
-                </span>
-              )}
-              {property.building_type && (
-                <span
-                  className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border"
-                  style={
-                    property.building_type === "residential"
-                      ? { background: "#FDF0F2", borderColor: "#C9929E", color: "#7D3040" }
-                      : { background: "#FDF3EF", borderColor: "#E8B49E", color: "#C4694A" }
-                  }
-                >
-                  {property.building_type === "residential"
-                    ? lang === "ar" ? "سكني" : "Residential"
-                    : lang === "ar" ? "تجاري" : "Commercial"}
-                </span>
-              )}
-            </div>
-          )}
+      {/* ── Navy gradient header strip ── */}
+      <div
+        className="w-full py-5 px-4"
+        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+      >
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+          {/* Right side (first child in RTL): wordmark + sub-label */}
+          <div>
+            <p className="font-bold text-lg text-white leading-tight">عِمارة</p>
+            <p className="text-sm text-white" style={{ opacity: 0.75 }}>لوحة المالك</p>
+          </div>
+
+          {/* Left side (second child in RTL): greeting + chips */}
+          <div className="flex flex-col items-end gap-1.5">
+            <p className="text-base font-semibold text-white leading-tight">
+              {lang === "ar"
+                ? `أهلاً${userName ? `، ${userName}` : ""}`
+                : `Hello${userName ? `, ${userName}` : ""}`}
+            </p>
+            {property && (
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                {property.building_type && (
+                  <span
+                    className="inline-flex items-center text-xs rounded-full px-2 py-0.5 font-medium"
+                    style={
+                      property.building_type === "residential"
+                        ? { background: "#FDF0F2", color: "#7D3040" }
+                        : { background: "#FDF3EF", color: "#C4694A" }
+                    }
+                  >
+                    {property.building_type === "residential"
+                      ? lang === "ar" ? "سكني" : "Residential"
+                      : lang === "ar" ? "تجاري" : "Commercial"}
+                  </span>
+                )}
+                {property.city && (
+                  <span
+                    className="inline-flex items-center text-xs rounded-full px-2 py-0.5 text-white"
+                    style={{ background: "rgba(255,255,255,0.10)" }}
+                  >
+                    {property.city}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
         {/* ══════════════════════════════════════════════════
             SECTION 1 — Property + Service Request (merged)
@@ -838,8 +836,8 @@ export default function OwnerDashboard() {
             </span>
             {offersList.length > 0 && (
               <span
-                className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-xs font-bold"
-                style={{ background: "#0E7C66" }}
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold"
+                style={{ background: "#EEF2F7", color: "#2E4A6B", border: "1px solid #2E4A6B" }}
               >
                 {offersList.length}
               </span>

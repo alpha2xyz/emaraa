@@ -60,17 +60,10 @@ import AboutPage from "@/pages/about-page";
 
 // Auth-gated pages — lazy loaded (split into separate chunks)
 const OwnerDashboard = React.lazy(() => import("@/pages/owner-dashboard"));
-const Properties = React.lazy(() => import("@/pages/properties"));
-const PropertyForm = React.lazy(() => import("@/pages/property-form"));
-const Requests = React.lazy(() => import("@/pages/requests"));
-const RequestForm = React.lazy(() => import("@/pages/request-form"));
-const OwnerOffersPage = React.lazy(() => import("@/pages/owner-offers-page"));
-
 const ProviderDashboard = React.lazy(() => import("@/pages/provider-dashboard"));
 const ProviderRequests = React.lazy(() => import("@/pages/provider-requests"));
 const ProviderOfferForm = React.lazy(() => import("@/pages/provider-offer-form"));
 const ProviderProfile = React.lazy(() => import("@/pages/provider-profile"));
-const ProviderOffers = React.lazy(() => import("@/pages/provider-offers"));
 
 const Settings = React.lazy(() => import("@/pages/settings"));
 const OwnerOnboarding = React.lazy(() => import("@/pages/owner-onboarding"));
@@ -82,6 +75,7 @@ const AdminAuth = React.lazy(() => import("@/pages/admin-auth"));
 // ── Sandbox pages (no auth, visual preview only) ───────────────────────────
 const SandboxOwnerOnboarding = React.lazy(() => import("@/pages/sandbox-owner-onboarding"));
 const SandboxProviderRequests = React.lazy(() => import("@/pages/sandbox-provider-requests"));
+const SandboxProviderDashboard = React.lazy(() => import("@/pages/sandbox-provider-dashboard"));
 
 // ── Shared Dashboard Shell ─────────────────────────────────────────────────
 function DashboardLayout({
@@ -155,45 +149,10 @@ function Router() {
             <OwnerDashboard />
           </DashboardLayout>
         </Route>
-        <Route path="/dashboard/owner/properties">
-          <DashboardLayout role="owner">
-            <Properties />
-          </DashboardLayout>
-        </Route>
         <Route path="/dashboard/owner/onboarding">
-          <DashboardLayout role="owner">
+          <RequireAuth role="owner">
             <OwnerOnboarding />
-          </DashboardLayout>
-        </Route>
-        <Route path="/dashboard/owner/properties/new">
-          <DashboardLayout role="owner">
-            <PropertyForm />
-          </DashboardLayout>
-        </Route>
-        <Route path="/dashboard/owner/properties/:id/edit">
-          <DashboardLayout role="owner">
-            <PropertyForm />
-          </DashboardLayout>
-        </Route>
-        <Route path="/dashboard/owner/requests">
-          <DashboardLayout role="owner">
-            <Requests />
-          </DashboardLayout>
-        </Route>
-        <Route path="/dashboard/owner/requests/new">
-          <DashboardLayout role="owner">
-            <RequestForm />
-          </DashboardLayout>
-        </Route>
-        <Route path="/dashboard/owner/requests/:id/edit">
-          <DashboardLayout role="owner">
-            <RequestForm />
-          </DashboardLayout>
-        </Route>
-        <Route path="/dashboard/owner/requests/:id/offers">
-          <DashboardLayout role="owner">
-            <OwnerOffersPage />
-          </DashboardLayout>
+          </RequireAuth>
         </Route>
         <Route path="/dashboard/owner/settings">
           <DashboardLayout role="owner">
@@ -222,15 +181,11 @@ function Router() {
             <ProviderProfile />
           </DashboardLayout>
         </Route>
-        <Route path="/dashboard/provider/offers">
-          <DashboardLayout role="provider">
-            <ProviderOffers />
-          </DashboardLayout>
-        </Route>
 
         {/* ── Sandbox (no auth, visual preview only) ──────────────────── */}
         <Route path="/sandbox/owner-onboarding" component={SandboxOwnerOnboarding} />
         <Route path="/sandbox/provider-requests" component={SandboxProviderRequests} />
+        <Route path="/sandbox/provider-dashboard" component={SandboxProviderDashboard} />
 
         {/* ── 404 ─────────────────────────────────────────────────────── */}
         <Route component={NotFound} />

@@ -22,13 +22,22 @@ import { Input } from "@/components/ui/input";
 import { useLang } from "@/hooks/use-lang";
 import { supabase } from "../lib/supabase";
 
+// ---------------------------------------------------------------------------
+// Unified SOW — same text for both building types (LOCKED — do not change)
+// ---------------------------------------------------------------------------
+
+const UNIFIED_SCOPE_PART1 =
+  "نظافة دورية للمناطق المشتركة والمداخل والأسطح والخزانات وإدارة النفايات، صيانة شاملة للإنارة والمضخات والتكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.";
+
+const UNIFIED_SCOPE_PART2 =
+  "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، لمدة سنة قابلة للتجديد.";
+
 export default function ProviderRequests() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [cityFilter, setCityFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all"); // Issue 7
+  const [typeFilter, setTypeFilter] = useState("all");
 
   const content = {
     ar: {
@@ -36,68 +45,54 @@ export default function ProviderRequests() {
       subtitle: "تصفح جميع الطلبات المتاحة وقدم عروضك",
       search: "بحث عن طلب...",
       all: "الكل",
-      property: "العقار",
-      city: "المدينة",
-      address: "العنوان",
       units: "وحدة",
-      viewMap: "عرض الموقع",
-      scopeTitle: "نطاق الخدمات المطلوبة",
-      scopeShort:
-        "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية. | متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
-      commercialScopeShort:
-        "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق. | متطلبات العرض: السعر لكل طابق أو وحدة تجارية، إجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
+      viewMap: "عرض الموقع على الخريطة",
       commercialBadge: "تجاري",
       residentialBadge: "سكني",
-      description: "الوصف",
-      date: "تاريخ الإنشاء",
+      ownerNotes: "ملاحظات المالك:",
       submitOffer: "تقديم عرض",
+      offerSubmitted: "تم تقديم العرض",
       noRequests: "لا توجد طلبات متاحة",
       noResults: "لا توجد نتائج للبحث",
-      loading: "جاري التحميل...",
       searchAndFilter: "البحث والفلترة",
       clearFilters: "إعادة تعيين",
       results: "نتيجة",
-      completeProfile: "أكمل ملف شركتك أولاً",
       completeNow: "إكمال الآن",
       filterByType: "النوع",
       teaserBanner: "أكمل ملفك الشخصي للاطلاع على تفاصيل الطلبات وتقديم عروضك",
       teaserRequestsAvailable: "طلبات متاحة",
+      scopeShort:
+        "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
     },
     en: {
       title: "Available Requests",
       subtitle: "Browse all available requests and submit your offers",
       search: "Search for a request...",
       all: "All",
-      property: "Property",
-      city: "City",
-      address: "Address",
       units: "units",
-      viewMap: "View Location",
-      scopeTitle: "Scope of Services Required",
-      scopeShort:
-        "Daily cleaning of common areas, rooftops, tanks, and waste removal; periodic maintenance of lighting, pumps, elevators, and cameras; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions. | Proposal Requirements: Full service breakdown with per-unit and total contract pricing inclusive of VAT, payment terms, commercial registration, accreditations, and client references or portfolio, for a one-year renewable contract.",
-      commercialScopeShort:
-        "Full cleaning of entrances, lobbies, floors, parking, and common areas; maintenance of central HVAC systems, elevators, escalators, cameras, and fire suppression systems; waste management; 24/7 emergencies; utility bill payments. | Proposal Requirements: Per-floor or per-commercial-unit pricing, total including VAT, commercial registration, accreditations, and references for similar commercial projects. One-year renewable.",
+      viewMap: "View on Map",
       commercialBadge: "Commercial",
       residentialBadge: "Residential",
-      description: "Description",
-      date: "Created Date",
+      ownerNotes: "Owner Notes:",
       submitOffer: "Submit Offer",
+      offerSubmitted: "Offer Submitted",
       noRequests: "No requests available",
       noResults: "No results found",
-      loading: "Loading...",
       searchAndFilter: "Search & Filter",
       clearFilters: "Clear Filters",
       results: "results",
-      completeProfile: "Complete Your Company Profile First",
       completeNow: "Complete Now",
       filterByType: "Type",
       teaserBanner: "Complete your profile to view request details and submit offers",
       teaserRequestsAvailable: "requests available",
+      scopeShort:
+        "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
     },
   };
 
   const t = content[lang];
+
+  // ── Real Supabase queries ──────────────────────────────────────────────────
 
   const { data: providerData } = useQuery({
     queryKey: ["/api/provider/profile"],
@@ -149,6 +144,7 @@ export default function ProviderRequests() {
     providerData.provider.commercial_register_url &&
     providerData.provider.company_profile_url &&
     providerData.provider.fal_license_url;
+
   const isApproved = providerData?.provider?.approved;
 
   const { data: myOffers } = useQuery({
@@ -167,6 +163,8 @@ export default function ProviderRequests() {
 
   const submittedRequestIds = new Set(myOffers?.map((o: any) => o.request_id) || []);
 
+  // ── Filtering ──────────────────────────────────────────────────────────────
+
   const filteredRequests = requests?.filter((request: any) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
@@ -174,15 +172,12 @@ export default function ProviderRequests() {
       request.properties?.name?.toLowerCase().includes(searchLower) ||
       request.properties?.city?.toLowerCase().includes(searchLower) ||
       request.description?.toLowerCase().includes(searchLower);
-    const matchesCity = cityFilter === "all" || request.properties?.city === cityFilter;
-    // Issue 7: type filter
-    const matchesType = typeFilter === "all" || request.properties?.building_type === typeFilter;
-    return matchesSearch && matchesCity && matchesType;
+    const matchesType =
+      typeFilter === "all" || request.properties?.building_type === typeFilter;
+    return matchesSearch && matchesType;
   });
 
-  const availableCities = Array.from(
-    new Set(requests?.map((r: any) => r.properties?.city).filter(Boolean))
-  );
+  const hasActiveFilters = searchQuery || typeFilter !== "all";
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -195,324 +190,352 @@ export default function ProviderRequests() {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setCityFilter("all");
     setTypeFilter("all");
   };
 
-  const hasActiveFilters = searchQuery || cityFilter !== "all" || typeFilter !== "all";
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div
-      className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6 space-y-6"
+      className="page-enter min-h-screen bg-[#F9F9FF]"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
-      <div>
-        <h1 className="text-3xl font-extrabold">{t.title}</h1>
-        <p className="text-muted-foreground mt-2">{t.subtitle}</p>
+      {/* ── Gradient header ── */}
+      <div
+        className="px-6 pt-7 pb-6 text-white -mx-4 sm:-mx-6 -mt-4 sm:-mt-6"
+        style={{
+          background: "linear-gradient(135deg, #0E7C66 0%, #0a5e4e 100%)",
+        }}
+      >
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-1">{t.title}</h1>
+          <p className="text-sm" style={{ opacity: 0.78 }}>
+            {t.subtitle}
+          </p>
+        </div>
       </div>
 
-      {!isProfileComplete && (
-        <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-5 py-4">
-          <Lock className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">{t.teaserBanner}</h3>
-            <Button
-              size="sm"
-              onClick={() => setLocation("/dashboard/provider/profile")}
-              className="bg-orange-600 hover:bg-orange-700 mt-2"
-            >
-              <Package className="h-4 w-4 me-2" />
-              {t.completeNow}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-extrabold">
-            <Filter className="h-5 w-5" />
-            {t.searchAndFilter}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="relative">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t.search}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-9"
-            />
-          </div>
-
-          {/* Issue 7: building type filter pills */}
-          <div>
-            <p className="text-xs text-muted-foreground mb-1.5 font-medium">{t.filterByType}</p>
-            <div className="flex flex-wrap gap-2">
-              {(["all", "residential", "commercial"] as const).map((type) => {
-                const label =
-                  type === "all"
-                    ? t.all
-                    : type === "residential"
-                      ? t.residentialBadge
-                      : t.commercialBadge;
-                return (
-                  <button
-                    key={type}
-                    onClick={() => setTypeFilter(type)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      typeFilter === type
-                        ? type === "commercial"
-                          ? "bg-[#C4694A] text-white"
-                          : "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {availableCities.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setCityFilter("all")}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  cityFilter === "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent"
-                }`}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* ── Incomplete profile banner ── */}
+        {!isProfileComplete && (
+          <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-5 py-4">
+            <Lock className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">{t.teaserBanner}</h3>
+              <Button
+                size="sm"
+                onClick={() => setLocation("/dashboard/provider/profile")}
+                className="mt-2"
+                style={{ background: "#C2410C" }}
               >
-                {t.all}
-              </button>
-              {availableCities.map((city: string) => (
-                <button
-                  key={city}
-                  onClick={() => setCityFilter(city)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    cityFilter === city
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-accent"
-                  }`}
-                >
-                  {city}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {hasActiveFilters && (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                {t.clearFilters}
+                <Package className="h-4 w-4 me-2" />
+                {t.completeNow}
               </Button>
-              <span className="text-sm text-muted-foreground">
-                {filteredRequests?.length || 0} {t.results}
-              </span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
-          ))}
-        </div>
-      ) : !filteredRequests || filteredRequests.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">
-                {hasActiveFilters ? t.noResults : t.noRequests}
-              </h3>
-              {hasActiveFilters && (
-                <Button variant="outline" onClick={clearFilters} className="mt-4">
+        {/* ── Search & Filter card ── */}
+        <Card className="rounded-xl shadow-sm" style={{ borderColor: "#DDE4EE" }}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-bold">
+              <Filter className="h-4 w-4" />
+              {t.searchAndFilter}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Search
+                className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                style={{ [lang === "ar" ? "right" : "left"]: "0.75rem" }}
+              />
+              <Input
+                placeholder={t.search}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={lang === "ar" ? "pr-9" : "pl-9"}
+              />
+            </div>
+
+            {/* Building type filter pills */}
+            <div>
+              <p className="text-xs text-gray-500 mb-2 font-medium">{t.filterByType}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["all", "residential", "commercial"] as const).map((type) => {
+                  const label =
+                    type === "all"
+                      ? t.all
+                      : type === "residential"
+                        ? t.residentialBadge
+                        : t.commercialBadge;
+                  const activeStyle =
+                    type === "commercial"
+                      ? { background: "#C4694A", color: "white" }
+                      : type === "residential"
+                        ? { background: "#7D3040", color: "white" }
+                        : { background: "#2E4A6B", color: "white" };
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setTypeFilter(type)}
+                      className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+                      style={
+                        typeFilter === type
+                          ? activeStyle
+                          : { background: "#F3F4F6", color: "#6B7280" }
+                      }
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={clearFilters}>
                   {t.clearFilters}
                 </Button>
-              )}
-            </div>
+                <span className="text-sm text-gray-500">
+                  {filteredRequests?.length || 0} {t.results}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
-      ) : !isProfileComplete ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRequests.map((request: any) => {
-            const isCommercial = request.properties?.building_type === "commercial";
-            return (
-              <Card key={request.id} className="border-2 opacity-90">
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    {/* City + building type — visible */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col gap-1">
-                        <Badge variant="outline" className="gap-1 w-fit">
-                          <MapPin className="h-3 w-3" />
-                          {request.properties?.city}
-                        </Badge>
-                        {isCommercial ? (
-                          <Badge className="bg-[#FDF3EF] text-[#C4694A] border border-[#EDB99F] text-xs w-fit">
-                            {t.commercialBadge}
+
+        {/* ── Loading skeletons ── */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-64 rounded-xl" />
+            ))}
+          </div>
+        ) : !filteredRequests || filteredRequests.length === 0 ? (
+          /* ── Empty state ── */
+          <Card className="rounded-xl" style={{ borderColor: "#DDE4EE" }}>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <AlertCircle className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-gray-700">
+                  {hasActiveFilters ? t.noResults : t.noRequests}
+                </h3>
+                {hasActiveFilters && (
+                  <Button variant="outline" onClick={clearFilters} className="mt-4">
+                    {t.clearFilters}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : !isProfileComplete ? (
+          /* ── Teaser / blurred cards (incomplete profile) ── */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredRequests.map((request: any) => {
+              const isCommercial = request.properties?.building_type === "commercial";
+              const typeColor = isCommercial ? "#C4694A" : "#7D3040";
+              const typeBg = isCommercial ? "#FDF3EF" : "#FDF0F2";
+              const typeBorder = isCommercial ? "#EDB99F" : "#F0C5CF";
+              const typeLabel = isCommercial ? t.commercialBadge : t.residentialBadge;
+
+              return (
+                <Card
+                  key={request.id}
+                  className="rounded-xl shadow-sm opacity-90"
+                  style={{ borderColor: "#DDE4EE" }}
+                >
+                  <CardContent className="pt-5 pb-5 px-5">
+                    <div className="space-y-4">
+                      {/* Top row */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex flex-col gap-1.5">
+                          <Badge
+                            className="text-xs w-fit font-semibold"
+                            style={{
+                              background: typeBg,
+                              color: typeColor,
+                              border: `1px solid ${typeBorder}`,
+                            }}
+                          >
+                            {typeLabel}
                           </Badge>
-                        ) : (
-                          <Badge className="bg-[#FDF0F2] text-[#7D3040] border border-[#F0C5CF] text-xs w-fit">
-                            {t.residentialBadge}
-                          </Badge>
-                        )}
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span>{request.properties?.city}</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-1">
+                          1 {t.teaserRequestsAvailable}
+                        </span>
                       </div>
-                      {/* Request count indicator */}
-                      <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-1">
-                        1 {t.teaserRequestsAvailable}
-                      </span>
-                    </div>
 
-                    {/* Property name — blurred */}
-                    <div className="flex items-center gap-2 text-sm select-none">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium blur-sm text-muted-foreground">
-                        ████████████
-                      </span>
-                    </div>
+                      {/* Property name — blurred */}
+                      <div className="flex items-center gap-2 select-none">
+                        <Building2
+                          className="h-4 w-4 flex-shrink-0"
+                          style={{ color: typeColor }}
+                        />
+                        <span className="font-bold text-gray-900 blur-sm">
+                          ████████████
+                        </span>
+                      </div>
 
-                    {/* Description — blurred */}
-                    <div className="space-y-1 select-none">
-                      <p className="text-sm blur-sm text-muted-foreground line-clamp-3">
+                      {/* SOW — blurred */}
+                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 blur-sm select-none">
                         ████████ ████ ████████ ████████ ████ ██████ ████████ ████ ████████
                       </p>
-                    </div>
 
-                    {/* Submit Offer — hidden, replaced with lock CTA */}
-                    <Button
-                      className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                      onClick={() => setLocation("/dashboard/provider/profile")}
-                    >
-                      <Lock className="h-4 w-4 me-2" />
-                      {t.completeNow}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRequests.map((request: any) => {
-            const isCommercial = request.properties?.building_type === "commercial";
-            return (
-              <Card
-                key={request.id}
-                className={`hover:shadow-lg transition-all border-2 ${isCommercial ? "hover:border-[#C4694A]" : "hover:border-primary"}`}
-              >
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-bold text-lg">{t.scopeTitle}</h3>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                      {/* Lock CTA */}
+                      <Button
+                        className="w-full text-white text-sm font-semibold"
+                        style={{ background: "#C2410C" }}
+                        onClick={() => setLocation("/dashboard/provider/profile")}
+                      >
+                        <Lock className="h-4 w-4 me-2" />
+                        {t.completeNow}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          /* ── Full request cards (profile complete) ── */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredRequests.map((request: any) => {
+              const isCommercial = request.properties?.building_type === "commercial";
+              const typeColor = isCommercial ? "#C4694A" : "#7D3040";
+              const typeBg = isCommercial ? "#FDF3EF" : "#FDF0F2";
+              const typeBorder = isCommercial ? "#EDB99F" : "#F0C5CF";
+              const typeLabel = isCommercial ? t.commercialBadge : t.residentialBadge;
+              const hasSubmitted = submittedRequestIds.has(request.id);
+
+              return (
+                <Card
+                  key={request.id}
+                  className="rounded-xl shadow-sm hover:shadow-md transition-shadow"
+                  style={{ borderColor: "#DDE4EE" }}
+                >
+                  <CardContent className="pt-5 pb-5 px-5">
+                    <div className="space-y-4">
+                      {/* ── Top row: type tag + city + date ── */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex flex-col gap-1.5">
+                          <Badge
+                            className="text-xs w-fit font-semibold"
+                            style={{
+                              background: typeBg,
+                              color: typeColor,
+                              border: `1px solid ${typeBorder}`,
+                            }}
+                          >
+                            {typeLabel}
+                          </Badge>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span>
+                              {request.properties?.city}
+                              {request.properties?.address
+                                ? ` · ${request.properties.address}`
+                                : ""}
+                              {request.properties?.units_count
+                                ? ` · ${request.properties.units_count} ${t.units}`
+                                : ""}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-gray-400">
                           <Calendar className="h-3 w-3" />
                           <span>{formatDate(request.created_at)}</span>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-1 items-end">
-                        <Badge variant="outline" className="gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {request.properties?.city}
-                        </Badge>
-                        {isCommercial ? (
-                          <Badge className="bg-[#FDF3EF] text-[#C4694A] border border-[#EDB99F] text-xs">
-                            {t.commercialBadge}
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-[#FDF0F2] text-[#7D3040] border border-[#F0C5CF] text-xs">
-                            {t.residentialBadge}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Property name */}
-                    <div className="flex items-center gap-2 text-sm">
-                      <Building2
-                        className={`h-4 w-4 ${isCommercial ? "text-[#C4694A]" : "text-[#7D3040]"}`}
-                      />
-                      <span className="font-medium">{request.properties?.name}</span>
-                    </div>
-
-                    {/* Issue 2: address + units_count */}
-                    {(request.properties?.address || request.properties?.units_count) && (
-                      <div className="flex items-start gap-1 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        <span>
-                          {request.properties?.address}
-                          {request.properties?.units_count
-                            ? ` · ${request.properties.units_count} ${t.units}`
-                            : ""}
+                      {/* ── Property name ── */}
+                      <div className="flex items-center gap-2">
+                        <Building2
+                          className="h-4 w-4 flex-shrink-0"
+                          style={{ color: typeColor }}
+                        />
+                        <span className="font-bold text-gray-900">
+                          {request.properties?.name}
                         </span>
                       </div>
-                    )}
 
-                    {/* Scope excerpt */}
-                    <p className="text-sm line-clamp-3 text-muted-foreground">
-                      {isCommercial ? t.commercialScopeShort : t.scopeShort}
-                    </p>
+                      {/* ── Unified SOW excerpt (same for both types) ── */}
+                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
+                        {lang === "ar"
+                          ? UNIFIED_SCOPE_PART1
+                          : t.scopeShort}
+                      </p>
 
-                    {request.description && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">{t.description}:</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                      {/* ── Owner notes ── */}
+                      {request.description && (
+                        <div
+                          className="rounded-lg px-3 py-2.5 text-xs text-gray-600 leading-relaxed"
+                          style={{ background: "#F9F9FF", border: "1px solid #DDE4EE" }}
+                        >
+                          <span className="font-semibold text-gray-700 block mb-1">
+                            {t.ownerNotes}
+                          </span>
                           {request.description}
-                        </p>
-                      </div>
-                    )}
+                        </div>
+                      )}
 
-                    {/* Issue 2: map_url button */}
-                    {request.properties?.map_url && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() => window.open(request.properties.map_url, "_blank")}
-                      >
-                        <ExternalLink className="h-3 w-3 me-1" />
-                        {t.viewMap}
-                      </Button>
-                    )}
+                      {/* ── Map button ── */}
+                      {request.properties?.map_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() =>
+                            window.open(request.properties.map_url, "_blank")
+                          }
+                        >
+                          <ExternalLink className="h-3 w-3 me-1" />
+                          {t.viewMap}
+                        </Button>
+                      )}
 
-                    {/* Action */}
-                    {submittedRequestIds.has(request.id) ? (
-                      <Button
-                        className="w-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-50 cursor-default"
-                        variant="outline"
-                        disabled
-                      >
-                        <CheckCircle2 className="h-4 w-4 me-2 text-green-600" />
-                        {lang === "ar" ? "تم تقديم العرض" : "Offer Submitted"}
-                      </Button>
-                    ) : (
-                      <Button
-                        className="w-full"
-                        onClick={() =>
-                          setLocation(`/dashboard/provider/requests/${request.id}/offer`)
-                        }
-                        disabled={!isProfileComplete || !isApproved}
-                      >
-                        <Send className="h-4 w-4 me-2" />
-                        {t.submitOffer}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                      {/* ── Submit / submitted button ── */}
+                      {hasSubmitted ? (
+                        <Button
+                          className="w-full text-sm font-semibold"
+                          style={{
+                            background: "#E8F5F2",
+                            color: "#0E7C66",
+                            border: "1px solid #A8D8CF",
+                          }}
+                          variant="outline"
+                          disabled
+                        >
+                          <CheckCircle2 className="h-4 w-4 me-2" style={{ color: "#0E7C66" }} />
+                          {t.offerSubmitted}
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full text-sm font-semibold text-white"
+                          style={{ background: "#0E7C66" }}
+                          onClick={() =>
+                            setLocation(
+                              `/dashboard/provider/requests/${request.id}/offer`
+                            )
+                          }
+                          disabled={!isProfileComplete || !isApproved}
+                        >
+                          <Send className="h-4 w-4 me-2" />
+                          {t.submitOffer}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

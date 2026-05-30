@@ -308,7 +308,21 @@ export default function TermsPage() {
   const l = labels[lang];
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Header strip */}
+      <div
+        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        className="text-white py-6 px-4 flex items-center justify-between"
+        dir="rtl"
+      >
+        <p className="font-bold text-xl">عِمارة</p>
+        <div className="text-start">
+          <p className="text-xl font-bold">{isRTL ? "الشروط والأحكام" : "Terms & Conditions"}</p>
+          <p className="text-sm opacity-75">Terms & Conditions</p>
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
@@ -351,6 +365,7 @@ export default function TermsPage() {
             info@emaraa.app
           </a>
         </div>
+      </div>
       </div>
     </div>
   );

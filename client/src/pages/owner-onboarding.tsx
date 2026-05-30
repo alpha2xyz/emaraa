@@ -101,19 +101,12 @@ const MAP_URL_PREFIXES: string[] = [
   "https://goo.gl/maps",
 ];
 
-const SERVICE_SCOPE: Record<string, { part1: string; part2: string }> = {
-  residential: {
-    part1:
-      "نظافة يومية للمناطق المشتركة والأسطح والخزانات ونقل النفايات، صيانة دورية للإنارة والمضخات والمصاعد والكاميرات، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.",
-    part2:
-      "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، مع السجل التجاري والاعتمادات والمراجع أو البورتفوليو، لمدة سنة قابلة للتجديد.",
-  },
-  commercial: {
-    part1:
-      "نظافة شاملة للمداخل والردهات والأدوار والمواقف والمرافق العامة، صيانة أنظمة التكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، إدارة النفايات، طوارئ 24/7، تسديد فواتير المرافق.",
-    part2:
-      "متطلبات العرض: السعر لكل طابق أو وحدة تجارية، إجمالي شامل الضريبة، السجل التجاري، شهادات اعتماد، ومراجع لمشاريع تجارية مماثلة. لمدة سنة قابلة للتجديد.",
-  },
+// Unified SOW — single text for both residential and commercial (LOCKED — do not change)
+const UNIFIED_SCOPE = {
+  part1:
+    "نظافة دورية للمناطق المشتركة والمداخل والأسطح والخزانات وإدارة النفايات، صيانة شاملة للإنارة والمضخات والتكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.",
+  part2:
+    "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، لمدة سنة قابلة للتجديد.",
 };
 
 // ---------------------------------------------------------------------------
@@ -299,13 +292,21 @@ export default function OwnerOnboarding() {
 
   return (
     <div className="page-enter min-h-screen bg-[#F9F9FF]" dir="rtl">
-      {/* ── Page header ── */}
-      <div className="px-6 py-10 text-white" style={{ background: "#2E4A6B" }}>
+      {/* ── Branded header ── */}
+      <div
+        className="px-6 pt-8 pb-7 text-white"
+        style={{
+          background: "linear-gradient(135deg, #2E4A6B 0%, #243A56 100%)",
+        }}
+      >
         <div className="max-w-2xl mx-auto">
+          <div className="mb-6">
+            <span className="text-xl font-bold tracking-wide">عِمارة</span>
+          </div>
           <h1 className="text-2xl font-bold leading-snug mb-2">
             أهلاً! سجّل عقارك وأرسل أول طلب خدمة
           </h1>
-          <p className="text-sm opacity-80">
+          <p className="text-sm" style={{ opacity: 0.78 }}>
             خطوة واحدة تنشئ حسابك كاملاً وتُخطر المزودين المعتمدين في الرياض
           </p>
         </div>
@@ -314,9 +315,8 @@ export default function OwnerOnboarding() {
       {/* ── Form ── */}
       <div className="max-w-2xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit} className="space-y-8" noValidate>
-          {/* ────────────────────────────────────────────────
-              SECTION 1 — Property data
-          ──────────────────────────────────────────────── */}
+
+          {/* ── SECTION 1 — Property data ── */}
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
@@ -324,12 +324,7 @@ export default function OwnerOnboarding() {
             >
               <span
                 className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{
-                  width: "1.5rem",
-                  height: "1.5rem",
-                  background: "#2E4A6B",
-                  flexShrink: 0,
-                }}
+                style={{ width: "1.5rem", height: "1.5rem", background: "#2E4A6B", flexShrink: 0 }}
               >
                 1
               </span>
@@ -359,11 +354,10 @@ export default function OwnerOnboarding() {
                   )}
                 </div>
 
-                {/* Building type — clickable cards */}
+                {/* Building type — tag selector */}
                 <div className="space-y-1.5">
                   <Label>نوع المبنى *</Label>
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Residential card — Burgundy #7D3040 */}
                     <button
                       type="button"
                       onClick={() => setBuildingType("residential")}
@@ -386,7 +380,6 @@ export default function OwnerOnboarding() {
                       </span>
                     </button>
 
-                    {/* Commercial card — Terracotta #C4694A */}
                     <button
                       type="button"
                       onClick={() => setBuildingType("commercial")}
@@ -409,6 +402,19 @@ export default function OwnerOnboarding() {
                       </span>
                     </button>
                   </div>
+                </div>
+
+                {/* City — fixed, read-only */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="city">المدينة</Label>
+                  <Input
+                    id="city"
+                    value="الرياض"
+                    disabled
+                    readOnly
+                    className="opacity-50 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500">الإصدار الأول — الرياض فقط</p>
                 </div>
 
                 {/* Neighborhood */}
@@ -464,7 +470,6 @@ export default function OwnerOnboarding() {
                       <SelectItem value="other">أخرى / Other</SelectItem>
                     </SelectContent>
                   </Select>
-                  {/* Smooth slide-in for custom units */}
                   <div
                     className="overflow-hidden transition-all duration-200"
                     style={{
@@ -544,9 +549,7 @@ export default function OwnerOnboarding() {
             </Card>
           </div>
 
-          {/* ────────────────────────────────────────────────
-              SECTION 2 — Service scope (read-only, auto-updates)
-          ──────────────────────────────────────────────── */}
+          {/* ── SECTION 2 — Service scope (unified, read-only) ── */}
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
@@ -554,16 +557,11 @@ export default function OwnerOnboarding() {
             >
               <span
                 className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{
-                  width: "1.5rem",
-                  height: "1.5rem",
-                  background: "#2E4A6B",
-                  flexShrink: 0,
-                }}
+                style={{ width: "1.5rem", height: "1.5rem", background: "#2E4A6B", flexShrink: 0 }}
               >
                 2
               </span>
-              نطاق الخدمة (يتحدد تلقائياً)
+              نطاق الخدمة
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6">
@@ -575,21 +573,19 @@ export default function OwnerOnboarding() {
                   <p className="text-sm font-medium text-gray-700">نطاق الخدمات المطلوبة</p>
                 </div>
                 <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
-                  <p>{SERVICE_SCOPE[buildingType].part1}</p>
+                  <p>{UNIFIED_SCOPE.part1}</p>
                   <p
                     className="text-xs leading-relaxed pt-2 border-t"
                     style={{ color: "#5A6880", borderColor: "#DDE4EE" }}
                   >
-                    {SERVICE_SCOPE[buildingType].part2}
+                    {UNIFIED_SCOPE.part2}
                   </p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* ────────────────────────────────────────────────
-              SECTION 3 — Notes for providers (optional)
-          ──────────────────────────────────────────────── */}
+          {/* ── SECTION 3 — Notes for providers (optional) ── */}
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
@@ -597,12 +593,7 @@ export default function OwnerOnboarding() {
             >
               <span
                 className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{
-                  width: "1.5rem",
-                  height: "1.5rem",
-                  background: "#2E4A6B",
-                  flexShrink: 0,
-                }}
+                style={{ width: "1.5rem", height: "1.5rem", background: "#2E4A6B", flexShrink: 0 }}
               >
                 3
               </span>
