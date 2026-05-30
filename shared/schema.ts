@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, uuid, boolean, numeric } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Users model
@@ -69,3 +69,56 @@ export const insertRequestSchema = z.object({
 
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
+
+// Providers model
+export const providers = pgTable("providers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").notNull(),
+  company_name: text("company_name").notNull(),
+  email: text("email"),
+  city: text("city"),
+  description: text("description"),
+  commercial_register_url: text("commercial_register_url"),
+  company_profile_url: text("company_profile_url"),
+  fal_license_url: text("fal_license_url"),
+  approved: boolean("approved").notNull().default(false),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertProviderSchema = z.object({
+  user_id: z.string().uuid(),
+  company_name: z.string(),
+  email: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  commercial_register_url: z.string().nullable().optional(),
+  company_profile_url: z.string().nullable().optional(),
+  fal_license_url: z.string().nullable().optional(),
+});
+
+export type InsertProvider = z.infer<typeof insertProviderSchema>;
+export type Provider = typeof providers.$inferSelect;
+
+// Provider offers model
+export const providerOffers = pgTable("provider_offers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  request_id: uuid("request_id").notNull(),
+  provider_id: uuid("provider_id").notNull(),
+  offer_file_url: text("offer_file_url"),
+  notes: text("notes"),
+  price_total: numeric("price_total"),
+  status: text("status").notNull().default("pending"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertProviderOfferSchema = z.object({
+  request_id: z.string().uuid(),
+  provider_id: z.string().uuid(),
+  offer_file_url: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  price_total: z.string().nullable().optional(),
+  status: z.string().optional(),
+});
+
+export type InsertProviderOffer = z.infer<typeof insertProviderOfferSchema>;
+export type ProviderOffer = typeof providerOffers.$inferSelect;

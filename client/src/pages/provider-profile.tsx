@@ -56,7 +56,7 @@ export default function ProviderProfile() {
       companyProfile: "بروفايل الشركة",
       falLicense: "رخصة فال",
       chooseFile: "اختر ملف",
-      fileTypes: "PDF أو صورة (بحد أقصى 5MB)",
+      fileTypes: "PDF أو صورة (بحد أقصى 10MB)",
       save: "حفظ والمتابعة",
       saving: "جاري الحفظ...",
       success: "تم حفظ البيانات بنجاح!",
@@ -83,7 +83,7 @@ export default function ProviderProfile() {
       companyProfile: "Company Profile",
       falLicense: "FAL License",
       chooseFile: "Choose File",
-      fileTypes: "PDF or Image (max 5MB)",
+      fileTypes: "PDF or Image (max 10MB)",
       save: "Save & Continue",
       saving: "Saving...",
       success: "Data saved successfully!",
@@ -142,10 +142,10 @@ export default function ProviderProfile() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: lang === "ar" ? "الملف كبير جداً" : "File too large",
-        description: lang === "ar" ? "الحد الأقصى 5MB" : "Maximum 5MB",
+        description: lang === "ar" ? "الحد الأقصى 10MB" : "Maximum 10MB",
         variant: "destructive",
       });
       return;
@@ -186,7 +186,10 @@ export default function ProviderProfile() {
       // رفع الملفات إلى Supabase Storage عبر الخادم (supabaseAdmin — لا حاجة لـ JWT)
       const uploadFile = async (file: File, folder: string) => {
         const token = localStorage.getItem("sessionToken");
-        const fileExt = file.name.split(".").pop();
+        const fileExt = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() : null;
+        if (!fileExt || !["pdf", "jpg", "jpeg", "png"].includes(fileExt)) {
+          throw new Error("invalid_extension");
+        }
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
         const res = await fetch(
           `/api/upload/provider-document?folder=${encodeURIComponent(folder)}&filename=${encodeURIComponent(fileName)}`,

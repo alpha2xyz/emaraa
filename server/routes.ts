@@ -404,7 +404,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
       const { data, error } = await supabaseAdmin.storage
         .from("provider-offers")
-        .upload(filename, req.body as Buffer, { contentType: "application/pdf", upsert: false });
+        .upload(filename, req.body as Buffer, { contentType: "application/pdf", upsert: true });
       if (error) return res.status(500).json({ error: error.message });
       res.json({ path: data.path });
     }
