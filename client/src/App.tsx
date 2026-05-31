@@ -44,7 +44,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useLang } from "@/hooks/use-lang";
 import { Navbar } from "@/components/Navbar";
-import { ProviderTabBar } from "@/components/ProviderTabBar";
 import RequireAuth from "@/components/RequireAuth";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
@@ -107,7 +106,6 @@ function DashboardLayout({
       )}
       <div className="min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
         <Navbar />
-        <ProviderTabBar />
         <main className="pb-4">{children}</main>
       </div>
     </RequireAuth>

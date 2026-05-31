@@ -322,6 +322,10 @@ export default function ProviderOfferForm() {
             </span>
           )}
         </div>
+        <div className="text-right">
+          <div className="text-white font-extrabold text-lg tracking-wide">عِمارة</div>
+          <div className="text-white/80 text-xs">{t.title}</div>
+        </div>
       </div>
 
       <div className="container mx-auto p-4 max-w-4xl py-8">

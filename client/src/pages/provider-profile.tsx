@@ -298,6 +298,12 @@ export default function ProviderProfile() {
         <h1 className="text-lg font-bold text-white flex-1">
           {lang === "ar" ? "ملف الشركة" : "Company Profile"}
         </h1>
+        <div className="text-end">
+          <div className="text-white font-extrabold text-lg tracking-wide">عِمارة</div>
+          <div className="text-white/80 text-xs">
+            {lang === "ar" ? "مزود خدمات" : "Service Provider"}
+          </div>
+        </div>
       </div>
 
       <div className="p-4 sm:p-6">
