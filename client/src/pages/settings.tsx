@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { User, Save, Loader2, Building2 } from "lucide-react";
+import { User, Save, Loader2, Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,9 +141,17 @@ export default function Settings() {
       {/* Role-aware gradient header strip */}
       <div
         style={{ background: headerGradient }}
-        className="py-5 px-4 flex items-center justify-between"
+        className="py-5 px-4 flex items-center gap-3"
       >
-        <h1 className="text-xl font-bold text-white">{t.title}</h1>
+        <button
+          type="button"
+          onClick={() => setLocation(userRole === "provider" ? "/dashboard/provider" : "/dashboard/owner")}
+          className="text-white p-1 rounded-lg hover:bg-white/10 flex-shrink-0"
+          aria-label={lang === "ar" ? "رجوع" : "Back"}
+        >
+          {lang === "ar" ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
+        </button>
+        <h1 className="text-xl font-bold text-white flex-1">{t.title}</h1>
         <span className="text-white font-extrabold text-lg tracking-wide">عِمارة</span>
       </div>
 
