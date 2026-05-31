@@ -44,7 +44,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useLang } from "@/hooks/use-lang";
 import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
 import RequireAuth from "@/components/RequireAuth";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
@@ -95,16 +94,19 @@ function DashboardLayout({
     <RequireAuth role={role}>
       {isImpersonating && (
         <div className="bg-amber-500 text-white text-xs px-4 py-2 flex items-center justify-between sticky top-0 z-50">
-          <span>Admin view — logged in as {role}</span>
+          <span>
+            {isRTL
+              ? `عرض المسؤول — مسجّل الدخول بصفة ${role === "owner" ? "مالك عقار" : "مزود خدمة"}`
+              : `Admin view — logged in as ${role}`}
+          </span>
           <button onClick={backToAdmin} className="underline font-semibold">
-            ← Back to Admin
+            {isRTL ? "← العودة للوحة التحكم" : "← Back to Admin"}
           </button>
         </div>
       )}
       <div className="min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
-        {role !== "provider" && <Navbar />}
-        <main className={role === "owner" ? "pb-4" : "pb-20"}>{children}</main>
-        <BottomNav />
+        <Navbar />
+        <main className="pb-4">{children}</main>
       </div>
     </RequireAuth>
   );

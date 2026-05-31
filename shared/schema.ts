@@ -57,6 +57,7 @@ export const requests = pgTable("requests", {
   description: text("description"),
   status: text("status").notNull().default("pending"),
   created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const insertRequestSchema = z.object({
@@ -78,11 +79,13 @@ export const providers = pgTable("providers", {
   email: text("email"),
   city: text("city"),
   description: text("description"),
-  commercial_register_url: text("commercial_register_url"),
-  company_profile_url: text("company_profile_url"),
+  commercial_register_url: text("commercial_register_url").notNull(),
+  company_profile_url: text("company_profile_url").notNull(),
   fal_license_url: text("fal_license_url"),
-  approved: boolean("approved").notNull().default(false),
+  approved: boolean("approved").default(false),
+  status: text("status").default("pending"),
   created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const insertProviderSchema = z.object({
@@ -91,9 +94,10 @@ export const insertProviderSchema = z.object({
   email: z.string().nullable().optional(),
   city: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
-  commercial_register_url: z.string().nullable().optional(),
-  company_profile_url: z.string().nullable().optional(),
+  commercial_register_url: z.string(),
+  company_profile_url: z.string(),
   fal_license_url: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
 });
 
 export type InsertProvider = z.infer<typeof insertProviderSchema>;
@@ -102,12 +106,12 @@ export type Provider = typeof providers.$inferSelect;
 // Provider offers model
 export const providerOffers = pgTable("provider_offers", {
   id: uuid("id").primaryKey().defaultRandom(),
-  request_id: uuid("request_id").notNull(),
-  provider_id: uuid("provider_id").notNull(),
+  request_id: uuid("request_id"),
+  provider_id: uuid("provider_id"),
   offer_file_url: text("offer_file_url"),
   notes: text("notes"),
   price_total: numeric("price_total"),
-  status: text("status").notNull().default("pending"),
+  status: text("status").default("pending"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
@@ -122,3 +126,66 @@ export const insertProviderOfferSchema = z.object({
 
 export type InsertProviderOffer = z.infer<typeof insertProviderOfferSchema>;
 export type ProviderOffer = typeof providerOffers.$inferSelect;
+
+// Sessions model (server-managed auth sessions)
+export const sessions = pgTable("sessions", {
+  token: uuid("token").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").notNull(),
+  role: text("role").notNull().default("owner"),
+  expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export type Session = typeof sessions.$inferSelect;
+
+// Admins model (admin dashboard users)
+export const admins = pgTable("admins", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  session_token: text("session_token"),
+  session_expires_at: timestamp("session_expires_at", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export type Admin = typeof admins.$inferSelect;
+
+// OTP rate limits (DB-backed, survives cold starts)
+export const otpRateLimits = pgTable("otp_rate_limits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  phone: text("phone").notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export type OtpRateLimit = typeof otpRateLimits.$inferSelect;
+
+// Admin login attempts (IP-based rate limiting)
+export const adminLoginAttempts = pgTable("admin_login_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ip: text("ip").notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export type AdminLoginAttempt = typeof adminLoginAttempts.$inferSelect;
+
+// SMS rate limits (per-user, per-endpoint)
+export const smsRateLimits = pgTable("sms_rate_limits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").notNull(),
+  endpoint: text("endpoint").notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SmsRateLimit = typeof smsRateLimits.$inferSelect;
+
+// Admin impersonation log (audit trail)
+export const adminImpersonationLog = pgTable("admin_impersonation_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  admin_id: uuid("admin_id"),
+  admin_username: text("admin_username"),
+  target_user_id: uuid("target_user_id").notNull(),
+  target_role: text("target_role"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type AdminImpersonationLog = typeof adminImpersonationLog.$inferSelect;

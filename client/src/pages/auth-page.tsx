@@ -213,10 +213,9 @@ export default function AuthPage() {
       localStorage.setItem("userRole", userRole);
       localStorage.setItem("userName", returnedName || formData.name || "");
       if (supabaseToken) {
+        // Store in localStorage — the custom fetch interceptor in supabase.ts reads it
+        // on every request, so no setSession call is needed.
         localStorage.setItem("supabaseToken", supabaseToken);
-        import("../lib/supabase").then(({ supabase }) => {
-          supabase.auth.setSession({ access_token: supabaseToken, refresh_token: supabaseToken });
-        });
       }
 
       if (userRole === "owner") {

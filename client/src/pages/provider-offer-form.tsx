@@ -18,7 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
+
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProviderOfferForm() {
@@ -122,49 +122,26 @@ export default function ProviderOfferForm() {
   const t = content[lang];
 
   const { data: providerData } = useQuery({
-    queryKey: ["/api/provider/profile"],
+    queryKey: ["/api/provider/dashboard"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-      const { data: user, error: userError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone)
-        .single();
-      if (userError || !user) throw new Error("user_not_found");
-      const { data: provider, error: providerError } = await supabase
-        .from("providers")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      if (providerError || !provider) throw new Error("profile_incomplete");
-      return { user, provider };
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch("/api/provider/dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("provider_not_found");
+      return res.json();
     },
   });
 
   const { data: request, isLoading } = useQuery({
-    queryKey: ["/api/requests", requestId],
+    queryKey: ["/api/provider/requests", requestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("requests")
-        .select(
-          `
-          *,
-          properties (
-            id,
-            name,
-            address,
-            city,
-            building_type,
-            map_url,
-            units_count
-          )
-        `
-        )
-        .eq("id", requestId)
-        .single();
-      if (error) throw error;
-      return data;
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/provider/requests/${requestId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("request_not_found");
+      return res.json();
     },
     enabled: !!requestId,
   });
@@ -194,20 +171,8 @@ export default function ProviderOfferForm() {
   const mutation = useMutation({
     mutationFn: async () => {
       if (!offerFile) throw new Error("no_file");
-      if (!providerData?.user || !providerData?.provider?.id) throw new Error("provider_not_found");
-      if (!providerData.provider.approved) {
-        throw new Error(
-          lang === "ar"
-            ? "حسابك لم يتم قبوله بعد من قِبل الإدارة"
-            : "Your account has not been approved by admin yet"
-        );
-      }
-      const { count: existingCount } = await supabase
-        .from("provider_offers")
-        .select("id", { count: "exact", head: true })
-        .eq("request_id", requestId)
-        .eq("provider_id", providerData.provider.id);
-      if ((existingCount ?? 0) > 0) throw new Error("already_submitted");
+      if (!providerData?.provider?.id) throw new Error("provider_not_found");
+      if (!providerData.provider.approved) throw new Error("not_approved");
 
       if (
         !["application/pdf"].includes(offerFile.type) &&
@@ -219,42 +184,37 @@ export default function ProviderOfferForm() {
         throw new Error("file_too_large");
       }
 
-      const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
       const token = localStorage.getItem("sessionToken");
+      const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
+
       const uploadRes = await fetch(
         `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/pdf",
-          },
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
           body: offerFile,
         }
       );
       if (!uploadRes.ok) {
         const err = await uploadRes.json().catch(() => ({}));
-        throw new Error(err.error || "File upload failed");
+        throw new Error(err.error || "upload_failed");
       }
 
-      const { data, error } = await supabase
-        .from("provider_offers")
-        .insert([
-          {
-            request_id: requestId,
-            provider_id: providerData.provider.id,
-            offer_file_url: fileName,
-            notes: notes || null,
-            price_total: priceTotal ? parseFloat(priceTotal) : null,
-          },
-        ])
-        .select()
-        .single();
-      if (error) {
-        await supabase.storage.from("provider-offers").remove([fileName]);
-        throw error;
+      const submitRes = await fetch("/api/provider/offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          request_id: requestId,
+          offer_file_url: fileName,
+          notes: notes || null,
+          price_total: priceTotal ? parseFloat(priceTotal) : null,
+        }),
+      });
+      if (!submitRes.ok) {
+        const err = await submitRes.json().catch(() => ({}));
+        throw new Error(err.error || "submit_failed");
       }
-      return data;
+      return submitRes.json();
     },
     onSuccess: (data) => {
       toast({ title: t.success, variant: "default" });
@@ -270,7 +230,7 @@ export default function ProviderOfferForm() {
           }).catch(() => {});
         }
       }
-      setLocation("/dashboard/provider/offers");
+      setLocation("/dashboard/provider");
     },
     onError: (error: any) => {
       if (import.meta.env.DEV) console.error("Offer submission error:", error);
@@ -284,6 +244,11 @@ export default function ProviderOfferForm() {
           lang === "ar"
             ? "يرجى إكمال ملف شركتك أولاً"
             : "Please complete your company profile first";
+      else if (error.message === "not_approved")
+        errorMessage =
+          lang === "ar"
+            ? "حسابك لم يتم قبوله بعد من قِبل الإدارة"
+            : "Your account has not been approved by admin yet";
       else if (error.message === "user_not_found")
         errorMessage =
           lang === "ar"

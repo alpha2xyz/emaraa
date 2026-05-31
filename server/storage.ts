@@ -113,6 +113,7 @@ export class MemStorage implements IStorage {
       description: insertRequest.description ?? null,
       status: insertRequest.status ?? "pending",
       created_at: new Date(),
+      updated_at: new Date(),
     };
     this.serviceRequests.set(id, request);
     return request;

@@ -511,6 +511,62 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Provider: single request by ID (for offer form — uses supabaseAdmin to bypass RLS)
+  app.get("/api/provider/requests/:id", requireSession, requireProvider, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { data, error } = await supabaseAdmin
+        .from("requests")
+        .select("*, properties(id, name, city, address, building_type, map_url, units_count)")
+        .eq("id", id)
+        .single();
+      if (error || !data) return res.status(404).json({ error: "Request not found" });
+      res.json(data);
+    } catch {
+      res.status(500).json({ error: "Failed to fetch request" });
+    }
+  });
+
+  // Provider: submit an offer — uses supabaseAdmin, includes duplicate check
+  app.post("/api/provider/offers", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { request_id, offer_file_url, notes, price_total } = req.body as {
+        request_id: string;
+        offer_file_url: string;
+        notes?: string | null;
+        price_total?: number | null;
+      };
+      if (!request_id || !offer_file_url)
+        return res.status(400).json({ error: "request_id and offer_file_url are required" });
+
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id, approved")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.status(403).json({ error: "provider_not_found" });
+      if (!provider.approved) return res.status(403).json({ error: "not_approved" });
+
+      const { count: existing } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", request_id)
+        .eq("provider_id", provider.id);
+      if ((existing ?? 0) > 0) return res.status(409).json({ error: "already_submitted" });
+
+      const { data, error } = await supabaseAdmin
+        .from("provider_offers")
+        .insert([{ request_id, provider_id: provider.id, offer_file_url, notes: notes || null, price_total: price_total || null }])
+        .select()
+        .single();
+      if (error) return res.status(500).json({ error: error.message });
+      res.json(data);
+    } catch {
+      res.status(500).json({ error: "Failed to submit offer" });
+    }
+  });
+
   // Service Requests routes
   app.get("/api/requests", requireSession, requireOwner, async (req, res) => {
     try {
@@ -597,6 +653,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         service_category: z.string().optional(),
       });
       const data = updateSchema.parse(req.body);
+
+      // If changing property_id, verify the new property belongs to this owner
+      if (data.property_id) {
+        const { data: targetProperty, error: propError } = await supabaseAdmin
+          .from("properties")
+          .select("owner_id")
+          .eq("id", data.property_id)
+          .single();
+        if (propError || !targetProperty)
+          return res.status(404).json({ error: "Property not found" });
+        if (targetProperty.owner_id !== (req as any).userId)
+          return res.status(403).json({ error: "Forbidden: property does not belong to you" });
+      }
+
       const { data: updated, error } = await supabaseAdmin
         .from("requests")
         .update(data)
@@ -700,6 +770,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
   app.post("/api/sms/offer-submitted", requireSession, requireProvider, async (req, res) => {
     try {
+      // Rate limit: max 5 SMS triggers per user per hour (DB-backed, survives cold starts)
+      const userId = (req as any).userId as string;
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: smsCount } = await supabaseAdmin
+        .from("sms_rate_limits")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("endpoint", "offer-submitted")
+        .gte("created_at", oneHourAgo);
+      if ((smsCount ?? 0) >= 5) {
+        return res.status(429).json({ error: "Too many SMS requests. Try again later." });
+      }
+      await supabaseAdmin.from("sms_rate_limits").insert([{ user_id: userId, endpoint: "offer-submitted" }]);
+
       const { offerId } = req.body;
       if (!offerId) return res.status(400).json({ error: "offerId required" });
 
@@ -754,6 +838,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // SMS — notify all approved Riyadh providers when a new request is posted
   app.post("/api/sms/new-request", requireSession, requireOwner, async (req, res) => {
     try {
+      // Rate limit: max 3 SMS broadcasts per owner per hour (DB-backed, survives cold starts)
+      const userId = (req as any).userId as string;
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: smsCount } = await supabaseAdmin
+        .from("sms_rate_limits")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("endpoint", "new-request")
+        .gte("created_at", oneHourAgo);
+      if ((smsCount ?? 0) >= 3) {
+        return res.status(429).json({ error: "Too many SMS requests. Try again later." });
+      }
+      await supabaseAdmin.from("sms_rate_limits").insert([{ user_id: userId, endpoint: "new-request" }]);
+
       const { requestId } = req.body;
       if (!requestId) return res.status(400).json({ error: "requestId required" });
 
@@ -995,6 +1093,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     if (sessionError || !session)
       return res.status(500).json({ error: "Failed to create session" });
+
+    // Write audit log — look up acting admin by their session token
+    const { data: actingAdmin } = await supabaseAdmin
+      .from("admins")
+      .select("id, username")
+      .eq("session_token", adminToken)
+      .maybeSingle();
+    Promise.resolve(
+      supabaseAdmin
+        .from("admin_impersonation_log")
+        .insert([{
+          admin_id: actingAdmin?.id ?? null,
+          admin_username: actingAdmin?.username ?? null,
+          target_user_id: user.id,
+          target_role: user.role,
+        }])
+    ).catch(() => {}); // fire-and-forget — don't block the response
 
     const supabaseToken = SUPABASE_JWT_SECRET
       ? signSupabaseJwt(user.id, user.phone, user.role)
