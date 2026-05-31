@@ -356,23 +356,6 @@ export default function ProviderDashboard() {
               </div>
             )}
 
-            {/* Quick actions */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setLocation("/dashboard/provider/requests")}
-                className="rounded-xl py-3 text-sm font-bold text-white"
-                style={{ background: "#0E7C66" }}
-              >
-                {t.browseRequests}
-              </button>
-              <button
-                onClick={() => setLocation("/dashboard/provider/profile")}
-                className="rounded-xl py-3 text-sm font-bold border"
-                style={{ borderColor: "#0E7C66", color: "#0E7C66", background: "white" }}
-              >
-                {t.updateProfile}
-              </button>
-            </div>
           </>
         )}
 
