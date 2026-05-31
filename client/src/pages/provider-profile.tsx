@@ -373,7 +373,15 @@ export default function ProviderProfile() {
           {/* بيانات الشركة */}
           <Card>
             <CardHeader>
-              <CardTitle>{t.companyInfo}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                {t.companyInfo}
+                {isApproved && (
+                  <span className="ms-auto flex items-center gap-1 text-xs font-normal text-amber-600">
+                    <Lock className="w-3.5 h-3.5" />
+                    {lang === "ar" ? "مقفل بعد الاعتماد" : "Locked after approval"}
+                  </span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -385,6 +393,8 @@ export default function ProviderProfile() {
                   value={formData.company_name}
                   onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                   required
+                  disabled={isApproved}
+                  className={isApproved ? "bg-gray-100" : ""}
                 />
               </div>
 
@@ -396,6 +406,8 @@ export default function ProviderProfile() {
                   placeholder={t.emailPlaceholder}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  disabled={isApproved}
+                  className={isApproved ? "bg-gray-100" : ""}
                 />
               </div>
             </CardContent>
