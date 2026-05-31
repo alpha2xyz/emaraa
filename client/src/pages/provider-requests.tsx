@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLang } from "@/hooks/use-lang";
+import { ProviderHeader } from "@/components/ProviderHeader";
 
 // ---------------------------------------------------------------------------
 // Unified SOW — same text for both building types (LOCKED — do not change)
@@ -165,20 +166,7 @@ export default function ProviderRequests() {
       className="page-enter min-h-screen bg-[#F9F9FF]"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
-      {/* ── Gradient header ── */}
-      <div
-        className="px-6 pt-7 pb-6 text-white -mx-4 sm:-mx-6 -mt-4 sm:-mt-6"
-        style={{
-          background: "linear-gradient(135deg, #0E7C66 0%, #0a5e4e 100%)",
-        }}
-      >
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-1">{t.title}</h1>
-          <p className="text-sm" style={{ opacity: 0.78 }}>
-            {t.subtitle}
-          </p>
-        </div>
-      </div>
+      <ProviderHeader />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* ── Incomplete profile banner ── */}

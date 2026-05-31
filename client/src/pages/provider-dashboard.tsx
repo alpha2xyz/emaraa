@@ -22,6 +22,7 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { supabase } from "../lib/supabase";
 import { openSignedPdf } from "../lib/storage";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ProviderHeader } from "@/components/ProviderHeader";
 
 type Tab = "overview" | "offers";
 
@@ -231,31 +232,7 @@ export default function ProviderDashboard() {
       style={{ background: "#F9F9FF" }}
       dir={isRTL ? "rtl" : "ltr"}
     >
-      {/* ── Emerald gradient header ── */}
-      <div
-        className="-mx-0 px-5 py-4 text-white"
-        style={{ background: "linear-gradient(135deg, #0E7C66, #0a5e4e)" }}
-      >
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div>
-            <p className="font-bold text-lg leading-none">عِمارة</p>
-            <p className="text-xs mt-1" style={{ opacity: 0.8 }}>
-              {isRTL ? "مزود خدمات" : "Service Provider"}
-            </p>
-          </div>
-          {companyName && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{companyName}</span>
-              <span
-                className="text-xs font-semibold rounded-full px-2 py-0.5"
-                style={{ background: "white", color: "#0E7C66" }}
-              >
-                {isRTL ? "مزود" : "Provider"}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      <ProviderHeader />
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
 
