@@ -24,7 +24,6 @@ import { openSignedPdf } from "../lib/storage";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProviderHeader } from "@/components/ProviderHeader";
 
-type Tab = "overview" | "offers";
 
 // ---------------------------------------------------------------------------
 // Stat card
@@ -74,7 +73,6 @@ export default function ProviderDashboard() {
   useAuthGuard("provider");
   const { lang } = useLang();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   const userPhone = localStorage.getItem("userPhone") || "";
 
@@ -236,38 +234,7 @@ export default function ProviderDashboard() {
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
 
-        {/* ── Tab switcher ── */}
-        <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "#DDE4EE" }}>
-          <button
-            onClick={() => setActiveTab("overview")}
-            className="flex-1 py-2.5 text-sm font-semibold transition-colors"
-            style={
-              activeTab === "overview"
-                ? { background: "#0E7C66", color: "white" }
-                : { background: "white", color: "#6B7280" }
-            }
-          >
-            {t.overview}
-          </button>
-          <button
-            onClick={() => setActiveTab("offers")}
-            className="flex-1 py-2.5 text-sm font-semibold transition-colors"
-            style={
-              activeTab === "offers"
-                ? { background: "#0E7C66", color: "white" }
-                : { background: "white", color: "#6B7280" }
-            }
-          >
-            {t.offers}
-          </button>
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* TAB 1 — نظرة عامة                                                */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {activeTab === "overview" && (
-          <>
-            {/* Profile incomplete banner */}
+        {/* Profile incomplete banner */}
             {!isProfileComplete && (
               <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4">
                 <div className="flex items-start gap-3">
@@ -356,15 +323,12 @@ export default function ProviderDashboard() {
               </div>
             )}
 
-          </>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* TAB 2 — عروضي                                                     */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {activeTab === "offers" && (
-          <>
-            {offersLoading && (
+        {/* ── My Offers ── */}
+        <div>
+          <h2 className="text-sm font-bold mb-3" style={{ color: "#1A2535" }}>
+            {isRTL ? "عروضي" : "My Offers"}
+          </h2>
+          {offersLoading && (
               <div className="space-y-3">
                 {[1, 2].map((i) => (
                   <Skeleton key={i} className="h-28 rounded-xl" />
@@ -469,8 +433,7 @@ export default function ProviderDashboard() {
                 })}
               </div>
             )}
-          </>
-        )}
+        </div>
 
       </div>
     </div>
