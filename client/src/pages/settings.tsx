@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLang } from "@/hooks/use-lang";
-import { supabase } from "../lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
@@ -66,16 +65,15 @@ export default function Settings() {
   const { data: userData, isLoading } = useQuery({
     queryKey: ["/api/user/profile"],
     queryFn: async () => {
-      const phone = localStorage.getItem("userPhone");
-      if (!phone) throw new Error("Not logged in");
-      const { data: user, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("phone", phone)
-        .single();
-      if (error) throw error;
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+      // Read profile via server (supabaseAdmin bypasses RLS)
+      const res = await fetch("/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("profile_load_failed");
+      const user = await res.json();
       if (user.role === "provider") {
-        const token = localStorage.getItem("sessionToken");
         const providerRes = await fetch("/api/provider/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });

@@ -202,7 +202,6 @@ export default function AuthPage() {
         phone,
         role: userRole,
         name: returnedName,
-        supabaseToken,
       } = await res.json();
 
       localStorage.removeItem("adminSessionToken");
@@ -212,11 +211,6 @@ export default function AuthPage() {
       localStorage.setItem("userPhone", phone);
       localStorage.setItem("userRole", userRole);
       localStorage.setItem("userName", returnedName || formData.name || "");
-      if (supabaseToken) {
-        // Store in localStorage — the custom fetch interceptor in supabase.ts reads it
-        // on every request, so no setSession call is needed.
-        localStorage.setItem("supabaseToken", supabaseToken);
-      }
 
       if (userRole === "owner") {
         setLocation(mode === "register" ? "/dashboard/owner/onboarding" : "/dashboard/owner");

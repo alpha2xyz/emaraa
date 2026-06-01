@@ -256,7 +256,6 @@ export default function AdminDashboard() {
     localStorage.setItem("userPhone", data.phone);
     localStorage.setItem("userRole", data.role);
     localStorage.setItem("userName", data.name ?? "");
-    if (data.supabaseToken) localStorage.setItem("supabaseToken", data.supabaseToken);
     setLocation(`/dashboard/${data.role}`);
   }
 

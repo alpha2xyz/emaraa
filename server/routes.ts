@@ -1,7 +1,6 @@
 import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { createHmac } from "crypto";
 import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
@@ -9,41 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET ?? "";
 const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY ?? "";
-
-function b64url(s: string): string {
-  return Buffer.from(s)
-    .toString("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}
-
-function signSupabaseJwt(sub: string, phone: string, role: string): string {
-  const now = Math.floor(Date.now() / 1000);
-  const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = b64url(
-    JSON.stringify({
-      aud: "authenticated",
-      iss: `${SUPABASE_URL}/auth/v1`,
-      sub,
-      role: "authenticated",
-      phone,
-      app_metadata: { provider: "phone", providers: ["phone"], user_role: role },
-      user_metadata: {},
-      iat: now,
-      exp: now + 30 * 24 * 3600,
-    })
-  );
-  const sig = createHmac("sha256", SUPABASE_JWT_SECRET)
-    .update(`${header}.${payload}`)
-    .digest("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-  return `${header}.${payload}.${sig}`;
-}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -99,15 +64,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (error || !data || new Date(data.expires_at) < new Date()) {
       return res.status(401).json({ valid: false });
     }
-    // Return a fresh supabaseToken so clients always have a valid JWT for RLS
-    const { data: user } = await supabaseAdmin
+    res.json({ valid: true, userId: data.user_id });
+  });
+
+  // Read current user's profile (bypasses RLS via supabaseAdmin)
+  app.get("/api/user/profile", requireSession, async (req, res) => {
+    const userId = (req as any).userId;
+    const { data: user, error } = await supabaseAdmin
       .from("users")
-      .select("phone, role")
-      .eq("id", data.user_id)
+      .select("*")
+      .eq("id", userId)
       .single();
-    const supabaseToken =
-      user && SUPABASE_JWT_SECRET ? signSupabaseJwt(data.user_id, user.phone, user.role) : "";
-    res.json({ valid: true, userId: data.user_id, supabaseToken });
+    if (error || !user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  });
+
+  // Log out — delete the session server-side (bypasses RLS via supabaseAdmin)
+  app.post("/api/auth/logout", async (req, res) => {
+    const token = req.headers.authorization?.replace("Bearer ", "").trim();
+    if (token) {
+      await supabaseAdmin.from("sessions").delete().eq("token", token);
+    }
+    res.json({ ok: true });
   });
 
   // Update current user's profile (name)
@@ -1167,8 +1145,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(500).json({ error: "Failed to create session" });
       }
 
-      const supabaseToken = SUPABASE_JWT_SECRET ? signSupabaseJwt(userId, phone, role) : "";
-      res.json({ token: session.token, userId, phone, role, name: userName, supabaseToken });
+      res.json({ token: session.token, userId, phone, role, name: userName });
     } catch (err: any) {
       console.error("[otp/verify] exception:", err?.message);
       res.status(500).json({ error: "Verification failed" });
@@ -1220,16 +1197,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         }])
     ).catch(() => {}); // fire-and-forget — don't block the response
 
-    const supabaseToken = SUPABASE_JWT_SECRET
-      ? signSupabaseJwt(user.id, user.phone, user.role)
-      : "";
     res.json({
       token: session.token,
       userId: user.id,
       phone: user.phone,
       role: user.role,
       name: user.name ?? "",
-      supabaseToken,
     });
   });
 
