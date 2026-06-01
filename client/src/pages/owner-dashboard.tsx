@@ -33,7 +33,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { openSignedPdf } from "@/lib/storage";
-import { supabase } from "@/lib/supabase";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -247,15 +246,13 @@ export default function OwnerDashboard() {
     queryKey: ["owner", "offers", requestId],
     enabled: !!requestId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("provider_offers")
-        .select(
-          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, users(phone))"
-        )
-        .eq("request_id", requestId!)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const token = localStorage.getItem("sessionToken");
+      if (!token) return [];
+      const res = await fetch(`/api/owner/offers/${requestId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      return res.json();
     },
   });
 

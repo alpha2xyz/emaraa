@@ -409,9 +409,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/provider/profile", requireSession, requireProvider, async (req, res) => {
     try {
       const userId = (req as any).userId as string;
-      const { company_name, email, commercial_register_url, company_profile_url, fal_license_url } = req.body as {
+      const { company_name, email, city, commercial_register_url, company_profile_url, fal_license_url } = req.body as {
         company_name: string;
         email?: string | null;
+        city?: string | null;
         commercial_register_url?: string | null;
         company_profile_url?: string | null;
         fal_license_url?: string | null;
@@ -432,7 +433,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .from("providers")
           .update({
             company_name: company_name.trim(),
-            email: email || null,
+            ...(email !== undefined && { email }),
+            ...(city !== undefined && { city }),
             ...(commercial_register_url !== undefined && { commercial_register_url }),
             ...(company_profile_url !== undefined && { company_profile_url }),
             ...(fal_license_url !== undefined && { fal_license_url }),
@@ -444,6 +446,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           user_id: userId,
           company_name: company_name.trim(),
           email: email || null,
+          city: city || null,
           commercial_register_url: commercial_register_url || null,
           company_profile_url: company_profile_url || null,
           fal_license_url: fal_license_url || null,
@@ -564,6 +567,73 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json(data);
     } catch {
       res.status(500).json({ error: "Failed to submit offer" });
+    }
+  });
+
+  // Provider: current provider profile (uses supabaseAdmin — bypasses RLS recursion)
+  app.get("/api/provider/profile", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { data } = await supabaseAdmin
+        .from("providers")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      res.json(data ?? null);
+    } catch {
+      res.status(500).json({ error: "Failed to fetch provider profile" });
+    }
+  });
+
+  // Provider: all offers submitted by this provider (uses supabaseAdmin — bypasses RLS recursion)
+  app.get("/api/provider/all-offers", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.json([]);
+
+      const { data } = await supabaseAdmin
+        .from("provider_offers")
+        .select(
+          "id, offer_file_url, notes, status, created_at, requests(id, service_category, properties(name, city, building_type))"
+        )
+        .eq("provider_id", provider.id)
+        .order("created_at", { ascending: false });
+      res.json(data ?? []);
+    } catch {
+      res.status(500).json({ error: "Failed to fetch provider offers" });
+    }
+  });
+
+  // Owner: all offers for one of the owner's requests (uses supabaseAdmin — bypasses RLS recursion)
+  app.get("/api/owner/offers/:requestId", requireSession, requireOwner, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { requestId } = req.params;
+
+      const { data: request, error: reqError } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", requestId)
+        .single();
+      if (reqError || !request || request.owner_id !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const { data } = await supabaseAdmin
+        .from("provider_offers")
+        .select(
+          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, users(phone))"
+        )
+        .eq("request_id", requestId)
+        .order("created_at", { ascending: false });
+      res.json(data ?? []);
+    } catch {
+      res.status(500).json({ error: "Failed to fetch offers" });
     }
   });
 

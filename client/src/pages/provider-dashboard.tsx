@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLang } from "@/hooks/use-lang";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { supabase } from "../lib/supabase";
 import { openSignedPdf } from "../lib/storage";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProviderHeader } from "@/components/ProviderHeader";
@@ -162,30 +161,13 @@ export default function ProviderDashboard() {
     queryKey: ["/api/provider/all-offers"],
     refetchOnMount: "always",
     queryFn: async () => {
-      if (!userPhone) throw new Error("Not logged in");
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", userPhone)
-        .single();
-      if (!user) throw new Error("User not found");
-      const { data: provider } = await supabase
-        .from("providers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-      if (!provider) return [];
-      const { data: offers, error } = await supabase
-        .from("provider_offers")
-        .select(
-          `id, offer_file_url, notes, status, created_at,
-           requests ( id, service_category,
-             properties ( name, city, building_type ) )`
-        )
-        .eq("provider_id", provider.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return offers ?? [];
+      const token = localStorage.getItem("sessionToken");
+      if (!token) throw new Error("Not logged in");
+      const res = await fetch("/api/provider/all-offers", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      return res.json();
     },
   });
 

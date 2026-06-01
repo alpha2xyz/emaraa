@@ -75,11 +75,11 @@ export default function Settings() {
         .single();
       if (error) throw error;
       if (user.role === "provider") {
-        const { data: provider } = await supabase
-          .from("providers")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
+        const token = localStorage.getItem("sessionToken");
+        const providerRes = await fetch("/api/provider/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const provider = providerRes.ok ? await providerRes.json() : null;
         return { ...user, provider };
       }
       return user;
@@ -113,13 +113,17 @@ export default function Settings() {
       // Update localStorage so navbar reflects new name immediately
       localStorage.setItem("userName", profileData.name);
 
-      // Provider-specific fields — still via Supabase (providers table has RLS for owners)
+      // Provider-specific fields — via server (supabaseAdmin bypasses RLS recursion)
       if (userRole === "provider" && userData) {
-        const { error: providerError } = await supabase
-          .from("providers")
-          .update({ company_name: profileData.company_name, city: profileData.city })
-          .eq("user_id", (userData as any).id);
-        if (providerError) throw providerError;
+        const providerRes = await fetch("/api/provider/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            company_name: profileData.company_name,
+            city: profileData.city,
+          }),
+        });
+        if (!providerRes.ok) throw new Error("provider_update_failed");
       }
     },
     onSuccess: () => toast({ title: t.success }),
