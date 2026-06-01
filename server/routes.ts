@@ -387,6 +387,37 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // never depends on the client JWT or storage RLS. Accepts a user session OR an admin session.
   app.get("/api/files/signed-url", async (req, res) => {
     try {
+      // TEMP DIAGNOSTIC — gated by a secret param. Reveals key TYPE/length + the real
+      // storage error, but NEVER the key value. Remove after debugging.
+      if (req.query.diag === "89fd3cf083b74fe4ce221d52") {
+        const k = SUPABASE_SERVICE_ROLE_KEY || "";
+        const kindOf = (v: string) =>
+          v.startsWith("sb_secret_") ? "sb_secret"
+          : v.startsWith("sb_publishable_") ? "sb_publishable"
+          : v.startsWith("eyJ") ? "legacy_jwt"
+          : v ? "other" : "empty";
+        const path = String(req.query.path || "");
+        let storage: any = "(no path)";
+        if (path) {
+          const r = await supabaseAdmin.storage
+            .from(String(req.query.bucket || "provider-offers"))
+            .createSignedUrl(path, 60);
+          storage = r.error
+            ? { ok: false, name: r.error.name, message: r.error.message, status: (r.error as any).status ?? (r.error as any).statusCode }
+            : { ok: true, signed: !!r.data?.signedUrl };
+        }
+        let host = "(bad url)";
+        try { host = new URL(SUPABASE_URL).host; } catch {}
+        return res.json({
+          serviceKeyKind: kindOf(k),
+          serviceKeyLen: k.length,
+          anonKeyKind: kindOf(SUPABASE_ANON_KEY || ""),
+          urlHost: host,
+          storage,
+          commit: "9b6e932+diag",
+        });
+      }
+
       const token = req.headers.authorization?.replace("Bearer ", "").trim();
       if (!token) return res.status(401).json({ error: "Unauthorized" });
 
