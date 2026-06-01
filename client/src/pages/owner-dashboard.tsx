@@ -801,7 +801,7 @@ export default function OwnerDashboard() {
                     {request.created_at && (
                       <span className="text-xs text-gray-400 mr-auto">
                         {new Date(request.created_at).toLocaleDateString(
-                          lang === "ar" ? "ar-SA" : "en-US",
+                          lang === "ar" ? "ar-SA-u-nu-latn" : "en-US",
                           { year: "numeric", month: "short", day: "numeric" }
                         )}
                       </span>
@@ -911,7 +911,7 @@ export default function OwnerDashboard() {
                             {lang === "ar" ? "السعر الإجمالي" : "Total Price"}
                           </p>
                           <p className="font-bold text-gray-800 text-sm">
-                            {Number(offer.price_total).toLocaleString("ar-SA")}{" "}
+                            {Number(offer.price_total).toLocaleString("en-US")}{" "}
                             {lang === "ar" ? "ريال" : "SAR"}
                           </p>
                         </div>
@@ -925,7 +925,7 @@ export default function OwnerDashboard() {
                             <p className="font-bold text-sm" style={{ color: "#2E4A6B" }}>
                               {Math.round(
                                 Number(offer.price_total) / property.units_count
-                              ).toLocaleString("ar-SA")}{" "}
+                              ).toLocaleString("en-US")}{" "}
                               {lang === "ar" ? "ريال" : "SAR"}
                             </p>
                           </div>

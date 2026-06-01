@@ -172,7 +172,7 @@ export default function ProviderDashboard() {
   });
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+    new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",

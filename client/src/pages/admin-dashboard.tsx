@@ -268,7 +268,7 @@ export default function AdminDashboard() {
   }
 
   function formatDate(d: string) {
-    return new Date(d).toLocaleDateString(isRTL ? "ar-SA" : "en-US", {
+    return new Date(d).toLocaleDateString(isRTL ? "ar-SA-u-nu-latn" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -719,7 +719,7 @@ export default function AdminDashboard() {
                                       </p>
                                       {o.price_total != null && (
                                         <p className="text-xs font-medium text-gray-700">
-                                          {t.price}: {o.price_total.toLocaleString()} {t.sar}
+                                          {t.price}: {o.price_total.toLocaleString("en-US")} {t.sar}
                                         </p>
                                       )}
                                       {o.notes && (

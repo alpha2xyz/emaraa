@@ -147,7 +147,7 @@ export default function ProviderRequests() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+    return date.toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
