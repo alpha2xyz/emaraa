@@ -405,6 +405,45 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   );
 
+  // Signed URL for private storage files — signed server-side via supabaseAdmin so it
+  // never depends on the client JWT or storage RLS. Accepts a user session OR an admin session.
+  app.get("/api/files/signed-url", async (req, res) => {
+    try {
+      const token = req.headers.authorization?.replace("Bearer ", "").trim();
+      if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+      // Authorize: a valid (non-expired) user session, or a valid admin session.
+      const { data: session } = await supabaseAdmin
+        .from("sessions")
+        .select("expires_at")
+        .eq("token", token)
+        .maybeSingle();
+      let authorized = !!(session && new Date(session.expires_at) >= new Date());
+      if (!authorized) {
+        const { data: isAdmin } = await supabase.rpc("verify_admin_session", { p_token: token });
+        authorized = !!isAdmin;
+      }
+      if (!authorized) return res.status(401).json({ error: "Unauthorized" });
+
+      const bucket = String(req.query.bucket || "");
+      const path = String(req.query.path || "");
+      const ALLOWED_BUCKETS = new Set(["provider-offers", "provider-documents"]);
+      if (!ALLOWED_BUCKETS.has(bucket) || !path) {
+        return res.status(400).json({ error: "Invalid bucket or path" });
+      }
+
+      const { data, error } = await supabaseAdmin.storage
+        .from(bucket)
+        .createSignedUrl(path, 3600);
+      if (error || !data?.signedUrl) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      res.json({ url: data.signedUrl });
+    } catch {
+      res.status(500).json({ error: "Failed to create signed URL" });
+    }
+  });
+
   // Save provider profile (insert or update) — uses supabaseAdmin to bypass client-side auth issues
   app.post("/api/provider/profile", requireSession, requireProvider, async (req, res) => {
     try {
