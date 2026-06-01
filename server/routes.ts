@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { createHash, createHmac } from "crypto";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -408,13 +409,42 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         }
         let host = "(bad url)";
         try { host = new URL(SUPABASE_URL).host; } catch {}
+
+        // Does prod's key VALUE match the known-good local key? (hash prefix, no leak)
+        const keySha12 = createHash("sha256").update(k).digest("hex").slice(0, 12);
+
+        // Can we sign by MINTING a service_role JWT from SUPABASE_JWT_SECRET instead?
+        const jwtSecret = process.env.SUPABASE_JWT_SECRET ?? "";
+        let mintTest: any = "(no path)";
+        if (path && jwtSecret) {
+          const b64 = (o: any) => Buffer.from(JSON.stringify(o)).toString("base64url");
+          const nowS = Math.floor(Date.now() / 1000);
+          const head = b64({ alg: "HS256", typ: "JWT" });
+          const body = b64({ iss: "supabase", ref: "txzbzpnrclkdodosbndy", role: "service_role", iat: nowS, exp: nowS + 600 });
+          const sig = createHmac("sha256", jwtSecret).update(`${head}.${body}`).digest("base64url");
+          const minted = `${head}.${body}.${sig}`;
+          const mClient = createClient(SUPABASE_URL, minted);
+          const mr = await mClient.storage
+            .from(String(req.query.bucket || "provider-offers"))
+            .createSignedUrl(path, 60);
+          mintTest = mr.error
+            ? { ok: false, name: mr.error.name, message: mr.error.message, status: (mr.error as any).status ?? (mr.error as any).statusCode }
+            : { ok: true, signed: !!mr.data?.signedUrl };
+        } else if (!jwtSecret) {
+          mintTest = "(SUPABASE_JWT_SECRET absent)";
+        }
+
         return res.json({
           serviceKeyKind: kindOf(k),
           serviceKeyLen: k.length,
+          serviceKeySha12: keySha12,
+          jwtSecretLen: jwtSecret.length,
+          jwtSecretKind: jwtSecret.startsWith("eyJ") ? "jwt?" : jwtSecret ? "opaque" : "empty",
           anonKeyKind: kindOf(SUPABASE_ANON_KEY || ""),
           urlHost: host,
           storage,
-          commit: "9b6e932+diag",
+          mintTest,
+          commit: "diag-v2",
         });
       }
 
