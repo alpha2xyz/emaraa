@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLang } from "@/hooks/use-lang";
 import {
   Select,
   SelectContent,
@@ -46,51 +47,51 @@ interface ApiErrorBody {
 // Constants
 // ---------------------------------------------------------------------------
 
-const NEIGHBORHOODS: string[] = [
-  "العليا",
-  "النزهة",
-  "الملقا",
-  "الغدير",
-  "حطين",
-  "الياسمين",
-  "الورود",
-  "الروضة",
-  "المروج",
-  "الربوة",
-  "السليمانية",
-  "الحمراء",
-  "الفيصلية",
-  "الوزارات",
-  "العقيق",
-  "الصحافة",
-  "الشفا",
-  "المصيف",
-  "الروابي",
-  "قرطبة",
-  "بنبان",
-  "النرجس",
-  "الواحة",
-  "الخزامى",
-  "المهدية",
-  "الطيبة",
-  "أم الحمام",
-  "البديعة",
-  "لبن",
-  "الدار البيضاء",
-  "الشميسي",
-  "الفيحاء",
-  "المنصورة",
-  "الجزيرة",
-  "النسيم",
-  "العزيزية",
-  "ذهبان",
-  "المعيزيلة",
-  "الحزم",
-  "الرمال",
-  "البرية",
-  "السعادة",
-  "الشرق",
-  "الوادي",
+const DISTRICTS: { ar: string; en: string }[] = [
+  { ar: "العليا", en: "Al Olaya" },
+  { ar: "النزهة", en: "Al Nuzha" },
+  { ar: "الملقا", en: "Al Malqa" },
+  { ar: "الغدير", en: "Al Ghadir" },
+  { ar: "حطين", en: "Hittin" },
+  { ar: "الياسمين", en: "Al Yasmin" },
+  { ar: "الورود", en: "Al Wurud" },
+  { ar: "الروضة", en: "Al Rawdah" },
+  { ar: "المروج", en: "Al Muruj" },
+  { ar: "الربوة", en: "Al Rabwah" },
+  { ar: "السليمانية", en: "Al Sulaymaniyah" },
+  { ar: "الحمراء", en: "Al Hamra" },
+  { ar: "الفيصلية", en: "Al Faisaliyah" },
+  { ar: "الوزارات", en: "Al Wizarat" },
+  { ar: "العقيق", en: "Al Aqiq" },
+  { ar: "الصحافة", en: "Al Sahafa" },
+  { ar: "الشفا", en: "Al Shifa" },
+  { ar: "المصيف", en: "Al Musayf" },
+  { ar: "الروابي", en: "Al Rawabi" },
+  { ar: "قرطبة", en: "Qurtuba" },
+  { ar: "بنبان", en: "Banban" },
+  { ar: "النرجس", en: "Al Narjis" },
+  { ar: "الواحة", en: "Al Wahah" },
+  { ar: "الخزامى", en: "Al Khuzama" },
+  { ar: "المهدية", en: "Al Mahdiyah" },
+  { ar: "الطيبة", en: "Al Taybah" },
+  { ar: "أم الحمام", en: "Umm Al Hamam" },
+  { ar: "البديعة", en: "Al Badi'ah" },
+  { ar: "لبن", en: "Laban" },
+  { ar: "الدار البيضاء", en: "Al Dar Al Baida" },
+  { ar: "الشميسي", en: "Al Shumaisi" },
+  { ar: "الفيحاء", en: "Al Fayhaa" },
+  { ar: "المنصورة", en: "Al Mansurah" },
+  { ar: "الجزيرة", en: "Al Jazirah" },
+  { ar: "النسيم", en: "Al Nasim" },
+  { ar: "العزيزية", en: "Al Aziziyah" },
+  { ar: "ذهبان", en: "Dhahban" },
+  { ar: "المعيزيلة", en: "Al Muaizilah" },
+  { ar: "الحزم", en: "Al Hazm" },
+  { ar: "الرمال", en: "Al Rimal" },
+  { ar: "البرية", en: "Al Bariyah" },
+  { ar: "السعادة", en: "Al Saadah" },
+  { ar: "الشرق", en: "Al Sharq" },
+  { ar: "الوادي", en: "Al Wadi" },
 ];
 
 const UNIT_OPTIONS: number[] = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26];
@@ -125,6 +126,7 @@ export default function OwnerOnboarding() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { lang } = useLang();
 
   // Form state
   const [propertyName, setPropertyName] = useState("");
@@ -409,32 +411,34 @@ export default function OwnerOnboarding() {
 
                 {/* City — fixed, read-only */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="city">المدينة</Label>
+                  <Label htmlFor="city">{lang === "ar" ? "المدينة" : "City"}</Label>
                   <Input
                     id="city"
-                    value="الرياض"
+                    value={lang === "ar" ? "الرياض" : "Riyadh"}
                     disabled
                     readOnly
                     className="opacity-50 cursor-not-allowed"
                   />
-                  <p className="text-xs text-gray-500">الإصدار الأول — الرياض فقط</p>
+                  <p className="text-xs text-gray-500">
+                    {lang === "ar" ? "الإصدار الأول — الرياض فقط" : "V1 — Riyadh only"}
+                  </p>
                 </div>
 
-                {/* Neighborhood */}
+                {/* District */}
                 <div className="space-y-1.5">
-                  <Label>الحي *</Label>
+                  <Label>{lang === "ar" ? "الحي *" : "District *"}</Label>
                   <Select value={neighborhood} onValueChange={setNeighborhood}>
                     <SelectTrigger
                       className={`w-full h-10 text-sm${
                         showValidation && !isNeighborhoodValid ? " border-red-500 ring-red-400" : ""
                       }`}
                     >
-                      <SelectValue placeholder="اختر الحي..." />
+                      <SelectValue placeholder={lang === "ar" ? "اختر الحي..." : "Select district..."} />
                     </SelectTrigger>
                     <SelectContent className="max-h-64">
-                      {NEIGHBORHOODS.map((n) => (
-                        <SelectItem key={n} value={n}>
-                          {n}
+                      {DISTRICTS.map((d) => (
+                        <SelectItem key={d.ar} value={d.ar}>
+                          {lang === "ar" ? d.ar : d.en}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -442,7 +446,7 @@ export default function OwnerOnboarding() {
                   {showValidation && !isNeighborhoodValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      يرجى اختيار الحي
+                      {lang === "ar" ? "يرجى اختيار الحي" : "Please select a district"}
                     </p>
                   )}
                 </div>

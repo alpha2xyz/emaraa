@@ -39,14 +39,6 @@ export function Navbar() {
               {userName && (
                 <span className="text-sm text-gray-700 font-medium">{userName}</span>
               )}
-              {userRole === "owner" && (
-                <span
-                  className="text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: "#EEF2F7", color: "#2E4A6B" }}
-                >
-                  مالك
-                </span>
-              )}
               {userRole === "provider" && (
                 <span
                   className="text-xs font-medium px-2 py-0.5 rounded-full"

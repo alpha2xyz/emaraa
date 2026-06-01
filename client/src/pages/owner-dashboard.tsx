@@ -39,51 +39,51 @@ import { supabase } from "@/lib/supabase";
 // Constants
 // ---------------------------------------------------------------------------
 
-const NEIGHBORHOODS: string[] = [
-  "العليا",
-  "النزهة",
-  "الملقا",
-  "الغدير",
-  "حطين",
-  "الياسمين",
-  "الورود",
-  "الروضة",
-  "المروج",
-  "الربوة",
-  "السليمانية",
-  "الحمراء",
-  "الفيصلية",
-  "الوزارات",
-  "العقيق",
-  "الصحافة",
-  "الشفا",
-  "المصيف",
-  "الروابي",
-  "قرطبة",
-  "بنبان",
-  "النرجس",
-  "الواحة",
-  "الخزامى",
-  "المهدية",
-  "الطيبة",
-  "أم الحمام",
-  "البديعة",
-  "لبن",
-  "الدار البيضاء",
-  "الشميسي",
-  "الفيحاء",
-  "المنصورة",
-  "الجزيرة",
-  "النسيم",
-  "العزيزية",
-  "ذهبان",
-  "المعيزيلة",
-  "الحزم",
-  "الرمال",
-  "البرية",
-  "السعادة",
-  "الشرق",
-  "الوادي",
+const DISTRICTS: { ar: string; en: string }[] = [
+  { ar: "العليا", en: "Al Olaya" },
+  { ar: "النزهة", en: "Al Nuzha" },
+  { ar: "الملقا", en: "Al Malqa" },
+  { ar: "الغدير", en: "Al Ghadir" },
+  { ar: "حطين", en: "Hittin" },
+  { ar: "الياسمين", en: "Al Yasmin" },
+  { ar: "الورود", en: "Al Wurud" },
+  { ar: "الروضة", en: "Al Rawdah" },
+  { ar: "المروج", en: "Al Muruj" },
+  { ar: "الربوة", en: "Al Rabwah" },
+  { ar: "السليمانية", en: "Al Sulaymaniyah" },
+  { ar: "الحمراء", en: "Al Hamra" },
+  { ar: "الفيصلية", en: "Al Faisaliyah" },
+  { ar: "الوزارات", en: "Al Wizarat" },
+  { ar: "العقيق", en: "Al Aqiq" },
+  { ar: "الصحافة", en: "Al Sahafa" },
+  { ar: "الشفا", en: "Al Shifa" },
+  { ar: "المصيف", en: "Al Musayf" },
+  { ar: "الروابي", en: "Al Rawabi" },
+  { ar: "قرطبة", en: "Qurtuba" },
+  { ar: "بنبان", en: "Banban" },
+  { ar: "النرجس", en: "Al Narjis" },
+  { ar: "الواحة", en: "Al Wahah" },
+  { ar: "الخزامى", en: "Al Khuzama" },
+  { ar: "المهدية", en: "Al Mahdiyah" },
+  { ar: "الطيبة", en: "Al Taybah" },
+  { ar: "أم الحمام", en: "Umm Al Hamam" },
+  { ar: "البديعة", en: "Al Badi'ah" },
+  { ar: "لبن", en: "Laban" },
+  { ar: "الدار البيضاء", en: "Al Dar Al Baida" },
+  { ar: "الشميسي", en: "Al Shumaisi" },
+  { ar: "الفيحاء", en: "Al Fayhaa" },
+  { ar: "المنصورة", en: "Al Mansurah" },
+  { ar: "الجزيرة", en: "Al Jazirah" },
+  { ar: "النسيم", en: "Al Nasim" },
+  { ar: "العزيزية", en: "Al Aziziyah" },
+  { ar: "ذهبان", en: "Dhahban" },
+  { ar: "المعيزيلة", en: "Al Muaizilah" },
+  { ar: "الحزم", en: "Al Hazm" },
+  { ar: "الرمال", en: "Al Rimal" },
+  { ar: "البرية", en: "Al Bariyah" },
+  { ar: "السعادة", en: "Al Saadah" },
+  { ar: "الشرق", en: "Al Sharq" },
+  { ar: "الوادي", en: "Al Wadi" },
 ];
 
 const UNIT_OPTIONS: number[] = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26];
@@ -535,7 +535,7 @@ export default function OwnerDashboard() {
                     lang={lang}
                   />
                   <PropertyRow
-                    label={lang === "ar" ? "الحي" : "Neighborhood"}
+                    label={lang === "ar" ? "الحي" : "District"}
                     value={property?.address}
                   />
                   <PropertyRow
@@ -644,10 +644,10 @@ export default function OwnerDashboard() {
                     </div>
                   </div>
 
-                  {/* Neighborhood */}
+                  {/* District */}
                   <div className="space-y-1.5">
                     <Label htmlFor="editNeighborhood">
-                      {lang === "ar" ? "الحي" : "Neighborhood"} *
+                      {lang === "ar" ? "الحي" : "District"} *
                     </Label>
                     <select
                       id="editNeighborhood"
@@ -656,11 +656,11 @@ export default function OwnerDashboard() {
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     >
                       <option value="" disabled>
-                        {lang === "ar" ? "اختر الحي..." : "Select neighborhood..."}
+                        {lang === "ar" ? "اختر الحي..." : "Select district..."}
                       </option>
-                      {NEIGHBORHOODS.map((n) => (
-                        <option key={n} value={n}>
-                          {n}
+                      {DISTRICTS.map((d) => (
+                        <option key={d.ar} value={d.ar}>
+                          {lang === "ar" ? d.ar : d.en}
                         </option>
                       ))}
                     </select>
