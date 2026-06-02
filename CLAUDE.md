@@ -191,6 +191,10 @@ Express v5 uses path-to-regexp v8 which rejects bare `*` → `Missing parameter 
 Run locally with: `HOST=127.0.0.1 PORT=3000 npm run dev`
 Vercel/production deployment leaves HOST unset → falls back to `0.0.0.0` (correct for production).
 
+### 4. `vercel.json` rewrite capture must NOT be named after a query param — BANNED (fixed 2026-06-02)
+`vercel.json` had `{ "source": "/api/:path*", "destination": "/api/index" }`. A **named** capture (`:path*`) makes Vercel inject a query param with that name (here `path`, e.g. `files/signed-url`) into the proxied request, which **silently overrides** the real `?path=` the client sends. `/api/files/signed-url` then signed a bogus path → Supabase "Object not found" → broken downloads. It only failed in **production** (Vercel rewrites don't run in local `npm run dev`), so it masqueraded as a Supabase/key/storage problem.
+**Fix:** the catch-all capture is named `:proxy*` (a name no endpoint reads). **Rule:** never name a rewrite capture after any query param an `/api` route reads (`path`, `id`, `bucket`, `token`, …). Symptom signature: works locally, wrong-arg/404 only in prod, on routes that read `req.query.<that-name>`.
+
 ---
 
 ## OTP System (Production-ready as of 2026-05-07)
