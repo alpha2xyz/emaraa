@@ -442,6 +442,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         const lr = await supabaseAdmin.storage.from(bucket).list("", { limit: 5 });
         const listResult = lr.error ? { ok: false, message: lr.error.message } : { ok: true, names: (lr.data || []).map((o: any) => o.name) };
 
+        // DECISIVE: does fetching the object by name (download) work from prod?
+        let downloadTest: any = "(no path)";
+        if (path) {
+          const dr = await supabaseAdmin.storage.from(bucket).download(path);
+          downloadTest = dr.error
+            ? { ok: false, message: dr.error.message }
+            : { ok: true, bytes: (await dr.data.arrayBuffer()).byteLength };
+        }
+
         return res.json({
           serviceKeyKind: kindOf(k),
           serviceKeyLen: k.length,
@@ -453,7 +462,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           rawBoth,
           rawApikeyOnly,
           listResult,
-          commit: "diag-v3",
+          downloadTest,
+          commit: "diag-v4",
         });
       }
 
