@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { createHash, createHmac } from "crypto";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -388,78 +387,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // never depends on the client JWT or storage RLS. Accepts a user session OR an admin session.
   app.get("/api/files/signed-url", async (req, res) => {
     try {
-      // TEMP DIAGNOSTIC — gated by a secret param. Reveals key TYPE/length + the real
-      // storage error, but NEVER the key value. Remove after debugging.
-      if (req.query.diag === "89fd3cf083b74fe4ce221d52") {
-        const k = SUPABASE_SERVICE_ROLE_KEY || "";
-        const kindOf = (v: string) =>
-          v.startsWith("sb_secret_") ? "sb_secret"
-          : v.startsWith("sb_publishable_") ? "sb_publishable"
-          : v.startsWith("eyJ") ? "legacy_jwt"
-          : v ? "other" : "empty";
-        const path = String(req.query.path || "");
-        let storage: any = "(no path)";
-        if (path) {
-          const r = await supabaseAdmin.storage
-            .from(String(req.query.bucket || "provider-offers"))
-            .createSignedUrl(path, 60);
-          storage = r.error
-            ? { ok: false, name: r.error.name, message: r.error.message, status: (r.error as any).status ?? (r.error as any).statusCode }
-            : { ok: true, signed: !!r.data?.signedUrl };
-        }
-        let host = "(bad url)";
-        try { host = new URL(SUPABASE_URL).host; } catch {}
-
-        // Does prod's key VALUE match the known-good local key? (hash prefix, no leak)
-        const keySha12 = createHash("sha256").update(k).digest("hex").slice(0, 12);
-
-        const bucket = String(req.query.bucket || "provider-offers");
-
-        // RAW HTTP from inside prod, capturing CDN cache status. Retried with a
-        // cache-buster query param to tell "stale edge 404 cache" from "origin 404".
-        const rawReq = async (method: string, ep: string, headers: Record<string, string>, body?: string) => {
-          try {
-            const r = await fetch(ep, { method, headers, body });
-            const t = await r.text();
-            return { status: r.status, cache: r.headers.get("cf-cache-status"), age: r.headers.get("age"), ray: r.headers.get("cf-ray"), body: t.slice(0, 90) };
-          } catch (e: any) {
-            return { fetchError: String(e?.message || e) };
-          }
-        };
-        const H = { apikey: k, Authorization: "Bearer " + k };
-        const Hj = { ...H, "Content-Type": "application/json" };
-        const cb = "?cb=" + Date.now();
-        let signRaw: any = "(no path)", signRawCb: any = "(no path)", dlRaw: any = "(no path)", dlRawCb: any = "(no path)";
-        if (path) {
-          const signEp = `${SUPABASE_URL}/storage/v1/object/sign/${bucket}/${path}`;
-          const dlEp = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
-          signRaw = await rawReq("POST", signEp, Hj, JSON.stringify({ expiresIn: 60 }));
-          signRawCb = await rawReq("POST", signEp + cb, Hj, JSON.stringify({ expiresIn: 60 }));
-          dlRaw = await rawReq("GET", dlEp, H);
-          dlRawCb = await rawReq("GET", dlEp + cb, H);
-        }
-
-        // Does the prod client even SEE objects in the bucket? (role/RLS-wide check)
-        const lr = await supabaseAdmin.storage.from(bucket).list("", { limit: 5 });
-        const listResult = lr.error ? { ok: false, message: lr.error.message } : { ok: true, names: (lr.data || []).map((o: any) => o.name) };
-
-        return res.json({
-          serviceKeyKind: kindOf(k),
-          serviceKeyLen: k.length,
-          serviceKeySha12: keySha12,
-          jwtSecretPresent: !!(process.env.SUPABASE_JWT_SECRET ?? ""),
-          anonKeyKind: kindOf(SUPABASE_ANON_KEY || ""),
-          urlHost: host,
-          clientSign: storage,
-          signRaw,
-          signRawCb,
-          dlRaw,
-          dlRawCb,
-          listResult,
-          commit: "diag-v5",
-        });
-      }
-
       const token = req.headers.authorization?.replace("Bearer ", "").trim();
       if (!token) return res.status(401).json({ error: "Unauthorized" });
 
