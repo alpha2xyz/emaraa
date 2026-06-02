@@ -415,41 +415,33 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
         const bucket = String(req.query.bucket || "provider-offers");
 
-        // RAW HTTP from inside prod to the storage sign endpoint — bypasses the JS
-        // client's header logic, so we see what storage-api itself returns from here.
-        const signEp = `${SUPABASE_URL}/storage/v1/object/sign/${bucket}/${path}`;
-        const rawCall = async (headers: Record<string, string>) => {
+        // RAW HTTP from inside prod, capturing CDN cache status. Retried with a
+        // cache-buster query param to tell "stale edge 404 cache" from "origin 404".
+        const rawReq = async (method: string, ep: string, headers: Record<string, string>, body?: string) => {
           try {
-            const r = await fetch(signEp, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", ...headers },
-              body: JSON.stringify({ expiresIn: 60 }),
-            });
+            const r = await fetch(ep, { method, headers, body });
             const t = await r.text();
-            return { status: r.status, body: t.slice(0, 140), gwRegion: r.headers.get("x-sb-region") || r.headers.get("sb-gateway-region") || r.headers.get("cf-ray") || null };
+            return { status: r.status, cache: r.headers.get("cf-cache-status"), age: r.headers.get("age"), ray: r.headers.get("cf-ray"), body: t.slice(0, 90) };
           } catch (e: any) {
             return { fetchError: String(e?.message || e) };
           }
         };
-        let rawBoth: any = "(no path)";
-        let rawApikeyOnly: any = "(no path)";
+        const H = { apikey: k, Authorization: "Bearer " + k };
+        const Hj = { ...H, "Content-Type": "application/json" };
+        const cb = "?cb=" + Date.now();
+        let signRaw: any = "(no path)", signRawCb: any = "(no path)", dlRaw: any = "(no path)", dlRawCb: any = "(no path)";
         if (path) {
-          rawBoth = await rawCall({ apikey: k, Authorization: "Bearer " + k });
-          rawApikeyOnly = await rawCall({ apikey: k });
+          const signEp = `${SUPABASE_URL}/storage/v1/object/sign/${bucket}/${path}`;
+          const dlEp = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
+          signRaw = await rawReq("POST", signEp, Hj, JSON.stringify({ expiresIn: 60 }));
+          signRawCb = await rawReq("POST", signEp + cb, Hj, JSON.stringify({ expiresIn: 60 }));
+          dlRaw = await rawReq("GET", dlEp, H);
+          dlRawCb = await rawReq("GET", dlEp + cb, H);
         }
 
         // Does the prod client even SEE objects in the bucket? (role/RLS-wide check)
         const lr = await supabaseAdmin.storage.from(bucket).list("", { limit: 5 });
         const listResult = lr.error ? { ok: false, message: lr.error.message } : { ok: true, names: (lr.data || []).map((o: any) => o.name) };
-
-        // DECISIVE: does fetching the object by name (download) work from prod?
-        let downloadTest: any = "(no path)";
-        if (path) {
-          const dr = await supabaseAdmin.storage.from(bucket).download(path);
-          downloadTest = dr.error
-            ? { ok: false, message: dr.error.message }
-            : { ok: true, bytes: (await dr.data.arrayBuffer()).byteLength };
-        }
 
         return res.json({
           serviceKeyKind: kindOf(k),
@@ -458,12 +450,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           jwtSecretPresent: !!(process.env.SUPABASE_JWT_SECRET ?? ""),
           anonKeyKind: kindOf(SUPABASE_ANON_KEY || ""),
           urlHost: host,
-          clientStorage: storage,
-          rawBoth,
-          rawApikeyOnly,
+          clientSign: storage,
+          signRaw,
+          signRawCb,
+          dlRaw,
+          dlRawCb,
           listResult,
-          downloadTest,
-          commit: "diag-v4",
+          commit: "diag-v5",
         });
       }
 
