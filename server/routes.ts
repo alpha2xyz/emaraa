@@ -413,38 +413,47 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // Does prod's key VALUE match the known-good local key? (hash prefix, no leak)
         const keySha12 = createHash("sha256").update(k).digest("hex").slice(0, 12);
 
-        // Can we sign by MINTING a service_role JWT from SUPABASE_JWT_SECRET instead?
-        const jwtSecret = process.env.SUPABASE_JWT_SECRET ?? "";
-        let mintTest: any = "(no path)";
-        if (path && jwtSecret) {
-          const b64 = (o: any) => Buffer.from(JSON.stringify(o)).toString("base64url");
-          const nowS = Math.floor(Date.now() / 1000);
-          const head = b64({ alg: "HS256", typ: "JWT" });
-          const body = b64({ iss: "supabase", ref: "txzbzpnrclkdodosbndy", role: "service_role", iat: nowS, exp: nowS + 600 });
-          const sig = createHmac("sha256", jwtSecret).update(`${head}.${body}`).digest("base64url");
-          const minted = `${head}.${body}.${sig}`;
-          const mClient = createClient(SUPABASE_URL, minted);
-          const mr = await mClient.storage
-            .from(String(req.query.bucket || "provider-offers"))
-            .createSignedUrl(path, 60);
-          mintTest = mr.error
-            ? { ok: false, name: mr.error.name, message: mr.error.message, status: (mr.error as any).status ?? (mr.error as any).statusCode }
-            : { ok: true, signed: !!mr.data?.signedUrl };
-        } else if (!jwtSecret) {
-          mintTest = "(SUPABASE_JWT_SECRET absent)";
+        const bucket = String(req.query.bucket || "provider-offers");
+
+        // RAW HTTP from inside prod to the storage sign endpoint — bypasses the JS
+        // client's header logic, so we see what storage-api itself returns from here.
+        const signEp = `${SUPABASE_URL}/storage/v1/object/sign/${bucket}/${path}`;
+        const rawCall = async (headers: Record<string, string>) => {
+          try {
+            const r = await fetch(signEp, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...headers },
+              body: JSON.stringify({ expiresIn: 60 }),
+            });
+            const t = await r.text();
+            return { status: r.status, body: t.slice(0, 140), gwRegion: r.headers.get("x-sb-region") || r.headers.get("sb-gateway-region") || r.headers.get("cf-ray") || null };
+          } catch (e: any) {
+            return { fetchError: String(e?.message || e) };
+          }
+        };
+        let rawBoth: any = "(no path)";
+        let rawApikeyOnly: any = "(no path)";
+        if (path) {
+          rawBoth = await rawCall({ apikey: k, Authorization: "Bearer " + k });
+          rawApikeyOnly = await rawCall({ apikey: k });
         }
+
+        // Does the prod client even SEE objects in the bucket? (role/RLS-wide check)
+        const lr = await supabaseAdmin.storage.from(bucket).list("", { limit: 5 });
+        const listResult = lr.error ? { ok: false, message: lr.error.message } : { ok: true, names: (lr.data || []).map((o: any) => o.name) };
 
         return res.json({
           serviceKeyKind: kindOf(k),
           serviceKeyLen: k.length,
           serviceKeySha12: keySha12,
-          jwtSecretLen: jwtSecret.length,
-          jwtSecretKind: jwtSecret.startsWith("eyJ") ? "jwt?" : jwtSecret ? "opaque" : "empty",
+          jwtSecretPresent: !!(process.env.SUPABASE_JWT_SECRET ?? ""),
           anonKeyKind: kindOf(SUPABASE_ANON_KEY || ""),
           urlHost: host,
-          storage,
-          mintTest,
-          commit: "diag-v2",
+          clientStorage: storage,
+          rawBoth,
+          rawApikeyOnly,
+          listResult,
+          commit: "diag-v3",
         });
       }
 
