@@ -387,6 +387,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // never depends on the client JWT or storage RLS. Accepts a user session OR an admin session.
   app.get("/api/files/signed-url", async (req, res) => {
     try {
+      // TEMP probe — gated by secret param. Tests the dedicated storage host from prod.
+      if (req.query.diag === "89fd3cf083b74fe4ce221d52") {
+        const k = SUPABASE_SERVICE_ROLE_KEY || "";
+        const ref = "txzbzpnrclkdodosbndy";
+        const bucket = String(req.query.bucket || "provider-offers");
+        const path = String(req.query.path || "");
+        const ep = `https://${ref}.storage.supabase.co/storage/v1/object/sign/${bucket}/${path}`;
+        let altHostSign: any = "(no path)";
+        if (path) {
+          try {
+            const r = await fetch(ep, { method: "POST", headers: { apikey: k, Authorization: "Bearer " + k, "Content-Type": "application/json" }, body: JSON.stringify({ expiresIn: 60 }) });
+            altHostSign = { status: r.status, cache: r.headers.get("cf-cache-status"), ray: r.headers.get("cf-ray"), body: (await r.text()).slice(0, 90) };
+          } catch (e: any) { altHostSign = { fetchError: String(e?.message || e) }; }
+        }
+        return res.json({ altHostSign, commit: "diag-v6" });
+      }
+
       const token = req.headers.authorization?.replace("Bearer ", "").trim();
       if (!token) return res.status(401).json({ error: "Unauthorized" });
 
