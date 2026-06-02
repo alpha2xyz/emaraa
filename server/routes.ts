@@ -410,13 +410,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid bucket or path" });
       }
 
+      // Use the plural createSignedUrls (path sent in the request body, not the URL).
+      // The single createSignedUrl puts the path in the URL, which Supabase storage
+      // rejects with "Object not found" specifically for requests from our server's
+      // network — while the body-based endpoints (list, createSignedUrls) work.
       const { data, error } = await supabaseAdmin.storage
         .from(bucket)
-        .createSignedUrl(path, 3600);
-      if (error || !data?.signedUrl) {
+        .createSignedUrls([path], 3600);
+      const signed = data?.[0];
+      if (error || !signed?.signedUrl || signed.error) {
         return res.status(404).json({ error: "File not found" });
       }
-      res.json({ url: data.signedUrl });
+      res.json({ url: signed.signedUrl });
     } catch {
       res.status(500).json({ error: "Failed to create signed URL" });
     }
