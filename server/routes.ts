@@ -410,15 +410,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid bucket or path" });
       }
 
-      // TESTING WORKAROUND: provider-offers and provider-documents are currently
-      // PUBLIC buckets, so we return the object's public URL directly. This avoids
-      // Supabase storage's sign/download-by-path endpoints, which fail with
-      // "Object not found" specifically for requests from our Vercel server's network
-      // (key/code verified correct; it's a Vercel<->Supabase storage egress issue).
-      // ⚠️ LAUNCH BLOCKER: before real launch, revert both buckets to private and
-      // restore signed URLs (via an Edge Function that signs from Supabase's network).
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
-      res.json({ url: publicUrl });
+      const { data, error } = await supabaseAdmin.storage
+        .from(bucket)
+        .createSignedUrl(path, 3600);
+      if (error || !data?.signedUrl) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      res.json({ url: data.signedUrl });
     } catch {
       res.status(500).json({ error: "Failed to create signed URL" });
     }
