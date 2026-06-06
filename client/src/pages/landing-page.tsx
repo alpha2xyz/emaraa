@@ -16,6 +16,7 @@ import {
   MapPin,
   ArrowLeft,
   ArrowDown,
+  ChevronDown,
 } from "lucide-react";
 
 // ── Building illustration ───────────────────────────────────────────────────
@@ -228,6 +229,19 @@ export default function LandingPage() {
       providerCTADesc: "انضم إلى عِمارة للعثور على عملاء جدد، والتقديم على المشاريع، وتنمية عملك.",
       joinProvider: "كن شريكاً في عِمارة",
       providerLogin: "تسجيل دخول مزود",
+      faqTitle: "أسئلة شائعة",
+      faqSubtitle: "كل ما تحتاج معرفته قبل البدء",
+      faqs: [
+        { q: "كيف تتحققون من مقدمي الخدمة؟", a: "كل مزوّد يجب أن يكون مرخّصاً من الهيئة العامة للعقار ولديه سجل تجاري ساري، ويمرّ بمراجعة واعتماد من فريقنا قبل أن يقدّم أي عرض." },
+        { q: "أي مناطق تغطّيها المنصة حالياً؟", a: "نبدأ بمدينة الرياض في الإصدار الأول، ونتوسّع تدريجياً إلى مدن أخرى." },
+        { q: "كم يستغرق استلام العروض؟", a: "بمجرد نشر طلبك يصل إشعار فوري للمزوّدين المعتمدين، وتبدأ العروض بالوصول عادةً خلال وقت قصير." },
+        { q: "هل بياناتي ورقمي خاصة؟", a: "نعم. لا يظهر رقمك لأي مزوّد إلا بعد قبولك لعرضه، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
+        { q: "ماذا لو وصلتني عدة عروض؟", a: "تقارن العروض جنباً إلى جنب — السعر الإجمالي والسعر لكل وحدة وملاحظات كل مزوّد — وتختار الأنسب لك. القرار بيدك." },
+      ],
+      ctaTitle: "جاهز تبدأ بإدارة عمارتك بكفاءة؟",
+      ctaDesc: "أضف عقارك خلال دقائق واستقبل عروضاً من مزوّدين موثوقين.",
+      ctaBtn: "ابدأ الآن",
+      whatsappLabel: "تواصل معنا عبر واتساب",
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
       aboutUs: "عن عِمارة",
@@ -302,6 +316,19 @@ export default function LandingPage() {
       providerCTADesc: "Join EMARAA to find new clients, apply for projects, and grow your business.",
       joinProvider: "Become a Partner",
       providerLogin: "Provider Login",
+      faqTitle: "Frequently Asked Questions",
+      faqSubtitle: "Everything you need to know before you start",
+      faqs: [
+        { q: "How do you verify service providers?", a: "Every provider must hold a valid REGA license and an active commercial registration, and is reviewed and approved by our team before submitting any offer." },
+        { q: "Which areas do you currently cover?", a: "We're launching in Riyadh first, and expanding to other cities gradually." },
+        { q: "How long until I receive offers?", a: "As soon as you post your request, approved providers get an instant notification, and offers usually start arriving shortly after." },
+        { q: "Are my data and phone number private?", a: "Yes. Your number is never shown to a provider until you accept their offer, and the full proposal file only opens after you accept." },
+        { q: "What if I receive several offers?", a: "You compare them side by side — total price, per-unit price, and each provider's notes — and choose what suits you. The decision is yours." },
+      ],
+      ctaTitle: "Ready to manage your building efficiently?",
+      ctaDesc: "Add your property in minutes and receive offers from trusted providers.",
+      ctaBtn: "Get Started",
+      whatsappLabel: "Chat with us on WhatsApp",
       quickLinks: "Quick Links",
       contactUs: "Contact Us",
       aboutUs: "About Emaraa",
@@ -609,6 +636,30 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── FAQ ─────────────────────────────────────────────────────────── */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto max-w-3xl px-4">
+          <div className="mb-10 text-center">
+            <h2 className="mb-3 text-3xl md:text-4xl font-extrabold text-gray-900">{t.faqTitle}</h2>
+            <p className="text-base md:text-lg text-gray-500">{t.faqSubtitle}</p>
+          </div>
+          <div className="space-y-3">
+            {t.faqs.map((f, i) => (
+              <details
+                key={i}
+                className="group rounded-xl border border-gray-200 bg-white px-5 py-4 [&_summary::-webkit-details-marker]:hidden"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-gray-900">
+                  {f.q}
+                  <ChevronDown className="h-5 w-5 flex-none text-gray-400 transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-gray-500">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Provider CTA (full-bleed band) ──────────────────────────────── */}
       <section
         className="relative overflow-hidden py-14 text-center"
@@ -651,6 +702,39 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Closing owner CTA (full-bleed band) ──────────────────────────── */}
+      <section
+        className="relative overflow-hidden py-16 text-center"
+        style={{ background: "linear-gradient(135deg, #2E4A6B 0%, #3F6690 100%)" }}
+      >
+        {/* faint dot pattern */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)",
+            backgroundSize: "26px 26px",
+          }}
+        />
+        <div className="relative container mx-auto px-4">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="mb-3 text-2xl md:text-3xl font-extrabold text-white">{t.ctaTitle}</h2>
+            <p className="mx-auto mb-8 max-w-lg text-base" style={{ color: "rgba(255,255,255,0.82)" }}>
+              {t.ctaDesc}
+            </p>
+            <Link href="/auth?role=owner">
+              <Button
+                size="lg"
+                className="bg-white px-12 font-semibold text-[#2E4A6B] hover:bg-gray-100 active:scale-95 transition-transform"
+              >
+                {t.ctaBtn}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -716,6 +800,19 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* ── Floating WhatsApp button ─────────────────────────────────────── */}
+      <a
+        href="https://wa.me/966501315725?text=مرحباً، لدي استفسار عن منصة عِمارة"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={t.whatsappLabel}
+        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#1EA952] shadow-lg transition-transform hover:scale-105 active:scale-95"
+      >
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="#fff" aria-hidden="true">
+          <path d="M17.6 6.32A8 8 0 0 0 4.21 16.05L3 21l5.06-1.18A8 8 0 1 0 17.6 6.32zM12 19.4a6.9 6.9 0 0 1-3.5-.96l-.25-.15-2.6.68.7-2.53-.16-.26A6.9 6.9 0 1 1 12 19.4zm3.9-5.2c-.21-.1-1.26-.62-1.45-.69s-.34-.1-.48.11-.55.68-.67.82-.25.16-.46.05a5.66 5.66 0 0 1-2.83-2.47c-.21-.36.21-.34.6-1.12a.38.38 0 0 0-.02-.36c-.05-.1-.48-1.15-.66-1.57s-.35-.36-.48-.36h-.41a.79.79 0 0 0-.57.27 2.4 2.4 0 0 0-.75 1.78 4.17 4.17 0 0 0 .87 2.2 9.54 9.54 0 0 0 3.65 3.23c2.27.99 2.27.66 2.68.62a2.18 2.18 0 0 0 1.43-1.01 1.78 1.78 0 0 0 .12-1.01c-.05-.1-.19-.16-.4-.26z" />
+        </svg>
+      </a>
     </div>
   );
 }

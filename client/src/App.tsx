@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
+import { Analytics } from "@vercel/analytics/react";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -194,6 +195,7 @@ export default function App() {
         <TooltipProvider>
           <Router />
           <Toaster />
+          <Analytics />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
