@@ -215,6 +215,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (existing.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
 
+      // Lock editing once the property's request has any non-rejected offer.
+      // Owner can edit again only after rejecting all received offers.
+      const { data: propRequests } = await supabaseAdmin
+        .from("requests")
+        .select("id")
+        .eq("property_id", req.params.id);
+      const requestIds = (propRequests ?? []).map((r: any) => r.id);
+      if (requestIds.length > 0) {
+        const { count: activeOffers } = await supabaseAdmin
+          .from("provider_offers")
+          .select("id", { count: "exact", head: true })
+          .in("request_id", requestIds)
+          .neq("status", "rejected");
+        if ((activeOffers ?? 0) > 0) {
+          return res.status(403).json({ error: "edit_locked" });
+        }
+      }
+
       const updateSchema = z.object({
         name: z.string().optional(),
         address: z.string().optional(),
@@ -521,6 +539,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             .from("provider_offers")
             .select("request_id")
             .eq("provider_id", providerId)
+            .neq("status", "rejected")
         : { data: [] };
       res.json({
         requests: requests || [],
@@ -568,12 +587,38 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!provider) return res.status(403).json({ error: "provider_not_found" });
       if (!provider.approved) return res.status(403).json({ error: "not_approved" });
 
-      const { count: existing } = await supabaseAdmin
+      // One offer per (request, provider). A previously rejected offer can be
+      // re-submitted: the owner rejected all offers and re-opened the request,
+      // so we reuse the rejected row (the UNIQUE(request_id, provider_id)
+      // constraint forbids a second row).
+      const { data: existingOffer } = await supabaseAdmin
         .from("provider_offers")
-        .select("id", { count: "exact", head: true })
+        .select("id, status")
         .eq("request_id", request_id)
-        .eq("provider_id", provider.id);
-      if ((existing ?? 0) > 0) return res.status(409).json({ error: "already_submitted" });
+        .eq("provider_id", provider.id)
+        .maybeSingle();
+
+      if (existingOffer && existingOffer.status !== "rejected") {
+        return res.status(409).json({ error: "already_submitted" });
+      }
+
+      if (existingOffer) {
+        // Re-offer: revive the rejected row as a fresh pending offer.
+        const { data, error } = await supabaseAdmin
+          .from("provider_offers")
+          .update({
+            offer_file_url,
+            notes: notes || null,
+            price_total: price_total || null,
+            status: "pending",
+            created_at: new Date().toISOString(),
+          })
+          .eq("id", existingOffer.id)
+          .select()
+          .single();
+        if (error) return res.status(500).json({ error: error.message });
+        return res.json(data);
+      }
 
       const { data, error } = await supabaseAdmin
         .from("provider_offers")
@@ -648,7 +693,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
-      res.json(data ?? []);
+      // Lock the PDF proposal until the owner accepts: only an accepted offer
+      // exposes its file path to the owner's browser.
+      const safe = (data ?? []).map((o: any) => ({
+        ...o,
+        offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
+      }));
+      res.json(safe);
     } catch {
       res.status(500).json({ error: "Failed to fetch offers" });
     }

@@ -260,15 +260,16 @@ export default function OwnerDashboard() {
   const requestStatus = request?.status ?? null;
   const statusConfig = requestStatus ? getRequestStatusConfig(requestStatus) : null;
 
-  // Block property editing only when an offer has been ACCEPTED (not just when request is pending)
-  const hasAcceptedOffer = (offers ?? []).some((o: any) => o.status === "accepted");
+  // Lock property/request editing once the request has any non-rejected offer.
+  // The owner can edit again only after rejecting all received offers.
+  const isRequestLocked = (offers ?? []).some((o: any) => o.status !== "rejected");
 
   // ---------------------------------------------------------------------------
   // Edit mode init — populate form fields from property
   // ---------------------------------------------------------------------------
 
   function enterEditMode() {
-    if (hasAcceptedOffer) {
+    if (isRequestLocked) {
       setShowEditLocked(true);
       return;
     }
@@ -513,8 +514,8 @@ export default function OwnerDashboard() {
                   <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
                     {lang === "ar"
-                      ? "التعديل محجوب — لديك عرضاً مقبولاً من مزود خدمة"
-                      : "Editing locked — you have an accepted offer from a provider"}
+                      ? "التعديل محجوب — وصلتك عروض على طلبك. ارفض جميع العروض لتتمكن من تعديل الطلب من جديد."
+                      : "Editing locked — you've received offers on your request. Reject all offers to edit the request again."}
                   </span>
                 </div>
               )}
@@ -958,9 +959,24 @@ export default function OwnerDashboard() {
                       </div>
                     )}
 
+                    {/* PDF proposal — locked until the owner accepts the offer */}
+                    {offer.status === "pending" && (
+                      <div
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                        style={{ background: "#F3F4F6", color: "#6B7280", border: "1px solid #E5E7EB" }}
+                      >
+                        <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>
+                          {lang === "ar"
+                            ? "يُفتح ملف العرض بعد قبوله"
+                            : "Proposal unlocks after you accept"}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Actions */}
                     <div className="flex gap-2 flex-wrap">
-                      {offer.offer_file_url && (
+                      {offer.status === "accepted" && offer.offer_file_url && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1023,8 +1039,8 @@ export default function OwnerDashboard() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {lang === "ar"
-                ? "قبول هذا العرض يظهر لك رقم مزود الخدمة للتواصل معه وسيؤدي تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
-                : "Accepting this offer will reveal the provider's phone number for direct contact and will automatically reject all other offers. Are you sure?"}
+                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF) ويظهر رقم مزود الخدمة للتواصل معه، وسيؤدي تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
+                : "Accepting this offer unlocks the provider's full proposal (PDF), reveals their phone number for direct contact, and automatically rejects all other offers. Are you sure?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

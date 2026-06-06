@@ -105,11 +105,19 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 2. **Section ① — العقار وطلب الخدمة** — property info (inline editable) merged with request status (shown below border-top divider with status badge + date + notes)
 3. **Section ② — عروض المزودين** — lists all offers received
 
-**Edit lock rule:** `hasAcceptedOffer = offers.some(o => o.status === "accepted")`
-- Edit is **ALLOWED** while request is pending with no accepted offer
-- Edit is **LOCKED** only when an offer has been accepted (a contract exists)
-- Amber locked notice: "التعديل محجوب — لديك عرضاً مقبولاً من مزود خدمة"
-- Do NOT lock based on request status (`pending`/`in_progress`) — this permanently locks the owner out after onboarding
+**Edit lock rule (updated 2026-06-02):** `isRequestLocked = offers.some(o => o.status !== "rejected")`
+- Edit is **LOCKED** as soon as the request receives its **first offer** (any pending or accepted offer)
+- Edit **UNLOCKS** only when the owner has **rejected all** received offers (or there are no offers yet)
+- Rationale: a request a provider has bid on must not change underneath them; the owner re-opens it by rejecting everything
+- Amber locked notice: "التعديل محجوب — وصلتك عروض على طلبك. ارفض جميع العروض لتتمكن من تعديل الطلب من جديد."
+- Enforced server-side too: `PUT /api/properties/:id` returns `403 edit_locked` if the property's request has any non-rejected offer
+- Do NOT lock based on request status (`pending`/`in_progress`) — lock on offer presence, not status
+- **Re-offer:** a rejected provider may bid again on the re-opened request. `POST /api/provider/offers` revives the rejected row (revives to `pending`) instead of inserting a duplicate (respects `UNIQUE(request_id, provider_id)`); `GET /api/provider/requests` excludes rejected offers from `submittedRequestIds`
+
+**PDF proposal lock rule (added 2026-06-02):** the owner cannot open a provider's PDF until they **accept** the offer.
+- Owner decides on **price + notes only**; the full PDF unlocks on accept (mirrors the phone-reveal-on-accept pattern)
+- Enforced server-side: `GET /api/owner/offers/:requestId` nulls out `offer_file_url` for any offer whose status is not `accepted` — the path never reaches the owner's browser until accept
+- Provider's own view (`GET /api/provider/all-offers`) and admin views are unchanged — they still see PDFs
 
 **Bottom nav:** `if (isOwner) return null` — owners have no bottom nav; provider 4-tab nav unchanged
 
