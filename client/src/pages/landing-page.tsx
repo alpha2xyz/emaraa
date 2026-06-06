@@ -1,20 +1,21 @@
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "@/hooks/use-lang";
 import { Link } from "wouter";
 import {
-  Users,
   Globe,
   ClipboardList,
   Search,
   BarChart3,
-  Wrench,
   Home,
   Building2,
   CheckCircle2,
   ShieldCheck,
   Bell,
   MapPin,
+  ArrowLeft,
+  ArrowDown,
 } from "lucide-react";
 
 // ── Building illustration ───────────────────────────────────────────────────
@@ -142,6 +143,23 @@ function HeroIllustration() {
   );
 }
 
+// ── Browser-framed product screenshot ───────────────────────────────────────
+function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_18px_50px_rgba(20,30,60,0.16)]">
+      <div className="flex h-9 items-center gap-1.5 border-b border-gray-100 bg-[#f1f3f7] px-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+        <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-gray-200 bg-white px-2 text-[10px] text-gray-400">
+          {url}
+        </span>
+      </div>
+      <div className="bg-[#F9F9FF] p-4">{children}</div>
+    </div>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { lang, toggleLang } = useLang();
@@ -154,7 +172,7 @@ export default function LandingPage() {
       heroTitle: "عِمارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
-        "منصة تربط ملاك العقارات السكنية والتجارية بمقدمي خدمات النظافة وإدارة المرافق الموثوقين. انشر احتياجاتك، واستلم عروضاً تنافسية، وتعاقد مع الأفضل.",
+        "منصة تربط ملاك العقارات السكنية والتجارية بمقدمي خدمات النظافة وإدارة المرافق الموثوقين. انشر احتياجاتك، واستلم عروضاً من مزوّدين موثوقين، وتعاقد مع الأفضل.",
       getStarted: "ابدأ مجاناً",
       learnMore: "اعرف المزيد",
       whoTitle: "من يستفيد من عِمارة؟",
@@ -177,14 +195,38 @@ export default function LandingPage() {
       howItWorksTitle: "كيف تعمل المنصة",
       howItWorksDesc: "العثور على مزود الخدمة المناسب لم يكن أسهل من أي وقت مضى. ابدأ في دقائق.",
       step1Title: "أضف عقارك",
-      step1Desc: "أضف تفاصيل مبناك (سكني أو تجاري) والخدمات التي تحتاجها",
+      step1Desc: "أضف تفاصيل عِمارتك (سكني أو تجاري) والخدمات التي تحتاجها",
       step2Title: "احصل على عروض",
       step2Desc: "مقدمو الخدمات المؤهلون يقدمون عروضهم على طلباتك",
       step3Title: "قارن واختر",
       step3Desc: "راجع العروض واختر أفضل مزود خدمة مناسب لك",
-      providerCTATitle: "هل أنت مزود خدمة؟",
-      providerCTADesc: "انضم إلى عِمارة للعثور على عملاء جدد، والمزايدة على المشاريع، وتنمية عملك.",
-      joinProvider: "انضم كمزود خدمة",
+      screens: {
+        urlForm: "emaraa.app/dashboard/owner/onboarding",
+        urlDash: "emaraa.app/dashboard/owner",
+        propLabel: "اسم العقار",
+        propValue: "برج النخيل السكني",
+        typeLabel: "نوع المبنى",
+        typeRes: "سكني",
+        typeCom: "تجاري",
+        districtLabel: "الحي",
+        districtValue: "العليا",
+        unitsLabel: "عدد الوحدات",
+        saveBtn: "حفظ ونشر الطلب",
+        offersHead: "عروض المزوّدين على طلبك",
+        co1: "شركة نظافة الرياض",
+        co1sub: "مرخّصة من الهيئة · وصل الآن",
+        co2: "الإتقان لإدارة المرافق",
+        co2sub: "مرخّصة من الهيئة · قبل ساعة",
+        newBadge: "عرض جديد",
+        compareHead: "قارن واختر العرض المناسب",
+        totalLabel: "الإجمالي",
+        perUnit: "للوحدة",
+        riyal: "ريال",
+        selectBtn: "اختيار",
+      },
+      providerCTATitle: "هل أنت شركة إدارة مرافق؟",
+      providerCTADesc: "انضم إلى عِمارة للعثور على عملاء جدد، والتقديم على المشاريع، وتنمية عملك.",
+      joinProvider: "كن شريكاً في عِمارة",
       providerLogin: "تسجيل دخول مزود",
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
@@ -202,7 +244,7 @@ export default function LandingPage() {
       heroTitle: "EMARAA,",
       heroHighlight: "Your Building, Perfectly Managed",
       heroDesc:
-        "Connecting residential and commercial property owners with trusted cleaning and facility management providers. Post your needs, receive competitive quotes, and contract the best.",
+        "Connecting residential and commercial property owners with trusted cleaning and facility management providers. Post your needs, receive proposals from trusted providers, and contract the best.",
       getStarted: "Get Started Free",
       learnMore: "Learn More",
       whoTitle: "Who is EMARAA for?",
@@ -232,9 +274,33 @@ export default function LandingPage() {
       step2Desc: "Qualified service providers bid on your requests",
       step3Title: "Compare & Choose",
       step3Desc: "Review bids and select the best provider for you",
-      providerCTATitle: "Are You a Service Provider?",
-      providerCTADesc: "Join EMARAA to find new clients, bid on projects, and grow your business.",
-      joinProvider: "Join as Service Provider",
+      screens: {
+        urlForm: "emaraa.app/dashboard/owner/onboarding",
+        urlDash: "emaraa.app/dashboard/owner",
+        propLabel: "Property name",
+        propValue: "Al-Nakheel Residential Tower",
+        typeLabel: "Building type",
+        typeRes: "Residential",
+        typeCom: "Commercial",
+        districtLabel: "District",
+        districtValue: "Al-Olaya",
+        unitsLabel: "Units",
+        saveBtn: "Save & post request",
+        offersHead: "Provider offers on your request",
+        co1: "Riyadh Cleaning Co.",
+        co1sub: "REGA-licensed · just now",
+        co2: "Al-Itqan Facility Mgmt",
+        co2sub: "REGA-licensed · 1h ago",
+        newBadge: "New offer",
+        compareHead: "Compare & choose the right offer",
+        totalLabel: "Total",
+        perUnit: "per unit",
+        riyal: "SAR",
+        selectBtn: "Select",
+      },
+      providerCTATitle: "Are You a Facility Management Company?",
+      providerCTADesc: "Join EMARAA to find new clients, apply for projects, and grow your business.",
+      joinProvider: "Become a Partner",
       providerLogin: "Provider Login",
       quickLinks: "Quick Links",
       contactUs: "Contact Us",
@@ -303,25 +369,17 @@ export default function LandingPage() {
                 </h1>
               </div>
               <p className="text-lg text-gray-500 leading-relaxed max-w-lg">{t.heroDesc}</p>
-              <div className="flex gap-3 flex-wrap">
-                <Link href="/auth?role=owner">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-8 active:scale-95 transition-transform shadow-md hover:shadow-lg"
-                  >
-                    {t.getStarted}
-                  </Button>
-                </Link>
+              <div className="flex">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="border-gray-200 text-gray-700 hover:border-[#2E4A6B] hover:text-[#2E4A6B] px-8"
+                  className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-8 gap-2 active:scale-95 transition-transform shadow-md hover:shadow-lg"
                   onClick={() => {
                     const el = document.getElementById("how-it-works");
                     if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" });
                   }}
                 >
                   {t.learnMore}
+                  <ArrowDown className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -340,7 +398,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: "#0E7C66" }} />
-              <span>{lang === "ar" ? "شركات معتمدة" : "Verified Companies"}</span>
+              <span>{lang === "ar" ? "مزوّدون مرخّصون من الهيئة" : "REGA-licensed providers"}</span>
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <Home className="w-5 h-5 flex-shrink-0" style={{ color: "#7D3040" }} />
@@ -381,11 +439,6 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/auth?role=owner">
-                  <Button className="w-full bg-[#7D3040] hover:bg-[#662838] active:scale-95 transition-transform">
-                    {t.startNow}
-                  </Button>
-                </Link>
               </CardContent>
             </Card>
 
@@ -404,21 +457,27 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/auth?role=owner">
-                  <Button className="w-full bg-[#C4694A] hover:bg-[#A3573C] active:scale-95 transition-transform">
-                    {t.startNow}
-                  </Button>
-                </Link>
               </CardContent>
             </Card>
+          </div>
+          {/* Single shared owner CTA */}
+          <div className="text-center mt-10">
+            <Link href="/auth?role=owner">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-12 active:scale-95 transition-transform shadow-md hover:shadow-lg"
+              >
+                {t.startNow}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── How it works ────────────────────────────────────────────────── */}
+      {/* ── How it works (real product screens) ─────────────────────────── */}
       <section id="how-it-works" className="py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-20">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
               {t.howItWorksTitle}
             </h2>
@@ -427,81 +486,168 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Steps */}
-          <div className="max-w-4xl mx-auto">
-            <div className="grid lg:grid-cols-3 gap-16 lg:gap-8">
-              {[
-                {
-                  num: "1",
-                  icon: ClipboardList,
-                  title: t.step1Title,
-                  desc: t.step1Desc,
-                  color: "#2E4A6B",
-                },
-                {
-                  num: "2",
-                  icon: Search,
-                  title: t.step2Title,
-                  desc: t.step2Desc,
-                  color: "#7D3040",
-                },
-                {
-                  num: "3",
-                  icon: BarChart3,
-                  title: t.step3Title,
-                  desc: t.step3Desc,
-                  color: "#374151",
-                },
-              ].map(({ num, icon: Icon, title, desc, color }) => (
-                <div key={num} className="flex flex-col items-center text-center lg:items-center">
-                  <Icon className="w-12 h-12 mb-4" strokeWidth={1.25} style={{ color }} />
-                  <span
-                    className="text-7xl font-extrabold leading-none mb-5 tracking-tight"
-                    style={{ color }}
-                  >
-                    {num}
+          <div className="max-w-5xl mx-auto flex flex-col gap-16 md:gap-20">
+            {/* Step 1 — list property */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2F7]">
+                    <ClipboardList className="h-5 w-5" style={{ color: "#2E4A6B" }} />
                   </span>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">{title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed max-w-xs">{desc}</p>
+                  <span className="text-4xl font-extrabold leading-none text-[#2E4A6B] opacity-20">1</span>
                 </div>
-              ))}
+                <h3 className="mb-2 text-xl font-extrabold text-gray-900">{t.step1Title}</h3>
+                <p className="max-w-sm text-sm leading-relaxed text-gray-500">{t.step1Desc}</p>
+              </div>
+              <BrowserFrame url={t.screens.urlForm}>
+                <div className="rounded-xl border border-gray-100 bg-white p-4">
+                  <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.propLabel}</p>
+                  <div className="mb-3 flex h-8 items-center rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-900">{t.screens.propValue}</div>
+                  <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.typeLabel}</p>
+                  <div className="mb-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border-2 py-2.5 text-center text-xs font-bold" style={{ borderColor: "#7D3040", background: "#FDF0F2", color: "#7D3040" }}>
+                      <Home className="mx-auto mb-1 h-4 w-4" />
+                      {t.screens.typeRes}
+                    </div>
+                    <div className="rounded-lg border border-gray-200 py-2.5 text-center text-xs font-bold text-gray-400">
+                      <Building2 className="mx-auto mb-1 h-4 w-4" />
+                      {t.screens.typeCom}
+                    </div>
+                  </div>
+                  <div className="mb-3 grid grid-cols-2 gap-2.5">
+                    <div>
+                      <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.districtLabel}</p>
+                      <div className="flex h-8 items-center rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-900">{t.screens.districtValue}</div>
+                    </div>
+                    <div>
+                      <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.unitsLabel}</p>
+                      <div className="flex h-8 items-center rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-900">12</div>
+                    </div>
+                  </div>
+                  <div className="flex h-9 items-center justify-center rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(90deg,#2E4A6B,#3F6690)" }}>{t.screens.saveBtn}</div>
+                </div>
+              </BrowserFrame>
+            </div>
+
+            {/* Step 2 — receive offers (reversed on desktop) */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div className="md:order-2">
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2F7]">
+                    <Search className="h-5 w-5" style={{ color: "#2E4A6B" }} />
+                  </span>
+                  <span className="text-4xl font-extrabold leading-none text-[#2E4A6B] opacity-20">2</span>
+                </div>
+                <h3 className="mb-2 text-xl font-extrabold text-gray-900">{t.step2Title}</h3>
+                <p className="max-w-sm text-sm leading-relaxed text-gray-500">{t.step2Desc}</p>
+              </div>
+              <div className="md:order-1">
+                <BrowserFrame url={t.screens.urlDash}>
+                  <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-gray-900">
+                    <Bell className="h-3.5 w-3.5" style={{ color: "#2E4A6B" }} />
+                    {t.screens.offersHead}
+                  </p>
+                  {[
+                    { n: t.screens.co1, s: t.screens.co1sub },
+                    { n: t.screens.co2, s: t.screens.co2sub },
+                  ].map((c, i) => (
+                    <div key={i} className="mb-2 flex items-center gap-2.5 rounded-xl border border-gray-100 bg-white p-2.5">
+                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "#EAF3F0" }}>
+                        <Building2 className="h-4 w-4" style={{ color: "#0E7C66" }} />
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-gray-900">{c.n}</p>
+                        <p className="mt-0.5 text-[10px] text-gray-400">{c.s}</p>
+                      </div>
+                      <span className="rounded-full px-2 py-1 text-[10px] font-bold" style={{ background: "#FEF3C7", color: "#92660b" }}>{t.screens.newBadge}</span>
+                    </div>
+                  ))}
+                </BrowserFrame>
+              </div>
+            </div>
+
+            {/* Step 3 — compare & choose */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2F7]">
+                    <BarChart3 className="h-5 w-5" style={{ color: "#2E4A6B" }} />
+                  </span>
+                  <span className="text-4xl font-extrabold leading-none text-[#2E4A6B] opacity-20">3</span>
+                </div>
+                <h3 className="mb-2 text-xl font-extrabold text-gray-900">{t.step3Title}</h3>
+                <p className="max-w-sm text-sm leading-relaxed text-gray-500">{t.step3Desc}</p>
+              </div>
+              <BrowserFrame url={t.screens.urlDash}>
+                <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-gray-900">
+                  <BarChart3 className="h-3.5 w-3.5" style={{ color: "#2E4A6B" }} />
+                  {t.screens.compareHead}
+                </p>
+                <div className="mb-2 flex items-center gap-2.5 rounded-xl border-2 bg-white p-2.5" style={{ borderColor: "#0E7C66", boxShadow: "0 5px 14px rgba(14,124,102,0.12)" }}>
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "#EAF3F0" }}>
+                    <Building2 className="h-4 w-4" style={{ color: "#0E7C66" }} />
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-gray-900">{t.screens.co2}</p>
+                    <p className="mt-0.5 text-[10px] text-gray-400">{t.screens.totalLabel}: 24,000 {t.screens.riyal} · {t.screens.perUnit} 2,000</p>
+                  </div>
+                  <span className="rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white" style={{ background: "#0E7C66" }}>{t.screens.selectBtn} ✓</span>
+                </div>
+                <div className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-white p-2.5">
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "#EAF3F0" }}>
+                    <Building2 className="h-4 w-4" style={{ color: "#0E7C66" }} />
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-gray-900">{t.screens.co1}</p>
+                    <p className="mt-0.5 text-[10px] text-gray-400">{t.screens.totalLabel}: 27,600 {t.screens.riyal} · {t.screens.perUnit} 2,300</p>
+                  </div>
+                  <span className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[10px] font-bold text-gray-400">{t.screens.selectBtn}</span>
+                </div>
+              </BrowserFrame>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Provider CTA ────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#F9F9FF]">
-        <div className="container mx-auto px-4">
-          <div
-            className="max-w-3xl mx-auto rounded-3xl shadow-md px-10 py-14 text-center"
-            style={{ background: "linear-gradient(135deg, #0E7C66 0%, #0a5e4e 100%)" }}
-          >
-            <Wrench className="w-12 h-12 mx-auto mb-6" style={{ color: "rgba(255,255,255,0.85)" }} strokeWidth={1.25} />
+      {/* ── Provider CTA (full-bleed band) ──────────────────────────────── */}
+      <section
+        className="relative overflow-hidden py-14 text-center"
+        style={{ background: "linear-gradient(135deg, #0E7C66 0%, #0a5e4e 100%)" }}
+      >
+        {/* faint dot pattern */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)",
+            backgroundSize: "26px 26px",
+          }}
+        />
+        {/* soft corner glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-32 h-[360px] w-[360px] start-[-80px]"
+          style={{ background: "radial-gradient(circle, rgba(255,255,255,0.09) 0%, transparent 70%)" }}
+        />
+        <div className="relative container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
               {t.providerCTATitle}
             </h2>
-            <p className="text-base md:text-lg mb-10 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.8)" }}>
+            <p className="text-base md:text-lg mb-8 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.8)" }}>
               {t.providerCTADesc}
             </p>
-            <div className="flex gap-3 justify-center flex-wrap">
+            <div className="flex justify-center">
               <Link href="/auth?role=provider">
                 <Button
                   size="lg"
-                  className="bg-white text-[#0E7C66] hover:bg-gray-100 px-10 active:scale-95 transition-transform font-semibold"
+                  className="group h-auto gap-3.5 rounded-full bg-white ps-1.5 pe-7 py-1.5 text-base font-bold text-[#0a5e4e] shadow-lg transition-transform hover:bg-white active:scale-95"
                 >
-                  <Users className="h-4 w-4 me-2" />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0E7C66] transition-colors group-hover:bg-[#0a5e4e]">
+                    <ArrowLeft className="text-white" />
+                  </span>
                   {t.joinProvider}
-                </Button>
-              </Link>
-              <Link href="/auth?role=provider&mode=login">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-10 font-semibold"
-                  style={{ borderColor: "rgba(255,255,255,0.5)", color: "white" }}
-                >
-                  {t.providerLogin}
                 </Button>
               </Link>
             </div>
