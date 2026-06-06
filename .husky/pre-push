@@ -1,0 +1,2 @@
+echo "🔎 Running type check before push (npm run check)..."
+npm run check

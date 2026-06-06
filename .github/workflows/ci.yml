@@ -1,0 +1,46 @@
+name: CI
+
+# Runs on pull requests and pushes to main. Acts as the deploy gate:
+# a broken type check or failing public E2E spec blocks the merge before
+# Vercel auto-deploys from main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: Type check + lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Type check
+        run: npm run check
+      - name: Lint
+        run: npx eslint .
+
+  e2e-public:
+    name: Playwright (public pages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      # Only the public spec runs in CI. The dashboard suites
+      # (auth/owner/provider/admin) need manually-provisioned auth state
+      # (tests/.auth, git-ignored) and a live Supabase, so they are excluded.
+      - name: Run public E2E against production
+        env:
+          CI: "true"
+          PLAYWRIGHT_BASE_URL: https://emaraa.app
+        run: npx playwright test tests/public.spec.ts
