@@ -636,6 +636,39 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Closing owner CTA (full-bleed band) ──────────────────────────── */}
+      <section
+        className="relative overflow-hidden py-16 text-center"
+        style={{ background: "linear-gradient(135deg, #2E4A6B 0%, #3F6690 100%)" }}
+      >
+        {/* faint dot pattern */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)",
+            backgroundSize: "26px 26px",
+          }}
+        />
+        <div className="relative container mx-auto px-4">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="mb-3 text-2xl md:text-3xl font-extrabold text-white">{t.ctaTitle}</h2>
+            <p className="mx-auto mb-8 max-w-lg text-base" style={{ color: "rgba(255,255,255,0.82)" }}>
+              {t.ctaDesc}
+            </p>
+            <Link href="/auth?role=owner">
+              <Button
+                size="lg"
+                className="bg-white px-12 font-semibold text-[#2E4A6B] hover:bg-gray-100 active:scale-95 transition-transform"
+              >
+                {t.ctaBtn}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto max-w-3xl px-4">
@@ -702,39 +735,6 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Closing owner CTA (full-bleed band) ──────────────────────────── */}
-      <section
-        className="relative overflow-hidden py-16 text-center"
-        style={{ background: "linear-gradient(135deg, #2E4A6B 0%, #3F6690 100%)" }}
-      >
-        {/* faint dot pattern */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)",
-            backgroundSize: "26px 26px",
-          }}
-        />
-        <div className="relative container mx-auto px-4">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="mb-3 text-2xl md:text-3xl font-extrabold text-white">{t.ctaTitle}</h2>
-            <p className="mx-auto mb-8 max-w-lg text-base" style={{ color: "rgba(255,255,255,0.82)" }}>
-              {t.ctaDesc}
-            </p>
-            <Link href="/auth?role=owner">
-              <Button
-                size="lg"
-                className="bg-white px-12 font-semibold text-[#2E4A6B] hover:bg-gray-100 active:scale-95 transition-transform"
-              >
-                {t.ctaBtn}
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
