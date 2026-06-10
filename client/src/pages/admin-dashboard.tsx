@@ -275,39 +275,39 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: t.users, value: stats?.users ?? 0, icon: Users, accent: "#1275E2", iconBg: "#EFF6FF" },
+    { label: t.users, value: stats?.users ?? 0, icon: Users, accent: "var(--provider)", iconBg: "var(--provider-soft)" },
     {
       label: t.properties,
       value: stats?.properties ?? 0,
       icon: Building2,
-      accent: "#15803D",
-      iconBg: "#F0FDF4",
+      accent: "var(--ok)",
+      iconBg: "var(--ok-soft)",
     },
     {
       label: t.requests,
       value: stats?.requests ?? 0,
       icon: FileText,
-      accent: "#8B3A4B",
-      iconBg: "#FFF1F2",
+      accent: "var(--residential)",
+      iconBg: "var(--residential-soft)",
     },
     {
       label: t.providers,
       value: stats?.providers ?? 0,
       icon: Shield,
-      accent: "#C55B00",
-      iconBg: "#FFF7ED",
+      accent: "var(--commercial)",
+      iconBg: "var(--commercial-soft)",
     },
   ];
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen" style={{ background: "var(--navy-2)" }} dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
-      <header className="bg-white border-b shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center">
+      <header className="bg-card border-b border-border shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-[#EEF2F7] rounded-xl flex items-center justify-center">
-            <Shield className="w-5 h-5 text-[#2E4A6B]" />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--owner-soft)" }}>
+            <Shield className="w-5 h-5" style={{ color: "var(--owner)" }} />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">{t.title}</h1>
+          <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs font-medium">
@@ -323,10 +323,10 @@ export default function AdminDashboard() {
             <span
               className={
                 dbStatus === "connected"
-                  ? "text-green-700"
+                  ? "text-green-400"
                   : dbStatus === "error"
-                    ? "text-red-600"
-                    : "text-yellow-600"
+                    ? "text-red-400"
+                    : "text-yellow-400"
               }
             >
               {dbStatus === "connected"
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
                     : "Checking…"}
             </span>
           </div>
-          <LanguageToggle className="text-gray-500" />
+          <LanguageToggle className="text-muted-foreground" />
           <Button
             variant="ghost"
             size="sm"
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto p-4 sm:p-6">
         <Tabs defaultValue="overview">
-          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 bg-white border">
+          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 bg-white/5 border border-border">
             <TabsTrigger value="overview">{t.overview}</TabsTrigger>
             <TabsTrigger value="providers">{t.providers}</TabsTrigger>
             <TabsTrigger value="users">{t.users}</TabsTrigger>
@@ -371,7 +371,7 @@ export default function AdminDashboard() {
               {statCards.map(({ label, value, icon: Icon, accent, iconBg }) => (
                 <div
                   key={label}
-                  className="bg-white rounded-2xl shadow-sm p-5"
+                  className="bg-card rounded-2xl shadow-sm p-5"
                   style={{ borderTop: `4px solid ${accent}` }}
                 >
                   <div className="flex items-center justify-between">
@@ -422,13 +422,13 @@ export default function AdminDashboard() {
                     {allProviders.map((p: any) => {
                       const profile = Array.isArray(p.providers) ? p.providers[0] : p.providers;
                       return (
-                        <div key={p.id} className="p-4 border rounded-lg bg-gray-50/40 space-y-3">
+                        <div key={p.id} className="p-4 border border-border rounded-lg space-y-3" style={{ background: "rgba(255,255,255,0.02)" }}>
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <button
                                   onClick={() => impersonate(p.id)}
-                                  className="font-semibold hover:text-[#2E4A6B] hover:underline text-start"
+                                  className="font-semibold hover:text-[#0DB8D3] hover:underline text-start"
                                 >
                                   {profile?.company_name ?? p.name}
                                 </button>
@@ -439,7 +439,7 @@ export default function AdminDashboard() {
                                     {profile.approved ? t.approved : t.pending}
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-muted-foreground">
                                     {t.profileIncomplete}
                                   </span>
                                 )}
@@ -451,7 +451,7 @@ export default function AdminDashboard() {
                                 {p.name} · {p.phone}
                               </p>
                               {profile?.description && (
-                                <p className="text-sm text-gray-600 mt-1">{profile.description}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{profile.description}</p>
                               )}
                               <p className="text-xs text-muted-foreground">
                                 {formatDate(p.created_at)}
@@ -565,12 +565,12 @@ export default function AdminDashboard() {
                     {allUsers.map((u: any) => (
                       <div
                         key={u.id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg bg-gray-50/40 gap-2"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg bg-white/5 gap-2"
                       >
                         <div>
                           <button
                             onClick={() => impersonate(u.id)}
-                            className="font-medium hover:text-[#2E4A6B] hover:underline text-start"
+                            className="font-medium hover:text-[#0DB8D3] hover:underline text-start"
                           >
                             {u.name || "—"}
                           </button>
@@ -602,7 +602,7 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-2">
                     {allProperties.map((p: any) => (
-                      <div key={p.id} className="p-3 border rounded-lg bg-gray-50/40 space-y-1">
+                      <div key={p.id} className="p-3 border rounded-lg bg-white/5 space-y-1">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                           <p className="font-medium">{p.name}</p>
                           <p className="text-xs text-muted-foreground">
@@ -652,9 +652,9 @@ export default function AdminDashboard() {
                       const offers = r.provider_offers ?? [];
                       const isExpanded = expandedRequest === r.id;
                       return (
-                        <div key={r.id} className="border rounded-lg bg-gray-50/40 overflow-hidden">
+                        <div key={r.id} className="border rounded-lg bg-white/5 overflow-hidden">
                           <button
-                            className="w-full p-3 text-start hover:bg-gray-50 transition-colors"
+                            className="w-full p-3 text-start hover:bg-white/5 transition-colors"
                             onClick={() => setExpandedRequest(isExpanded ? null : r.id)}
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -677,14 +677,14 @@ export default function AdminDashboard() {
                                   {(r.properties as any)?.users?.name}
                                 </p>
                                 {r.description && (
-                                  <p className="text-xs text-gray-500">{r.description}</p>
+                                  <p className="text-xs text-muted-foreground">{r.description}</p>
                                 )}
                                 <p className="text-xs text-muted-foreground">
                                   {formatDate(r.created_at)}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <Badge className="bg-purple-100 text-gray-900 text-xs">
+                                <Badge className="bg-purple-500/15 text-purple-200 text-xs">
                                   <Package className="h-3 w-3 me-1" />
                                   {offers.length} {t.offers}
                                 </Badge>
@@ -698,7 +698,7 @@ export default function AdminDashboard() {
                           </button>
 
                           {isExpanded && (
-                            <div className="border-t bg-gray-50 p-3 space-y-2">
+                            <div className="border-t bg-white/5 p-3 space-y-2">
                               {offers.length === 0 ? (
                                 <p className="text-sm text-muted-foreground text-center py-2">
                                   {t.noOffers}
@@ -707,7 +707,7 @@ export default function AdminDashboard() {
                                 offers.map((o: any) => (
                                   <div
                                     key={o.id}
-                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-white border rounded"
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-card border rounded"
                                   >
                                     <div className="space-y-0.5">
                                       <p className="text-sm font-medium">
@@ -717,18 +717,18 @@ export default function AdminDashboard() {
                                         {o.providers?.city}
                                       </p>
                                       {o.price_total != null && (
-                                        <p className="text-xs font-medium text-gray-700">
+                                        <p className="text-xs font-medium text-foreground">
                                           {t.price}: {o.price_total.toLocaleString("en-US")} {t.sar}
                                         </p>
                                       )}
                                       {o.notes && (
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-muted-foreground">
                                           {t.notes}: {o.notes}
                                         </p>
                                       )}
                                       <Badge
                                         variant="outline"
-                                        className={`text-xs ${o.status === "accepted" ? "border-green-400 text-green-700" : o.status === "rejected" ? "border-red-400 text-red-700" : "border-yellow-400 text-yellow-700"}`}
+                                        className={`text-xs ${o.status === "accepted" ? "border-green-400 text-green-300" : o.status === "rejected" ? "border-red-400 text-red-300" : "border-yellow-400 text-yellow-300"}`}
                                       >
                                         {t.offerStatus[o.status as keyof typeof t.offerStatus] ??
                                           o.status}

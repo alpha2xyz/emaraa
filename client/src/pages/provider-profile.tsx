@@ -279,12 +279,13 @@ export default function ProviderProfile() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-[#F9F9FF]"
+      className="page-enter min-h-screen"
+      style={{ background: "var(--navy-2)" }}
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Emerald gradient header strip */}
       <div
-        style={{ background: "linear-gradient(135deg, #0E7C66, #0a5e4e)" }}
+        style={{ background: "linear-gradient(135deg, #0e3a5c, #193546)" }}
         className="py-5 px-4 flex items-center gap-3"
       >
         <button
@@ -310,24 +311,24 @@ export default function ProviderProfile() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-foreground">
             {existingProvider?.provider
               ? lang === "ar" ? "تعديل ملف الشركة" : "Edit Company Profile"
               : t.title}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">{t.subtitle}</p>
+          <p className="text-muted-foreground text-sm mt-1">{t.subtitle}</p>
         </div>
 
         {/* Approval Status Banner */}
         {existingProvider?.provider &&
           (existingProvider.provider.approved ? (
-            <div className="flex items-center gap-3 rounded-xl border-s-4 border-green-500 bg-green-50/80 px-4 py-3 text-green-800 mb-6">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+            <div className="flex items-center gap-3 rounded-xl border-s-4 border-green-500/40 bg-green-500/10 px-4 py-3 text-foreground mb-6">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-green-400" />
               <div>
                 <p className="font-semibold">
                   {lang === "ar" ? "تم قبول حسابك ✓" : "Your account is approved ✓"}
                 </p>
-                <p className="text-sm opacity-75">
+                <p className="text-sm text-muted-foreground">
                   {lang === "ar"
                     ? "يمكنك الآن تصفح الطلبات وتقديم عروضك"
                     : "You can now browse requests and submit offers"}
@@ -335,13 +336,13 @@ export default function ProviderProfile() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3 rounded-xl border-s-4 border-yellow-400 bg-yellow-50/80 px-4 py-3 text-gray-900 mb-6">
-              <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
+            <div className="flex items-center gap-3 rounded-xl border-s-4 border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-foreground mb-6">
+              <Clock className="h-5 w-5 shrink-0 text-yellow-400" />
               <div>
                 <p className="font-semibold">
                   {lang === "ar" ? "طلبك قيد المراجعة" : "Your registration is under review"}
                 </p>
-                <p className="text-sm opacity-75">
+                <p className="text-sm text-muted-foreground">
                   {lang === "ar"
                     ? "سيتم إشعارك عند قبول حسابك من قِبل الإدارة"
                     : "You will be notified once your account is approved by admin"}
@@ -360,11 +361,11 @@ export default function ProviderProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t.name}</Label>
-                  <Input value={userData.name} disabled className="bg-gray-100" />
+                  <Input value={userData.name} disabled className="bg-white/5" />
                 </div>
                 <div className="space-y-2">
                   <Label>{t.phone}</Label>
-                  <Input value={userData.phone} disabled className="bg-gray-100" />
+                  <Input value={userData.phone} disabled className="bg-white/5" />
                 </div>
               </div>
             </CardContent>
@@ -376,7 +377,7 @@ export default function ProviderProfile() {
               <CardTitle className="flex items-center gap-2">
                 {t.companyInfo}
                 {isApproved && (
-                  <span className="ms-auto flex items-center gap-1 text-xs font-normal text-amber-600">
+                  <span className="ms-auto flex items-center gap-1 text-xs font-normal text-amber-400">
                     <Lock className="w-3.5 h-3.5" />
                     {lang === "ar" ? "مقفل بعد الاعتماد" : "Locked after approval"}
                   </span>
@@ -394,7 +395,7 @@ export default function ProviderProfile() {
                   onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                   required
                   disabled={isApproved}
-                  className={isApproved ? "bg-gray-100" : ""}
+                  className={isApproved ? "bg-white/5" : ""}
                 />
               </div>
 
@@ -407,7 +408,7 @@ export default function ProviderProfile() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={isApproved}
-                  className={isApproved ? "bg-gray-100" : ""}
+                  className={isApproved ? "bg-white/5" : ""}
                 />
               </div>
             </CardContent>
@@ -420,7 +421,7 @@ export default function ProviderProfile() {
                 <FileText className="w-5 h-5" />
                 {t.documents}
                 {isApproved && (
-                  <span className="ms-auto flex items-center gap-1 text-xs font-normal text-amber-600">
+                  <span className="ms-auto flex items-center gap-1 text-xs font-normal text-amber-400">
                     <Lock className="w-3.5 h-3.5" />
                     {lang === "ar" ? "مقفل بعد الاعتماد" : "Locked after approval"}
                   </span>
@@ -444,29 +445,30 @@ export default function ProviderProfile() {
                     disabled={isApproved}
                   />
                   {isApproved ? (
-                    <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
+                    <span className="flex items-center gap-2 px-4 py-2 bg-white/5 text-muted-foreground rounded-lg text-sm">
                       <Lock className="w-4 h-4" />
                       {lang === "ar" ? "مقفل" : "Locked"}
                     </span>
                   ) : (
                     <Label
                       htmlFor="commercial_register"
-                      className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer"
+                      style={{ background: "var(--provider-soft)", color: "var(--provider)" }}
                     >
                       <Upload className="w-4 h-4" />
                       {t.chooseFile}
                     </Label>
                   )}
                   {!isApproved && files.commercial_register ? (
-                    <span className="text-sm text-gray-600">{files.commercial_register.name}</span>
+                    <span className="text-sm text-muted-foreground">{files.commercial_register.name}</span>
                   ) : existingProvider?.provider?.commercial_register_url ? (
-                    <span className="text-sm text-green-600 flex items-center gap-1">
+                    <span className="text-sm text-green-400 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" />
                       {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
                     </span>
                   ) : null}
                 </div>
-                {!isApproved && <p className="text-xs text-gray-500">{t.fileTypes}</p>}
+                {!isApproved && <p className="text-xs text-muted-foreground">{t.fileTypes}</p>}
               </div>
 
               {/* بروفايل الشركة */}
@@ -485,29 +487,30 @@ export default function ProviderProfile() {
                     disabled={isApproved}
                   />
                   {isApproved ? (
-                    <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
+                    <span className="flex items-center gap-2 px-4 py-2 bg-white/5 text-muted-foreground rounded-lg text-sm">
                       <Lock className="w-4 h-4" />
                       {lang === "ar" ? "مقفل" : "Locked"}
                     </span>
                   ) : (
                     <Label
                       htmlFor="company_profile"
-                      className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer"
+                      style={{ background: "var(--provider-soft)", color: "var(--provider)" }}
                     >
                       <Upload className="w-4 h-4" />
                       {t.chooseFile}
                     </Label>
                   )}
                   {!isApproved && files.company_profile ? (
-                    <span className="text-sm text-gray-600">{files.company_profile.name}</span>
+                    <span className="text-sm text-muted-foreground">{files.company_profile.name}</span>
                   ) : existingProvider?.provider?.company_profile_url ? (
-                    <span className="text-sm text-green-600 flex items-center gap-1">
+                    <span className="text-sm text-green-400 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" />
                       {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
                     </span>
                   ) : null}
                 </div>
-                {!isApproved && <p className="text-xs text-gray-500">{t.fileTypes}</p>}
+                {!isApproved && <p className="text-xs text-muted-foreground">{t.fileTypes}</p>}
               </div>
 
               {/* رخصة فال */}
@@ -526,44 +529,45 @@ export default function ProviderProfile() {
                     disabled={isApproved}
                   />
                   {isApproved ? (
-                    <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
+                    <span className="flex items-center gap-2 px-4 py-2 bg-white/5 text-muted-foreground rounded-lg text-sm">
                       <Lock className="w-4 h-4" />
                       {lang === "ar" ? "مقفل" : "Locked"}
                     </span>
                   ) : (
                     <Label
                       htmlFor="fal_license"
-                      className="flex items-center gap-2 px-4 py-2 bg-[#EEF2F7] text-[#2E4A6B] rounded-lg cursor-pointer hover:bg-[#D8E4EE]"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer"
+                      style={{ background: "var(--provider-soft)", color: "var(--provider)" }}
                     >
                       <Upload className="w-4 h-4" />
                       {t.chooseFile}
                     </Label>
                   )}
                   {!isApproved && files.fal_license ? (
-                    <span className="text-sm text-gray-600">{files.fal_license.name}</span>
+                    <span className="text-sm text-muted-foreground">{files.fal_license.name}</span>
                   ) : existingProvider?.provider?.fal_license_url ? (
-                    <span className="text-sm text-green-600 flex items-center gap-1">
+                    <span className="text-sm text-green-400 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" />
                       {lang === "ar" ? "تم الرفع مسبقاً ✓" : "Already uploaded ✓"}
                     </span>
                   ) : null}
                 </div>
-                {!isApproved && <p className="text-xs text-gray-500">{t.fileTypes}</p>}
+                {!isApproved && <p className="text-xs text-muted-foreground">{t.fileTypes}</p>}
               </div>
             </CardContent>
           </Card>
 
           {/* Confirmation warning (shown only when editing an approved profile) */}
           {awaitingConfirm && (
-            <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4">
-              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4">
+              <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-semibold text-gray-900 text-sm mb-1">
+                <p className="font-semibold text-foreground text-sm mb-1">
                   {lang === "ar"
                     ? "ملفك الشخصي معتمد — التعديل يتطلب مراجعة جديدة"
                     : "Your profile is approved — editing requires re-review"}
                 </p>
-                <p className="text-xs text-gray-600 mb-3">
+                <p className="text-xs text-muted-foreground mb-3">
                   {lang === "ar"
                     ? "بعد الحفظ، سيتم إعادة مراجعة حسابك من قِبل الإدارة قبل تفعيله مجدداً."
                     : "After saving, your account will be re-reviewed by admin before it is reactivated."}
@@ -573,7 +577,7 @@ export default function ProviderProfile() {
                     type="submit"
                     size="sm"
                     className="text-white"
-                    style={{ background: "#C2410C" }}
+                    style={{ background: "#EA7C1A", color: "#1a0f04" }}
                     disabled={mutation.isPending}
                   >
                     {mutation.isPending ? (
@@ -600,7 +604,7 @@ export default function ProviderProfile() {
             <Button
               type="submit"
               className="w-full text-white"
-              style={{ background: "#0E7C66" }}
+              style={{ background: "var(--provider)" }}
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (

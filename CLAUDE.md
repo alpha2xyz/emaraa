@@ -82,10 +82,10 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 5. `queryClient.invalidateQueries(["owner-stats", "/api/properties", "owner-property"])` → redirect to `/dashboard/owner`
    - **All 3 cache keys must be invalidated** — the dashboard uses `["owner-property"]`, not `["/api/properties"]`. Missing this causes a redirect loop back to onboarding.
 
-**Building type card colors (brand system — do not change):**
-- Residential (سكني) selected: border `#7D3040`, background `#FDF0F2`, text/icon `#7D3040` (Burgundy)
-- Commercial (تجاري) selected: border `#C4694A`, background `#FDF3EF`, text/icon `#C4694A` (Terracotta)
-- Unselected: border `#E5E7EB`, background `#FFFFFF`, icon `#9CA3AF`
+**Building type card colors (dark theme, rebrand 2026-06-11):**
+- Residential (سكني) selected: border `var(--residential)` #C75B72, background `var(--residential-soft)`, text/icon `#E58AA0`
+- Commercial (تجاري) selected: border `var(--commercial)` #E08A5B, background `var(--commercial-soft)`, text/icon `#F0A87F`
+- Unselected: border `var(--border)`, background `rgba(255,255,255,0.03)`, text/icon `#9FC2D3`
 
 ---
 
@@ -127,17 +127,29 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 
 ---
 
-### Brand Color System (applies to all owner pages)
+### Brand Color System — "Arctic Depths" DARK theme (rebrand 2026-06-11)
 
-| Element | Color |
+The app is a **dark theme**. All colors are centralized in `client/src/index.css` `:root`
+(shadcn HSL tokens flipped to dark + a brand block). **Use CSS variables, never hardcode hex.**
+
+| Element | Color (CSS var) |
 |---|---|
-| Owner role (buttons, badges, section badges) | Navy `#2E4A6B` |
-| Provider role (buttons, badges) | Emerald `#0E7C66` |
-| Residential property type | Burgundy `#7D3040` / light `#FDF0F2` |
-| Commercial property type | Terracotta `#C4694A` / light `#FDF3EF` |
-| Sage `#6B7C5E` | **DEPRECATED** — old provider color, do not use |
+| Base surfaces | `--navy` #193546 (cards) · `--navy-2` #0F2733 (page bg) · `--navy-3` #0A1C25 (deepest) |
+| Text | `text-foreground` (light ink #EAF6FB) · `text-muted-foreground` (#9FC2D3) |
+| Owner role accent | Cyan `--owner` #0DB8D3 / `--owner-soft` |
+| Provider role accent | Blue `--provider` #1B7FDC / `--provider-soft` |
+| Secondary / deep | `--deep` #065B98 (also generic `--primary`) |
+| Residential property type | `--residential` #C75B72 / `--residential-soft` (text #E58AA0) |
+| Commercial property type | `--commercial` #E08A5B / `--commercial-soft` (text #F0A87F) |
+| Status | `--ok` #34D399 · `--warn` #FBBF24 · `--err` #F87171 (+ `-soft`) |
 
-**Rule:** Navy is the owner ROLE color — never use it for building type cards or chips. Sage is retired. Building types always use Burgundy (residential) and Terracotta (commercial).
+**Rules:**
+- **Owner = Cyan, Provider = Blue.** `--role` is set per-layout in `App.tsx` (`DashboardLayout`).
+- **Solid OWNER buttons** use cyan bg + **dark text** `#04222c` (white-on-cyan fails contrast).
+  **Solid PROVIDER buttons** use blue bg + white text.
+- Building types keep their warm accents (burgundy/terracotta) for contrast against the all-blue roles.
+- Old palette **RETIRED**: Navy `#2E4A6B`, Emerald `#0E7C66`, Sage `#6B7C5E` — do not reintroduce.
+- To re-theme the whole app, edit the brand block in `index.css` once — do not hardcode hex in components.
 
 ---
 

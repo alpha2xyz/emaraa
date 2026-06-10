@@ -39,8 +39,8 @@ function HeroIllustration() {
         </filter>
       </defs>
 
-      {/* Soft background blob */}
-      <circle cx="262" cy="222" r="178" fill="#EEF2F7" />
+      {/* Soft background blob — cyan glow on dark hero */}
+      <circle cx="262" cy="222" r="178" fill="var(--owner-soft)" />
 
       {/* Ground */}
       <rect x="48" y="388" width="380" height="7" rx="3.5" fill="#D0DCE8" />
@@ -60,9 +60,9 @@ function HeroIllustration() {
       <rect x="80" y="348" width="20" height="15" rx="2.5" fill="white" opacity="0.4" />
       <rect x="108" y="348" width="20" height="15" rx="2.5" fill="white" opacity="0.25" />
 
-      {/* Main tall building – deep teal */}
-      <rect x="174" y="64" width="156" height="324" rx="10" fill="#2E4A6B" />
-      <rect x="194" y="52" width="116" height="18" rx="6" fill="#243A56" />
+      {/* Main tall building – deep blue */}
+      <rect x="174" y="64" width="156" height="324" rx="10" fill="#065B98" />
+      <rect x="194" y="52" width="116" height="18" rx="6" fill="#06477a" />
       {/* Windows – 4 cols × 6 rows */}
       <rect x="190" y="84" width="24" height="26" rx="3" fill="white" opacity="0.4" />
       <rect x="222" y="84" width="24" height="26" rx="3" fill="white" opacity="0.2" />
@@ -89,7 +89,7 @@ function HeroIllustration() {
       <rect x="254" y="274" width="24" height="26" rx="3" fill="white" opacity="0.5" />
       <rect x="286" y="274" width="24" height="26" rx="3" fill="white" opacity="0.3" />
       {/* Door */}
-      <rect x="226" y="348" width="50" height="40" rx="4" fill="#243A56" />
+      <rect x="226" y="348" width="50" height="40" rx="4" fill="#06477a" />
       <rect x="248" y="348" width="2" height="40" fill="white" opacity="0.1" />
 
       {/* Right building – pale teal */}
@@ -106,12 +106,12 @@ function HeroIllustration() {
       {/* Floating request card */}
       <rect x="292" y="86" width="160" height="100" rx="14" fill="white" filter="url(#card-glow)" />
       <rect x="310" y="106" width="26" height="30" rx="4" fill="#eff6ff" />
-      <rect x="314" y="112" width="18" height="2.5" rx="1.25" fill="#2E4A6B" />
-      <rect x="314" y="118" width="18" height="2.5" rx="1.25" fill="#2E4A6B" opacity="0.5" />
-      <rect x="314" y="124" width="12" height="2.5" rx="1.25" fill="#2E4A6B" opacity="0.3" />
-      <rect x="344" y="108" width="88" height="9" rx="4.5" fill="#EEF2F7" />
+      <rect x="314" y="112" width="18" height="2.5" rx="1.25" fill="#0DB8D3" />
+      <rect x="314" y="118" width="18" height="2.5" rx="1.25" fill="#0DB8D3" opacity="0.5" />
+      <rect x="314" y="124" width="12" height="2.5" rx="1.25" fill="#0DB8D3" opacity="0.3" />
+      <rect x="344" y="108" width="88" height="9" rx="4.5" fill="#d9eef4" />
       <rect x="344" y="122" width="66" height="7" rx="3.5" fill="#e2e8f0" />
-      <rect x="310" y="150" width="70" height="22" rx="11" fill="#2E4A6B" />
+      <rect x="310" y="150" width="70" height="22" rx="11" fill="#0DB8D3" />
       <circle cx="402" cy="151" r="14" fill="#dcfce7" />
       <path
         d="M396 151 L400.5 155.5 L409 144"
@@ -147,16 +147,16 @@ function HeroIllustration() {
 // ── Browser-framed product screenshot ───────────────────────────────────────
 function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_18px_50px_rgba(20,30,60,0.16)]">
-      <div className="flex h-9 items-center gap-1.5 border-b border-gray-100 bg-[#f1f3f7] px-3">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
+      <div className="flex h-9 items-center gap-1.5 border-b border-border px-3" style={{ background: "var(--navy-3)" }}>
         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-gray-200 bg-white px-2 text-[10px] text-gray-400">
+        <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-border px-2 text-[10px] text-muted-foreground" style={{ background: "var(--navy-2)" }}>
           {url}
         </span>
       </div>
-      <div className="bg-[#F9F9FF] p-4">{children}</div>
+      <div className="p-4" style={{ background: "var(--navy-2)" }}>{children}</div>
     </div>
   );
 }
@@ -344,12 +344,12 @@ export default function LandingPage() {
   const isRTL = lang === "ar";
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <span className="text-2xl font-extrabold text-[#2E4A6B] tracking-tight">
+            <span className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--owner)" }}>
               {t.siteName}
             </span>
             <nav className="flex items-center gap-2">
@@ -357,7 +357,7 @@ export default function LandingPage() {
                 variant="ghost"
                 size="sm"
                 onClick={toggleLang}
-                className="text-gray-600 hover:text-[#2E4A6B] gap-1.5"
+                className="text-muted-foreground hover:text-[#0DB8D3] gap-1.5"
               >
                 <Globe className="h-4 w-4" />
                 {lang === "ar" ? "EN" : "عربي"}
@@ -366,7 +366,7 @@ export default function LandingPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-xl text-gray-700 border-gray-200 hover:border-[#2E4A6B] hover:text-[#2E4A6B]"
+                  className="rounded-xl text-foreground border-border hover:border-[#0DB8D3] hover:text-[#0DB8D3]"
                 >
                   {t.login}
                 </Button>
@@ -377,29 +377,30 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="bg-[#F9F9FF] py-20 md:py-28">
+      <section className="py-20 md:py-28" style={{ background: "linear-gradient(160deg, #0f3a47, #0F2733 75%)" }}>
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             {/* Text side */}
             <div className="flex flex-col gap-6">
               <div className="inline-flex">
-                <span className="text-xs font-semibold text-[#2E4A6B] bg-[#EEF2F7] px-3 py-1.5 rounded-full tracking-wide">
+                <span className="text-xs font-semibold px-3 py-1.5 rounded-full tracking-wide" style={{ color: "var(--owner)", background: "var(--owner-soft)" }}>
                   {t.chip}
                 </span>
               </div>
               <div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-3">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-3">
                   {t.heroTitle}
                 </h1>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#2E4A6B] leading-tight">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight" style={{ color: "var(--owner)" }}>
                   {t.heroHighlight}
                 </h1>
               </div>
-              <p className="text-lg text-gray-500 leading-relaxed max-w-lg">{t.heroDesc}</p>
+              <p className="text-lg leading-relaxed max-w-lg" style={{ color: "rgba(255,255,255,0.7)" }}>{t.heroDesc}</p>
               <div className="flex">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-8 gap-2 active:scale-95 transition-transform shadow-md hover:shadow-lg"
+                  className="px-8 gap-2 active:scale-95 transition-transform shadow-md hover:shadow-lg hover:opacity-90"
+                  style={{ background: "var(--owner)", color: "#04222c" }}
                   onClick={() => {
                     const el = document.getElementById("how-it-works");
                     if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" });
@@ -420,23 +421,23 @@ export default function LandingPage() {
       </section>
 
       {/* ── Trust strip ─────────────────────────────────────────────────── */}
-      <div className="py-6 bg-white border-y border-gray-100">
+      <div className="py-6 bg-card border-y border-border">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: "#0E7C66" }} />
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: "var(--provider)" }} />
               <span>{lang === "ar" ? "مزوّدون مرخّصون من الهيئة" : "REGA-licensed providers"}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Home className="w-5 h-5 flex-shrink-0" style={{ color: "#7D3040" }} />
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Home className="w-5 h-5 flex-shrink-0" style={{ color: "#E58AA0" }} />
               <span>{lang === "ar" ? "مرافق سكنية وتجارية" : "Residential & Commercial"}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "#2E4A6B" }} />
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--owner)" }} />
               <span>{lang === "ar" ? "إشعارات فورية" : "Instant Notifications"}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#C4694A" }} />
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#F0A87F" }} />
               <span>{lang === "ar" ? "الرياض — الإصدار الأول" : "Riyadh — V1"}</span>
             </div>
           </div>
@@ -444,24 +445,24 @@ export default function LandingPage() {
       </div>
 
       {/* ── Who benefits ────────────────────────────────────────────────── */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20" style={{ background: "var(--navy-2)" }}>
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{t.whoTitle}</h2>
-            <p className="text-base md:text-lg text-gray-500 max-w-2xl mx-auto">{t.whoSubtitle}</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">{t.whoTitle}</h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">{t.whoSubtitle}</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Residential */}
             <Card className="hover:shadow-md transition-shadow duration-200">
               <CardContent className="p-8">
-                <div className="w-14 h-14 bg-[#FDF0F2] rounded-2xl flex items-center justify-center mb-5">
-                  <Home className="w-7 h-7 text-[#7D3040]" strokeWidth={1.5} />
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--residential-soft)" }}>
+                  <Home className="w-7 h-7" strokeWidth={1.5} style={{ color: "#E58AA0" }} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{t.residentialTitle}</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">{t.residentialTitle}</h3>
                 <ul className="space-y-2.5 mb-6">
                   {t.residentialItems.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2.5 text-sm text-gray-600">
-                      <CheckCircle2 className="w-4 h-4 text-[#7D3040] flex-shrink-0" />
+                    <li key={i} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "#E58AA0" }} />
                       {item}
                     </li>
                   ))}
@@ -472,14 +473,14 @@ export default function LandingPage() {
             {/* Commercial */}
             <Card className="hover:shadow-md transition-shadow duration-200">
               <CardContent className="p-8">
-                <div className="w-14 h-14 bg-[#FDF3EF] rounded-2xl flex items-center justify-center mb-5">
-                  <Building2 className="w-7 h-7 text-[#C4694A]" strokeWidth={1.5} />
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--commercial-soft)" }}>
+                  <Building2 className="w-7 h-7" strokeWidth={1.5} style={{ color: "#F0A87F" }} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{t.commercialTitle}</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">{t.commercialTitle}</h3>
                 <ul className="space-y-2.5 mb-6">
                   {t.commercialItems.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2.5 text-sm text-gray-600">
-                      <CheckCircle2 className="w-4 h-4 text-[#C4694A] flex-shrink-0" />
+                    <li key={i} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "#F0A87F" }} />
                       {item}
                     </li>
                   ))}
@@ -492,7 +493,8 @@ export default function LandingPage() {
             <Link href="/auth?role=owner">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-[#2E4A6B] to-[#3F6690] hover:from-[#243A56] hover:to-[#2E4A6B] text-white px-12 active:scale-95 transition-transform shadow-md hover:shadow-lg"
+                className="px-12 active:scale-95 transition-transform shadow-md hover:shadow-lg hover:opacity-90"
+                style={{ background: "var(--owner)", color: "#04222c" }}
               >
                 {t.startNow}
               </Button>
@@ -502,13 +504,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works (real product screens) ─────────────────────────── */}
-      <section id="how-it-works" className="py-24 bg-white">
+      <section id="how-it-works" className="py-24 bg-card">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">
               {t.howItWorksTitle}
             </h2>
-            <p className="text-base md:text-lg text-gray-500 max-w-xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
               {t.howItWorksDesc}
             </p>
           </div>
@@ -518,40 +520,40 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               <div>
                 <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2F7]">
-                    <ClipboardList className="h-5 w-5" style={{ color: "#2E4A6B" }} />
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
+                    <ClipboardList className="h-5 w-5" style={{ color: "var(--owner)" }} />
                   </span>
-                  <span className="text-4xl font-extrabold leading-none text-[#2E4A6B] opacity-20">1</span>
+                  <span className="text-4xl font-extrabold leading-none opacity-40" style={{ color: "var(--owner)" }}>1</span>
                 </div>
-                <h3 className="mb-2 text-xl font-extrabold text-gray-900">{t.step1Title}</h3>
-                <p className="max-w-sm text-sm leading-relaxed text-gray-500">{t.step1Desc}</p>
+                <h3 className="mb-2 text-xl font-extrabold text-foreground">{t.step1Title}</h3>
+                <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step1Desc}</p>
               </div>
               <BrowserFrame url={t.screens.urlForm}>
-                <div className="rounded-xl border border-gray-100 bg-white p-4">
-                  <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.propLabel}</p>
-                  <div className="mb-3 flex h-8 items-center rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-900">{t.screens.propValue}</div>
-                  <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.typeLabel}</p>
+                <div className="rounded-xl border border-border p-4" style={{ background: "var(--card)" }}>
+                  <p className="mb-1.5 text-xs font-bold text-foreground">{t.screens.propLabel}</p>
+                  <div className="mb-3 flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold text-foreground">{t.screens.propValue}</div>
+                  <p className="mb-1.5 text-xs font-bold text-foreground">{t.screens.typeLabel}</p>
                   <div className="mb-3 grid grid-cols-2 gap-2">
-                    <div className="rounded-lg border-2 py-2.5 text-center text-xs font-bold" style={{ borderColor: "#7D3040", background: "#FDF0F2", color: "#7D3040" }}>
+                    <div className="rounded-lg border-2 py-2.5 text-center text-xs font-bold" style={{ borderColor: "var(--residential)", background: "var(--residential-soft)", color: "#E58AA0" }}>
                       <Home className="mx-auto mb-1 h-4 w-4" />
                       {t.screens.typeRes}
                     </div>
-                    <div className="rounded-lg border border-gray-200 py-2.5 text-center text-xs font-bold text-gray-400">
+                    <div className="rounded-lg border border-border py-2.5 text-center text-xs font-bold text-muted-foreground">
                       <Building2 className="mx-auto mb-1 h-4 w-4" />
                       {t.screens.typeCom}
                     </div>
                   </div>
                   <div className="mb-3 grid grid-cols-2 gap-2.5">
                     <div>
-                      <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.districtLabel}</p>
-                      <div className="flex h-8 items-center rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-900">{t.screens.districtValue}</div>
+                      <p className="mb-1.5 text-xs font-bold text-foreground">{t.screens.districtLabel}</p>
+                      <div className="flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold text-foreground">{t.screens.districtValue}</div>
                     </div>
                     <div>
-                      <p className="mb-1.5 text-xs font-bold text-gray-700">{t.screens.unitsLabel}</p>
-                      <div className="flex h-8 items-center rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-900">12</div>
+                      <p className="mb-1.5 text-xs font-bold text-foreground">{t.screens.unitsLabel}</p>
+                      <div className="flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold text-foreground">12</div>
                     </div>
                   </div>
-                  <div className="flex h-9 items-center justify-center rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(90deg,#2E4A6B,#3F6690)" }}>{t.screens.saveBtn}</div>
+                  <div className="flex h-9 items-center justify-center rounded-lg text-xs font-bold" style={{ background: "var(--owner)", color: "#04222c" }}>{t.screens.saveBtn}</div>
                 </div>
               </BrowserFrame>
             </div>
@@ -560,33 +562,33 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               <div className="md:order-2">
                 <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2F7]">
-                    <Search className="h-5 w-5" style={{ color: "#2E4A6B" }} />
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
+                    <Search className="h-5 w-5" style={{ color: "var(--owner)" }} />
                   </span>
-                  <span className="text-4xl font-extrabold leading-none text-[#2E4A6B] opacity-20">2</span>
+                  <span className="text-4xl font-extrabold leading-none opacity-40" style={{ color: "var(--owner)" }}>2</span>
                 </div>
-                <h3 className="mb-2 text-xl font-extrabold text-gray-900">{t.step2Title}</h3>
-                <p className="max-w-sm text-sm leading-relaxed text-gray-500">{t.step2Desc}</p>
+                <h3 className="mb-2 text-xl font-extrabold text-foreground">{t.step2Title}</h3>
+                <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step2Desc}</p>
               </div>
               <div className="md:order-1">
                 <BrowserFrame url={t.screens.urlDash}>
-                  <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-gray-900">
-                    <Bell className="h-3.5 w-3.5" style={{ color: "#2E4A6B" }} />
+                  <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-foreground">
+                    <Bell className="h-3.5 w-3.5" style={{ color: "var(--owner)" }} />
                     {t.screens.offersHead}
                   </p>
                   {[
                     { n: t.screens.co1, s: t.screens.co1sub },
                     { n: t.screens.co2, s: t.screens.co2sub },
                   ].map((c, i) => (
-                    <div key={i} className="mb-2 flex items-center gap-2.5 rounded-xl border border-gray-100 bg-white p-2.5">
-                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "#EAF3F0" }}>
-                        <Building2 className="h-4 w-4" style={{ color: "#0E7C66" }} />
+                    <div key={i} className="mb-2 flex items-center gap-2.5 rounded-xl border border-border p-2.5" style={{ background: "var(--card)" }}>
+                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "var(--provider-soft)" }}>
+                        <Building2 className="h-4 w-4" style={{ color: "var(--provider)" }} />
                       </span>
                       <div className="flex-1">
-                        <p className="text-xs font-bold text-gray-900">{c.n}</p>
-                        <p className="mt-0.5 text-[10px] text-gray-400">{c.s}</p>
+                        <p className="text-xs font-bold text-foreground">{c.n}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">{c.s}</p>
                       </div>
-                      <span className="rounded-full px-2 py-1 text-[10px] font-bold" style={{ background: "#FEF3C7", color: "#92660b" }}>{t.screens.newBadge}</span>
+                      <span className="rounded-full px-2 py-1 text-[10px] font-bold" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>{t.screens.newBadge}</span>
                     </div>
                   ))}
                 </BrowserFrame>
@@ -597,38 +599,38 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               <div>
                 <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2F7]">
-                    <BarChart3 className="h-5 w-5" style={{ color: "#2E4A6B" }} />
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
+                    <BarChart3 className="h-5 w-5" style={{ color: "var(--owner)" }} />
                   </span>
-                  <span className="text-4xl font-extrabold leading-none text-[#2E4A6B] opacity-20">3</span>
+                  <span className="text-4xl font-extrabold leading-none opacity-40" style={{ color: "var(--owner)" }}>3</span>
                 </div>
-                <h3 className="mb-2 text-xl font-extrabold text-gray-900">{t.step3Title}</h3>
-                <p className="max-w-sm text-sm leading-relaxed text-gray-500">{t.step3Desc}</p>
+                <h3 className="mb-2 text-xl font-extrabold text-foreground">{t.step3Title}</h3>
+                <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step3Desc}</p>
               </div>
               <BrowserFrame url={t.screens.urlDash}>
-                <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-gray-900">
-                  <BarChart3 className="h-3.5 w-3.5" style={{ color: "#2E4A6B" }} />
+                <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-foreground">
+                  <BarChart3 className="h-3.5 w-3.5" style={{ color: "var(--owner)" }} />
                   {t.screens.compareHead}
                 </p>
-                <div className="mb-2 flex items-center gap-2.5 rounded-xl border-2 bg-white p-2.5" style={{ borderColor: "#0E7C66", boxShadow: "0 5px 14px rgba(14,124,102,0.12)" }}>
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "#EAF3F0" }}>
-                    <Building2 className="h-4 w-4" style={{ color: "#0E7C66" }} />
+                <div className="mb-2 flex items-center gap-2.5 rounded-xl border-2 p-2.5" style={{ background: "var(--card)", borderColor: "var(--provider)", boxShadow: "0 5px 14px rgba(27,127,220,0.25)" }}>
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "var(--provider-soft)" }}>
+                    <Building2 className="h-4 w-4" style={{ color: "var(--provider)" }} />
                   </span>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-900">{t.screens.co2}</p>
-                    <p className="mt-0.5 text-[10px] text-gray-400">{t.screens.totalLabel}: 24,000 {t.screens.riyal} · {t.screens.perUnit} 2,000</p>
+                    <p className="text-xs font-bold text-foreground">{t.screens.co2}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">{t.screens.totalLabel}: 24,000 {t.screens.riyal} · {t.screens.perUnit} 2,000</p>
                   </div>
-                  <span className="rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white" style={{ background: "#0E7C66" }}>{t.screens.selectBtn} ✓</span>
+                  <span className="rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white" style={{ background: "var(--provider)" }}>{t.screens.selectBtn} ✓</span>
                 </div>
-                <div className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-white p-2.5">
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "#EAF3F0" }}>
-                    <Building2 className="h-4 w-4" style={{ color: "#0E7C66" }} />
+                <div className="flex items-center gap-2.5 rounded-xl border border-border p-2.5" style={{ background: "var(--card)" }}>
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "var(--provider-soft)" }}>
+                    <Building2 className="h-4 w-4" style={{ color: "var(--provider)" }} />
                   </span>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-900">{t.screens.co1}</p>
-                    <p className="mt-0.5 text-[10px] text-gray-400">{t.screens.totalLabel}: 27,600 {t.screens.riyal} · {t.screens.perUnit} 2,300</p>
+                    <p className="text-xs font-bold text-foreground">{t.screens.co1}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">{t.screens.totalLabel}: 27,600 {t.screens.riyal} · {t.screens.perUnit} 2,300</p>
                   </div>
-                  <span className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[10px] font-bold text-gray-400">{t.screens.selectBtn}</span>
+                  <span className="rounded-lg border border-border px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground">{t.screens.selectBtn}</span>
                 </div>
               </BrowserFrame>
             </div>
@@ -639,7 +641,7 @@ export default function LandingPage() {
       {/* ── Closing owner CTA (full-bleed band) ──────────────────────────── */}
       <section
         className="relative overflow-hidden py-16 text-center"
-        style={{ background: "linear-gradient(135deg, #2E4A6B 0%, #3F6690 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0f3a47 0%, #0F2733 75%)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}
       >
         {/* faint dot pattern */}
         <div
@@ -660,7 +662,8 @@ export default function LandingPage() {
             <Link href="/auth?role=owner">
               <Button
                 size="lg"
-                className="bg-white px-12 font-semibold text-[#2E4A6B] hover:bg-gray-100 active:scale-95 transition-transform"
+                className="px-12 font-semibold hover:opacity-90 active:scale-95 transition-transform"
+                style={{ background: "var(--owner)", color: "#04222c" }}
               >
                 {t.ctaBtn}
               </Button>
@@ -670,23 +673,23 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20" style={{ background: "var(--navy-2)" }}>
         <div className="container mx-auto max-w-3xl px-4">
           <div className="mb-10 text-center">
-            <h2 className="mb-3 text-3xl md:text-4xl font-extrabold text-gray-900">{t.faqTitle}</h2>
-            <p className="text-base md:text-lg text-gray-500">{t.faqSubtitle}</p>
+            <h2 className="mb-3 text-3xl md:text-4xl font-extrabold text-foreground">{t.faqTitle}</h2>
+            <p className="text-base md:text-lg text-muted-foreground">{t.faqSubtitle}</p>
           </div>
           <div className="space-y-3">
             {t.faqs.map((f, i) => (
               <details
                 key={i}
-                className="group rounded-xl border border-gray-200 bg-white px-5 py-4 [&_summary::-webkit-details-marker]:hidden"
+                className="group rounded-xl border border-border bg-card px-5 py-4 [&_summary::-webkit-details-marker]:hidden"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-gray-900">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-foreground">
                   {f.q}
-                  <ChevronDown className="h-5 w-5 flex-none text-gray-400 transition-transform group-open:rotate-180" />
+                  <ChevronDown className="h-5 w-5 flex-none text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-gray-500">{f.a}</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
               </details>
             ))}
           </div>
@@ -696,7 +699,7 @@ export default function LandingPage() {
       {/* ── Provider CTA (full-bleed band) ──────────────────────────────── */}
       <section
         className="relative overflow-hidden py-14 text-center"
-        style={{ background: "linear-gradient(135deg, #0E7C66 0%, #0a5e4e 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0e3a5c, #193546)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}
       >
         {/* faint dot pattern */}
         <div
@@ -726,9 +729,10 @@ export default function LandingPage() {
               <Link href="/auth?role=provider">
                 <Button
                   size="lg"
-                  className="group h-auto gap-3.5 rounded-full bg-white ps-1.5 pe-7 py-1.5 text-base font-bold text-[#0a5e4e] shadow-lg transition-transform hover:bg-white active:scale-95"
+                  className="group h-auto gap-3.5 rounded-full ps-1.5 pe-7 py-1.5 text-base font-bold text-white shadow-lg transition-transform active:scale-95 hover:opacity-90"
+                  style={{ background: "var(--provider)" }}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0E7C66] transition-colors group-hover:bg-[#0a5e4e]">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full transition-colors" style={{ background: "#0e2f4d" }}>
                     <ArrowLeft className="text-white" />
                   </span>
                   {t.joinProvider}
@@ -740,20 +744,20 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-white border-t border-gray-100 py-12">
+      <footer className="bg-card border-t border-border py-12">
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 gap-8 mb-8">
             <div>
-              <p className="text-xl font-extrabold text-[#2E4A6B] mb-2">{t.siteName}</p>
-              <p className="text-sm text-gray-500">{t.footerTagline}</p>
+              <p className="text-xl font-extrabold mb-2" style={{ color: "var(--owner)" }}>{t.siteName}</p>
+              <p className="text-sm text-muted-foreground">{t.footerTagline}</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">{t.quickLinks}</h4>
+              <h4 className="font-semibold text-foreground mb-3">{t.quickLinks}</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
                     href="/contact"
-                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.contactUs}
                   </Link>
@@ -761,7 +765,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/about"
-                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.aboutUs}
                   </Link>
@@ -771,7 +775,7 @@ export default function LandingPage() {
                     href="/emaraa-guide.html"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.viewDemo}
                   </a>
@@ -779,7 +783,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/terms"
-                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.termsOfUse}
                   </Link>
@@ -787,7 +791,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/privacy"
-                    className="text-gray-500 hover:text-[#2E4A6B] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.privacyPolicy}
                   </Link>
@@ -795,8 +799,8 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-100 pt-6 text-center">
-            <p className="text-sm text-gray-500">{t.footerCopyright}</p>
+          <div className="border-t border-border pt-6 text-center">
+            <p className="text-sm text-muted-foreground">{t.footerCopyright}</p>
           </div>
         </div>
       </footer>

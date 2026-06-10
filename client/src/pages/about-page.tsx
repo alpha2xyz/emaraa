@@ -7,9 +7,9 @@ export default function AboutPage() {
   const isRTL = lang === "ar";
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
       {/* ── Hero ── */}
-      <div className="bg-gradient-to-br from-[#1A2E42] via-[#2E4A6B] to-[#243A56] text-white py-10 px-6 text-center relative overflow-hidden">
+      <div className="text-white py-10 px-6 text-center relative overflow-hidden" style={{ background: "linear-gradient(160deg, #0f3a47, #0F2733 75%)", borderBottom: "2px solid var(--owner)" }}>
         <div
           className="absolute inset-0 opacity-5"
           style={{
@@ -43,10 +43,10 @@ export default function AboutPage() {
       {/* ── Why Emaraa ── */}
       <div className="max-w-3xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
+          <h2 className="text-3xl font-extrabold text-foreground mb-4">
             {isRTL ? "لماذا عِمارة؟" : "Why Emaraa?"}
           </h2>
-          <p className="text-gray-500 text-base leading-relaxed max-w-xl mx-auto">
+          <p className="text-muted-foreground text-base leading-relaxed max-w-xl mx-auto">
             {isRTL
               ? "في السوق السعودي، مالك العقار يجد مزود الخدمة بالمعارف أو الصدفة. لا مقارنة، لا توثيق، لا ضمان. عِمارة بُنيت لتغيير هذا."
               : "In the Saudi market, property owners find service providers through connections or chance. No comparison, no documentation, no guarantee. Emaraa was built to change that."}
@@ -92,15 +92,16 @@ export default function AboutPage() {
           ].map((item, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center hover:shadow-md transition-shadow"
+              className="rounded-2xl border border-border shadow-sm p-6 text-center hover:shadow-md transition-shadow"
+              style={{ background: "var(--card)" }}
             >
-              <div className="w-12 h-12 rounded-2xl bg-[#EEF2F7] flex items-center justify-center mx-auto mb-4 text-[#2E4A6B]">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "var(--owner-soft)", color: "var(--owner)" }}>
                 {item.icon}
               </div>
-              <h3 className="font-bold text-gray-900 text-sm mb-2">
+              <h3 className="font-bold text-foreground text-sm mb-2">
                 {isRTL ? item.ar.title : item.en.title}
               </h3>
-              <p className="text-gray-500 text-xs leading-relaxed">
+              <p className="text-muted-foreground text-xs leading-relaxed">
                 {isRTL ? item.ar.body : item.en.body}
               </p>
             </div>
@@ -108,7 +109,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── Values ── */}
-        <div className="bg-[#1A2E42] rounded-2xl p-8 text-white mb-16">
+        <div className="rounded-2xl p-8 text-white mb-16" style={{ background: "var(--navy)", border: "1px solid var(--border)" }}>
           <h2 className="text-2xl font-extrabold mb-6 text-center">
             {isRTL ? "ما الذي نؤمن به" : "What We Stand For"}
           </h2>
@@ -165,10 +166,10 @@ export default function AboutPage() {
 
         {/* ── Market Numbers ── */}
         <div className="mb-16">
-          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-2">
+          <h2 className="text-2xl font-extrabold text-foreground text-center mb-2">
             {isRTL ? "الفرصة في الرياض" : "The Riyadh Opportunity"}
           </h2>
-          <p className="text-center text-gray-400 text-sm mb-8">
+          <p className="text-center text-muted-foreground text-sm mb-8">
             {isRTL
               ? "أرقام رسمية — هذا هو السوق الذي ينتظرك"
               : "Official figures — this is the market waiting for you"}
@@ -193,37 +194,38 @@ export default function AboutPage() {
             ].map((s, i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center"
+                className="rounded-2xl border border-border shadow-sm p-5 text-center"
+                style={{ background: "var(--card)" }}
               >
                 <p
-                  className="text-2xl font-extrabold text-[#2E4A6B] mb-1"
-                  style={{ fontFamily: "Tajawal, sans-serif" }}
+                  className="text-2xl font-extrabold mb-1"
+                  style={{ fontFamily: "Tajawal, sans-serif", color: "var(--owner)" }}
                 >
                   {s.num}
                 </p>
-                <p className="text-xs text-gray-500 leading-snug">{s.label}</p>
-                <p className="text-[10px] text-gray-300 mt-1">{s.src}</p>
+                <p className="text-xs text-muted-foreground leading-snug">{s.label}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{s.src}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── Founder Note ── */}
-        <div className="bg-[#EEF2F7] rounded-2xl p-7 mb-16">
+        <div className="rounded-2xl p-7 mb-16" style={{ background: "var(--owner-soft)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-[#2E4A6B] flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--owner)" }}>
+              <Users className="w-5 h-5" style={{ color: "#04222c" }} />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">
+              <p className="font-bold text-foreground text-sm">
                 {isRTL ? "من المؤسس" : "From the Founder"}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {isRTL ? "عبدالله الفرائضي — الرياض" : "Abdallah Alfaraidi — Riyadh"}
               </p>
             </div>
           </div>
-          <p className="text-gray-600 text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             {isRTL
               ? '"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات — رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذه هي عِمارة."'
               : '"I built Emaraa because I saw how owners dealt with service providers — scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That\'s Emaraa."'}
@@ -232,13 +234,13 @@ export default function AboutPage() {
 
         {/* ── CTA ── */}
         <div className="text-center">
-          <p className="text-gray-500 text-sm mb-5">
+          <p className="text-muted-foreground text-sm mb-5">
             {isRTL
               ? "هل لديك عقار سكني في الرياض؟"
               : "Do you have a residential property in Riyadh?"}
           </p>
           <Link href="/auth">
-            <button className="bg-[#2E4A6B] hover:bg-[#1A2E42] text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm">
+            <button className="font-semibold px-8 py-3 rounded-xl transition-opacity hover:opacity-90 text-sm" style={{ background: "var(--owner)", color: "#04222c" }}>
               {isRTL ? "ابدأ الآن" : "Get Started"}
             </button>
           </Link>

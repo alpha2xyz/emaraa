@@ -27,7 +27,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-14 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="font-bold text-lg text-primary">
+        <Link href="/" className="font-bold text-lg text-foreground">
           {lang === "ar" ? "عِمارة" : "Emaraa"}
         </Link>
 
@@ -37,12 +37,12 @@ export function Navbar() {
           {isLoggedIn && (
             <div className="flex items-center gap-1.5">
               {userName && (
-                <span className="text-sm text-gray-700 font-medium">{userName}</span>
+                <span className="text-sm text-foreground font-medium">{userName}</span>
               )}
               {userRole === "provider" && (
                 <span
                   className="text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: "#E6F4F1", color: "#0E7C66" }}
+                  style={{ backgroundColor: "var(--provider-soft)", color: "#7bb6f0" }}
                 >
                   مزود
                 </span>
@@ -53,7 +53,7 @@ export function Navbar() {
           {/* Gear icon dropdown */}
           <Popover>
             <PopoverTrigger asChild>
-              <button className="p-1.5 rounded-lg transition-colors text-gray-500 hover:text-gray-800 cursor-pointer">
+              <button className="p-1.5 rounded-lg transition-colors text-muted-foreground hover:text-foreground cursor-pointer">
                 <Settings size={18} />
               </button>
             </PopoverTrigger>
@@ -61,7 +61,7 @@ export function Navbar() {
               {/* Section 1 — Language toggle (compact) */}
               <button
                 onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-                className="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-50 flex items-center gap-2 w-full transition-colors text-gray-700"
+                className="text-sm px-2 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-2 w-full transition-colors text-foreground"
               >
                 <span className="text-base">🌐</span>
                 <span>{lang === "ar" ? "English" : "العربية"}</span>
@@ -73,7 +73,7 @@ export function Navbar() {
               {isLoggedIn && (
                 <Link
                   href={settingsHref}
-                  className="text-sm px-2 py-1.5 rounded-lg hover:bg-gray-50 flex items-center gap-2 w-full transition-colors text-gray-700"
+                  className="text-sm px-2 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-2 w-full transition-colors text-foreground"
                 >
                   <Settings size={15} />
                   الإعدادات
@@ -86,7 +86,7 @@ export function Navbar() {
               {isLoggedIn && (
                 <button
                   onClick={handleLogout}
-                  className="text-sm text-red-500 hover:bg-red-50 px-2 py-1.5 rounded-lg flex items-center gap-2 w-full transition-colors"
+                  className="text-sm text-red-400 hover:bg-red-500/10 px-2 py-1.5 rounded-lg flex items-center gap-2 w-full transition-colors"
                 >
                   <LogOut size={15} />
                   تسجيل الخروج

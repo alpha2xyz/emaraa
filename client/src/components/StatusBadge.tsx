@@ -10,22 +10,22 @@ const statusConfig: Record<
 > = {
   pending: {
     icon: Clock,
-    className: "bg-amber-100 text-amber-800 border-amber-200",
+    className: "bg-amber-500/15 text-amber-300 border-amber-500/30",
     label: { ar: "قيد المراجعة", en: "Pending" },
   },
   accepted: {
     icon: CheckCircle2,
-    className: "bg-green-100 text-green-800 border-green-200",
+    className: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
     label: { ar: "مقبول", en: "Accepted" },
   },
   rejected: {
     icon: XCircle,
-    className: "bg-red-100 text-red-800 border-red-200",
+    className: "bg-red-500/15 text-red-300 border-red-500/30",
     label: { ar: "مرفوض", en: "Rejected" },
   },
   in_progress: {
     icon: Hourglass,
-    className: "bg-blue-100 text-blue-800 border-blue-200",
+    className: "bg-blue-500/15 text-blue-300 border-blue-500/30",
     label: { ar: "جاري التنفيذ", en: "In Progress" },
   },
 };

@@ -43,15 +43,15 @@ function StatCard({
 }) {
   return (
     <div
-      className="bg-white rounded-xl border shadow-sm p-4"
-      style={{ borderColor: "#DDE4EE", borderTop: `3px solid ${color}` }}
+      className="bg-card rounded-xl border shadow-sm p-4"
+      style={{ borderColor: "var(--border)", borderTop: `3px solid ${color}` }}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-2xl font-bold" style={{ color }}>
             {value}
           </p>
-          <p className="text-sm text-gray-600 mt-0.5 leading-snug">{label}</p>
+          <p className="text-sm text-muted-foreground mt-0.5 leading-snug">{label}</p>
         </div>
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -209,7 +209,7 @@ export default function ProviderDashboard() {
   return (
     <div
       className="page-enter min-h-screen"
-      style={{ background: "#F9F9FF" }}
+      style={{ background: "var(--navy-2)" }}
       dir={isRTL ? "rtl" : "ltr"}
     >
       <ProviderHeader />
@@ -218,16 +218,16 @@ export default function ProviderDashboard() {
 
         {/* Profile incomplete banner */}
             {!isProfileComplete && (
-              <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+              <div className="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="h-6 w-6 text-orange-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm mb-1">{t.completeProfile}</p>
-                    <p className="text-sm text-gray-700 mb-3">{t.completeProfileDesc}</p>
+                    <p className="font-semibold text-foreground text-sm mb-1">{t.completeProfile}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{t.completeProfileDesc}</p>
                     <button
                       onClick={() => setLocation("/dashboard/provider/profile")}
                       className="text-xs font-bold rounded-lg px-4 py-2 text-white"
-                      style={{ background: "#EA7C1A" }}
+                      style={{ background: "#EA7C1A", color: "#1a0f04" }}
                     >
                       <Package className="inline w-3.5 h-3.5 me-1" />
                       {t.completeNow}
@@ -239,12 +239,12 @@ export default function ProviderDashboard() {
 
             {/* Approval pending banner */}
             {isProfileComplete && !isApproved && (
-              <div className="rounded-xl border border-yellow-200 bg-yellow-50/60 p-4">
+              <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4">
                 <div className="flex items-start gap-3">
-                  <Clock className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+                  <Clock className="h-6 w-6 text-yellow-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-gray-900 text-sm">{t.underReview}</p>
-                    <p className="text-sm text-gray-700 mt-0.5">{t.underReviewDesc}</p>
+                    <p className="font-semibold text-foreground text-sm">{t.underReview}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{t.underReviewDesc}</p>
                   </div>
                 </div>
               </div>
@@ -255,29 +255,29 @@ export default function ProviderDashboard() {
               <StatCard
                 label={t.available}
                 value={availableRequests.length}
-                color="#0E7C66"
-                bg="#E8F5F2"
+                color="#1B7FDC"
+                bg="var(--provider-soft)"
                 icon={FileText}
               />
               <StatCard
                 label={t.myOffers}
                 value={myOffersStats.length}
-                color="#2E4A6B"
-                bg="#EEF2F7"
+                color="#0DB8D3"
+                bg="var(--owner-soft)"
                 icon={Send}
               />
               <StatCard
                 label={t.pending}
                 value={myOffersStats.filter((o: any) => o.status === "pending").length}
-                color="#C4694A"
-                bg="#FDF3EF"
+                color="#FBBF24"
+                bg="var(--warn-soft)"
                 icon={Clock}
               />
               <StatCard
                 label={t.accepted}
                 value={myOffersStats.filter((o: any) => o.status === "accepted").length}
-                color="#7D3040"
-                bg="#FDF0F2"
+                color="#34D399"
+                bg="var(--ok-soft)"
                 icon={CheckCircle2}
               />
             </div>
@@ -286,16 +286,16 @@ export default function ProviderDashboard() {
             {isProfileComplete && (
               <div
                 className="rounded-xl border p-3"
-                style={{ background: "#EEF2F7", borderColor: "#B8CCD9" }}
+                style={{ background: "var(--provider-soft)", borderColor: "rgba(27,127,220,0.3)" }}
               >
                 <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-[#3D6187] flex-shrink-0 mt-0.5" />
+                  <Info className="h-4 w-4 text-[#7bb6f0] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-[#1A2E42]">{t.phoneDisclosure}</p>
+                    <p className="text-xs text-foreground">{t.phoneDisclosure}</p>
                     {userPhone && (
                       <div className="flex items-center gap-1 mt-1">
-                        <Phone className="h-3 w-3 text-[#2E4A6B]" />
-                        <span className="text-xs font-semibold text-[#2E4A6B]" dir="ltr">
+                        <Phone className="h-3 w-3 text-[#7bb6f0]" />
+                        <span className="text-xs font-semibold text-[#7bb6f0]" dir="ltr">
                           {userPhone}
                         </span>
                       </div>
@@ -307,7 +307,7 @@ export default function ProviderDashboard() {
 
         {/* ── My Offers ── */}
         <div>
-          <h2 className="text-sm font-bold mb-3" style={{ color: "#1A2535" }}>
+          <h2 className="text-sm font-bold mb-3 text-foreground">
             {isRTL ? "عروضي" : "My Offers"}
           </h2>
           {offersLoading && (
@@ -321,15 +321,15 @@ export default function ProviderDashboard() {
             {!offersLoading && (!offersList || offersList.length === 0) && (
               <div
                 className="rounded-xl border p-8 text-center"
-                style={{ background: "white", borderColor: "#DDE4EE" }}
+                style={{ background: "var(--card)", borderColor: "var(--border)" }}
               >
-                <Send className="w-10 h-10 mx-auto mb-3" style={{ color: "#DDE4EE" }} />
-                <p className="font-semibold text-gray-700">{t.noOffers}</p>
-                <p className="text-sm text-gray-400 mt-1 mb-4">{t.noOffersHint}</p>
+                <Send className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--muted-foreground)" }} />
+                <p className="font-semibold text-foreground">{t.noOffers}</p>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">{t.noOffersHint}</p>
                 <button
                   onClick={() => setLocation("/dashboard/provider/requests")}
                   className="text-sm font-bold rounded-xl px-5 py-2 text-white"
-                  style={{ background: "#0E7C66" }}
+                  style={{ background: "var(--provider)" }}
                 >
                   {t.browseRequests}
                 </button>
@@ -341,8 +341,8 @@ export default function ProviderDashboard() {
                 {offersList.map((offer: any) => {
                   const prop = offer.requests?.properties;
                   const buildingType = prop?.building_type;
-                  const typeColor = buildingType === "commercial" ? "#C4694A" : "#7D3040";
-                  const typeBg = buildingType === "commercial" ? "#FDF3EF" : "#FDF0F2";
+                  const typeColor = buildingType === "commercial" ? "#F0A87F" : "#E58AA0";
+                  const typeBg = buildingType === "commercial" ? "var(--commercial-soft)" : "var(--residential-soft)";
                   const typeLabel =
                     buildingType === "commercial"
                       ? isRTL ? "تجاري" : "Commercial"
@@ -351,8 +351,8 @@ export default function ProviderDashboard() {
                   return (
                     <div
                       key={offer.id}
-                      className="bg-white rounded-xl border shadow-sm p-4 space-y-3"
-                      style={{ borderColor: "#DDE4EE" }}
+                      className="bg-card rounded-xl border shadow-sm p-4 space-y-3"
+                      style={{ borderColor: "var(--border)" }}
                     >
                       {/* Top row */}
                       <div className="flex items-start justify-between gap-2">
@@ -361,7 +361,7 @@ export default function ProviderDashboard() {
                             className="w-4 h-4 flex-shrink-0"
                             style={{ color: typeColor }}
                           />
-                          <span className="font-bold text-gray-900 truncate">
+                          <span className="font-bold text-foreground truncate">
                             {prop?.name || "—"}
                           </span>
                         </div>
@@ -378,21 +378,21 @@ export default function ProviderDashboard() {
 
                       {/* Location */}
                       {prop?.city && (
-                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                           <span>{prop.city}</span>
                         </div>
                       )}
 
                       {/* Date */}
-                      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{formatDate(offer.created_at)}</span>
                       </div>
 
                       {/* Notes */}
                       {offer.notes && (
-                        <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-2">
+                        <p className="text-sm text-muted-foreground bg-white/5 rounded-lg p-2">
                           {offer.notes}
                         </p>
                       )}
@@ -404,7 +404,7 @@ export default function ProviderDashboard() {
                             openSignedPdf("provider-offers", offer.offer_file_url)
                           }
                           className="flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 py-2 border"
-                          style={{ borderColor: "#DDE4EE", color: "#0E7C66" }}
+                          style={{ borderColor: "var(--border)", color: "var(--provider)" }}
                         >
                           <FileText className="w-3.5 h-3.5" />
                           {t.viewFile}
