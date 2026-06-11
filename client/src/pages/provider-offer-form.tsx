@@ -267,9 +267,9 @@ export default function ProviderOfferForm() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#2E4A6B]" />
-        <p className="text-gray-500">{t.loading}</p>
-        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">
+        <Loader2 className="w-8 h-8 animate-spin text-[#1B7FDC]" />
+        <p className="text-muted-foreground">{t.loading}</p>
+        <button onClick={() => history.back()} className="text-sm text-[#7bb6f0] hover:underline">
           {lang === "ar" ? "رجوع" : "Back"}
         </button>
       </div>
@@ -280,8 +280,8 @@ export default function ProviderOfferForm() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <AlertCircle className="w-8 h-8 text-red-500" />
-        <p className="text-gray-500">{t.error}</p>
-        <button onClick={() => history.back()} className="text-sm text-[#2E4A6B] hover:underline">
+        <p className="text-muted-foreground">{t.error}</p>
+        <button onClick={() => history.back()} className="text-sm text-[#7bb6f0] hover:underline">
           {lang === "ar" ? "رجوع" : "Back"}
         </button>
       </div>
@@ -291,8 +291,8 @@ export default function ProviderOfferForm() {
   const buildingType = request?.properties?.building_type;
   const buildingChipStyle =
     buildingType === "commercial"
-      ? { background: "#FDF3EF", color: "#C4694A" }
-      : { background: "#FDF0F2", color: "#7D3040" };
+      ? { background: "var(--commercial-soft)", color: "#F0A87F" }
+      : { background: "var(--residential-soft)", color: "#E58AA0" };
   const buildingLabel =
     buildingType === "commercial"
       ? lang === "ar"
@@ -303,10 +303,10 @@ export default function ProviderOfferForm() {
         : "Residential";
 
   return (
-    <div className="min-h-screen bg-[#F9F9FF]" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="min-h-screen" style={{ background: "var(--navy-2)" }} dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Emerald gradient header strip */}
       <div
-        style={{ background: "linear-gradient(135deg, #0E7C66, #0a5e4e)" }}
+        style={{ background: "linear-gradient(135deg, #0e3a5c, #193546)" }}
         className="py-5 px-4 flex items-center justify-between"
       >
         <div className="flex items-center gap-2">
@@ -344,24 +344,24 @@ export default function ProviderOfferForm() {
 
         {/* Issue 3: early approval gate banner */}
         {isNotApproved && (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-4 py-3">
-            <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-            <span className="text-sm text-orange-900 font-medium">{t.notApproved}</span>
+          <div className="mb-4 flex items-start gap-3 rounded-xl border-s-4 border-orange-500/40 bg-orange-500/10 px-4 py-3">
+            <AlertCircle className="h-5 w-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <span className="text-sm text-foreground font-medium">{t.notApproved}</span>
           </div>
         )}
 
         {/* Issue 5B: phone consent checkbox */}
-        <div className="flex items-start gap-3 rounded-xl border border-[#B8CCD9] bg-[#EEF2F7]/60 px-4 py-3 mb-4">
+        <div className="flex items-start gap-3 rounded-xl border px-4 py-3 mb-4" style={{ borderColor: "var(--border)", background: "var(--provider-soft)" }}>
           <input
             type="checkbox"
             id="phoneConsent"
             checked={phoneConsent}
             onChange={(e) => setPhoneConsent(e.target.checked)}
-            className="mt-1 h-4 w-4 accent-[#2E4A6B] flex-shrink-0 cursor-pointer"
+            className="mt-1 h-4 w-4 accent-[#1B7FDC] flex-shrink-0 cursor-pointer"
           />
           <label
             htmlFor="phoneConsent"
-            className="text-sm text-[#1A2E42] cursor-pointer leading-relaxed"
+            className="text-sm text-foreground cursor-pointer leading-relaxed"
           >
             {lang === "ar"
               ? "أوافق على مشاركة رقم جوالي المسجّل مع مالك العقار في حال قبول عرضي"
@@ -370,7 +370,7 @@ export default function ProviderOfferForm() {
         </div>
 
         {providerData?.provider?.company_name && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border-s-4 border-[#2E4A6B] bg-[#EEF2F7]/80 px-4 py-3 text-sm font-medium text-[#1A2E42]">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border-s-4 px-4 py-3 text-sm font-medium text-foreground" style={{ borderInlineStartColor: "var(--provider)", background: "var(--provider-soft)" }}>
             <Building2 className="h-4 w-4 shrink-0" />
             <span>
               {lang === "ar"
@@ -382,11 +382,11 @@ export default function ProviderOfferForm() {
 
         {/* Scope of services — unified read-only card */}
         <div
-          className="mb-6 rounded-xl border p-4 text-sm"
-          style={{ background: "#F9F9FF", borderColor: "#DDE4EE" }}
+          className="mb-6 rounded-xl border p-4 text-sm bg-white/5"
+          style={{ borderColor: "var(--border)" }}
         >
-          <p className="text-gray-800 leading-relaxed mb-3">{t.scopePart1}</p>
-          <p className="text-gray-700 leading-relaxed font-medium">{t.scopePart2}</p>
+          <p className="text-foreground leading-relaxed mb-3">{t.scopePart1}</p>
+          <p className="text-muted-foreground leading-relaxed font-medium">{t.scopePart2}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -414,7 +414,7 @@ export default function ProviderOfferForm() {
                 <div>
                   <p className="text-sm text-muted-foreground">{t.address}:</p>
                   <div className="flex items-start gap-1 mt-1">
-                    <MapPin className="h-4 w-4 mt-0.5 text-gray-400 flex-shrink-0" />
+                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                     <p className="text-sm">{request.properties.address}</p>
                   </div>
                 </div>
@@ -477,11 +477,11 @@ export default function ProviderOfferForm() {
                       className="hidden"
                     />
                     <label htmlFor="offer-file">
-                      <div className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-primary bg-white transition-colors">
+                      <div className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary bg-card transition-colors">
                         {offerFile ? (
                           <>
-                            <FileText className="h-12 w-12 mx-auto text-green-500 mb-2" />
-                            <p className="text-sm font-medium text-green-600">{t.fileSelected}</p>
+                            <FileText className="h-12 w-12 mx-auto text-green-400 mb-2" />
+                            <p className="text-sm font-medium text-green-400">{t.fileSelected}</p>
                             <p className="text-xs text-muted-foreground mt-1">{offerFile.name}</p>
                             <p className="text-xs text-muted-foreground">
                               ({(offerFile.size / 1024 / 1024).toFixed(2)} MB)
@@ -548,7 +548,7 @@ export default function ProviderOfferForm() {
                   <Button
                     type="submit"
                     className="flex-1 text-white"
-                    style={{ background: "#0E7C66" }}
+                    style={{ background: "var(--provider)" }}
                     disabled={
                       mutation.isPending ||
                       !offerFile ||

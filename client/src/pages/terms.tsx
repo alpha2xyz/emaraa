@@ -308,10 +308,10 @@ export default function TermsPage() {
   const l = labels[lang];
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header strip */}
       <div
-        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}
         className="text-white py-6 px-4 flex items-center justify-between"
         dir="rtl"
       >
@@ -326,31 +326,31 @@ export default function TermsPage() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
-            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#2E4A6B] transition-colors">
+            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[#0DB8D3] transition-colors">
               {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
               {l.back}
             </button>
           </Link>
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="text-sm px-3 py-1 rounded-full border border-[#2E4A6B] text-[#2E4A6B] hover:bg-[#2E4A6B] hover:text-white transition-colors"
+            className="text-sm px-3 py-1 rounded-full border border-[#0DB8D3] text-[#0DB8D3] hover:bg-[#0DB8D3] hover:text-[#04222c] transition-colors"
           >
             {lang === "ar" ? "EN" : "عربي"}
           </button>
         </div>
 
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{l.title}</h1>
-        <p className="text-gray-500 mb-10 text-sm">{l.subtitle}</p>
+        <h1 className="text-3xl font-extrabold text-foreground mb-2">{l.title}</h1>
+        <p className="text-muted-foreground mb-10 text-sm">{l.subtitle}</p>
 
         <div className="space-y-8">
           {sections.map((sec, i) => (
-            <div key={i} className="border-b border-gray-100 pb-8 last:border-0">
-              <h2 className="text-base font-bold text-[#2E4A6B] mb-3">
+            <div key={i} className="border-b border-border pb-8 last:border-0">
+              <h2 className="text-base font-bold mb-3" style={{ color: "var(--owner)" }}>
                 {i + 1}. {sec.title}
               </h2>
               <div className="space-y-2">
                 {sec.body.map((para, j) => (
-                  <p key={j} className="text-sm text-gray-600 leading-relaxed">
+                  <p key={j} className="text-sm text-muted-foreground leading-relaxed">
                     {para}
                   </p>
                 ))}
@@ -359,9 +359,9 @@ export default function TermsPage() {
           ))}
         </div>
 
-        <div className="mt-10 text-center text-xs text-gray-400">
+        <div className="mt-10 text-center text-xs text-muted-foreground">
           {isRTL ? "للاستفسار: " : "Inquiries: "}
-          <a href="mailto:info@emaraa.app" className="hover:text-[#2E4A6B] transition-colors">
+          <a href="mailto:info@emaraa.app" className="hover:text-[#0DB8D3] transition-colors">
             info@emaraa.app
           </a>
         </div>

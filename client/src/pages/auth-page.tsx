@@ -27,10 +27,16 @@ export default function AuthPage() {
   const role = urlParams.get("role") || "owner";
 
   const isProvider = role === "provider";
-  const themeColor = isProvider ? "#0E7C66" : "#2E4A6B";
-  const themeMid = isProvider ? "#19a688" : "#3F6690";
-  const themeDark = isProvider ? "#0a5e4e" : "#243A56";
-  const themeDeep = isProvider ? "#063d2e" : "#162534";
+  // Brand accents (Arctic Depths) — owner = cyan, provider = blue.
+  // Kept as hex literals (= var(--owner)/var(--provider)) so string interpolations stay valid CSS.
+  const themeColor = isProvider ? "#1B7FDC" : "#0DB8D3";
+  const themeMid = isProvider ? "#3FA0F0" : "#3FD0E6";
+  // Dark navy panel gradient stops (decoupled from the bright accent so the panel stays dark)
+  const panelStart = isProvider ? "#0e3a5c" : "#0f3a47";
+  const panelMid = "#193546";
+  const panelDeep = "#0F2733";
+  // Solid-button text: owner = dark ink on cyan, provider = white on blue
+  const solidText = isProvider ? "#ffffff" : "#04222c";
   const themeBtnBg = `linear-gradient(to right, ${themeColor}, ${themeMid})`;
   const urlMode = urlParams.get("mode");
   const [mode, setMode] = useState<"login" | "register">(
@@ -242,16 +248,17 @@ export default function AuthPage() {
       : ["Easy property management", "Vetted service providers", "Transparent, reliable offers"];
 
   return (
-    <div className="page-enter min-h-screen bg-white flex">
+    <div className="page-enter min-h-screen bg-background flex">
       {/* Left marketing panel — desktop only */}
       <div
         className="hidden lg:flex w-5/12 flex-col justify-center p-14 text-white"
         style={{
-          background: `linear-gradient(135deg, ${themeColor} 0%, ${themeDark} 55%, ${themeDeep} 100%)`,
+          background: `linear-gradient(135deg, ${panelStart} 0%, ${panelMid} 55%, ${panelDeep} 100%)`,
+          borderRight: `2px solid ${themeColor}`,
         }}
         dir={lang === "ar" ? "rtl" : "ltr"}
       >
-        <Building2 className="w-12 h-12 mb-8" style={{ color: `${themeColor}aa` }} />
+        <Building2 className="w-12 h-12 mb-8" style={{ color: themeColor }} />
         <h1 className="text-4xl font-extrabold mb-3">{lang === "ar" ? "عمارة" : "Emaraa"}</h1>
         <p className="text-lg text-white/80 mb-2">
           {lang === "ar" ? "منصة إدارة المرافق العقارية" : "Facility Management Platform"}
@@ -281,14 +288,14 @@ export default function AuthPage() {
             type="button"
             onClick={() => setLocation("/")}
             disabled={loading}
-            className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t.back}
           </button>
 
           {/* Role selector tabs */}
-          <div className="flex rounded-xl bg-gray-100 p-1 mb-4">
+          <div className="flex rounded-xl bg-white/5 p-1 mb-4">
             {(["owner", "provider"] as const).map((r) => (
               <button
                 key={r}
@@ -301,9 +308,9 @@ export default function AuthPage() {
                   setLocation(`/auth?role=${r}&mode=${mode}`);
                 }}
                 className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  role === r ? "text-white shadow" : "text-gray-500 hover:text-gray-700"
+                  role === r ? "shadow" : "text-muted-foreground hover:text-foreground"
                 }`}
-                style={role === r ? { background: themeColor } : undefined}
+                style={role === r ? { background: themeColor, color: solidText } : undefined}
               >
                 {r === "owner" ? t.ownerTab : t.providerTab}
               </button>
@@ -311,15 +318,15 @@ export default function AuthPage() {
           </div>
 
           <div
-            className="rounded-2xl shadow-sm bg-white overflow-hidden border-t-4"
+            className="rounded-2xl shadow-sm bg-card overflow-hidden border-t-4"
             style={{ borderTopColor: themeColor }}
           >
             <div className="px-6 pt-6 pb-2">
               <div className="flex items-center gap-3 mb-2">
                 <Building2 className="w-8 h-8" style={{ color: themeColor }} />
-                <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
+                <h2 className="text-xl font-bold text-foreground">{getTitle()}</h2>
               </div>
-              <p className="text-sm text-gray-500">{getDescription()}</p>
+              <p className="text-sm text-muted-foreground">{getDescription()}</p>
             </div>
 
             <div className="px-6 pb-6">
@@ -340,7 +347,7 @@ export default function AuthPage() {
                         }}
                         maxLength={25}
                         className={`rounded-xl text-base ${validationErrors.name ? "border-red-500" : ""}`}
-                        style={{ backgroundColor: isProvider ? "#E8F5F2" : "#EEF2F7" }}
+                        style={{ backgroundColor: isProvider ? "var(--provider-soft)" : "var(--owner-soft)" }}
                       />
                       {validationErrors.name && (
                         <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -365,7 +372,7 @@ export default function AuthPage() {
                       }}
                       maxLength={10}
                       className={`rounded-xl text-base ${validationErrors.phone ? "border-red-500" : ""}`}
-                      style={{ backgroundColor: isProvider ? "#E8F5F2" : "#EEF2F7" }}
+                      style={{ backgroundColor: isProvider ? "var(--provider-soft)" : "var(--owner-soft)" }}
                     />
                     {validationErrors.phone && (
                       <div className="flex items-center gap-2 text-red-600 text-sm">
@@ -384,15 +391,15 @@ export default function AuthPage() {
 
                   <Button
                     type="submit"
-                    className="w-full text-white hover:opacity-90 transition-opacity"
-                    style={{ background: themeBtnBg }}
+                    className="w-full hover:opacity-90 transition-opacity"
+                    style={{ background: themeBtnBg, color: solidText }}
                     disabled={loading}
                   >
                     {loading ? t.loading : mode === "login" ? t.loginButton : t.registerButton}
                   </Button>
 
                   {mode === "register" && (
-                    <p className="text-xs text-gray-400 text-center leading-relaxed">
+                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
                       {lang === "ar" ? (
                         <>
                           بالنقر على تسجيل، أنت توافق على{" "}
@@ -465,8 +472,8 @@ export default function AuthPage() {
 
                   <Button
                     type="submit"
-                    className="w-full text-white hover:opacity-90 transition-opacity"
-                    style={{ background: themeBtnBg }}
+                    className="w-full hover:opacity-90 transition-opacity"
+                    style={{ background: themeBtnBg, color: solidText }}
                     disabled={loading || otpCode.length < 4}
                   >
                     {loading ? t.loading : t.otpVerify}

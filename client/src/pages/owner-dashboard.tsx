@@ -105,7 +105,7 @@ function SectionBadge({ number }: { number: number }) {
   return (
     <span
       className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-xs font-bold flex-shrink-0"
-      style={{ background: "#2E4A6B" }}
+      style={{ background: "var(--owner)", color: "#04222c" }}
     >
       {number}
     </span>
@@ -416,7 +416,7 @@ export default function OwnerDashboard() {
 
   if (isLoading) {
     return (
-      <div className="page-enter min-h-screen bg-[#F9F9FF] p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="page-enter min-h-screen bg-background p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
         <div className="max-w-2xl mx-auto space-y-6">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-4 w-64" />
@@ -438,12 +438,12 @@ export default function OwnerDashboard() {
   const offersList = offers ?? [];
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
 
       {/* ── Navy gradient header strip ── */}
       <div
         className="w-full py-5 px-4"
-        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}
       >
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
           {/* Right side (first child in RTL): wordmark + sub-label */}
@@ -466,8 +466,8 @@ export default function OwnerDashboard() {
                     className="inline-flex items-center text-xs rounded-full px-2 py-0.5 font-medium"
                     style={
                       property.building_type === "residential"
-                        ? { background: "#FDF0F2", color: "#7D3040" }
-                        : { background: "#FDF3EF", color: "#C4694A" }
+                        ? { background: "var(--residential-soft)", color: "#E58AA0" }
+                        : { background: "var(--commercial-soft)", color: "#F0A87F" }
                     }
                   >
                     {property.building_type === "residential"
@@ -497,19 +497,19 @@ export default function OwnerDashboard() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <SectionBadge number={1} />
-            <span className="text-sm font-semibold text-gray-700">
+            <span className="text-sm font-semibold text-foreground">
               {lang === "ar" ? "العقار وطلب الخدمة" : "Property & Service Request"}
             </span>
           </div>
 
-          <Card className="rounded-xl shadow-sm border border-gray-100">
+          <Card className="rounded-xl shadow-sm border border-border">
             <CardContent className="pt-5 pb-5 space-y-4">
 
               {/* Edit locked notice */}
               {showEditLocked && (
                 <div
                   className="flex items-start gap-2 rounded-lg px-4 py-3 text-sm"
-                  style={{ background: "#FEF3C7", color: "#92400E", border: "1px solid #FCD34D" }}
+                  style={{ background: "var(--warn-soft)", color: "var(--warn)", border: "1px solid rgba(251,191,36,0.4)" }}
                 >
                   <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
@@ -546,7 +546,7 @@ export default function OwnerDashboard() {
                   />
                   {property?.map_url && (
                     <div className="flex items-start gap-3">
-                      <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">
+                      <span className="text-xs text-muted-foreground w-28 flex-shrink-0 pt-0.5">
                         {lang === "ar" ? "رابط الخريطة" : "Map URL"}
                       </span>
                       <a
@@ -554,7 +554,7 @@ export default function OwnerDashboard() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm flex items-center gap-1 hover:underline"
-                        style={{ color: "#2E4A6B" }}
+                        style={{ color: "var(--owner)" }}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         {lang === "ar" ? "افتح الخريطة" : "Open Map"}
@@ -574,7 +574,7 @@ export default function OwnerDashboard() {
                       variant="outline"
                       onClick={enterEditMode}
                       className="gap-1.5"
-                      style={{ borderColor: "#2E4A6B", color: "#2E4A6B" }}
+                      style={{ borderColor: "var(--owner)", color: "var(--owner)", background: "transparent" }}
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                       {lang === "ar" ? "تعديل" : "Edit"}
@@ -608,14 +608,14 @@ export default function OwnerDashboard() {
                         className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                         style={
                           editBuildingType === "residential"
-                            ? { border: "2px solid #7D3040", background: "#FDF0F2" }
-                            : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
+                            ? { border: "2px solid var(--residential)", background: "var(--residential-soft)" }
+                            : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
                         }
                       >
                         <span className="text-2xl">🏠</span>
                         <span
                           className="text-sm font-medium"
-                          style={{ color: editBuildingType === "residential" ? "#7D3040" : "#374151" }}
+                          style={{ color: editBuildingType === "residential" ? "#E58AA0" : "#9FC2D3" }}
                         >
                           {lang === "ar" ? "سكني" : "Residential"}
                         </span>
@@ -627,14 +627,14 @@ export default function OwnerDashboard() {
                         className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                         style={
                           editBuildingType === "commercial"
-                            ? { border: "2px solid #C4694A", background: "#FDF3EF" }
-                            : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
+                            ? { border: "2px solid var(--commercial)", background: "var(--commercial-soft)" }
+                            : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
                         }
                       >
                         <span className="text-2xl">🏢</span>
                         <span
                           className="text-sm font-medium"
-                          style={{ color: editBuildingType === "commercial" ? "#C4694A" : "#374151" }}
+                          style={{ color: editBuildingType === "commercial" ? "#F0A87F" : "#9FC2D3" }}
                         >
                           {lang === "ar" ? "تجاري" : "Commercial"}
                         </span>
@@ -745,7 +745,7 @@ export default function OwnerDashboard() {
                   <div className="space-y-1.5">
                     <Label htmlFor="editNationalAddress">
                       {lang === "ar" ? "العنوان الوطني" : "National Address"}{" "}
-                      <span className="text-gray-400 font-normal text-xs">
+                      <span className="text-muted-foreground font-normal text-xs">
                         ({lang === "ar" ? "اختياري" : "optional"})
                       </span>
                     </Label>
@@ -765,7 +765,7 @@ export default function OwnerDashboard() {
                       onClick={() => saveMutation.mutate()}
                       disabled={saveMutation.isPending}
                       className="gap-1.5 text-white"
-                      style={{ background: "#2E4A6B" }}
+                      style={{ background: "var(--owner)", color: "#04222c" }}
                     >
                       <Save className="w-3.5 h-3.5" />
                       {saveMutation.isPending
@@ -786,11 +786,11 @@ export default function OwnerDashboard() {
               {request && (
                 <div
                   className="mt-5 pt-5 space-y-3"
-                  style={{ borderTop: "1px solid #DDE4EE" }}
+                  style={{ borderTop: "1px solid var(--border)" }}
                 >
                   <div className="flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4 flex-shrink-0" style={{ color: "#2E4A6B" }} />
-                    <span className="text-sm font-medium text-gray-700">
+                    <ClipboardList className="w-4 h-4 flex-shrink-0" style={{ color: "var(--owner)" }} />
+                    <span className="text-sm font-medium text-foreground">
                       {lang === "ar" ? "حالة الطلب" : "Request Status"}
                     </span>
                     <span
@@ -800,7 +800,7 @@ export default function OwnerDashboard() {
                       {lang === "ar" ? statusConfig?.label : statusConfig?.labelEn}
                     </span>
                     {request.created_at && (
-                      <span className="text-xs text-gray-400 mr-auto">
+                      <span className="text-xs text-muted-foreground mr-auto">
                         {new Date(request.created_at).toLocaleDateString(
                           lang === "ar" ? "ar-SA-u-nu-latn" : "en-US",
                           { year: "numeric", month: "short", day: "numeric" }
@@ -810,8 +810,8 @@ export default function OwnerDashboard() {
                   </div>
 
                   {request.description && (
-                    <div className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
-                      <span className="text-gray-400 block mb-1">
+                    <div className="text-xs text-muted-foreground bg-white/5 rounded-lg px-3 py-2 leading-relaxed">
+                      <span className="text-muted-foreground block mb-1">
                         {lang === "ar" ? "ملاحظاتك للمزودين" : "Your notes to providers"}
                       </span>
                       {request.description}
@@ -829,13 +829,13 @@ export default function OwnerDashboard() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <SectionBadge number={2} />
-            <span className="text-sm font-semibold text-gray-700">
+            <span className="text-sm font-semibold text-foreground">
               {lang === "ar" ? "عروض المزودين" : "Provider Offers"}
             </span>
             {offersList.length > 0 && (
               <span
                 className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold"
-                style={{ background: "#EEF2F7", color: "#2E4A6B", border: "1px solid #2E4A6B" }}
+                style={{ background: "var(--owner-soft)", color: "var(--owner)", border: "1px solid var(--owner)" }}
               >
                 {offersList.length}
               </span>
@@ -849,9 +849,9 @@ export default function OwnerDashboard() {
               ))}
             </div>
           ) : !requestId ? (
-            <Card className="rounded-xl shadow-sm border border-gray-100">
+            <Card className="rounded-xl shadow-sm border border-border">
               <CardContent className="pt-5 pb-5 text-center">
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {lang === "ar"
                     ? "لا يوجد طلب نشط لعرض العروض"
                     : "No active request to show offers"}
@@ -859,13 +859,13 @@ export default function OwnerDashboard() {
               </CardContent>
             </Card>
           ) : offersList.length === 0 ? (
-            <Card className="rounded-xl shadow-sm border border-gray-100">
+            <Card className="rounded-xl shadow-sm border border-border">
               <CardContent className="pt-8 pb-8 text-center">
                 <div className="text-3xl mb-3">📭</div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">
+                <p className="text-sm font-semibold text-foreground mb-1">
                   {lang === "ar" ? "لم يصلك أي عرض بعد" : "No offers yet"}
                 </p>
-                <p className="text-xs text-gray-400 max-w-xs mx-auto">
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
                   {lang === "ar"
                     ? "تم إخطار المزودين بطلبك — ستظهر العروض هنا عند استلامها"
                     : "Providers have been notified of your request — offers will appear here when received"}
@@ -877,18 +877,18 @@ export default function OwnerDashboard() {
               {offersList.map((offer: any) => (
                 <Card
                   key={offer.id}
-                  className="rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                  className="rounded-xl shadow-sm border border-border hover:shadow-md transition-shadow"
                 >
                   <CardContent className="pt-4 pb-4 space-y-3">
                     {/* Header: provider name + status */}
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-gray-800 flex items-center gap-1.5">
-                          <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: "#2E4A6B" }} />
+                        <p className="font-semibold text-foreground flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--owner)" }} />
                           {offer.providers?.company_name}
                         </p>
                         {offer.providers?.city && (
-                          <p className="text-xs text-gray-400 mt-0.5">{offer.providers.city}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{offer.providers.city}</p>
                         )}
                       </div>
                       <StatusBadge status={offer.status} lang={lang} />
@@ -896,7 +896,7 @@ export default function OwnerDashboard() {
 
                     {/* Notes */}
                     {offer.notes && (
-                      <div className="text-xs text-gray-600 bg-gray-50 rounded px-3 py-2 leading-relaxed">
+                      <div className="text-xs text-muted-foreground bg-white/5 rounded px-3 py-2 leading-relaxed">
                         {offer.notes}
                       </div>
                     )}
@@ -905,25 +905,25 @@ export default function OwnerDashboard() {
                     {offer.price_total && (
                       <div
                         className="flex gap-4 rounded-lg px-3 py-2"
-                        style={{ background: "#F9F9FF", border: "1px solid #E5E7EB" }}
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
                       >
                         <div>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             {lang === "ar" ? "السعر الإجمالي" : "Total Price"}
                           </p>
-                          <p className="font-bold text-gray-800 text-sm">
+                          <p className="font-bold text-foreground text-sm">
                             {Number(offer.price_total).toLocaleString("en-US")}{" "}
                             {lang === "ar" ? "ريال" : "SAR"}
                           </p>
                         </div>
                         {property?.units_count && (
                           <div
-                            className="border-s border-gray-200 ps-4"
+                            className="border-s border-border ps-4"
                           >
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-muted-foreground">
                               {lang === "ar" ? "السعر لكل وحدة" : "Per Unit"}
                             </p>
-                            <p className="font-bold text-sm" style={{ color: "#2E4A6B" }}>
+                            <p className="font-bold text-sm" style={{ color: "var(--owner)" }}>
                               {Math.round(
                                 Number(offer.price_total) / property.units_count
                               ).toLocaleString("en-US")}{" "}
@@ -939,19 +939,19 @@ export default function OwnerDashboard() {
                       <div
                         className="flex items-center gap-2 rounded-lg px-3 py-2"
                         style={{
-                          background: "#E6F4F1",
-                          border: "1px solid #A7D4CB",
+                          background: "var(--provider-soft)",
+                          border: "1px solid rgba(27,127,220,0.4)",
                         }}
                       >
-                        <Phone className="w-4 h-4 flex-shrink-0" style={{ color: "#0E7C66" }} />
+                        <Phone className="w-4 h-4 flex-shrink-0" style={{ color: "var(--provider)" }} />
                         <div>
-                          <p className="text-xs font-medium" style={{ color: "#0E7C66" }}>
+                          <p className="text-xs font-medium" style={{ color: "var(--provider)" }}>
                             {lang === "ar" ? "رقم التواصل" : "Contact Number"}
                           </p>
                           <a
                             href={`tel:${offer.providers.users.phone}`}
                             className="text-sm font-bold hover:underline"
-                            style={{ color: "#0A6355" }}
+                            style={{ color: "#7bb6f0" }}
                           >
                             {offer.providers.users.phone}
                           </a>
@@ -963,7 +963,7 @@ export default function OwnerDashboard() {
                     {offer.status === "pending" && (
                       <div
                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                        style={{ background: "#F3F4F6", color: "#6B7280", border: "1px solid #E5E7EB" }}
+                        style={{ background: "rgba(255,255,255,0.04)", color: "#9FC2D3", border: "1px solid var(--border)" }}
                       >
                         <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>
@@ -994,7 +994,7 @@ export default function OwnerDashboard() {
                             disabled={offerStatusMutation.isPending}
                             onClick={() => setAcceptingOfferId(offer.id)}
                             className="gap-1.5 text-white"
-                            style={{ background: "#2E4A6B" }}
+                            style={{ background: "var(--owner)", color: "#04222c" }}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             {lang === "ar" ? "قبول" : "Accept"}
@@ -1073,8 +1073,8 @@ function PropertyRow({ label, value }: { label: string; value?: string | null })
   if (!value) return null;
   return (
     <div className="flex items-start gap-3">
-      <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">{label}</span>
-      <span className="text-sm text-gray-800">{value}</span>
+      <span className="text-xs text-muted-foreground w-28 flex-shrink-0 pt-0.5">{label}</span>
+      <span className="text-sm text-foreground">{value}</span>
     </div>
   );
 }
@@ -1096,13 +1096,13 @@ function PropertyRowTyped({
     : lang === "ar" ? "تجاري" : "Commercial";
   return (
     <div className="flex items-start gap-3">
-      <span className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5">{label}</span>
+      <span className="text-xs text-muted-foreground w-28 flex-shrink-0 pt-0.5">{label}</span>
       <span
         className="text-xs font-medium px-2.5 py-0.5 rounded-full"
         style={
           isResidential
-            ? { background: "#FDF0F2", color: "#7D3040", border: "1px solid #C9929E" }
-            : { background: "#FDF3EF", color: "#C4694A", border: "1px solid #E8B49E" }
+            ? { background: "var(--residential-soft)", color: "#E58AA0", border: "1px solid rgba(199,91,114,0.4)" }
+            : { background: "var(--commercial-soft)", color: "#F0A87F", border: "1px solid rgba(224,138,91,0.4)" }
         }
       >
         {displayText}

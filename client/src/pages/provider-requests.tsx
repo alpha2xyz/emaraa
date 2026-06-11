@@ -163,7 +163,8 @@ export default function ProviderRequests() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-[#F9F9FF]"
+      className="page-enter min-h-screen"
+      style={{ background: "var(--navy-2)" }}
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <ProviderHeader />
@@ -171,15 +172,15 @@ export default function ProviderRequests() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* ── Incomplete profile banner ── */}
         {!isProfileComplete && (
-          <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-400 bg-orange-50/80 px-5 py-4">
-            <Lock className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-500/40 bg-orange-500/10 px-5 py-4">
+            <Lock className="h-6 w-6 text-orange-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-1">{t.teaserBanner}</h3>
+              <h3 className="font-semibold text-foreground mb-1">{t.teaserBanner}</h3>
               <Button
                 size="sm"
                 onClick={() => setLocation("/dashboard/provider/profile")}
                 className="mt-2"
-                style={{ background: "#C2410C" }}
+                style={{ background: "#EA7C1A", color: "#1a0f04" }}
               >
                 <Package className="h-4 w-4 me-2" />
                 {t.completeNow}
@@ -189,9 +190,9 @@ export default function ProviderRequests() {
         )}
 
         {/* ── Search & Filter card ── */}
-        <Card className="rounded-xl shadow-sm" style={{ borderColor: "#DDE4EE" }}>
+        <Card className="rounded-xl shadow-sm bg-card" style={{ borderColor: "var(--border)" }}>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-bold">
+            <CardTitle className="flex items-center gap-2 text-base font-bold text-foreground">
               <Filter className="h-4 w-4" />
               {t.searchAndFilter}
             </CardTitle>
@@ -199,7 +200,7 @@ export default function ProviderRequests() {
           <CardContent className="space-y-3">
             <div className="relative">
               <Search
-                className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                 style={{ [lang === "ar" ? "right" : "left"]: "0.75rem" }}
               />
               <Input
@@ -212,7 +213,7 @@ export default function ProviderRequests() {
 
             {/* Building type filter pills */}
             <div>
-              <p className="text-xs text-gray-500 mb-2 font-medium">{t.filterByType}</p>
+              <p className="text-xs text-muted-foreground mb-2 font-medium">{t.filterByType}</p>
               <div className="flex flex-wrap gap-2">
                 {(["all", "residential", "commercial"] as const).map((type) => {
                   const label =
@@ -223,10 +224,10 @@ export default function ProviderRequests() {
                         : t.commercialBadge;
                   const activeStyle =
                     type === "commercial"
-                      ? { background: "#C4694A", color: "white" }
+                      ? { background: "var(--commercial)", color: "white" }
                       : type === "residential"
-                        ? { background: "#7D3040", color: "white" }
-                        : { background: "#2E4A6B", color: "white" };
+                        ? { background: "var(--residential)", color: "white" }
+                        : { background: "var(--provider)", color: "white" };
                   return (
                     <button
                       key={type}
@@ -235,7 +236,7 @@ export default function ProviderRequests() {
                       style={
                         typeFilter === type
                           ? activeStyle
-                          : { background: "#F3F4F6", color: "#6B7280" }
+                          : { background: "rgba(255,255,255,0.06)", color: "var(--muted-foreground)" }
                       }
                     >
                       {label}
@@ -250,7 +251,7 @@ export default function ProviderRequests() {
                 <Button variant="outline" size="sm" onClick={clearFilters}>
                   {t.clearFilters}
                 </Button>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {filteredRequests?.length || 0} {t.results}
                 </span>
               </div>
@@ -267,11 +268,11 @@ export default function ProviderRequests() {
           </div>
         ) : !filteredRequests || filteredRequests.length === 0 ? (
           /* ── Empty state ── */
-          <Card className="rounded-xl" style={{ borderColor: "#DDE4EE" }}>
+          <Card className="rounded-xl bg-card" style={{ borderColor: "var(--border)" }}>
             <CardContent className="py-12">
               <div className="text-center">
-                <AlertCircle className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-xl font-semibold mb-2 text-gray-700">
+                <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-foreground">
                   {hasActiveFilters ? t.noResults : t.noRequests}
                 </h3>
                 {hasActiveFilters && (
@@ -287,16 +288,16 @@ export default function ProviderRequests() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredRequests.map((request: any) => {
               const isCommercial = request.properties?.building_type === "commercial";
-              const typeColor = isCommercial ? "#C4694A" : "#7D3040";
-              const typeBg = isCommercial ? "#FDF3EF" : "#FDF0F2";
-              const typeBorder = isCommercial ? "#EDB99F" : "#F0C5CF";
+              const typeColor = isCommercial ? "#F0A87F" : "#E58AA0";
+              const typeBg = isCommercial ? "var(--commercial-soft)" : "var(--residential-soft)";
+              const typeBorder = isCommercial ? "rgba(224,138,91,0.4)" : "rgba(199,91,114,0.4)";
               const typeLabel = isCommercial ? t.commercialBadge : t.residentialBadge;
 
               return (
                 <Card
                   key={request.id}
-                  className="rounded-xl shadow-sm opacity-90"
-                  style={{ borderColor: "#DDE4EE" }}
+                  className="rounded-xl shadow-sm opacity-90 bg-card"
+                  style={{ borderColor: "var(--border)" }}
                 >
                   <CardContent className="pt-5 pb-5 px-5">
                     <div className="space-y-4">
@@ -313,12 +314,12 @@ export default function ProviderRequests() {
                           >
                             {typeLabel}
                           </Badge>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <MapPin className="h-3 w-3 flex-shrink-0" />
                             <span>{request.properties?.city}</span>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-1">
+                        <span className="text-xs font-semibold text-orange-300 bg-orange-500/15 border border-orange-500/30 rounded-full px-2 py-1">
                           1 {t.teaserRequestsAvailable}
                         </span>
                       </div>
@@ -329,20 +330,20 @@ export default function ProviderRequests() {
                           className="h-4 w-4 flex-shrink-0"
                           style={{ color: typeColor }}
                         />
-                        <span className="font-bold text-gray-900 blur-sm">
+                        <span className="font-bold text-foreground blur-sm">
                           ████████████
                         </span>
                       </div>
 
                       {/* SOW — blurred */}
-                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 blur-sm select-none">
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 blur-sm select-none">
                         ████████ ████ ████████ ████████ ████ ██████ ████████ ████ ████████
                       </p>
 
                       {/* Lock CTA */}
                       <Button
-                        className="w-full text-white text-sm font-semibold"
-                        style={{ background: "#C2410C" }}
+                        className="w-full text-sm font-semibold"
+                        style={{ background: "#EA7C1A", color: "#1a0f04" }}
                         onClick={() => setLocation("/dashboard/provider/profile")}
                       >
                         <Lock className="h-4 w-4 me-2" />
@@ -359,17 +360,17 @@ export default function ProviderRequests() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredRequests.map((request: any) => {
               const isCommercial = request.properties?.building_type === "commercial";
-              const typeColor = isCommercial ? "#C4694A" : "#7D3040";
-              const typeBg = isCommercial ? "#FDF3EF" : "#FDF0F2";
-              const typeBorder = isCommercial ? "#EDB99F" : "#F0C5CF";
+              const typeColor = isCommercial ? "#F0A87F" : "#E58AA0";
+              const typeBg = isCommercial ? "var(--commercial-soft)" : "var(--residential-soft)";
+              const typeBorder = isCommercial ? "rgba(224,138,91,0.4)" : "rgba(199,91,114,0.4)";
               const typeLabel = isCommercial ? t.commercialBadge : t.residentialBadge;
               const hasSubmitted = submittedRequestIds.has(request.id);
 
               return (
                 <Card
                   key={request.id}
-                  className="rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                  style={{ borderColor: "#DDE4EE" }}
+                  className="rounded-xl shadow-sm hover:shadow-md transition-shadow bg-card"
+                  style={{ borderColor: "var(--border)" }}
                 >
                   <CardContent className="pt-5 pb-5 px-5">
                     <div className="space-y-4">
@@ -386,7 +387,7 @@ export default function ProviderRequests() {
                           >
                             {typeLabel}
                           </Badge>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <MapPin className="h-3 w-3 flex-shrink-0" />
                             <span>
                               {request.properties?.city}
@@ -399,7 +400,7 @@ export default function ProviderRequests() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           <span>{formatDate(request.created_at)}</span>
                         </div>
@@ -411,13 +412,13 @@ export default function ProviderRequests() {
                           className="h-4 w-4 flex-shrink-0"
                           style={{ color: typeColor }}
                         />
-                        <span className="font-bold text-gray-900">
+                        <span className="font-bold text-foreground">
                           {request.properties?.name}
                         </span>
                       </div>
 
                       {/* ── Unified SOW excerpt (same for both types) ── */}
-                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
                         {lang === "ar"
                           ? UNIFIED_SCOPE_PART1
                           : t.scopeShort}
@@ -426,10 +427,10 @@ export default function ProviderRequests() {
                       {/* ── Owner notes ── */}
                       {request.description && (
                         <div
-                          className="rounded-lg px-3 py-2.5 text-xs text-gray-600 leading-relaxed"
-                          style={{ background: "#F9F9FF", border: "1px solid #DDE4EE" }}
+                          className="rounded-lg px-3 py-2.5 text-xs text-muted-foreground leading-relaxed bg-white/5"
+                          style={{ border: "1px solid var(--border)" }}
                         >
-                          <span className="font-semibold text-gray-700 block mb-1">
+                          <span className="font-semibold text-foreground block mb-1">
                             {t.ownerNotes}
                           </span>
                           {request.description}
@@ -456,20 +457,20 @@ export default function ProviderRequests() {
                         <Button
                           className="w-full text-sm font-semibold"
                           style={{
-                            background: "#E8F5F2",
-                            color: "#0E7C66",
-                            border: "1px solid #A8D8CF",
+                            background: "var(--provider-soft)",
+                            color: "var(--provider)",
+                            border: "1px solid rgba(27,127,220,0.4)",
                           }}
                           variant="outline"
                           disabled
                         >
-                          <CheckCircle2 className="h-4 w-4 me-2" style={{ color: "#0E7C66" }} />
+                          <CheckCircle2 className="h-4 w-4 me-2" style={{ color: "var(--provider)" }} />
                           {t.offerSubmitted}
                         </Button>
                       ) : (
                         <Button
                           className="w-full text-sm font-semibold text-white"
-                          style={{ background: "#0E7C66" }}
+                          style={{ background: "var(--provider)" }}
                           onClick={() =>
                             setLocation(
                               `/dashboard/provider/requests/${request.id}/offer`

@@ -23,10 +23,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-foreground">
             حدث خطأ غير متوقع / Something went wrong
           </h1>
-          <p className="text-gray-500">يرجى تحديث الصفحة / Please refresh the page</p>
+          <p className="text-muted-foreground">يرجى تحديث الصفحة / Please refresh the page</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -105,7 +105,11 @@ function DashboardLayout({
           </button>
         </div>
       )}
-      <div className="min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
+      <div
+        className="min-h-screen bg-background"
+        dir={isRTL ? "rtl" : "ltr"}
+        style={{ ["--role" as string]: role === "provider" ? "var(--provider)" : "var(--owner)" } as React.CSSProperties}
+      >
         <Navbar />
         <main className="pb-4">{children}</main>
       </div>
@@ -119,7 +123,7 @@ function Router() {
     <React.Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-[#2E4A6B] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#0DB8D3] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

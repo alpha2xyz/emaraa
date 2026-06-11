@@ -7,10 +7,10 @@ export default function NotFound() {
   const isRTL = lang === "ar";
 
   return (
-    <div className="min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header strip */}
       <div
-        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}
         className="text-white py-6 px-4 flex items-center justify-between"
         dir="rtl"
       >
@@ -30,24 +30,24 @@ export default function NotFound() {
 
       {/* Card */}
       <div className="max-w-md mx-auto mt-8 px-4">
-        <div className="bg-white rounded-xl border border-[#DDE4EE] shadow-sm p-10 text-center">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-10 text-center">
           <SearchX
-            style={{ color: "#2E4A6B" }}
+            style={{ color: "var(--owner)" }}
             className="mx-auto mb-5"
             size={64}
             strokeWidth={1.5}
           />
-          <h1 className="text-xl font-bold mb-2" style={{ color: "#2E4A6B" }}>
+          <h1 className="text-xl font-bold mb-2" style={{ color: "var(--owner)" }}>
             الصفحة غير موجودة
           </h1>
-          <p className="text-sm text-gray-500 mb-1">
+          <p className="text-sm text-muted-foreground mb-1">
             لم نتمكن من العثور على الصفحة التي تبحث عنها
           </p>
-          <p className="text-xs text-gray-400 mb-6">Page not found</p>
+          <p className="text-xs text-muted-foreground mb-6">Page not found</p>
           <Link href="/">
             <button
-              className="text-white font-semibold px-6 py-3 rounded-xl transition-opacity hover:opacity-90"
-              style={{ background: "#2E4A6B" }}
+              className="font-semibold px-6 py-3 rounded-xl transition-opacity hover:opacity-90"
+              style={{ background: "var(--owner)", color: "#04222c" }}
             >
               العودة للرئيسية
             </button>

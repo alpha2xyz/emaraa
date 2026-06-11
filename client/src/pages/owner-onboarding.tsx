@@ -296,12 +296,13 @@ export default function OwnerOnboarding() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir="rtl">
+    <div className="page-enter min-h-screen" style={{ background: "var(--navy-2)" }} dir="rtl">
       {/* ── Branded header ── */}
       <div
         className="px-6 pt-8 pb-7 text-white"
         style={{
-          background: "linear-gradient(135deg, #2E4A6B 0%, #243A56 100%)",
+          background: "linear-gradient(135deg, #0f3a47, #193546)",
+          borderBottom: "2px solid var(--owner)",
         }}
       >
         <div className="max-w-2xl mx-auto">
@@ -325,11 +326,11 @@ export default function OwnerOnboarding() {
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
-              style={{ color: "#2E4A6B" }}
+              style={{ color: "var(--owner)" }}
             >
               <span
-                className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ width: "1.5rem", height: "1.5rem", background: "#2E4A6B", flexShrink: 0 }}
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold"
+                style={{ width: "1.5rem", height: "1.5rem", background: "var(--owner)", color: "#04222c", flexShrink: 0 }}
               >
                 1
               </span>
@@ -369,17 +370,17 @@ export default function OwnerOnboarding() {
                       className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                       style={
                         buildingType === "residential"
-                          ? { border: "2px solid #7D3040", background: "#FDF0F2" }
-                          : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
+                          ? { border: "2px solid var(--residential)", background: "var(--residential-soft)" }
+                          : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
                       }
                     >
                       <Home
                         className="w-6 h-6"
-                        style={{ color: buildingType === "residential" ? "#7D3040" : "#9CA3AF" }}
+                        style={{ color: buildingType === "residential" ? "#E58AA0" : "#9FC2D3" }}
                       />
                       <span
                         className="text-sm font-medium"
-                        style={{ color: buildingType === "residential" ? "#7D3040" : "#374151" }}
+                        style={{ color: buildingType === "residential" ? "#E58AA0" : "#9FC2D3" }}
                       >
                         سكني
                       </span>
@@ -391,17 +392,17 @@ export default function OwnerOnboarding() {
                       className="rounded-xl py-4 px-3 flex flex-col items-center gap-2 cursor-pointer transition-colors"
                       style={
                         buildingType === "commercial"
-                          ? { border: "2px solid #C4694A", background: "#FDF3EF" }
-                          : { border: "1px solid #E5E7EB", background: "#FFFFFF" }
+                          ? { border: "2px solid var(--commercial)", background: "var(--commercial-soft)" }
+                          : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
                       }
                     >
                       <Building2
                         className="w-6 h-6"
-                        style={{ color: buildingType === "commercial" ? "#C4694A" : "#9CA3AF" }}
+                        style={{ color: buildingType === "commercial" ? "#F0A87F" : "#9FC2D3" }}
                       />
                       <span
                         className="text-sm font-medium"
-                        style={{ color: buildingType === "commercial" ? "#C4694A" : "#374151" }}
+                        style={{ color: buildingType === "commercial" ? "#F0A87F" : "#9FC2D3" }}
                       >
                         تجاري
                       </span>
@@ -419,7 +420,7 @@ export default function OwnerOnboarding() {
                     readOnly
                     className="opacity-50 cursor-not-allowed"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {lang === "ar" ? "الإصدار الأول — الرياض فقط" : "V1 — Riyadh only"}
                   </p>
                 </div>
@@ -541,7 +542,7 @@ export default function OwnerOnboarding() {
                 <div className="space-y-1.5">
                   <Label htmlFor="nationalAddress" className="flex items-center gap-1.5">
                     العنوان الوطني{" "}
-                    <span className="text-gray-400 font-normal text-xs">(اختياري)</span>
+                    <span className="text-muted-foreground font-normal text-xs">(اختياري)</span>
                   </Label>
                   <Input
                     id="nationalAddress"
@@ -560,11 +561,11 @@ export default function OwnerOnboarding() {
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
-              style={{ color: "#2E4A6B" }}
+              style={{ color: "var(--owner)" }}
             >
               <span
-                className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ width: "1.5rem", height: "1.5rem", background: "#2E4A6B", flexShrink: 0 }}
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold"
+                style={{ width: "1.5rem", height: "1.5rem", background: "var(--owner)", color: "#04222c", flexShrink: 0 }}
               >
                 2
               </span>
@@ -575,15 +576,15 @@ export default function OwnerOnboarding() {
                 <div className="flex items-start gap-3 mb-3">
                   <ClipboardList
                     className="w-5 h-5 mt-0.5 flex-shrink-0"
-                    style={{ color: "#2E4A6B" }}
+                    style={{ color: "var(--owner)" }}
                   />
-                  <p className="text-sm font-medium text-gray-700">نطاق الخدمات المطلوبة</p>
+                  <p className="text-sm font-medium text-foreground">نطاق الخدمات المطلوبة</p>
                 </div>
-                <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
+                <div className="space-y-3 text-sm text-foreground leading-relaxed">
                   <p>{UNIFIED_SCOPE.part1}</p>
                   <p
                     className="text-xs leading-relaxed pt-2 border-t"
-                    style={{ color: "#5A6880", borderColor: "#DDE4EE" }}
+                    style={{ color: "#9FC2D3", borderColor: "var(--border)" }}
                   >
                     {UNIFIED_SCOPE.part2}
                   </p>
@@ -596,11 +597,11 @@ export default function OwnerOnboarding() {
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
-              style={{ color: "#2E4A6B" }}
+              style={{ color: "var(--owner)" }}
             >
               <span
-                className="inline-flex items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ width: "1.5rem", height: "1.5rem", background: "#2E4A6B", flexShrink: 0 }}
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold"
+                style={{ width: "1.5rem", height: "1.5rem", background: "var(--owner)", color: "#04222c", flexShrink: 0 }}
               >
                 3
               </span>
@@ -609,8 +610,8 @@ export default function OwnerOnboarding() {
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
-                  <FileText className="w-4 h-4 text-gray-400" />
-                  <Label htmlFor="notes" className="text-sm text-gray-600">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <Label htmlFor="notes" className="text-sm text-muted-foreground">
                     تفاصيل أو ملاحظات إضافية للمزودين
                   </Label>
                 </div>
@@ -623,7 +624,7 @@ export default function OwnerOnboarding() {
                   maxLength={500}
                   className="resize-none text-base"
                 />
-                <p className="text-xs text-gray-400 text-start">{notes.length} / 500</p>
+                <p className="text-xs text-muted-foreground text-start">{notes.length} / 500</p>
               </CardContent>
             </Card>
           </div>
@@ -632,8 +633,8 @@ export default function OwnerOnboarding() {
           <div>
             <Button
               type="submit"
-              className="w-full py-6 text-base font-semibold text-white rounded-xl shadow-md"
-              style={{ background: "#2E4A6B" }}
+              className="w-full py-6 text-base font-semibold rounded-xl shadow-md"
+              style={{ background: "var(--owner)", color: "#04222c" }}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -648,7 +649,7 @@ export default function OwnerOnboarding() {
                 </span>
               )}
             </Button>
-            <p className="text-xs text-center text-gray-400 mt-2">
+            <p className="text-xs text-center text-muted-foreground mt-2">
               ستُنشأ تلقائياً: عقار + طلب خدمة + إشعار للمزودين
             </p>
           </div>

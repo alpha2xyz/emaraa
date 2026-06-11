@@ -13,7 +13,8 @@ export function ProviderHeader() {
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #0E7C66, #0a5e4e)",
+        background: "linear-gradient(135deg, #0e3a5c, #193546)",
+        borderBottom: "1px solid var(--border)",
         position: "sticky",
         top: 56,
         zIndex: 40,
@@ -33,7 +34,7 @@ export function ProviderHeader() {
                 fontSize: "14px",
                 fontWeight: active ? 800 : 500,
                 color: active ? "#FFFFFF" : "rgba(255,255,255,0.62)",
-                borderBottom: active ? "2px solid #FFFFFF" : "2px solid transparent",
+                borderBottom: active ? "2px solid var(--provider)" : "2px solid transparent",
                 textDecoration: "none",
                 transition: "color 0.15s, border-color 0.15s",
               }}

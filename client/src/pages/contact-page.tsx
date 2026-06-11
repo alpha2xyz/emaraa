@@ -62,10 +62,10 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="page-enter min-h-screen bg-[#F9F9FF]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header strip */}
       <div
-        style={{ background: "linear-gradient(135deg, #2E4A6B, #243A56)" }}
+        style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}
         className="text-white py-6 px-4 flex items-center justify-between"
         dir="rtl"
       >
@@ -89,25 +89,25 @@ export default function ContactPage() {
       <div className="p-4 sm:p-6">
       <div className="max-w-2xl mx-auto">
         <Link href="/">
-          <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#2E4A6B] mb-6 transition-colors">
+          <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[#0DB8D3] mb-6 transition-colors">
             {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t.back}
           </button>
         </Link>
-        <p className="text-gray-600 mb-8">{t.subtitle}</p>
+        <p className="text-muted-foreground mb-8">{t.subtitle}</p>
         <div className="space-y-4">
           {contacts.map(({ icon: Icon, label, value, href, external }) => (
             <Card key={label} className="hover:shadow-md transition-shadow">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#EEF2F7] rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-6 h-6 text-[#2E4A6B]" />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "var(--owner-soft)" }}>
+                  <Icon className="w-6 h-6" style={{ color: "var(--owner)" }} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{label}</p>
+                  <p className="text-sm text-muted-foreground">{label}</p>
                   <a
                     href={href}
                     {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="font-semibold text-gray-900 hover:text-[#2E4A6B] transition-colors"
+                    className="font-semibold text-foreground hover:text-[#0DB8D3] transition-colors"
                   >
                     {value}
                   </a>

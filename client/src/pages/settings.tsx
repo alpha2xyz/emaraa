@@ -130,19 +130,20 @@ export default function Settings() {
 
   const headerGradient =
     userRole === "provider"
-      ? "linear-gradient(135deg, #0E7C66, #0a5e4e)"
-      : "linear-gradient(135deg, #2E4A6B, #243A56)";
+      ? "linear-gradient(135deg, #0e3a5c, #193546)"
+      : "linear-gradient(135deg, #0f3a47, #193546)";
 
-  const brandColor = userRole === "provider" ? "#0E7C66" : "#2E4A6B";
+  const brandColor = userRole === "provider" ? "var(--provider)" : "var(--owner)";
 
   return (
     <div
-      className="page-enter min-h-screen bg-[#F9F9FF]"
+      className="page-enter min-h-screen"
+      style={{ background: "var(--navy-2)" }}
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Role-aware gradient header strip */}
       <div
-        style={{ background: headerGradient }}
+        style={{ background: headerGradient, borderBottom: `2px solid ${brandColor}` }}
         className="py-5 px-4 flex items-center gap-3"
       >
         <button
@@ -159,7 +160,7 @@ export default function Settings() {
 
       <div className="p-4 sm:p-6">
       <div className="mb-8">
-        <p className="text-gray-600">{t.subtitle}</p>
+        <p className="text-muted-foreground">{t.subtitle}</p>
       </div>
 
       <Card className="max-w-2xl">
@@ -186,7 +187,10 @@ export default function Settings() {
               />
             )}
             {nameError && (
-              <div className="border border-red-300 bg-red-50 text-red-700 text-sm rounded-md px-3 py-2">
+              <div
+                className="text-sm rounded-md px-3 py-2"
+                style={{ background: "var(--err-soft)", color: "var(--err)", border: "1px solid rgba(248,113,113,0.4)" }}
+              >
                 {nameError}
               </div>
             )}
@@ -197,7 +201,7 @@ export default function Settings() {
             {isLoading ? (
               <Skeleton className="h-10 w-full rounded-xl" />
             ) : (
-              <Input id="phone" value={profileData.phone} disabled className="bg-gray-100" />
+              <Input id="phone" value={profileData.phone} disabled className="bg-white/5" />
             )}
           </div>
 
@@ -251,8 +255,7 @@ export default function Settings() {
                 setNameError("");
                 mutation.mutate();
               }}
-              className="text-white"
-              style={{ background: brandColor }}
+              style={{ background: brandColor, color: userRole === "provider" ? "#FFFFFF" : "#04222c" }}
               disabled={mutation.isPending || isLoading}
             >
               {mutation.isPending ? (
