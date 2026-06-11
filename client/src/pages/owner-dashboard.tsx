@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   XCircle,
   ExternalLink,
+  Home,
+  Inbox,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -172,7 +174,6 @@ export default function OwnerDashboard() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  const userName = localStorage.getItem("userName") || "";
   const isRTL = lang === "ar";
 
   // Property edit state
@@ -440,55 +441,6 @@ export default function OwnerDashboard() {
   return (
     <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
 
-      {/* ── Navy gradient header strip ── */}
-      <div
-        className="w-full py-5 px-4"
-        style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}
-      >
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-          {/* Right side (first child in RTL): wordmark + sub-label */}
-          <div>
-            <p className="font-bold text-lg text-white leading-tight">عِمارة</p>
-            <p className="text-sm text-white" style={{ opacity: 0.75 }}>لوحة المالك</p>
-          </div>
-
-          {/* Left side (second child in RTL): greeting + chips */}
-          <div className="flex flex-col items-end gap-1.5">
-            <p className="text-base font-semibold text-white leading-tight">
-              {lang === "ar"
-                ? `أهلاً${userName ? `، ${userName}` : ""}`
-                : `Hello${userName ? `, ${userName}` : ""}`}
-            </p>
-            {property && (
-              <div className="flex flex-wrap gap-1.5 justify-end">
-                {property.building_type && (
-                  <span
-                    className="inline-flex items-center text-xs rounded-full px-2 py-0.5 font-medium"
-                    style={
-                      property.building_type === "residential"
-                        ? { background: "var(--residential-soft)", color: "#E58AA0" }
-                        : { background: "var(--commercial-soft)", color: "#F0A87F" }
-                    }
-                  >
-                    {property.building_type === "residential"
-                      ? lang === "ar" ? "سكني" : "Residential"
-                      : lang === "ar" ? "تجاري" : "Commercial"}
-                  </span>
-                )}
-                {property.city && (
-                  <span
-                    className="inline-flex items-center text-xs rounded-full px-2 py-0.5 text-white"
-                    style={{ background: "rgba(255,255,255,0.10)" }}
-                  >
-                    {property.city}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
         {/* ══════════════════════════════════════════════════
@@ -612,7 +564,10 @@ export default function OwnerDashboard() {
                             : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
                         }
                       >
-                        <span className="text-2xl">🏠</span>
+                        <Home
+                          className="w-6 h-6"
+                          style={{ color: editBuildingType === "residential" ? "#E58AA0" : "#9FC2D3" }}
+                        />
                         <span
                           className="text-sm font-medium"
                           style={{ color: editBuildingType === "residential" ? "#E58AA0" : "#9FC2D3" }}
@@ -631,7 +586,10 @@ export default function OwnerDashboard() {
                             : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
                         }
                       >
-                        <span className="text-2xl">🏢</span>
+                        <Building2
+                          className="w-6 h-6"
+                          style={{ color: editBuildingType === "commercial" ? "#F0A87F" : "#9FC2D3" }}
+                        />
                         <span
                           className="text-sm font-medium"
                           style={{ color: editBuildingType === "commercial" ? "#F0A87F" : "#9FC2D3" }}
@@ -861,7 +819,7 @@ export default function OwnerDashboard() {
           ) : offersList.length === 0 ? (
             <Card className="rounded-xl shadow-sm border border-border">
               <CardContent className="pt-8 pb-8 text-center">
-                <div className="text-3xl mb-3">📭</div>
+                <Inbox className="w-9 h-9 mx-auto mb-3" style={{ color: "var(--muted-foreground)" }} />
                 <p className="text-sm font-semibold text-foreground mb-1">
                   {lang === "ar" ? "لم يصلك أي عرض بعد" : "No offers yet"}
                 </p>

@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useLang } from "@/hooks/use-lang";
 import { queryClient } from "@/lib/queryClient";
 import { logoutUser } from "@/lib/auth";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Globe } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function Navbar() {
@@ -63,7 +63,7 @@ export function Navbar() {
                 onClick={() => setLang(lang === "ar" ? "en" : "ar")}
                 className="text-sm px-2 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-2 w-full transition-colors text-foreground"
               >
-                <span className="text-base">🌐</span>
+                <Globe className="w-4 h-4" />
                 <span>{lang === "ar" ? "English" : "العربية"}</span>
               </button>
 
