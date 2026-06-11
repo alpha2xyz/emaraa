@@ -167,17 +167,17 @@ export default function LandingPage() {
 
   const content = {
     ar: {
-      siteName: "عِمارة",
+      siteName: "عِمــارة",
       login: "تسجيل الدخول",
       chip: "منصة سعودية · سكني وتجاري",
-      heroTitle: "عِمارة،",
+      heroTitle: "عِمــارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
         "منصة تربط ملاك العقارات السكنية والتجارية بمقدمي خدمات النظافة وإدارة المرافق الموثوقين. انشر احتياجاتك، واستلم عروضاً من مزوّدين موثوقين، وتعاقد مع الأفضل.",
       getStarted: "ابدأ مجاناً",
       learnMore: "اعرف المزيد",
-      whoTitle: "من يستفيد من عِمارة؟",
-      whoSubtitle: "سواء كنت مالك مبنى سكني أو تجاري، عِمارة تُيسّر عليك إدارة مرافقك",
+      whoTitle: "من يستفيد من عِمــارة؟",
+      whoSubtitle: "سواء كنت مالك مبنى سكني أو تجاري، عِمــارة تُيسّر عليك إدارة مرافقك",
       residentialTitle: "المباني السكنية",
       residentialItems: [
         "أبراج سكنية ومجمعات",
@@ -226,8 +226,8 @@ export default function LandingPage() {
         selectBtn: "اختيار",
       },
       providerCTATitle: "هل أنت شركة إدارة مرافق؟",
-      providerCTADesc: "انضم إلى عِمارة للعثور على عملاء جدد، والتقديم على المشاريع، وتنمية عملك.",
-      joinProvider: "كن شريكاً في عِمارة",
+      providerCTADesc: "انضم إلى عِمــارة للعثور على عملاء جدد، والتقديم على المشاريع، وتنمية عملك.",
+      joinProvider: "كن شريكاً في عِمــارة",
       providerLogin: "تسجيل دخول مزود",
       faqTitle: "أسئلة شائعة",
       faqSubtitle: "كل ما تحتاج معرفته قبل البدء",
@@ -244,12 +244,12 @@ export default function LandingPage() {
       whatsappLabel: "تواصل معنا عبر واتساب",
       quickLinks: "روابط سريعة",
       contactUs: "اتصل بنا",
-      aboutUs: "عن عِمارة",
+      aboutUs: "عن عِمــارة",
       viewDemo: "دليل المنصة",
       termsOfUse: "شروط الاستخدام",
       privacyPolicy: "سياسة الخصوصية",
       footerTagline: "عمارتك، مُدارة بشكل مثالي",
-      footerCopyright: "© 2026 عِمارة. جميع الحقوق محفوظة.",
+      footerCopyright: "© 2026 عِمــارة. جميع الحقوق محفوظة.",
     },
     en: {
       siteName: "EMARAA",
