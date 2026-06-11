@@ -134,6 +134,7 @@ export default function OwnerOnboarding() {
   const [neighborhood, setNeighborhood] = useState("");
   const [unitsCount, setUnitsCount] = useState("");
   const [customUnits, setCustomUnits] = useState("");
+  const [areaSqm, setAreaSqm] = useState("");
   const [mapUrl, setMapUrl] = useState("");
   const [nationalAddress, setNationalAddress] = useState("");
   const [notes, setNotes] = useState("");
@@ -147,11 +148,22 @@ export default function OwnerOnboarding() {
   const isMapUrlValid = mapUrl.trim() === "" || isValidMapUrl(mapUrl.trim());
   const isPropertyNameValid = propertyName.trim().length > 0;
   const isNeighborhoodValid = neighborhood !== "";
+  // Commercial properties are measured in m²; residential in units
   const isUnitsValid =
-    unitsCount !== "" && (unitsCount !== "other" || customUnits.trim().length > 0);
+    buildingType === "commercial"
+      ? areaSqm.trim() !== "" && parseInt(areaSqm.trim(), 10) > 0
+      : unitsCount !== "" && (unitsCount !== "other" || customUnits.trim().length > 0);
   const isMapUrlPresent = mapUrl.trim().length > 0;
+  // Saudi short national address: 4 letters + 4 digits (e.g. RUYF1234) — optional
+  const isNationalAddressValid =
+    nationalAddress.trim() === "" || /^[A-Z]{4}\d{4}$/.test(nationalAddress.trim());
   const isFormValid =
-    isPropertyNameValid && isNeighborhoodValid && isUnitsValid && isMapUrlPresent && isMapUrlValid;
+    isPropertyNameValid &&
+    isNeighborhoodValid &&
+    isUnitsValid &&
+    isMapUrlPresent &&
+    isMapUrlValid &&
+    isNationalAddressValid;
 
   // ---------------------------------------------------------------------------
   // Submit handler
@@ -176,7 +188,11 @@ export default function OwnerOnboarding() {
     let propertyData: PropertyResponse;
     try {
       const unitsValue =
-        unitsCount === "other" ? parseInt(customUnits.trim(), 10) : parseInt(unitsCount, 10);
+        buildingType === "commercial"
+          ? parseInt(areaSqm.trim(), 10)
+          : unitsCount === "other"
+            ? parseInt(customUnits.trim(), 10)
+            : parseInt(unitsCount, 10);
 
       const propertyRes = await fetch("/api/properties", {
         method: "POST",
@@ -452,61 +468,84 @@ export default function OwnerOnboarding() {
                   )}
                 </div>
 
-                {/* Units count */}
-                <div className="space-y-1.5">
-                  <Label>عدد الوحدات *</Label>
-                  <Select
-                    value={unitsCount}
-                    onValueChange={(v) => {
-                      setUnitsCount(v);
-                      if (v !== "other") setCustomUnits("");
-                    }}
-                  >
-                    <SelectTrigger
-                      className={`w-full h-10 text-sm${
-                        showValidation && unitsCount === "" ? " border-red-500 ring-red-400" : ""
-                      }`}
-                    >
-                      <SelectValue placeholder="اختر عدد الوحدات..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {UNIT_OPTIONS.map((n) => (
-                        <SelectItem key={n} value={String(n)}>
-                          {n} وحدة
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="other">أخرى / Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div
-                    className="overflow-hidden transition-all duration-200"
-                    style={{
-                      maxHeight: unitsCount === "other" ? "80px" : "0",
-                      opacity: unitsCount === "other" ? 1 : 0,
-                    }}
-                  >
+                {/* Units count (residential) / Area in m² (commercial) */}
+                {buildingType === "commercial" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="areaSqm">المساحة (م²) *</Label>
                     <Input
+                      id="areaSqm"
                       type="number"
                       min="1"
-                      placeholder="أدخل عدد الوحدات"
-                      value={customUnits}
-                      onChange={(e) => setCustomUnits(e.target.value)}
-                      className={`mt-2 ${
-                        showValidation && unitsCount === "other" && customUnits.trim() === ""
-                          ? "border-red-500"
-                          : ""
-                      }`}
+                      placeholder="أدخل مساحة العقار بالمتر المربع"
+                      value={areaSqm}
+                      onChange={(e) => setAreaSqm(e.target.value)}
+                      className={
+                        showValidation && !isUnitsValid ? "border-red-500 ring-red-400" : ""
+                      }
                     />
+                    {showValidation && !isUnitsValid && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        يرجى إدخال المساحة بالمتر المربع
+                      </p>
+                    )}
                   </div>
-                  {showValidation && !isUnitsValid && (
-                    <p className="text-red-500 text-xs flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {unitsCount === "other"
-                        ? "يرجى إدخال عدد الوحدات"
-                        : "يرجى اختيار عدد الوحدات"}
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>عدد الوحدات *</Label>
+                    <Select
+                      value={unitsCount}
+                      onValueChange={(v) => {
+                        setUnitsCount(v);
+                        if (v !== "other") setCustomUnits("");
+                      }}
+                    >
+                      <SelectTrigger
+                        className={`w-full h-10 text-sm${
+                          showValidation && unitsCount === "" ? " border-red-500 ring-red-400" : ""
+                        }`}
+                      >
+                        <SelectValue placeholder="اختر عدد الوحدات..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {UNIT_OPTIONS.map((n) => (
+                          <SelectItem key={n} value={String(n)}>
+                            {n} وحدة
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="other">أخرى / Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div
+                      className="overflow-hidden transition-all duration-200"
+                      style={{
+                        maxHeight: unitsCount === "other" ? "80px" : "0",
+                        opacity: unitsCount === "other" ? 1 : 0,
+                      }}
+                    >
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="أدخل عدد الوحدات"
+                        value={customUnits}
+                        onChange={(e) => setCustomUnits(e.target.value)}
+                        className={`mt-2 ${
+                          showValidation && unitsCount === "other" && customUnits.trim() === ""
+                            ? "border-red-500"
+                            : ""
+                        }`}
+                      />
+                    </div>
+                    {showValidation && !isUnitsValid && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        {unitsCount === "other"
+                          ? "يرجى إدخال عدد الوحدات"
+                          : "يرجى اختيار عدد الوحدات"}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Google Maps URL */}
                 <div className="space-y-1.5">
@@ -547,11 +586,26 @@ export default function OwnerOnboarding() {
                   <Input
                     id="nationalAddress"
                     type="text"
-                    placeholder="مثال: RTHA1234"
+                    placeholder="مثال: RUYF1234"
                     value={nationalAddress}
-                    onChange={(e) => setNationalAddress(e.target.value)}
-                    className="border-dashed"
+                    maxLength={8}
+                    onChange={(e) =>
+                      setNationalAddress(
+                        e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+                      )
+                    }
+                    className={`border-dashed${
+                      nationalAddress.trim() !== "" && !isNationalAddressValid
+                        ? " border-red-500"
+                        : ""
+                    }`}
                   />
+                  {nationalAddress.trim() !== "" && !isNationalAddressValid && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام — مثال: RUYF1234
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

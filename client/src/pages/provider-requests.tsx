@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ExternalLink,
   Lock,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,9 @@ export default function ProviderRequests() {
       completeNow: "إكمال الآن",
       filterByType: "النوع",
       teaserBanner: "أكمل ملفك الشخصي للاطلاع على تفاصيل الطلبات وتقديم عروضك",
+      pendingBanner: "ملفك قيد المراجعة — ستتمكن من الاطلاع على تفاصيل الطلبات وتقديم عروضك بعد موافقة الإدارة",
+      pendingBtn: "بانتظار موافقة الإدارة",
+      sqm: "م²",
       teaserRequestsAvailable: "طلبات متاحة",
       scopeShort:
         "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
@@ -84,6 +88,9 @@ export default function ProviderRequests() {
       completeNow: "Complete Now",
       filterByType: "Type",
       teaserBanner: "Complete your profile to view request details and submit offers",
+      pendingBanner: "Your profile is under review — you'll see request details and submit offers once the admin approves you",
+      pendingBtn: "Awaiting admin approval",
+      sqm: "m²",
       teaserRequestsAvailable: "requests available",
       scopeShort:
         "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
@@ -189,6 +196,16 @@ export default function ProviderRequests() {
           </div>
         )}
 
+        {/* ── Awaiting admin approval banner ── */}
+        {isProfileComplete && !isApproved && (
+          <div className="flex items-start gap-4 rounded-xl border-s-4 border-orange-500/40 bg-orange-500/10 px-5 py-4">
+            <Clock className="h-6 w-6 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground">{t.pendingBanner}</h3>
+            </div>
+          </div>
+        )}
+
         {/* ── Search & Filter card ── */}
         <Card className="rounded-xl shadow-sm bg-card" style={{ borderColor: "var(--border)" }}>
           <CardHeader className="pb-3">
@@ -283,8 +300,8 @@ export default function ProviderRequests() {
               </div>
             </CardContent>
           </Card>
-        ) : !isProfileComplete ? (
-          /* ── Teaser / blurred cards (incomplete profile) ── */
+        ) : !isProfileComplete || !isApproved ? (
+          /* ── Teaser / blurred cards (incomplete profile OR not yet approved) ── */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredRequests.map((request: any) => {
               const isCommercial = request.properties?.building_type === "commercial";
@@ -340,15 +357,31 @@ export default function ProviderRequests() {
                         ████████ ████ ████████ ████████ ████ ██████ ████████ ████ ████████
                       </p>
 
-                      {/* Lock CTA */}
-                      <Button
-                        className="w-full text-sm font-semibold"
-                        style={{ background: "#EA7C1A", color: "#1a0f04" }}
-                        onClick={() => setLocation("/dashboard/provider/profile")}
-                      >
-                        <Lock className="h-4 w-4 me-2" />
-                        {t.completeNow}
-                      </Button>
+                      {/* Lock CTA — complete profile, or wait for admin approval */}
+                      {!isProfileComplete ? (
+                        <Button
+                          className="w-full text-sm font-semibold"
+                          style={{ background: "#EA7C1A", color: "#1a0f04" }}
+                          onClick={() => setLocation("/dashboard/provider/profile")}
+                        >
+                          <Lock className="h-4 w-4 me-2" />
+                          {t.completeNow}
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full text-sm font-semibold"
+                          variant="outline"
+                          disabled
+                          style={{
+                            background: "rgba(234,124,26,0.12)",
+                            color: "#EA7C1A",
+                            border: "1px solid rgba(234,124,26,0.4)",
+                          }}
+                        >
+                          <Clock className="h-4 w-4 me-2" />
+                          {t.pendingBtn}
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -395,7 +428,7 @@ export default function ProviderRequests() {
                                 ? ` · ${request.properties.address}`
                                 : ""}
                               {request.properties?.units_count
-                                ? ` · ${request.properties.units_count} ${t.units}`
+                                ? ` · ${request.properties.units_count} ${isCommercial ? t.sqm : t.units}`
                                 : ""}
                             </span>
                           </div>

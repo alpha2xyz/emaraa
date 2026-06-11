@@ -420,11 +420,25 @@ export default function ProviderOfferForm() {
                 </div>
               )}
 
-              {/* Issue 2: units_count */}
+              {/* Issue 2: units_count — commercial properties are measured in m² */}
               {request.properties?.units_count && (
                 <div>
-                  <p className="text-sm text-muted-foreground">{t.units}:</p>
-                  <p className="font-medium">{request.properties.units_count}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {request.properties?.building_type === "commercial"
+                      ? lang === "ar"
+                        ? "المساحة (م²)"
+                        : "Area (m²)"
+                      : t.units}
+                    :
+                  </p>
+                  <p className="font-medium">
+                    {request.properties.units_count}
+                    {request.properties?.building_type === "commercial"
+                      ? lang === "ar"
+                        ? " م²"
+                        : " m²"
+                      : ""}
+                  </p>
                 </div>
               )}
 

@@ -450,6 +450,11 @@ export default function AdminDashboard() {
                               <p className="text-sm text-muted-foreground">
                                 {p.name} · {p.phone}
                               </p>
+                              {profile?.email && (
+                                <p className="text-sm text-muted-foreground" dir="ltr">
+                                  {profile.email}
+                                </p>
+                              )}
                               {profile?.description && (
                                 <p className="text-sm text-muted-foreground mt-1">{profile.description}</p>
                               )}
@@ -611,7 +616,17 @@ export default function AdminDashboard() {
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {p.city} · {p.building_type}{" "}
-                          {p.units_count ? `· ${p.units_count} ${isRTL ? "وحدة" : "units"}` : ""}
+                          {p.units_count
+                            ? `· ${p.units_count} ${
+                                p.building_type === "commercial"
+                                  ? isRTL
+                                    ? "م²"
+                                    : "m²"
+                                  : isRTL
+                                    ? "وحدة"
+                                    : "units"
+                              }`
+                            : ""}
                         </p>
                         {p.address && (
                           <p className="text-sm text-muted-foreground">
@@ -624,6 +639,18 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted-foreground">
                           {t.owner}: {(p.users as any)?.name} · {(p.users as any)?.phone}
                         </p>
+                        {p.map_url && (
+                          <a
+                            href={p.map_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs inline-flex items-center gap-1 hover:underline"
+                            style={{ color: "var(--owner)" }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            {isRTL ? "فتح الخريطة" : "Open map"}
+                          </a>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -675,6 +702,9 @@ export default function AdminDashboard() {
                                 <p className="text-sm text-muted-foreground">
                                   {(r.properties as any)?.city} · {t.owner}:{" "}
                                   {(r.properties as any)?.users?.name}
+                                  {(r.properties as any)?.users?.phone
+                                    ? ` · ${(r.properties as any).users.phone}`
+                                    : ""}
                                 </p>
                                 {r.description && (
                                   <p className="text-xs text-muted-foreground">{r.description}</p>
