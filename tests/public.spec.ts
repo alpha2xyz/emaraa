@@ -12,8 +12,9 @@ import { test, expect } from "@playwright/test";
 test.describe("Landing Page", () => {
   test("loads and shows the brand name", async ({ page }) => {
     await page.goto("/");
-    // Arabic brand name — default language is ar
-    await expect(page.locator("text=عِمارة").first()).toBeVisible();
+    // Arabic brand name (elongated wordmark عِمــارة) — default language is ar.
+    // This is the primary "the app actually rendered" signal: a blank page fails here.
+    await expect(page.locator("text=عِمــارة").first()).toBeVisible();
   });
 
   test("shows hero headline", async ({ page }) => {
@@ -29,18 +30,20 @@ test.describe("Landing Page", () => {
 
   test("shows the provider CTA section", async ({ page }) => {
     await page.goto("/");
-    // Provider CTA heading
-    await expect(page.locator("text=هل أنت مزود خدمة؟")).toBeVisible();
+    // Provider CTA heading (current copy)
+    await expect(page.locator("text=هل أنت شركة إدارة مرافق؟")).toBeVisible();
   });
 
   test("footer shows copyright", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("text=2026 عِمارة")).toBeVisible();
+    // Stable legal text — survives brand-wordmark tweaks
+    await expect(page.locator("text=جميع الحقوق محفوظة").first()).toBeVisible();
   });
 
   test("footer Quick Links navigates to /contact", async ({ page }) => {
     await page.goto("/");
-    const link = page.locator("footer a", { hasText: "اتصل بنا" });
+    // Target the stable href, not volatile link copy
+    const link = page.locator("footer a[href='/contact']").first();
     await expect(link).toBeVisible();
     await link.click();
     await expect(page).toHaveURL(/\/contact/);
@@ -48,7 +51,7 @@ test.describe("Landing Page", () => {
 
   test("footer Quick Links navigates to /about", async ({ page }) => {
     await page.goto("/");
-    const link = page.locator("footer a", { hasText: "عن عِمارة" });
+    const link = page.locator("footer a[href='/about']").first();
     await expect(link).toBeVisible();
     await link.click();
     await expect(page).toHaveURL(/\/about/);

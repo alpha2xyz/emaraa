@@ -8,6 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
     "db:push": "drizzle-kit push",
     "test": "playwright test",
     "test:local": "PLAYWRIGHT_BASE_URL=http://localhost:5000 playwright test",

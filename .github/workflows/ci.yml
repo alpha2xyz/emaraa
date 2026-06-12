@@ -1,8 +1,10 @@
 name: CI
 
 # Runs on pull requests and pushes to main. Acts as the deploy gate:
-# a broken type check or failing public E2E spec blocks the merge before
-# Vercel auto-deploys from main.
+# a broken type check, lint error, or a build that doesn't actually RENDER
+# blocks the merge. The render job builds the production bundle and loads it
+# in a real (Linux) browser — this is what catches a blank-page regression
+# that "builds fine" and returns 200 but never mounts the app.
 on:
   pull_request:
   push:
@@ -24,8 +26,8 @@ jobs:
       - name: Lint
         run: npx eslint .
 
-  e2e-public:
-    name: Playwright (public pages)
+  render:
+    name: Production build renders (no blank page)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,11 +38,23 @@ jobs:
       - run: npm ci
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-      # Only the public spec runs in CI. The dashboard suites
-      # (auth/owner/provider/admin) need manually-provisioned auth state
-      # (tests/.auth, git-ignored) and a live Supabase, so they are excluded.
-      - name: Run public E2E against production
+      - name: Build the production bundle
+        env:
+          # Dummy client values so the SPA initialises and renders the public
+          # pages without a real backend. The render check never calls Supabase.
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-render-check
+        run: npm run build
+      - name: Serve the built bundle and assert it renders
         env:
           CI: "true"
-          PLAYWRIGHT_BASE_URL: https://emaraa.app
-        run: npx playwright test tests/public.spec.ts
+          # 127.0.0.1 (not "localhost") so Playwright does NOT auto-start the dev
+          # server — we test the real built output served by `npm run preview`.
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+        run: |
+          npm run preview &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4173 >/dev/null && break
+            sleep 1
+          done
+          npx playwright test tests/public.spec.ts
