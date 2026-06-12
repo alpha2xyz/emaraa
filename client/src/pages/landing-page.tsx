@@ -197,6 +197,8 @@ export default function LandingPage() {
       howItWorksDesc: "العثور على مزود الخدمة المناسب لم يكن أسهل من أي وقت مضى. ابدأ في دقائق.",
       step1Title: "أضف عقارك",
       step1Desc: "أضف تفاصيل عِمارتك (سكني أو تجاري) والخدمات التي تحتاجها",
+      step1Reassurance: "أسهل من أي وقت مضى، ابدأ وفي دقائق ستجد مزود الخدمة المناسب لك",
+      howItWorksCtaNudge: "العثور على مزود الخدمة المناسب أصبح أسهل من أي وقت، ابدأ الآن",
       step2Title: "احصل على عروض",
       step2Desc: "مقدمو الخدمات المؤهلون يقدمون عروضهم على طلباتك",
       step3Title: "قارن واختر",
@@ -226,14 +228,14 @@ export default function LandingPage() {
         selectBtn: "اختيار",
       },
       providerCTATitle: "هل أنت شركة إدارة مرافق؟",
-      providerCTADesc: "انضم إلى عِمــارة للعثور على عملاء جدد، والتقديم على المشاريع، وتنمية عملك.",
+      providerCTADesc: "انضم إلى عِمــارة للعثور على عملاء جدد، والتقديم على المشاريع، التي تساعد على تنمية عملك.",
       joinProvider: "كن شريكاً في عِمــارة",
       providerLogin: "تسجيل دخول مزود",
       faqTitle: "أسئلة شائعة",
       faqSubtitle: "كل ما تحتاج معرفته قبل البدء",
       faqs: [
-        { q: "كيف تتحققون من مقدمي الخدمة؟", a: "كل مزوّد يجب أن يكون مرخّصاً من الهيئة العامة للعقار ولديه سجل تجاري ساري، ويمرّ بمراجعة واعتماد من فريقنا قبل أن يقدّم أي عرض." },
-        { q: "أي مناطق تغطّيها المنصة حالياً؟", a: "نبدأ بمدينة الرياض في الإصدار الأول، ونتوسّع تدريجياً إلى مدن أخرى." },
+        { q: "كيف تتحققون من مقدمي الخدمة؟", a: "كل عرض يصلك يأتي من مزوّد مرخّص من الهيئة العامة للعقار ولديه سجل تجاري ساري، راجعه واعتمده فريقنا قبل أن يصل إليك. أنت تستلم عروضاً من جهات موثوقة فقط." },
+        { q: "أي مناطق تغطّيها المنصة حالياً؟", a: "نبدأ بمدينة الرياض في المرحلة الأولى، ونتوسّع تدريجياً إلى مدن أخرى." },
         { q: "كم يستغرق استلام العروض؟", a: "بمجرد نشر طلبك يصل إشعار فوري للمزوّدين المعتمدين، وتبدأ العروض بالوصول عادةً خلال وقت قصير." },
         { q: "هل بياناتي ورقمي خاصة؟", a: "نعم. لا يظهر رقمك لأي مزوّد إلا بعد قبولك لعرضه، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
         { q: "ماذا لو وصلتني عدة عروض؟", a: "تقارن العروض جنباً إلى جنب — السعر الإجمالي والسعر لكل وحدة وملاحظات كل مزوّد — وتختار الأنسب لك. القرار بيدك." },
@@ -284,6 +286,8 @@ export default function LandingPage() {
         "Finding the right service provider has never been easier. Get started in minutes.",
       step1Title: "List Your Property",
       step1Desc: "Add your building details (residential or commercial) and the services you need",
+      step1Reassurance: "Easier than ever — start now and find the right service provider in minutes.",
+      howItWorksCtaNudge: "Finding the right provider is easier than ever — start now.",
       step2Title: "Get Matched",
       step2Desc: "Qualified service providers bid on your requests",
       step3Title: "Compare & Choose",
@@ -313,13 +317,13 @@ export default function LandingPage() {
         selectBtn: "Select",
       },
       providerCTATitle: "Are You a Facility Management Company?",
-      providerCTADesc: "Join EMARAA to find new clients, apply for projects, and grow your business.",
+      providerCTADesc: "Join EMARAA to find new clients and apply for projects that help grow your business.",
       joinProvider: "Become a Partner",
       providerLogin: "Provider Login",
       faqTitle: "Frequently Asked Questions",
       faqSubtitle: "Everything you need to know before you start",
       faqs: [
-        { q: "How do you verify service providers?", a: "Every provider must hold a valid REGA license and an active commercial registration, and is reviewed and approved by our team before submitting any offer." },
+        { q: "How do you verify service providers?", a: "Every offer you receive comes from a provider who holds a valid REGA license and an active commercial registration, reviewed and approved by our team before it reaches you. You only get offers from trusted, vetted companies." },
         { q: "Which areas do you currently cover?", a: "We're launching in Riyadh first, and expanding to other cities gradually." },
         { q: "How long until I receive offers?", a: "As soon as you post your request, approved providers get an instant notification, and offers usually start arriving shortly after." },
         { q: "Are my data and phone number private?", a: "Yes. Your number is never shown to a provider until you accept their offer, and the full proposal file only opens after you accept." },
@@ -438,7 +442,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#F0A87F" }} />
-              <span>{lang === "ar" ? "الرياض — الإصدار الأول" : "Riyadh — V1"}</span>
+              <span>{lang === "ar" ? "الرياض — المرحلة الأولى" : "Riyadh — Phase One"}</span>
             </div>
           </div>
         </div>
@@ -527,6 +531,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="mb-2 text-xl font-extrabold text-foreground">{t.step1Title}</h3>
                 <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step1Desc}</p>
+                <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step1Reassurance}</p>
               </div>
               <BrowserFrame url={t.screens.urlForm}>
                 <div className="rounded-xl border border-border p-4" style={{ background: "var(--card)" }}>
@@ -656,8 +661,11 @@ export default function LandingPage() {
         <div className="relative container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
             <h2 className="mb-3 text-2xl md:text-3xl font-extrabold text-white">{t.ctaTitle}</h2>
-            <p className="mx-auto mb-8 max-w-lg text-base" style={{ color: "rgba(255,255,255,0.82)" }}>
+            <p className="mx-auto mb-4 max-w-lg text-base" style={{ color: "rgba(255,255,255,0.82)" }}>
               {t.ctaDesc}
+            </p>
+            <p className="mx-auto mb-8 max-w-lg text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+              {t.howItWorksCtaNudge}
             </p>
             <Link href="/auth?role=owner">
               <Button
