@@ -13,7 +13,15 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
-app.use(helmet());
+// Full Helmet (incl. CSP) in production. In local dev, disable only the CSP —
+// Vite injects an inline preamble script for fast-refresh that a strict
+// script-src would block, crashing the SPA before it renders. Dev-only; the
+// deployed site runs api/index.ts and gets its headers from vercel.json.
+app.use(
+  helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
+  })
+);
 app.disable("x-powered-by"); // don't reveal Express
 
 const allowedOrigins = process.env.FRONTEND_URL
