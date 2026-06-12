@@ -51,6 +51,7 @@ export default function ProviderOfferForm() {
       priceTotal: "السعر الإجمالي السنوي (ريال سعودي)",
       priceTotalPlaceholder: "مثال: 48000",
       priceTotalHint: "سيتم احتساب السعر لكل وحدة تلقائياً وعرضه للمالك",
+      priceTotalHintSqm: "سيتم احتساب السعر لكل م² تلقائياً وعرضه للمالك",
       notes: "ملاحظات إضافية (اختياري)",
       notesPlaceholder: "أضف أي ملاحظات أو تفاصيل إضافية...",
       submit: "إرسال العرض",
@@ -91,6 +92,7 @@ export default function ProviderOfferForm() {
       priceTotal: "Total Annual Price (SAR)",
       priceTotalPlaceholder: "e.g. 48000",
       priceTotalHint: "Price per unit will be calculated automatically and shown to the owner",
+      priceTotalHintSqm: "Price per m² will be calculated automatically and shown to the owner",
       notes: "Additional Notes (Optional)",
       notesPlaceholder: "Add any additional notes or details...",
       submit: "Submit Offer",
@@ -534,7 +536,11 @@ export default function ProviderOfferForm() {
                       className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{t.priceTotalHint}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {request?.properties?.building_type === "commercial"
+                      ? t.priceTotalHintSqm
+                      : t.priceTotalHint}
+                  </p>
                 </div>
 
                 <div>
