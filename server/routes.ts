@@ -177,6 +177,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Saudi short national address: 4 letters + 4 digits (e.g. RUYF1234)
+  const NATIONAL_ADDRESS_RE = /^[A-Za-z]{4}\d{4}$/;
+
   app.post("/api/properties", requireSession, requireOwner, async (req, res) => {
     try {
       const { count: propertyCount } = await supabaseAdmin
@@ -188,6 +191,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       const data = insertPropertySchema.parse(req.body);
+      if (data.national_address && !NATIONAL_ADDRESS_RE.test(data.national_address)) {
+        return res.status(400).json({ error: "invalid_national_address" });
+      }
       data.owner_id = (req as any).userId;
       const { data: property, error } = await supabaseAdmin
         .from("properties")
@@ -243,6 +249,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         national_address: z.string().nullable().optional(),
       });
       const data = updateSchema.parse(req.body);
+      if (data.national_address && !NATIONAL_ADDRESS_RE.test(data.national_address)) {
+        return res.status(400).json({ error: "invalid_national_address" });
+      }
       const { data: updated, error } = await supabaseAdmin
         .from("properties")
         .update(data)
@@ -531,7 +540,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .select("*, properties(id, name, city, address, building_type, map_url, units_count)")
           .eq("status", "pending")
           .order("created_at", { ascending: false }),
-        supabaseAdmin.from("providers").select("id").eq("user_id", userId).maybeSingle(),
+        supabaseAdmin.from("providers").select("id, approved").eq("user_id", userId).maybeSingle(),
       ]);
       const providerId = provider?.id ?? null;
       const { data: myOffers } = providerId
@@ -541,8 +550,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             .eq("provider_id", providerId)
             .neq("status", "rejected")
         : { data: [] };
+      // Unapproved providers get a redacted teaser: no property name, address,
+      // map link, owner notes, or anything that identifies the owner/location.
+      const isApproved = !!provider?.approved;
+      const safeRequests = isApproved
+        ? requests || []
+        : (requests || []).map((r: any) => ({
+            id: r.id,
+            status: r.status,
+            service_category: r.service_category,
+            created_at: r.created_at,
+            properties: r.properties
+              ? {
+                  id: r.properties.id,
+                  city: r.properties.city,
+                  building_type: r.properties.building_type,
+                }
+              : null,
+          }));
       res.json({
-        requests: requests || [],
+        requests: safeRequests,
         submittedRequestIds: (myOffers || []).map((o: any) => o.request_id),
       });
     } catch (err: any) {
@@ -553,6 +580,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Provider: single request by ID (for offer form — uses supabaseAdmin to bypass RLS)
   app.get("/api/provider/requests/:id", requireSession, requireProvider, async (req, res) => {
     try {
+      const userId = (req as any).userId as string;
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("approved")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider?.approved) return res.status(403).json({ error: "not_approved" });
+
       const { id } = req.params;
       const { data, error } = await supabaseAdmin
         .from("requests")
@@ -689,15 +724,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, users(phone))"
+          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
-      // Lock the PDF proposal until the owner accepts: only an accepted offer
-      // exposes its file path to the owner's browser.
+      // Lock the PDF proposal AND the provider phone until the owner accepts:
+      // only an accepted offer exposes its file path and contact number.
       const safe = (data ?? []).map((o: any) => ({
         ...o,
         offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
+        providers: o.providers
+          ? { ...o.providers, users: o.status === "accepted" ? o.providers.users : null }
+          : null,
       }));
       res.json(safe);
     } catch {
@@ -1392,7 +1430,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { data, error } = await supabaseAdmin
       .from("users")
       .select(
-        "id, name, phone, created_at, providers(id, company_name, city, approved, commercial_register_url, company_profile_url, fal_license_url, description)"
+        "id, name, phone, created_at, providers(id, company_name, email, city, approved, commercial_register_url, company_profile_url, fal_license_url, description)"
       )
       .eq("role", "provider")
       .order("created_at", { ascending: false });
@@ -1405,7 +1443,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { data, error } = await supabaseAdmin
       .from("properties")
       .select(
-        "id, name, city, address, national_address, building_type, units_count, created_at, users(name, phone)"
+        "id, name, city, address, national_address, building_type, units_count, map_url, created_at, users(name, phone)"
       )
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch properties" });

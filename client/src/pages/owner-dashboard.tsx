@@ -303,9 +303,14 @@ export default function OwnerDashboard() {
       if (!token) throw new Error("Unauthorized");
 
       const unitsValue =
-        editUnitsCount === "other"
-          ? parseInt(editCustomUnits.trim(), 10)
-          : parseInt(editUnitsCount, 10);
+        editBuildingType === "commercial"
+          ? parseInt(
+              (editUnitsCount === "other" ? editCustomUnits : editUnitsCount).trim(),
+              10
+            )
+          : editUnitsCount === "other"
+            ? parseInt(editCustomUnits.trim(), 10)
+            : parseInt(editUnitsCount, 10);
 
       const body: Record<string, unknown> = {
         name: editName.trim(),
@@ -493,8 +498,22 @@ export default function OwnerDashboard() {
                     value={property?.city}
                   />
                   <PropertyRow
-                    label={lang === "ar" ? "عدد الوحدات" : "Units Count"}
-                    value={property?.units_count != null ? String(property.units_count) : undefined}
+                    label={
+                      property?.building_type === "commercial"
+                        ? lang === "ar"
+                          ? "المساحة (م²)"
+                          : "Area (m²)"
+                        : lang === "ar"
+                          ? "عدد الوحدات"
+                          : "Units Count"
+                    }
+                    value={
+                      property?.units_count != null
+                        ? property.building_type === "commercial"
+                          ? `${property.units_count} ${lang === "ar" ? "م²" : "m²"}`
+                          : String(property.units_count)
+                        : undefined
+                    }
                   />
                   {property?.map_url && (
                     <div className="flex items-start gap-3">
@@ -622,7 +641,29 @@ export default function OwnerDashboard() {
                     </select>
                   </div>
 
-                  {/* Units count */}
+                  {/* Units count (residential) / Area in m² (commercial) */}
+                  {editBuildingType === "commercial" ? (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="editAreaSqm">
+                        {lang === "ar" ? "المساحة (م²)" : "Area (m²)"} *
+                      </Label>
+                      <Input
+                        id="editAreaSqm"
+                        type="number"
+                        min="1"
+                        placeholder={
+                          lang === "ar"
+                            ? "أدخل مساحة العقار بالمتر المربع"
+                            : "Enter property area in m²"
+                        }
+                        value={editUnitsCount === "other" ? editCustomUnits : editUnitsCount}
+                        onChange={(e) => {
+                          setEditUnitsCount(e.target.value);
+                          setEditCustomUnits("");
+                        }}
+                      />
+                    </div>
+                  ) : (
                   <div className="space-y-1.5">
                     <Label htmlFor="editUnitsCount">
                       {lang === "ar" ? "عدد الوحدات" : "Units Count"} *
@@ -672,6 +713,7 @@ export default function OwnerDashboard() {
                       />
                     )}
                   </div>
+                  )}
 
                   {/* Map URL */}
                   <div className="space-y-1.5">
@@ -709,11 +751,29 @@ export default function OwnerDashboard() {
                     </Label>
                     <Input
                       id="editNationalAddress"
-                      placeholder={lang === "ar" ? "مثال: RTHA1234" : "e.g. RTHA1234"}
+                      placeholder={lang === "ar" ? "مثال: RUYF1234" : "e.g. RUYF1234"}
                       value={editNationalAddress}
-                      onChange={(e) => setEditNationalAddress(e.target.value)}
-                      className="border-dashed"
+                      maxLength={8}
+                      onChange={(e) =>
+                        setEditNationalAddress(
+                          e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+                        )
+                      }
+                      className={`border-dashed${
+                        editNationalAddress.trim() !== "" &&
+                        !/^[A-Z]{4}\d{4}$/.test(editNationalAddress.trim())
+                          ? " border-red-500"
+                          : ""
+                      }`}
                     />
+                    {editNationalAddress.trim() !== "" &&
+                      !/^[A-Z]{4}\d{4}$/.test(editNationalAddress.trim()) && (
+                        <p className="text-red-500 text-xs">
+                          {lang === "ar"
+                            ? "العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام — مثال: RUYF1234"
+                            : "Short national address: 4 letters then 4 digits — e.g. RUYF1234"}
+                        </p>
+                      )}
                   </div>
 
                   {/* Actions */}
@@ -721,7 +781,11 @@ export default function OwnerDashboard() {
                     <Button
                       size="sm"
                       onClick={() => saveMutation.mutate()}
-                      disabled={saveMutation.isPending}
+                      disabled={
+                        saveMutation.isPending ||
+                        (editNationalAddress.trim() !== "" &&
+                          !/^[A-Z]{4}\d{4}$/.test(editNationalAddress.trim()))
+                      }
                       className="gap-1.5 text-white"
                       style={{ background: "var(--owner)", color: "#04222c" }}
                     >
@@ -879,7 +943,13 @@ export default function OwnerDashboard() {
                             className="border-s border-border ps-4"
                           >
                             <p className="text-xs text-muted-foreground">
-                              {lang === "ar" ? "السعر لكل وحدة" : "Per Unit"}
+                              {property?.building_type === "commercial"
+                                ? lang === "ar"
+                                  ? "السعر لكل م²"
+                                  : "Per m²"
+                                : lang === "ar"
+                                  ? "السعر لكل وحدة"
+                                  : "Per Unit"}
                             </p>
                             <p className="font-bold text-sm" style={{ color: "var(--owner)" }}>
                               {Math.round(
@@ -934,6 +1004,23 @@ export default function OwnerDashboard() {
 
                     {/* Actions */}
                     <div className="flex gap-2 flex-wrap">
+                      {/* Company profile — open to the owner before accepting, helps compare offers */}
+                      {offer.providers?.company_profile_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            openSignedPdf(
+                              "provider-documents",
+                              offer.providers.company_profile_url
+                            )
+                          }
+                          className="gap-1.5"
+                        >
+                          <Building2 className="w-3.5 h-3.5" />
+                          {lang === "ar" ? "الملف التعريفي للشركة" : "Company Profile"}
+                        </Button>
+                      )}
                       {offer.status === "accepted" && offer.offer_file_url && (
                         <Button
                           variant="outline"
