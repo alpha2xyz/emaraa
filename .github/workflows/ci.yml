@@ -45,7 +45,7 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-render-check
         run: npm run build
-      - name: Serve the built bundle and assert it renders
+      - name: Serve the built bundle, capture screenshots, assert it renders
         env:
           CI: "true"
           # 127.0.0.1 (not "localhost") so Playwright does NOT auto-start the dev
@@ -57,4 +57,14 @@ jobs:
             curl -sf http://127.0.0.1:4173 >/dev/null && break
             sleep 1
           done
+          # Always capture the gallery first (even a blank page is captured so a
+          # regression is visible), THEN run the render gate that actually fails.
+          npx playwright test tests/screenshots.spec.ts || true
           npx playwright test tests/public.spec.ts
+      - name: Upload public-page screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-page-screenshots
+          path: screenshots/
+          if-no-files-found: warn
