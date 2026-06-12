@@ -1,3 +1,8 @@
+import { initSentry } from "./sentry";
+
+// Initialize Sentry first — no-op unless SENTRY_DSN is set.
+initSentry();
+
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";

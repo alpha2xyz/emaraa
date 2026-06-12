@@ -925,6 +925,29 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .update({ status: "rejected" })
           .eq("request_id", offer.request_id)
           .neq("id", req.params.id as string);
+
+        // Auto-create a pending deal capturing the accepted offer's value.
+        // Admin later confirms the final contract value and marks it closed.
+        // UNIQUE(offer_id) makes this idempotent if the owner re-accepts.
+        const { data: acceptedOffer } = await supabaseAdmin
+          .from("provider_offers")
+          .select("id, provider_id, price_total")
+          .eq("id", req.params.id as string)
+          .single();
+        if (acceptedOffer) {
+          await supabaseAdmin.from("deals").upsert(
+            {
+              request_id: offer.request_id,
+              offer_id: acceptedOffer.id,
+              provider_id: acceptedOffer.provider_id,
+              owner_id: request.owner_id,
+              contract_value: acceptedOffer.price_total ?? null,
+              status: "pending",
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "offer_id" }
+          );
+        }
       }
 
       res.json({ success: true });
@@ -934,13 +957,32 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Helper: send a plain SMS via Authentica (fire-and-forget)
-  async function sendSms(phone: string, message: string) {
+  async function sendSms(phone: string, message: string, messageType?: string) {
     const e164 = phone.startsWith("+") ? phone : "+966" + phone.substring(1);
-    await fetch(`${AUTHENTICA_BASE}/send-sms`, {
-      method: "POST",
-      headers: authenticaHeaders,
-      body: JSON.stringify({ phone: e164, message }),
-    });
+    let status = "sent";
+    let errorText: string | null = null;
+    try {
+      const resp = await fetch(`${AUTHENTICA_BASE}/send-sms`, {
+        method: "POST",
+        headers: authenticaHeaders,
+        body: JSON.stringify({ phone: e164, message }),
+      });
+      if (!resp.ok) {
+        status = "failed";
+        errorText = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 300)}`;
+      }
+    } catch (err: any) {
+      status = "failed";
+      errorText = (err?.message ?? "network error").slice(0, 300);
+    }
+    // Record every send for billing reconciliation + failure visibility (fire-and-forget).
+    supabaseAdmin
+      .from("sms_log")
+      .insert([{ phone: e164, message_type: messageType ?? null, status, error: errorText }])
+      .then(() => {}, () => {});
+    if (status === "failed" && process.env.NODE_ENV !== "production") {
+      console.error(`[sendSms] failed to ${e164}: ${errorText}`);
+    }
   }
 
   // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
@@ -987,7 +1029,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (pu?.phone)
           sendSms(
             pu.phone,
-            "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك."
+            "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك.",
+            "offer_submitted"
           ).catch(() => {});
       }
 
@@ -1001,7 +1044,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (ou?.phone)
           sendSms(
             ou.phone,
-            "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app"
+            "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app",
+            "new_offer"
           ).catch(() => {});
       }
 
@@ -1047,7 +1091,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           if (u?.phone)
             sendSms(
               u.phone,
-              "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app"
+              "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app",
+              "new_request"
             ).catch(() => {});
         }
       }
@@ -1327,7 +1372,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           if (u?.phone)
             sendSms(
               u.phone,
-              "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app"
+              "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app",
+              "provider_approved"
             ).catch(() => {});
         }
       }
@@ -1448,6 +1494,55 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch properties" });
     res.json(data ?? []);
+  });
+
+  app.get("/api/admin/deals", async (req, res) => {
+    if (!(await verifyAdminToken(req, res))) return;
+    const { data, error } = await supabaseAdmin
+      .from("deals")
+      .select(
+        "id, contract_value, status, signed_at, notes, created_at, requests!deals_request_fk(properties(name, city, building_type)), providers!deals_provider_fk(company_name), owner:users!deals_owner_fk(name, phone)"
+      )
+      .order("created_at", { ascending: false });
+    if (error) return res.status(500).json({ error: "Failed to fetch deals" });
+
+    // GMV summary: total confirmed (closed) contract value + counts by status
+    const { data: closed } = await supabaseAdmin
+      .from("deals")
+      .select("contract_value")
+      .eq("status", "closed");
+    const gmv = (closed ?? []).reduce(
+      (sum: number, d: any) => sum + (Number(d.contract_value) || 0),
+      0
+    );
+    res.json({ deals: data ?? [], gmv, closedCount: (closed ?? []).length });
+  });
+
+  app.patch("/api/admin/deals/:id", async (req, res) => {
+    if (!(await verifyAdminToken(req, res))) return;
+    const { contract_value, status, signed_at, notes } = req.body as {
+      contract_value?: string | number | null;
+      status?: string;
+      signed_at?: string | null;
+      notes?: string | null;
+    };
+    if (status && !["pending", "closed", "cancelled"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+    const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (contract_value !== undefined)
+      update.contract_value = contract_value === "" ? null : contract_value;
+    if (status !== undefined) update.status = status;
+    if (signed_at !== undefined) update.signed_at = signed_at || null;
+    if (notes !== undefined) update.notes = notes;
+    const { data, error } = await supabaseAdmin
+      .from("deals")
+      .update(update)
+      .eq("id", req.params.id)
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: "Failed to update deal" });
+    res.json(data);
   });
 
   app.get("/api/admin/requests", async (req, res) => {

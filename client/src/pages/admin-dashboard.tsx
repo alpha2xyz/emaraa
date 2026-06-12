@@ -14,6 +14,8 @@ import {
   ChevronUp,
   Package,
   RefreshCw,
+  Handshake,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +84,20 @@ export default function AdminDashboard() {
           nationalAddress: "العنوان الوطني",
           sar: "ريال",
           profileIncomplete: "لم يكتمل الملف الشخصي",
+          deals: "الصفقات",
+          gmv: "إجمالي قيمة العقود المؤكدة (GMV)",
+          contractValue: "قيمة العقد",
+          dealPending: "بانتظار التأكيد",
+          dealClosed: "مكتملة",
+          dealCancelled: "ملغاة",
+          markClosed: "تأكيد كمكتملة",
+          markCancelled: "إلغاء",
+          signedAt: "تاريخ التوقيع",
+          saveDeal: "حفظ",
+          noDeals: "لا توجد صفقات بعد — تُنشأ تلقائياً عند قبول المالك لعرض",
+          dealNotes: "ملاحظات",
+          enterValue: "أدخل قيمة العقد السنوية",
+          closedCount: "صفقة مؤكدة",
         }
       : {
           title: "Admin Dashboard",
@@ -128,6 +144,20 @@ export default function AdminDashboard() {
           nationalAddress: "National Address",
           sar: "SAR",
           profileIncomplete: "Profile not completed",
+          deals: "Deals",
+          gmv: "Confirmed Contract Value (GMV)",
+          contractValue: "Contract Value",
+          dealPending: "Awaiting confirmation",
+          dealClosed: "Closed",
+          dealCancelled: "Cancelled",
+          markClosed: "Confirm as closed",
+          markCancelled: "Cancel",
+          signedAt: "Signed date",
+          saveDeal: "Save",
+          noDeals: "No deals yet — created automatically when an owner accepts an offer",
+          dealNotes: "Notes",
+          enterValue: "Enter annual contract value",
+          closedCount: "confirmed deals",
         };
 
   const adminHeaders = () => ({
@@ -220,6 +250,50 @@ export default function AdminDashboard() {
       return res.json();
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  // ── Deals (GMV tracking) ───────────────────────────────────────────────────
+  const { data: dealsData, isLoading: dealsLoading } = useQuery({
+    queryKey: ["admin", "deals"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/deals", { headers: adminHeaders() });
+      if (!res.ok) throw new Error("Failed to fetch deals");
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [dealEdits, setDealEdits] = useState<
+    Record<string, { contract_value?: string; signed_at?: string; notes?: string }>
+  >({});
+
+  const dealMutation = useMutation({
+    mutationFn: async ({
+      id,
+      contract_value,
+      status,
+      signed_at,
+      notes,
+    }: {
+      id: string;
+      contract_value?: string;
+      status?: string;
+      signed_at?: string;
+      notes?: string;
+    }) => {
+      const res = await fetch(`/api/admin/deals/${id}`, {
+        method: "PATCH",
+        headers: adminHeaders(),
+        body: JSON.stringify({ contract_value, status, signed_at, notes }),
+      });
+      if (!res.ok) throw new Error("Failed to update deal");
+    },
+    onSuccess: () => {
+      toast({ title: lang === "ar" ? "تم تحديث الصفقة" : "Deal updated" });
+      queryClient.invalidateQueries({ queryKey: ["admin", "deals"] });
+    },
+    onError: () =>
+      toast({ variant: "destructive", title: lang === "ar" ? "حدث خطأ" : "An error occurred" }),
   });
 
   // ── Approve/Reject ─────────────────────────────────────────────────────────
@@ -363,6 +437,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="users">{t.users}</TabsTrigger>
             <TabsTrigger value="properties">{t.properties}</TabsTrigger>
             <TabsTrigger value="requests">{t.requests}</TabsTrigger>
+            <TabsTrigger value="deals">{t.deals}</TabsTrigger>
           </TabsList>
 
           {/* ── Overview ──────────────────────────────────────────────── */}
@@ -782,6 +857,184 @@ export default function AdminDashboard() {
                               )}
                             </div>
                           )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Deals (GMV tracking) ──────────────────────────────────── */}
+          <TabsContent value="deals">
+            {/* GMV summary banner */}
+            <div
+              className="rounded-xl p-5 mb-4 flex items-center gap-4"
+              style={{ background: "var(--ok-soft)", border: "1px solid var(--ok)" }}
+            >
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--ok)" }}
+              >
+                <TrendingUp className="w-6 h-6" style={{ color: "var(--navy-2)" }} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t.gmv}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Number(dealsData?.gmv ?? 0).toLocaleString("en-US")} {t.sar}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {dealsData?.closedCount ?? 0} {t.closedCount}
+                </p>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Handshake className="h-5 w-5" style={{ color: "var(--ok)" }} />
+                  {t.deals}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {dealsLoading ? (
+                  <p className="text-center py-8 text-muted-foreground">{t.loading}</p>
+                ) : !dealsData?.deals?.length ? (
+                  <p className="text-center py-8 text-muted-foreground">{t.noDeals}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {dealsData.deals.map((d: any) => {
+                      const edit = dealEdits[d.id] ?? {};
+                      const property = d.requests?.properties;
+                      const statusColor =
+                        d.status === "closed"
+                          ? "var(--ok)"
+                          : d.status === "cancelled"
+                            ? "var(--err)"
+                            : "var(--warn)";
+                      const statusLabel =
+                        d.status === "closed"
+                          ? t.dealClosed
+                          : d.status === "cancelled"
+                            ? t.dealCancelled
+                            : t.dealPending;
+                      return (
+                        <div
+                          key={d.id}
+                          className="p-4 border border-border rounded-lg space-y-3"
+                          style={{ background: "rgba(255,255,255,0.02)" }}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="space-y-0.5">
+                              <p className="font-semibold text-foreground">
+                                {property?.name ?? "—"}
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  {" · "}
+                                  {property?.city}
+                                  {property?.building_type ? ` · ${property.building_type}` : ""}
+                                </span>
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {t.providers}: {d.providers?.company_name ?? "—"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {t.owner}: {d.owner?.name ?? "—"}
+                                {d.owner?.phone ? ` · ${d.owner.phone}` : ""}
+                              </p>
+                            </div>
+                            <span
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                              style={{ background: `${statusColor}22`, color: statusColor }}
+                            >
+                              {statusLabel}
+                            </span>
+                          </div>
+
+                          {/* Editable fields */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-xs text-muted-foreground">
+                                {t.contractValue} ({t.sar})
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder={t.enterValue}
+                                defaultValue={d.contract_value ?? ""}
+                                onChange={(e) =>
+                                  setDealEdits((p) => ({
+                                    ...p,
+                                    [d.id]: { ...p[d.id], contract_value: e.target.value },
+                                  }))
+                                }
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs text-muted-foreground">{t.signedAt}</label>
+                              <input
+                                type="date"
+                                defaultValue={d.signed_at ? d.signed_at.slice(0, 10) : ""}
+                                onChange={(e) =>
+                                  setDealEdits((p) => ({
+                                    ...p,
+                                    [d.id]: { ...p[d.id], signed_at: e.target.value },
+                                  }))
+                                }
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={dealMutation.isPending}
+                              onClick={() =>
+                                dealMutation.mutate({
+                                  id: d.id,
+                                  contract_value: edit.contract_value,
+                                  signed_at: edit.signed_at,
+                                })
+                              }
+                            >
+                              {t.saveDeal}
+                            </Button>
+                            {d.status !== "closed" && (
+                              <Button
+                                size="sm"
+                                className="text-white"
+                                style={{ background: "var(--ok)", color: "var(--navy-2)" }}
+                                disabled={dealMutation.isPending}
+                                onClick={() =>
+                                  dealMutation.mutate({
+                                    id: d.id,
+                                    status: "closed",
+                                    contract_value: edit.contract_value,
+                                    signed_at:
+                                      edit.signed_at ||
+                                      (d.signed_at ? d.signed_at.slice(0, 10) : new Date().toISOString().slice(0, 10)),
+                                  })
+                                }
+                              >
+                                <CheckCircle2 className="h-3 w-3 me-1" />
+                                {t.markClosed}
+                              </Button>
+                            )}
+                            {d.status !== "cancelled" && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={dealMutation.isPending}
+                                onClick={() => dealMutation.mutate({ id: d.id, status: "cancelled" })}
+                              >
+                                <XCircle className="h-3 w-3 me-1" />
+                                {t.markCancelled}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

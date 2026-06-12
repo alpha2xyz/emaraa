@@ -127,6 +127,49 @@ export const insertProviderOfferSchema = z.object({
 export type InsertProviderOffer = z.infer<typeof insertProviderOfferSchema>;
 export type ProviderOffer = typeof providerOffers.$inferSelect;
 
+// Deals model — captures a closed contract + its value (powers GMV / case studies / REGA file)
+// A deal is auto-created (status "pending") when an owner accepts an offer; admin confirms
+// the final contract value and marks it "closed" with a signed date.
+export const deals = pgTable("deals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  request_id: uuid("request_id").notNull(),
+  offer_id: uuid("offer_id").notNull(),
+  provider_id: uuid("provider_id").notNull(),
+  owner_id: uuid("owner_id").notNull(),
+  contract_value: numeric("contract_value"), // final annual contract value in SAR
+  status: text("status").notNull().default("pending"), // pending | closed | cancelled
+  signed_at: timestamp("signed_at", { withTimezone: true }),
+  notes: text("notes"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const insertDealSchema = z.object({
+  request_id: z.string().uuid(),
+  offer_id: z.string().uuid(),
+  provider_id: z.string().uuid(),
+  owner_id: z.string().uuid(),
+  contract_value: z.string().nullable().optional(),
+  status: z.string().optional(),
+  signed_at: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+export type InsertDeal = z.infer<typeof insertDealSchema>;
+export type Deal = typeof deals.$inferSelect;
+
+// SMS log — every Authentica send is recorded with its outcome (billing reconciliation + failure visibility)
+export const smsLog = pgTable("sms_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  phone: text("phone").notNull(),
+  message_type: text("message_type"), // new_request | offer_submitted | offer_accepted | provider_approved | otp
+  status: text("status").notNull(), // sent | failed
+  error: text("error"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export type SmsLog = typeof smsLog.$inferSelect;
+
 // Sessions model (server-managed auth sessions)
 export const sessions = pgTable("sessions", {
   token: uuid("token").primaryKey().defaultRandom(),
