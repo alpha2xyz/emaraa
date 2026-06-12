@@ -20,6 +20,24 @@ const authenticaHeaders = {
   "Content-Type": "application/json",
 };
 
+// ── Env-gated test login ──────────────────────────────────────────────────
+// Lets specific FAKE phone numbers log in with a fixed code, skipping Authentica
+// (no SMS sent, no credit spent). Active ONLY when OTP_TEST_MODE=true — which is
+// set on local + preview and DELIBERATELY ABSENT in production. Defense in depth:
+// even if the flag leaked to prod, only these exact whitelisted numbers + the exact
+// code would bypass — real users are never affected. Replaces the old hardcoded
+// TEST_PHONES (which dangerously included the public support number) and the
+// blanket OTP_BYPASS (which accepted any code for any phone).
+const OTP_TEST_MODE = process.env.OTP_TEST_MODE === "true";
+const OTP_TEST_NUMBERS = (process.env.OTP_TEST_NUMBERS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const OTP_TEST_CODE = process.env.OTP_TEST_CODE ?? "";
+function isOtpTestNumber(phone: string): boolean {
+  return OTP_TEST_MODE && OTP_TEST_NUMBERS.length > 0 && OTP_TEST_NUMBERS.includes(phone);
+}
+
 // Middleware: validate session token and attach userId + userRole to req (single query)
 async function requireSession(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace("Bearer ", "").trim();
@@ -1130,14 +1148,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(409).json({ error: "Phone already registered" });
       }
 
-      // Bypass mode: skip Authentica — accept any 4-digit code for testing
-      if (process.env.OTP_BYPASS === "true") {
-        return res.json({ success: true, bypass: true });
-      }
-
-      // Per-number test bypass: hardcoded test phones always accept code 0100, no SMS sent
-      const TEST_PHONES = ["0501315725", "0543977679"];
-      if (TEST_PHONES.includes(phone)) {
+      // Env-gated test login: whitelisted fake numbers skip Authentica (no SMS sent).
+      // Active only where OTP_TEST_MODE=true (local + preview) — never in production.
+      if (isOtpTestNumber(phone)) {
         return res.json({ success: true, bypass: true });
       }
 
@@ -1201,13 +1214,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid role" });
       }
 
-      // Per-number test bypass: hardcoded test phones accept code 0100 without calling Authentica
-      const TEST_PHONES = ["0501315725", "0543977679"];
-      const isTestPhone = TEST_PHONES.includes(phone);
-      const isTestCode = code === "0100";
-
-      // Bypass mode: accept any 4-digit code without calling Authentica
-      if (!isTestPhone && process.env.OTP_BYPASS !== "true") {
+      // Env-gated test login (OTP_TEST_MODE, never set in production). A whitelisted fake
+      // number logs in with the fixed OTP_TEST_CODE; a wrong code is rejected. Any other
+      // number falls through to the real Authentica verification.
+      if (isOtpTestNumber(phone)) {
+        if (code !== OTP_TEST_CODE) {
+          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          return res.status(400).json({ error: "Invalid OTP" });
+        }
+      } else {
         const e164 = "+966" + phone.substring(1);
         const r = await fetch(`${AUTHENTICA_BASE}/verify-otp`, {
           method: "POST",
@@ -1220,8 +1235,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
           return res.status(400).json({ error: "Invalid OTP" });
         }
-      } else if (isTestPhone && !isTestCode) {
-        return res.status(400).json({ error: "Invalid OTP" });
       }
 
       // OTP verified — create or find user
