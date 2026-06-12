@@ -307,6 +307,37 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 
 ---
 
+## Workflow Rules (AI collaboration)
+
+### Branch discipline
+- Any change beyond trivial copy/docs goes on a **git branch**; review via the **Vercel preview** deployment; merge to `main` only after Abdallah approves.
+- **ZERO diagnostic/TEMP commits on `main`.** Debugging happens on a branch against the Preview deployment, never on `main`.
+
+### Model routing
+| Model | Use for |
+|---|---|
+| **Fable 5** | Monthly audits, architecture decisions, multi-layer debugging, plans handed to subagents |
+| **Opus 4.8** | Feature implementation, bug fixes, UI work, reports, subagent swarms |
+| **Sonnet 4.6** | Quick questions, docs, single-file tweaks, research |
+
+### Audit rhythm
+- `/emaraa:backend` — weekly
+- `/emaraa:frontend` — weekly (alternate days from backend)
+- `/emaraa:website-test` — monthly, and before any external demo
+- `/emaraa:deploy-gate` — before every merge to `main`
+- TODO.md cleanup — monthly
+
+### Prompting standard
+- Prompts = **goal + constraints + expected output**.
+- Memory and CLAUDE.md carry the context — **do not re-explain the project** in prompts.
+
+### Session protocol
+- Open with `/emaraa:session start` (one goal).
+- Close with `/emaraa:session end`.
+- Decisions go to `/emaraa:decision`.
+
+---
+
 ## Feature Backlog
 
 > Full backlog lives in `~/Documents/Emaraa with claude/_work/TODO.md`. This section is a quick reference for items with specific code locations.
