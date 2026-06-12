@@ -728,11 +728,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
-      // Lock the PDF proposal until the owner accepts: only an accepted offer
-      // exposes its file path to the owner's browser.
+      // Lock the PDF proposal AND the provider phone until the owner accepts:
+      // only an accepted offer exposes its file path and contact number.
       const safe = (data ?? []).map((o: any) => ({
         ...o,
         offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
+        providers: o.providers
+          ? { ...o.providers, users: o.status === "accepted" ? o.providers.users : null }
+          : null,
       }));
       res.json(safe);
     } catch {
