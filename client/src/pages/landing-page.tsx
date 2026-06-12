@@ -173,7 +173,7 @@ export default function LandingPage() {
       heroTitle: "عِمــارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
-        "منصة تربط ملاك العقارات السكنية والتجارية بمقدمي خدمات النظافة وإدارة المرافق الموثوقين. انشر احتياجاتك، واستلم عروضاً من مزوّدين موثوقين، وتعاقد مع الأفضل.",
+        "ابحث، قارن، وتعاقد سنوياً مع شركات مرافق مرخّصة من الهيئة العامة للعقار، في أول منصة متخصصة لعقود إدارة المرافق العقارية.",
       getStarted: "ابدأ مجاناً",
       learnMore: "اعرف المزيد",
       whoTitle: "من يستفيد من عِمــارة؟",
@@ -260,7 +260,7 @@ export default function LandingPage() {
       heroTitle: "EMARAA,",
       heroHighlight: "Your Building, Perfectly Managed",
       heroDesc:
-        "Connecting residential and commercial property owners with trusted cleaning and facility management providers. Post your needs, receive proposals from trusted providers, and contract the best.",
+        "Search, compare, and contract annually with REGA-licensed facility management companies — on the first platform specialized in property facility management contracts.",
       getStarted: "Get Started Free",
       learnMore: "Learn More",
       whoTitle: "Who is EMARAA for?",
