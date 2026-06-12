@@ -977,6 +977,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Helper: send a plain SMS via Authentica (fire-and-forget)
   async function sendSms(phone: string, message: string, messageType?: string) {
     const e164 = phone.startsWith("+") ? phone : "+966" + phone.substring(1);
+    // Test mode (local + preview): never hit Authentica — no real SMS, no credit spent.
+    // The flow still works; we log it as suppressed so behaviour is observable. Production
+    // (OTP_TEST_MODE unset) sends real notifications normally.
+    if (OTP_TEST_MODE) {
+      supabaseAdmin
+        .from("sms_log")
+        .insert([{ phone: e164, message_type: messageType ?? null, status: "suppressed_test", error: null }])
+        .then(() => {}, () => {});
+      return;
+    }
     let status = "sent";
     let errorText: string | null = null;
     try {

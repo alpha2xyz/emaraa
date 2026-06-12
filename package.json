@@ -8,6 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "reset:test": "tsx --env-file=.env script/reset-test-data.ts",
     "db:push": "drizzle-kit push",
     "test": "playwright test",
     "test:local": "PLAYWRIGHT_BASE_URL=http://localhost:5000 playwright test",
