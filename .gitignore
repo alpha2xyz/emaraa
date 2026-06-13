@@ -19,3 +19,4 @@ tests/.auth/
 
 # Supabase CLI temp files
 supabase/.temp/
+screenshots/
