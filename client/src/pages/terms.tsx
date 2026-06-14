@@ -75,6 +75,7 @@ const arSections: Section[] = [
       "يلتزم مزود الخدمة بتنفيذ الخدمة وفق العرض المقدَّم وفي الوقت المحدد.",
       "يُحظر على مزود الخدمة التواصل مع الملاك خارج إطار المنصة بهدف تجاوز آلية العروض الرسمية.",
       "أي تغيير جوهري في بيانات الشركة (السجل التجاري، الرخص) يجب إبلاغ الإدارة به فوراً.",
+      "يلتزم مزود الخدمة بسداد عمولة عِمارة البالغة 1% من قيمة الصفقة عن طريق التحويل إلى الحساب البنكي لعِمارة بعد إتمام الصفقة بنجاح من خلال المنصة.",
     ],
   },
   {
@@ -217,6 +218,7 @@ const enSections: Section[] = [
       "Providers are committed to delivering the service as proposed and within the agreed timeline.",
       "Providers are prohibited from contacting owners outside the platform in order to bypass the official proposal mechanism.",
       "Any material change to company information (commercial registration, licenses) must be reported to administration immediately.",
+      "The provider agrees to pay Emaraa's 1% commission on the deal value via transfer to Emaraa's bank account after the deal is successfully completed through the platform.",
     ],
   },
   {
