@@ -46,10 +46,16 @@ export async function sendEmail(
     }
   }
 
-  supabaseAdmin
-    .from("email_log")
-    .insert([{ to_email: to, subject: opts.subject, kind: opts.kind ?? null, status, error: errorText }])
-    .then(() => {}, () => {});
+  // Await the log insert — on Vercel the lambda freezes the moment the response
+  // is sent, so a fire-and-forget insert would be lost. The report's "since last
+  // report" cutoff depends on this row persisting, so it must complete first.
+  try {
+    await supabaseAdmin
+      .from("email_log")
+      .insert([{ to_email: to, subject: opts.subject, kind: opts.kind ?? null, status, error: errorText }]);
+  } catch {
+    // never let logging failure break the send result
+  }
 
   if (status !== "sent" && process.env.NODE_ENV !== "production") {
     console.error(`[sendEmail] ${status} to ${to}: ${errorText ?? ""}`);
