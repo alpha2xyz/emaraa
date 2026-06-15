@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Handshake,
   TrendingUp,
+  Mail,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -340,6 +341,33 @@ export default function AdminDashboard() {
     setLocation("/admin");
   }
 
+  const [sendingReport, setSendingReport] = useState(false);
+  async function handleSendReport() {
+    if (sendingReport) return;
+    setSendingReport(true);
+    try {
+      const res = await fetch("/api/admin/send-report", {
+        method: "POST",
+        headers: adminHeaders(),
+      });
+      if (!res.ok) throw new Error("failed");
+      toast({
+        title: lang === "ar" ? "تم إرسال التقرير" : "Report sent",
+        description:
+          lang === "ar"
+            ? "وصل التقرير إلى info@emaraa.app"
+            : "Report delivered to info@emaraa.app",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: lang === "ar" ? "تعذّر إرسال التقرير" : "Could not send report",
+      });
+    } finally {
+      setSendingReport(false);
+    }
+  }
+
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString(isRTL ? "ar-SA-u-nu-latn" : "en-US", {
       year: "numeric",
@@ -417,6 +445,22 @@ export default function AdminDashboard() {
             </span>
           </div>
           <LanguageToggle className="text-muted-foreground" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSendReport}
+            disabled={sendingReport}
+            className="text-[var(--provider)] hover:text-[var(--provider)]"
+          >
+            <Mail className="w-4 h-4 me-2" />
+            {sendingReport
+              ? lang === "ar"
+                ? "جارٍ الإرسال…"
+                : "Sending…"
+              : lang === "ar"
+                ? "أرسل التقرير"
+                : "Send report"}
+          </Button>
           <Button
             variant="ghost"
             size="sm"

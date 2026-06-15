@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { sendEmail, buildAdminReport } from "./email.js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -1555,6 +1556,40 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch requests" });
     res.json(data ?? []);
+  });
+
+  // ── Admin activity report → email to info@emaraa.app ──────────────────────
+  // On-demand: triggered by the "أرسل التقرير الآن" button in the admin dashboard.
+  app.post("/api/admin/send-report", async (req, res) => {
+    if (!(await verifyAdminToken(req, res))) return;
+    try {
+      const { subject, html } = await buildAdminReport(supabaseAdmin);
+      const r = await sendEmail(supabaseAdmin, { subject, html, kind: "admin_report" });
+      if (r.status !== "sent") {
+        return res.status(502).json({ error: "email_failed", detail: r.error ?? r.status });
+      }
+      res.json({ ok: true });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[send-report]", e?.message);
+      res.status(500).json({ error: "report_failed" });
+    }
+  });
+
+  // Weekly auto-digest — hit by Vercel Cron (Sunday 8am AST). Secured by CRON_SECRET.
+  app.get("/api/cron/weekly-report", async (req, res) => {
+    const secret = process.env.CRON_SECRET ?? "";
+    const auth = req.headers["authorization"] ?? "";
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    try {
+      const { subject, html } = await buildAdminReport(supabaseAdmin);
+      await sendEmail(supabaseAdmin, { subject, html, kind: "admin_report" });
+      res.json({ ok: true });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[cron weekly-report]", e?.message);
+      res.status(500).json({ error: "report_failed" });
+    }
   });
 
   return httpServer;
