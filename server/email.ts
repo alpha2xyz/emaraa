@@ -65,6 +65,42 @@ export async function sendEmail(
 
 const nf = (n: number) => Number(n || 0).toLocaleString("en-US");
 
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "https://emaraa.app";
+
+// Branded RTL notification email — one heading, a short body, an optional CTA button.
+// Mirrors the admin-report visual style (dark gradient header + white card).
+export function notificationEmail(opts: {
+  heading: string;
+  body: string; // plain Arabic text; \n becomes <br>
+  ctaLabel?: string;
+  ctaUrl?: string;
+}): string {
+  const cyan = "#0DB8D3", blue = "#1B7FDC", deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
+  const bodyHtml = opts.body.replace(/\n/g, "<br>");
+  const cta =
+    opts.ctaLabel && opts.ctaUrl
+      ? `<div style="margin-top:20px;">
+           <a href="${opts.ctaUrl}" style="display:inline-block;background:${blue};color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 26px;border-radius:10px;">${opts.ctaLabel}</a>
+         </div>`
+      : "";
+  return `
+  <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#F0F3F7;padding:24px;color:${ink};">
+    <div style="max-width:520px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
+        <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة Emaraa</div>
+        <div style="font-size:20px;font-weight:800;margin-top:8px;">${opts.heading}</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
+        <div style="font-size:15px;line-height:1.9;color:${ink};">${bodyHtml}</div>
+        ${cta}
+      </div>
+      <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
+        إشعار تلقائي من منصة عِمارة · <a href="${FRONTEND_URL}" style="color:${mut};">emaraa.app</a>
+      </div>
+    </div>
+  </div>`;
+}
+
 // Build the admin activity report: deltas since the last successful report + running totals.
 export async function buildAdminReport(
   supabaseAdmin: SupabaseClient,

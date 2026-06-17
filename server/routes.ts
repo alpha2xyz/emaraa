@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, buildAdminReport } from "./email.js";
+import { sendEmail, buildAdminReport, notificationEmail } from "./email.js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -20,6 +20,24 @@ const authenticaHeaders = {
   Accept: "application/json",
   "Content-Type": "application/json",
 };
+
+// ── Env-gated test login ──────────────────────────────────────────────────
+// Lets specific FAKE phone numbers log in with a fixed code, skipping Authentica
+// (no SMS sent, no credit spent). Active ONLY when OTP_TEST_MODE=true — which is
+// set on local + preview and DELIBERATELY ABSENT in production. Defense in depth:
+// even if the flag leaked to prod, only these exact whitelisted numbers + the exact
+// code would bypass — real users are never affected. Replaces the old hardcoded
+// TEST_PHONES (which dangerously included the public support number) and the
+// blanket OTP_BYPASS (which accepted any code for any phone).
+const OTP_TEST_MODE = process.env.OTP_TEST_MODE === "true";
+const OTP_TEST_NUMBERS = (process.env.OTP_TEST_NUMBERS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const OTP_TEST_CODE = process.env.OTP_TEST_CODE ?? "";
+function isOtpTestNumber(phone: string): boolean {
+  return OTP_TEST_MODE && OTP_TEST_NUMBERS.length > 0 && OTP_TEST_NUMBERS.includes(phone);
+}
 
 // Middleware: validate session token and attach userId + userRole to req (single query)
 async function requireSession(req: Request, res: Response, next: NextFunction) {
@@ -467,6 +485,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "اسم الشركة مطلوب" });
       }
 
+      // Email is REQUIRED for providers — it's the only channel we have to send them
+      // notifications (welcome, account approved, new requests, offer accepted).
+      const emailTrimmed = (email ?? "").trim();
+      const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
+
       const { data: existing } = await supabaseAdmin
         .from("providers")
         .select("id")
@@ -474,11 +497,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .maybeSingle();
 
       if (existing?.id) {
+        // Updates: if an email is supplied it must be valid; we don't wipe an existing one.
+        if (email !== undefined && !emailValid) {
+          return res.status(400).json({ error: "البريد الإلكتروني غير صحيح" });
+        }
         const { error } = await supabaseAdmin
           .from("providers")
           .update({
             company_name: company_name.trim(),
-            ...(email !== undefined && { email }),
+            ...(email !== undefined && { email: emailTrimmed }),
             ...(city !== undefined && { city }),
             ...(commercial_register_url !== undefined && { commercial_register_url }),
             ...(company_profile_url !== undefined && { company_profile_url }),
@@ -487,16 +514,34 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .eq("id", existing.id);
         if (error) return res.status(500).json({ error: error.message });
       } else {
+        // First-time profile creation: email is mandatory.
+        if (!emailValid) {
+          return res.status(400).json({ error: "البريد الإلكتروني مطلوب" });
+        }
         const { error } = await supabaseAdmin.from("providers").insert([{
           user_id: userId,
           company_name: company_name.trim(),
-          email: email || null,
+          email: emailTrimmed,
           city: city || null,
           commercial_register_url: commercial_register_url || null,
           company_profile_url: company_profile_url || null,
           fal_license_url: fal_license_url || null,
         }]);
         if (error) return res.status(500).json({ error: error.message });
+
+        // Welcome email — sent once, on first profile creation (the moment we first have
+        // their email). Confirms receipt + sets the expectation of an approval review.
+        await notify(
+          emailTrimmed,
+          "أهلاً بك في عِمارة",
+          notificationEmail({
+            heading: `أهلاً بك، ${company_name.trim()}`,
+            body: "شكراً لتسجيلك كمزود خدمة في عِمارة. تم استلام ملف شركتك ومستنداتك، وهي الآن قيد المراجعة من فريقنا. سنُرسل لك بريداً فور قبول حسابك لتتمكن من تقديم عروضك على طلبات الخدمة.",
+            ctaLabel: "عرض لوحة التحكم",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "provider_welcome",
+        );
       }
 
       res.json({ ok: true });
@@ -932,7 +977,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // UNIQUE(offer_id) makes this idempotent if the owner re-accepts.
         const { data: acceptedOffer } = await supabaseAdmin
           .from("provider_offers")
-          .select("id, provider_id, price_total")
+          .select("id, provider_id, price_total, providers(email)")
           .eq("id", req.params.id as string)
           .single();
         if (acceptedOffer) {
@@ -948,6 +993,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             },
             { onConflict: "offer_id" }
           );
+
+          // Notify the winning provider — their offer was accepted (providers have an email).
+          await notify(
+            (acceptedOffer.providers as any)?.email,
+            "تم قبول عرضك — عِمارة",
+            notificationEmail({
+              heading: "مبروك! تم قبول عرضك",
+              body: "قام المالك بقبول عرضك على طلب الخدمة. سجّل دخولك لمتابعة تفاصيل الصفقة والخطوات التالية.",
+              ctaLabel: "عرض الصفقة",
+              ctaUrl: "https://emaraa.app",
+            }),
+            "offer_accepted",
+          );
         }
       }
 
@@ -957,33 +1015,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Helper: send a plain SMS via Authentica (fire-and-forget)
-  async function sendSms(phone: string, message: string, messageType?: string) {
-    const e164 = phone.startsWith("+") ? phone : "+966" + phone.substring(1);
-    let status = "sent";
-    let errorText: string | null = null;
-    try {
-      const resp = await fetch(`${AUTHENTICA_BASE}/send-sms`, {
-        method: "POST",
-        headers: authenticaHeaders,
-        body: JSON.stringify({ phone: e164, message }),
-      });
-      if (!resp.ok) {
-        status = "failed";
-        errorText = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 300)}`;
-      }
-    } catch (err: any) {
-      status = "failed";
-      errorText = (err?.message ?? "network error").slice(0, 300);
+  // Helper: send a notification email via Zoho. MUST be awaited by callers — on Vercel the
+  // lambda freezes the instant the handler responds, so a fire-and-forget send would be lost.
+  // Notification SMS was removed (2026-06-17): Authentica's send-sms requires a registered
+  // Sender Name, which needs a CR we don't have yet. OTP still uses Authentica (shared sender).
+  // When a Sender Name is approved, SMS can be reintroduced alongside email.
+  async function notify(
+    email: string | null | undefined,
+    subject: string,
+    html: string,
+    kind: string,
+  ) {
+    if (!email) return; // no address on file → nothing to send (e.g. owners have no email yet)
+    // Test mode (local + preview): never send real emails — log as suppressed so the flow
+    // is still observable. Production (OTP_TEST_MODE unset) sends normally.
+    if (OTP_TEST_MODE) {
+      await supabaseAdmin
+        .from("email_log")
+        .insert([{ to_email: email, subject, kind, status: "suppressed_test", error: null }])
+        .then(() => {}, () => {});
+      return;
     }
-    // Record every send for billing reconciliation + failure visibility (fire-and-forget).
-    supabaseAdmin
-      .from("sms_log")
-      .insert([{ phone: e164, message_type: messageType ?? null, status, error: errorText }])
-      .then(() => {}, () => {});
-    if (status === "failed" && process.env.NODE_ENV !== "production") {
-      console.error(`[sendSms] failed to ${e164}: ${errorText}`);
-    }
+    await sendEmail(supabaseAdmin, { to: email, subject, html, kind });
   }
 
   // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
@@ -1008,47 +1061,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: offer } = await supabaseAdmin
         .from("provider_offers")
-        .select("id, request_id, provider_id, providers(user_id)")
+        .select("id, request_id, provider_id, providers(email)")
         .eq("id", offerId)
         .single();
       if (!offer) return res.status(404).json({ error: "Offer not found" });
 
-      const { data: request } = await supabaseAdmin
-        .from("requests")
-        .select("owner_id")
-        .eq("id", offer.request_id)
-        .single();
+      // Notify provider — offer confirmed (providers have an email on file)
+      const providerEmail = (offer.providers as any)?.email as string | undefined;
+      await notify(
+        providerEmail,
+        "تم إرسال عرضك — عِمارة",
+        notificationEmail({
+          heading: "تم إرسال عرضك بنجاح",
+          body: "وصلنا عرضك على طلب الخدمة. سنُعلمك فور قبوله من قِبل المالك.",
+          ctaLabel: "عرض لوحة التحكم",
+          ctaUrl: "https://emaraa.app",
+        }),
+        "offer_submitted",
+      );
 
-      // Notify provider — offer confirmed
-      const providerUserId = (offer.providers as any)?.user_id;
-      if (providerUserId) {
-        const { data: pu } = await supabaseAdmin
-          .from("users")
-          .select("phone")
-          .eq("id", providerUserId)
-          .single();
-        if (pu?.phone)
-          sendSms(
-            pu.phone,
-            "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك.",
-            "offer_submitted"
-          ).catch(() => {});
-      }
-
-      // Notify owner — new offer arrived
-      if (request?.owner_id) {
-        const { data: ou } = await supabaseAdmin
-          .from("users")
-          .select("phone")
-          .eq("id", request.owner_id)
-          .single();
-        if (ou?.phone)
-          sendSms(
-            ou.phone,
-            "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app",
-            "new_offer"
-          ).catch(() => {});
-      }
+      // Notify owner — new offer arrived: SKIPPED. Owners register by phone only and have no
+      // email on file (users table is phone-only). Re-enable once owner email is collected,
+      // or when an approved Authentica Sender Name lets us send the owner an SMS again.
 
       res.json({ success: true });
     } catch {
@@ -1078,23 +1112,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: providers } = await supabaseAdmin
         .from("providers")
-        .select("user_id")
+        .select("email")
         .eq("approved", true)
         .eq("city", "الرياض");
 
+      // Email each approved Riyadh provider. Sequential awaits — fine at current provider
+      // counts (~tens); revisit with a background worker if this list grows into the hundreds.
       if (providers?.length) {
+        const html = notificationEmail({
+          heading: "طلب خدمة جديد في الرياض",
+          body: "تم نشر طلب خدمة جديد في الرياض. سجّل دخولك على عِمارة لتقديم عرضك قبل المزودين الآخرين.",
+          ctaLabel: "تقديم عرض الآن",
+          ctaUrl: "https://emaraa.app",
+        });
         for (const p of providers) {
-          const { data: u } = await supabaseAdmin
-            .from("users")
-            .select("phone")
-            .eq("id", p.user_id)
-            .single();
-          if (u?.phone)
-            sendSms(
-              u.phone,
-              "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app",
-              "new_request"
-            ).catch(() => {});
+          await notify((p as any).email, "طلب خدمة جديد في الرياض — عِمارة", html, "new_request");
         }
       }
 
@@ -1131,14 +1163,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(409).json({ error: "Phone already registered" });
       }
 
-      // Bypass mode: skip Authentica — accept any 4-digit code for testing
-      if (process.env.OTP_BYPASS === "true") {
-        return res.json({ success: true, bypass: true });
-      }
-
-      // Per-number test bypass: hardcoded test phones always accept code 0100, no SMS sent
-      const TEST_PHONES = ["0501315725", "0543977679"];
-      if (TEST_PHONES.includes(phone)) {
+      // Env-gated test login: whitelisted fake numbers skip Authentica (no SMS sent).
+      // Active only where OTP_TEST_MODE=true (local + preview) — never in production.
+      if (isOtpTestNumber(phone)) {
         return res.json({ success: true, bypass: true });
       }
 
@@ -1202,13 +1229,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid role" });
       }
 
-      // Per-number test bypass: hardcoded test phones accept code 0100 without calling Authentica
-      const TEST_PHONES = ["0501315725", "0543977679"];
-      const isTestPhone = TEST_PHONES.includes(phone);
-      const isTestCode = code === "0100";
-
-      // Bypass mode: accept any 4-digit code without calling Authentica
-      if (!isTestPhone && process.env.OTP_BYPASS !== "true") {
+      // Env-gated test login (OTP_TEST_MODE, never set in production). A whitelisted fake
+      // number logs in with the fixed OTP_TEST_CODE; a wrong code is rejected. Any other
+      // number falls through to the real Authentica verification.
+      if (isOtpTestNumber(phone)) {
+        if (code !== OTP_TEST_CODE) {
+          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          return res.status(400).json({ error: "Invalid OTP" });
+        }
+      } else {
         const e164 = "+966" + phone.substring(1);
         const r = await fetch(`${AUTHENTICA_BASE}/verify-otp`, {
           method: "POST",
@@ -1221,8 +1250,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
           return res.status(400).json({ error: "Invalid OTP" });
         }
-      } else if (isTestPhone && !isTestCode) {
-        return res.status(400).json({ error: "Invalid OTP" });
       }
 
       // OTP verified — create or find user
@@ -1361,22 +1388,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (approved) {
         const { data: provider } = await supabaseAdmin
           .from("providers")
-          .select("user_id")
+          .select("email")
           .eq("id", id)
           .single();
-        if (provider?.user_id) {
-          const { data: u } = await supabaseAdmin
-            .from("users")
-            .select("phone")
-            .eq("id", provider.user_id)
-            .single();
-          if (u?.phone)
-            sendSms(
-              u.phone,
-              "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app",
-              "provider_approved"
-            ).catch(() => {});
-        }
+        await notify(
+          provider?.email,
+          "تم قبول حسابك — عِمارة",
+          notificationEmail({
+            heading: "تهانينا! تم قبول حسابك",
+            body: "تم قبول حساب مزود الخدمة الخاص بك في عِمارة. يمكنك الآن تقديم عروضك على طلبات الخدمة.",
+            ctaLabel: "تصفّح الطلبات",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "provider_approved",
+        );
       }
 
       res.json({ success: true });

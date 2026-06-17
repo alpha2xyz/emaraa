@@ -44,8 +44,9 @@ export default function ProviderProfile() {
       companyInfo: "بيانات الشركة",
       companyName: "اسم الشركة",
       companyPlaceholder: "مثال: شركة الخدمات المتكاملة",
-      email: "البريد الإلكتروني (اختياري)",
+      email: "البريد الإلكتروني",
       emailPlaceholder: "example@company.com",
+      errorEmail: "البريد الإلكتروني مطلوب وصيغته صحيحة (example@company.com)",
       city: "المدينة",
       cityPlaceholder: "مثال: الرياض",
       description: "نبذة عن الشركة",
@@ -71,8 +72,9 @@ export default function ProviderProfile() {
       companyInfo: "Company Information",
       companyName: "Company Name",
       companyPlaceholder: "Example: Integrated Services Company",
-      email: "Email (Optional)",
+      email: "Email",
       emailPlaceholder: "example@company.com",
+      errorEmail: "A valid email is required (example@company.com)",
       city: "City",
       cityPlaceholder: "Example: Riyadh",
       description: "Company Description",
@@ -181,6 +183,12 @@ export default function ProviderProfile() {
         throw new Error("documents_required");
       }
 
+      // البريد الإلكتروني مطلوب — نستخدمه لإرسال إشعارات المنصة (الترحيب، قبول الحساب، العروض)
+      const emailTrimmed = formData.email.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+        throw new Error("email_required");
+      }
+
       const userId = localStorage.getItem("userId");
       if (!userId) throw new Error("User not found");
 
@@ -230,7 +238,7 @@ export default function ProviderProfile() {
         },
         body: JSON.stringify({
           company_name: formData.company_name,
-          email: formData.email || null,
+          email: emailTrimmed,
           commercial_register_url: commercialRegisterPath,
           company_profile_url: companyProfilePath,
           fal_license_url: falLicensePath,
@@ -254,6 +262,8 @@ export default function ProviderProfile() {
 
       if (error.message === "documents_required") {
         errorMessage = t.errorDocuments;
+      } else if (error.message === "email_required") {
+        errorMessage = t.errorEmail;
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -400,10 +410,13 @@ export default function ProviderProfile() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">{t.email}</Label>
+                <Label htmlFor="email">
+                  {t.email} <span style={{ color: "var(--err)" }}>*</span>
+                </Label>
                 <Input
                   id="email"
                   type="email"
+                  required
                   placeholder={t.emailPlaceholder}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
