@@ -311,6 +311,8 @@ export default function OwnerOnboarding() {
     // Step 8 — success toast
     toast({
       title: "تم إرسال طلبك بنجاح! سيتواصل معك المزودون قريباً.",
+      description:
+        "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض — بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض.",
       variant: "default",
     });
 

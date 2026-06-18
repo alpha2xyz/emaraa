@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Home,
   Inbox,
+  Info,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -473,6 +474,21 @@ export default function OwnerDashboard() {
                     {lang === "ar"
                       ? "التعديل محجوب — وصلتك عروض على طلبك. ارفض جميع العروض لتتمكن من تعديل الطلب من جديد."
                       : "Editing locked — you've received offers on your request. Reject all offers to edit the request again."}
+                  </span>
+                </div>
+              )}
+
+              {/* Editable-now notice — you can edit only until the first offer arrives */}
+              {!isRequestLocked && !isEditing && (
+                <div
+                  className="flex items-start gap-2 rounded-lg px-4 py-3 text-sm"
+                  style={{ background: "var(--owner-soft)", color: "var(--owner)", border: "1px solid rgba(13,184,211,0.35)" }}
+                >
+                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>
+                    {lang === "ar"
+                      ? "يمكنك تعديل طلبك الآن. بمجرد وصول أول عرض سيُقفل التعديل حتى ترفض جميع العروض — فتأكد أن جميع تفاصيلك وملاحظاتك مكتملة."
+                      : "You can edit your request now. Once the first offer arrives, editing locks until you reject all offers — so make sure all your details and notes are complete."}
                   </span>
                 </div>
               )}
