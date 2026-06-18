@@ -877,15 +877,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           `نوع العقار: ${btype}`,
           `المدينة: ${prop?.city ?? "—"}`,
           `عدد الوحدات: ${prop?.units_count ?? "—"}`,
-          request.description ? `ملاحظات: ${request.description}` : "",
-        ].filter(Boolean).join("\n");
+          // Always show the notes line — even when empty — so the owner can confirm
+          // they included everything, and notice if they forgot to add details.
+          `ملاحظاتك للمزودين: ${request.description ? request.description : "(لم تُضف أي ملاحظات)"}`,
+        ].join("\n");
         await notify(
           ownerU.email,
           "تم استلام طلبك — عِمارة",
           notificationEmail({
             heading: "تم استلام طلب الخدمة",
-            body: `استلمنا طلبك بنجاح وهو الآن متاح للمزودين المعتمدين في مدينتك.\n\nتفاصيل الطلب:\n${lines}\n\nسنُعلمك فور وصول أول عرض.`,
-            ctaLabel: "عرض لوحة التحكم",
+            body: `استلمنا طلبك بنجاح وهو الآن متاح للمزودين المعتمدين في مدينتك.\n\nتفاصيل الطلب:\n${lines}\n\nراجِع التفاصيل أعلاه — وإذا نسيت إضافة أي ملاحظة مهمة للمزودين، يمكنك تعديل طلبك من لوحة التحكم قبل وصول العروض.\n\nسنُعلمك فور وصول أول عرض.`,
+            ctaLabel: "مراجعة طلبي وتعديله",
             ctaUrl: "https://emaraa.app",
           }),
           "owner_request_created",
