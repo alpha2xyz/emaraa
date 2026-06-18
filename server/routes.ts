@@ -436,18 +436,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const token = req.headers.authorization?.replace("Bearer ", "").trim();
       if (!token) return res.status(401).json({ error: "Unauthorized" });
 
-      // Authorize: a valid (non-expired) user session, or a valid admin session.
+      // Identify the requester: a valid (non-expired) user session (→ userId), or an admin session.
       const { data: session } = await supabaseAdmin
         .from("sessions")
-        .select("expires_at")
+        .select("user_id, expires_at")
         .eq("token", token)
         .maybeSingle();
-      let authorized = !!(session && new Date(session.expires_at) >= new Date());
-      if (!authorized) {
-        const { data: isAdmin } = await supabase.rpc("verify_admin_session", { p_token: token });
-        authorized = !!isAdmin;
+      const sessionValid = !!(session && new Date(session.expires_at) >= new Date());
+      const requesterUserId: string | null = sessionValid ? (session!.user_id as string) : null;
+      let isAdmin = false;
+      if (!sessionValid) {
+        const { data: adminOk } = await supabase.rpc("verify_admin_session", { p_token: token });
+        isAdmin = !!adminOk;
       }
-      if (!authorized) return res.status(401).json({ error: "Unauthorized" });
+      if (!requesterUserId && !isAdmin) return res.status(401).json({ error: "Unauthorized" });
 
       const bucket = String(req.query.bucket || "");
       const path = String(req.query.path || "");
@@ -455,6 +457,64 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!ALLOWED_BUCKETS.has(bucket) || !path) {
         return res.status(400).json({ error: "Invalid bucket or path" });
       }
+
+      // ── Object-level authorization ──────────────────────────────────────────
+      // Being logged in is NOT enough: only hand out files the requester may actually see.
+      // Ownership is derived from the data (path looked up in the DB), never assumed from the
+      // bucket/path string — this mirrors exactly what the UI exposes.
+      let allowed = isAdmin; // admin sees everything
+
+      if (!allowed && bucket === "provider-documents") {
+        // Find which provider owns this exact path, and which document it is. DB lookup is
+        // format-agnostic (handles both legacy `providers/x.pdf` and scoped `uid/folder/x.pdf`).
+        let owner: { id: string; user_id: string } | null = null;
+        let docCol: string | null = null;
+        for (const col of ["company_profile_url", "commercial_register_url", "fal_license_url"]) {
+          const { data: hit } = await supabaseAdmin
+            .from("providers")
+            .select("id, user_id")
+            .eq(col, path)
+            .maybeSingle();
+          if (hit) { owner = hit as any; docCol = col; break; }
+        }
+        if (owner) {
+          if (requesterUserId === owner.user_id) {
+            allowed = true; // the provider viewing their own document
+          } else if (docCol === "company_profile_url" && requesterUserId) {
+            // Company profile is visible to an owner who received an offer from this provider
+            // on one of their requests (mirrors the owner-dashboard "Company Profile" button).
+            const { data: link } = await supabaseAdmin
+              .from("provider_offers")
+              .select("id, requests!inner(owner_id)")
+              .eq("provider_id", owner.id)
+              .eq("requests.owner_id", requesterUserId)
+              .limit(1)
+              .maybeSingle();
+            allowed = !!link;
+          }
+          // commercial_register_url + fal_license_url: provider-or-admin only → stays denied.
+        }
+      }
+
+      if (!allowed && bucket === "provider-offers") {
+        // Offer PDFs are stored by filename only — derive ownership from the offer row.
+        const { data: offer } = await supabaseAdmin
+          .from("provider_offers")
+          .select("status, providers(user_id), requests(owner_id)")
+          .eq("offer_file_url", path)
+          .maybeSingle();
+        if (offer) {
+          const providerUserId = (offer.providers as any)?.user_id;
+          const ownerId = (offer.requests as any)?.owner_id;
+          if (requesterUserId && requesterUserId === providerUserId) {
+            allowed = true; // the provider who submitted the offer
+          } else if (requesterUserId && requesterUserId === ownerId && offer.status === "accepted") {
+            allowed = true; // the request owner — only after accepting (mirrors the PDF-lock rule)
+          }
+        }
+      }
+
+      if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
       const { data, error } = await supabaseAdmin.storage
         .from(bucket)
