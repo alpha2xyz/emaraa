@@ -107,18 +107,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ ok: true });
   });
 
-  // Update current user's profile (name)
+  // Update current user's profile (name and/or email). Email is optional — owners use it to
+  // opt in to email notifications about their requests; "" clears it.
   app.put("/api/user/profile", requireSession, async (req, res) => {
     try {
-      const { name } = req.body;
-      if (!name || !String(name).trim()) {
-        return res.status(400).json({ error: "name_required" });
+      const { name, email } = req.body;
+      const update: Record<string, any> = {};
+      if (name !== undefined) {
+        if (!String(name).trim()) return res.status(400).json({ error: "name_required" });
+        update.name = String(name).trim();
+      }
+      if (email !== undefined) {
+        const e = String(email).trim();
+        if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+          return res.status(400).json({ error: "invalid_email" });
+        }
+        update.email = e || null;
+      }
+      if (Object.keys(update).length === 0) {
+        return res.status(400).json({ error: "nothing_to_update" });
       }
       const userId = (req as any).userId;
-      const { error } = await supabaseAdmin
-        .from("users")
-        .update({ name: String(name).trim() })
-        .eq("id", userId);
+      const { error } = await supabaseAdmin.from("users").update(update).eq("id", userId);
       if (error) throw error;
       res.json({ ok: true });
     } catch (err: any) {
@@ -848,6 +858,40 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .select()
         .single();
       if (error || !request) throw error;
+
+      // Owner email (opt-in): confirm the request with its details, if the owner saved an email.
+      const { data: ownerU } = await supabaseAdmin
+        .from("users")
+        .select("email, name")
+        .eq("id", data.owner_id)
+        .single();
+      if (ownerU?.email) {
+        const { data: prop } = await supabaseAdmin
+          .from("properties")
+          .select("name, building_type, city, units_count")
+          .eq("id", property_id)
+          .single();
+        const btype = prop?.building_type === "residential" ? "سكني" : prop?.building_type === "commercial" ? "تجاري" : (prop?.building_type ?? "—");
+        const lines = [
+          `العقار: ${prop?.name ?? "—"}`,
+          `نوع العقار: ${btype}`,
+          `المدينة: ${prop?.city ?? "—"}`,
+          `عدد الوحدات: ${prop?.units_count ?? "—"}`,
+          request.description ? `ملاحظات: ${request.description}` : "",
+        ].filter(Boolean).join("\n");
+        await notify(
+          ownerU.email,
+          "تم استلام طلبك — عِمارة",
+          notificationEmail({
+            heading: "تم استلام طلب الخدمة",
+            body: `استلمنا طلبك بنجاح وهو الآن متاح للمزودين المعتمدين في مدينتك.\n\nتفاصيل الطلب:\n${lines}\n\nسنُعلمك فور وصول أول عرض.`,
+            ctaLabel: "عرض لوحة التحكم",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "owner_request_created",
+        );
+      }
+
       res.status(201).json(request);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1006,6 +1050,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             }),
             "offer_accepted",
           );
+
+          // Notify the owner — confirmation of their acceptance (opt-in email).
+          const { data: ownerU } = await supabaseAdmin
+            .from("users")
+            .select("email")
+            .eq("id", request.owner_id)
+            .single();
+          await notify(
+            ownerU?.email,
+            "تم قبول العرض — عِمارة",
+            notificationEmail({
+              heading: "تم قبول العرض بنجاح",
+              body: "لقد قبلت عرض المزود على طلبك. يمكنك الآن مراجعة ملف العرض الكامل وبيانات التواصل مع المزود من لوحة التحكم لإتمام الخطوات التالية.",
+              ctaLabel: "عرض التفاصيل",
+              ctaUrl: "https://emaraa.app",
+            }),
+            "owner_offer_accepted",
+          );
         }
       }
 
@@ -1080,9 +1142,30 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         "offer_submitted",
       );
 
-      // Notify owner — new offer arrived: SKIPPED. Owners register by phone only and have no
-      // email on file (users table is phone-only). Re-enable once owner email is collected,
-      // or when an approved Authentica Sender Name lets us send the owner an SMS again.
+      // Notify owner — new offer arrived (opt-in: only if the owner saved an email).
+      const { data: reqRow } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", offer.request_id)
+        .single();
+      if (reqRow?.owner_id) {
+        const { data: ownerU } = await supabaseAdmin
+          .from("users")
+          .select("email")
+          .eq("id", reqRow.owner_id)
+          .single();
+        await notify(
+          ownerU?.email,
+          "لديك عرض جديد — عِمارة",
+          notificationEmail({
+            heading: "وصلك عرض جديد على طلبك",
+            body: "قدّم أحد المزودين عرضاً على طلب الخدمة الخاص بك. سجّل دخولك لمراجعة العرض وملف الشركة واتخاذ قرارك.",
+            ctaLabel: "مراجعة العرض",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "owner_new_offer",
+        );
+      }
 
       res.json({ success: true });
     } catch {

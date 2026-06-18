@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   phone: text("phone").notNull().unique(),
   name: text("name"),
+  email: text("email"), // optional — owners opt in to email notifications about their requests
   role: text("role").notNull().default("owner"), // owner, provider
   created_at: timestamp("created_at").defaultNow(),
 });
@@ -14,6 +15,7 @@ export const users = pgTable("users", {
 export const insertUserSchema = z.object({
   phone: z.string(),
   name: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
   role: z.string().optional(),
 });
 
