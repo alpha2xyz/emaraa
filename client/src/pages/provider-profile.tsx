@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, Loader2, Upload, FileText, CheckCircle2, Clock, ChevronRight, ChevronLeft, Lock, AlertTriangle } from "lucide-react";
+import { Save, Loader2, Upload, FileText, CheckCircle2, Clock, ChevronRight, ChevronLeft, Lock, AlertTriangle, Info } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +54,7 @@ export default function ProviderProfile() {
       documents: "المستندات المطلوبة (إجباري)",
       commercialRegister: "السجل التجاري",
       companyProfile: "بروفايل الشركة",
+      profileShared: "سيُشارَك ملفك التعريفي مع المالك عند تقديم عرضك على طلبه.",
       falLicense: "رخصة فال",
       chooseFile: "اختر ملف",
       fileTypes: "PDF أو صورة (بحد أقصى 10MB)",
@@ -82,6 +83,7 @@ export default function ProviderProfile() {
       documents: "Required Documents (Mandatory)",
       commercialRegister: "Commercial Register",
       companyProfile: "Company Profile",
+      profileShared: "Your company profile is shared with the owner when you submit an offer.",
       falLicense: "FAL License",
       chooseFile: "Choose File",
       fileTypes: "PDF or Image (max 10MB)",
@@ -524,6 +526,13 @@ export default function ProviderProfile() {
                   ) : null}
                 </div>
                 {!isApproved && <p className="text-xs text-muted-foreground">{t.fileTypes}</p>}
+                <p
+                  className="text-xs flex items-start gap-1.5 leading-relaxed"
+                  style={{ color: "var(--provider)" }}
+                >
+                  <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>{t.profileShared}</span>
+                </p>
               </div>
 
               {/* رخصة فال */}

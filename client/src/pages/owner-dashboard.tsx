@@ -14,10 +14,12 @@ import {
   ExternalLink,
   Home,
   Inbox,
+  Info,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -188,6 +190,8 @@ export default function OwnerDashboard() {
   const [editCustomUnits, setEditCustomUnits] = useState("");
   const [editMapUrl, setEditMapUrl] = useState("");
   const [editNationalAddress, setEditNationalAddress] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editEmail, setEditEmail] = useState("");
 
   // Offer accept dialog
   const [acceptingOfferId, setAcceptingOfferId] = useState<string | null>(null);
@@ -227,6 +231,19 @@ export default function OwnerDashboard() {
       });
       if (!res.ok) return [];
       return res.json();
+    },
+  });
+
+  // Current user profile — for the notification email shown in edit mode
+  const { data: userProfile } = useQuery({
+    queryKey: ["owner-user-profile"],
+    queryFn: async () => {
+      const token = localStorage.getItem("sessionToken");
+      if (!token) return null;
+      const res = await fetch("/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.ok ? res.json() : null;
     },
   });
 
@@ -284,6 +301,8 @@ export default function OwnerDashboard() {
     setEditCustomUnits("");
     setEditMapUrl(property.map_url ?? "");
     setEditNationalAddress(property.national_address ?? "");
+    setEditNotes(request?.description ?? "");
+    setEditEmail(userProfile?.email ?? "");
     setIsEditing(true);
     setShowEditLocked(false);
   }
@@ -335,13 +354,44 @@ export default function OwnerDashboard() {
         const json = await res.json().catch(() => ({}));
         throw new Error((json as any).error ?? "Failed to save");
       }
-      return res.json();
+
+      // Save the request notes (description) too
+      if (request?.id) {
+        const reqRes = await fetch(`/api/requests/${request.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ description: editNotes.trim() || null }),
+        });
+        if (!reqRes.ok) {
+          const j = await reqRes.json().catch(() => ({}));
+          throw new Error((j as any).error ?? "Failed to save notes");
+        }
+      }
+
+      // Save the optional notification email
+      const emailRes = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: editEmail.trim() }),
+      });
+      if (!emailRes.ok) {
+        const j = await emailRes.json().catch(() => ({}));
+        throw new Error(
+          (j as any).error === "invalid_email"
+            ? lang === "ar"
+              ? "البريد الإلكتروني غير صحيح"
+              : "Invalid email"
+            : (j as any).error ?? "Failed to save email"
+        );
+      }
     },
     onSuccess: () => {
       toast({
         title: lang === "ar" ? "تم حفظ التعديلات" : "Changes saved",
       });
       queryClient.invalidateQueries({ queryKey: ["owner-property"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-user-profile"] });
       setIsEditing(false);
     },
     onError: (err: Error) => {
@@ -473,6 +523,21 @@ export default function OwnerDashboard() {
                     {lang === "ar"
                       ? "التعديل محجوب — وصلتك عروض على طلبك. ارفض جميع العروض لتتمكن من تعديل الطلب من جديد."
                       : "Editing locked — you've received offers on your request. Reject all offers to edit the request again."}
+                  </span>
+                </div>
+              )}
+
+              {/* Editable-now notice — you can edit only until the first offer arrives */}
+              {!isRequestLocked && !isEditing && (
+                <div
+                  className="flex items-start gap-2 rounded-lg px-4 py-3 text-sm"
+                  style={{ background: "var(--owner-soft)", color: "var(--owner)", border: "1px solid rgba(13,184,211,0.35)" }}
+                >
+                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>
+                    {lang === "ar"
+                      ? "يمكنك تعديل طلبك الآن. بمجرد وصول أول عرض سيُقفل التعديل حتى ترفض جميع العروض — فتأكد أن جميع تفاصيلك وملاحظاتك مكتملة."
+                      : "You can edit your request now. Once the first offer arrives, editing locks until you reject all offers — so make sure all your details and notes are complete."}
                   </span>
                 </div>
               )}
@@ -776,6 +841,58 @@ export default function OwnerDashboard() {
                       )}
                   </div>
 
+                  {/* Notes for providers */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editNotes">
+                      {lang === "ar" ? "ملاحظات للمزودين" : "Notes for providers"}{" "}
+                      <span className="text-muted-foreground font-normal text-xs">
+                        ({lang === "ar" ? "اختياري" : "optional"})
+                      </span>
+                    </Label>
+                    <Textarea
+                      id="editNotes"
+                      placeholder={
+                        lang === "ar"
+                          ? "أي تفاصيل تريد إيصالها للمزودين..."
+                          : "Any details you want providers to know..."
+                      }
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value.slice(0, 500))}
+                      rows={3}
+                      maxLength={500}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground text-start">{editNotes.length} / 500</p>
+                  </div>
+
+                  {/* Notification email */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editEmail">
+                      {lang === "ar" ? "البريد الإلكتروني للإشعارات" : "Notification email"}{" "}
+                      <span className="text-muted-foreground font-normal text-xs">
+                        ({lang === "ar" ? "اختياري" : "optional"})
+                      </span>
+                    </Label>
+                    <Input
+                      id="editEmail"
+                      type="email"
+                      dir="ltr"
+                      placeholder="example@email.com"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className={`text-start${
+                        editEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim())
+                          ? " border-red-500"
+                          : ""
+                      }`}
+                    />
+                    {editEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim()) && (
+                      <p className="text-red-500 text-xs">
+                        {lang === "ar" ? "صيغة البريد الإلكتروني غير صحيحة" : "Invalid email format"}
+                      </p>
+                    )}
+                  </div>
+
                   {/* Actions */}
                   <div className="flex gap-3 pt-2">
                     <Button
@@ -784,7 +901,9 @@ export default function OwnerDashboard() {
                       disabled={
                         saveMutation.isPending ||
                         (editNationalAddress.trim() !== "" &&
-                          !/^[A-Z]{4}\d{4}$/.test(editNationalAddress.trim()))
+                          !/^[A-Z]{4}\d{4}$/.test(editNationalAddress.trim())) ||
+                        (editEmail.trim() !== "" &&
+                          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim()))
                       }
                       className="gap-1.5 text-white"
                       style={{ background: "var(--owner)", color: "#04222c" }}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Home } from "lucide-react";
+import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Home, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/hooks/use-lang";
 import {
@@ -138,6 +138,7 @@ export default function OwnerOnboarding() {
   const [mapUrl, setMapUrl] = useState("");
   const [nationalAddress, setNationalAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
 
   // UI state
   const [showValidation, setShowValidation] = useState(false);
@@ -246,6 +247,16 @@ export default function OwnerOnboarding() {
     // Step 4 — extract property id
     const propertyId = propertyData.id;
 
+    // Step 4b — save optional notification email FIRST, so the request-created
+    // confirmation email can fire from POST /api/requests.
+    if (ownerEmail.trim() && token) {
+      await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: ownerEmail.trim() }),
+      }).catch(() => {});
+    }
+
     // Step 5 — POST /api/requests (soft failure)
     let newRequestId: string | null = null;
     try {
@@ -300,6 +311,8 @@ export default function OwnerOnboarding() {
     // Step 8 — success toast
     toast({
       title: "تم إرسال طلبك بنجاح! سيتواصل معك المزودون قريباً.",
+      description:
+        "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض — بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض.",
       variant: "default",
     });
 
@@ -679,6 +692,39 @@ export default function OwnerOnboarding() {
                   className="resize-none text-base"
                 />
                 <p className="text-xs text-muted-foreground text-start">{notes.length} / 500</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ── Notification email (optional) ── */}
+          <div>
+            <p className="flex items-center gap-2 text-base font-semibold mb-3">
+              <span
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-sm"
+                style={{ background: "var(--owner-soft)", color: "var(--owner)" }}
+              >
+                <Mail className="w-4 h-4" />
+              </span>
+              البريد الإلكتروني للإشعارات (اختياري)
+            </p>
+            <Card className="rounded-xl shadow-sm">
+              <CardContent className="pt-6 space-y-2">
+                <Label htmlFor="owner_email" className="text-sm text-muted-foreground">
+                  أضف بريدك لتصلك إشعارات عن طلبك
+                </Label>
+                <Input
+                  id="owner_email"
+                  type="email"
+                  inputMode="email"
+                  dir="ltr"
+                  placeholder="example@email.com"
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  className="text-base text-start"
+                />
+                <p className="text-xs text-muted-foreground text-start">
+                  سنُرسل لك بريداً عند استلام طلبك، ووصول عرض جديد، وقبول العرض — بدون الحاجة لتسجيل الدخول للتحقق.
+                </p>
               </CardContent>
             </Card>
           </div>

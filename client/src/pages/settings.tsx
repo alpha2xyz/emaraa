@@ -20,6 +20,7 @@ export default function Settings() {
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem("userName") || "",
     phone: localStorage.getItem("userPhone") || "",
+    email: "",
     company_name: "",
     city: "",
   });
@@ -32,6 +33,8 @@ export default function Settings() {
       profile: "الملف الشخصي",
       name: "الاسم",
       phone: "رقم الجوال",
+      email: "البريد الإلكتروني (اختياري)",
+      emailHint: "أضف بريدك لتصلك إشعارات عن طلباتك (طلب جديد، عرض جديد، قبول العرض) بدون الحاجة لتسجيل الدخول للتحقق.",
       companyName: "اسم الشركة",
       city: "المدينة",
       completeProfile: "إكمال ملف الشركة",
@@ -47,6 +50,8 @@ export default function Settings() {
       profile: "Profile",
       name: "Name",
       phone: "Phone Number",
+      email: "Email (optional)",
+      emailHint: "Add your email to get notified about your requests (new request, new offer, offer accepted) — no need to log in just to check.",
       companyName: "Company Name",
       city: "City",
       completeProfile: "Complete Company Profile",
@@ -89,6 +94,7 @@ export default function Settings() {
       setProfileData({
         name: (userData as any).name || "",
         phone: (userData as any).phone || "",
+        email: (userData as any).email || "",
         company_name: (userData as any).provider?.company_name || "",
         city: (userData as any).provider?.city || "",
       });
@@ -104,7 +110,7 @@ export default function Settings() {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: profileData.name }),
+        body: JSON.stringify({ name: profileData.name, email: profileData.email }),
       });
       if (!res.ok) throw new Error("update_failed");
 
@@ -204,6 +210,25 @@ export default function Settings() {
               <Input id="phone" value={profileData.phone} disabled className="bg-white/5" />
             )}
           </div>
+
+          {userRole !== "provider" && (
+            <div className="space-y-2">
+              <Label htmlFor="email">{t.email}</Label>
+              {isLoading ? (
+                <Skeleton className="h-10 w-full rounded-xl" />
+              ) : (
+                <Input
+                  id="email"
+                  type="email"
+                  inputMode="email"
+                  placeholder="example@email.com"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                />
+              )}
+              <p className="text-xs text-muted-foreground leading-relaxed">{t.emailHint}</p>
+            </div>
+          )}
 
           {userRole === "provider" && (
             <>

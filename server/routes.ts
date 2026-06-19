@@ -107,18 +107,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ ok: true });
   });
 
-  // Update current user's profile (name)
+  // Update current user's profile (name and/or email). Email is optional — owners use it to
+  // opt in to email notifications about their requests; "" clears it.
   app.put("/api/user/profile", requireSession, async (req, res) => {
     try {
-      const { name } = req.body;
-      if (!name || !String(name).trim()) {
-        return res.status(400).json({ error: "name_required" });
+      const { name, email } = req.body;
+      const update: Record<string, any> = {};
+      if (name !== undefined) {
+        if (!String(name).trim()) return res.status(400).json({ error: "name_required" });
+        update.name = String(name).trim();
+      }
+      if (email !== undefined) {
+        const e = String(email).trim();
+        if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+          return res.status(400).json({ error: "invalid_email" });
+        }
+        update.email = e || null;
+      }
+      if (Object.keys(update).length === 0) {
+        return res.status(400).json({ error: "nothing_to_update" });
       }
       const userId = (req as any).userId;
-      const { error } = await supabaseAdmin
-        .from("users")
-        .update({ name: String(name).trim() })
-        .eq("id", userId);
+      const { error } = await supabaseAdmin.from("users").update(update).eq("id", userId);
       if (error) throw error;
       res.json({ ok: true });
     } catch (err: any) {
@@ -436,18 +446,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const token = req.headers.authorization?.replace("Bearer ", "").trim();
       if (!token) return res.status(401).json({ error: "Unauthorized" });
 
-      // Authorize: a valid (non-expired) user session, or a valid admin session.
+      // Identify the requester: a valid (non-expired) user session (→ userId), or an admin session.
       const { data: session } = await supabaseAdmin
         .from("sessions")
-        .select("expires_at")
+        .select("user_id, expires_at")
         .eq("token", token)
         .maybeSingle();
-      let authorized = !!(session && new Date(session.expires_at) >= new Date());
-      if (!authorized) {
-        const { data: isAdmin } = await supabase.rpc("verify_admin_session", { p_token: token });
-        authorized = !!isAdmin;
+      const sessionValid = !!(session && new Date(session.expires_at) >= new Date());
+      const requesterUserId: string | null = sessionValid ? (session!.user_id as string) : null;
+      let isAdmin = false;
+      if (!sessionValid) {
+        const { data: adminOk } = await supabase.rpc("verify_admin_session", { p_token: token });
+        isAdmin = !!adminOk;
       }
-      if (!authorized) return res.status(401).json({ error: "Unauthorized" });
+      if (!requesterUserId && !isAdmin) return res.status(401).json({ error: "Unauthorized" });
 
       const bucket = String(req.query.bucket || "");
       const path = String(req.query.path || "");
@@ -455,6 +467,64 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!ALLOWED_BUCKETS.has(bucket) || !path) {
         return res.status(400).json({ error: "Invalid bucket or path" });
       }
+
+      // ── Object-level authorization ──────────────────────────────────────────
+      // Being logged in is NOT enough: only hand out files the requester may actually see.
+      // Ownership is derived from the data (path looked up in the DB), never assumed from the
+      // bucket/path string — this mirrors exactly what the UI exposes.
+      let allowed = isAdmin; // admin sees everything
+
+      if (!allowed && bucket === "provider-documents") {
+        // Find which provider owns this exact path, and which document it is. DB lookup is
+        // format-agnostic (handles both legacy `providers/x.pdf` and scoped `uid/folder/x.pdf`).
+        let owner: { id: string; user_id: string } | null = null;
+        let docCol: string | null = null;
+        for (const col of ["company_profile_url", "commercial_register_url", "fal_license_url"]) {
+          const { data: hit } = await supabaseAdmin
+            .from("providers")
+            .select("id, user_id")
+            .eq(col, path)
+            .maybeSingle();
+          if (hit) { owner = hit as any; docCol = col; break; }
+        }
+        if (owner) {
+          if (requesterUserId === owner.user_id) {
+            allowed = true; // the provider viewing their own document
+          } else if (docCol === "company_profile_url" && requesterUserId) {
+            // Company profile is visible to an owner who received an offer from this provider
+            // on one of their requests (mirrors the owner-dashboard "Company Profile" button).
+            const { data: link } = await supabaseAdmin
+              .from("provider_offers")
+              .select("id, requests!inner(owner_id)")
+              .eq("provider_id", owner.id)
+              .eq("requests.owner_id", requesterUserId)
+              .limit(1)
+              .maybeSingle();
+            allowed = !!link;
+          }
+          // commercial_register_url + fal_license_url: provider-or-admin only → stays denied.
+        }
+      }
+
+      if (!allowed && bucket === "provider-offers") {
+        // Offer PDFs are stored by filename only — derive ownership from the offer row.
+        const { data: offer } = await supabaseAdmin
+          .from("provider_offers")
+          .select("status, providers(user_id), requests(owner_id)")
+          .eq("offer_file_url", path)
+          .maybeSingle();
+        if (offer) {
+          const providerUserId = (offer.providers as any)?.user_id;
+          const ownerId = (offer.requests as any)?.owner_id;
+          if (requesterUserId && requesterUserId === providerUserId) {
+            allowed = true; // the provider who submitted the offer
+          } else if (requesterUserId && requesterUserId === ownerId && offer.status === "accepted") {
+            allowed = true; // the request owner — only after accepting (mirrors the PDF-lock rule)
+          }
+        }
+      }
+
+      if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
       const { data, error } = await supabaseAdmin.storage
         .from(bucket)
@@ -848,6 +918,42 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .select()
         .single();
       if (error || !request) throw error;
+
+      // Owner email (opt-in): confirm the request with its details, if the owner saved an email.
+      const { data: ownerU } = await supabaseAdmin
+        .from("users")
+        .select("email, name")
+        .eq("id", data.owner_id)
+        .single();
+      if (ownerU?.email) {
+        const { data: prop } = await supabaseAdmin
+          .from("properties")
+          .select("name, building_type, city, units_count")
+          .eq("id", property_id)
+          .single();
+        const btype = prop?.building_type === "residential" ? "سكني" : prop?.building_type === "commercial" ? "تجاري" : (prop?.building_type ?? "—");
+        const lines = [
+          `العقار: ${prop?.name ?? "—"}`,
+          `نوع العقار: ${btype}`,
+          `المدينة: ${prop?.city ?? "—"}`,
+          `عدد الوحدات: ${prop?.units_count ?? "—"}`,
+          // Always show the notes line — even when empty — so the owner can confirm
+          // they included everything, and notice if they forgot to add details.
+          `ملاحظاتك للمزودين: ${request.description ? request.description : "(لم تُضف أي ملاحظات)"}`,
+        ].join("\n");
+        await notify(
+          ownerU.email,
+          "تم استلام طلبك — عِمارة",
+          notificationEmail({
+            heading: "تم استلام طلب الخدمة",
+            body: `استلمنا طلبك بنجاح وهو الآن متاح للمزودين المعتمدين في مدينتك.\n\nتفاصيل الطلب:\n${lines}\n\nراجِع التفاصيل أعلاه — وإذا نسيت إضافة أي ملاحظة مهمة للمزودين، يمكنك تعديل طلبك من لوحة التحكم قبل وصول العروض.\n\nسنُعلمك فور وصول أول عرض.`,
+            ctaLabel: "مراجعة طلبي وتعديله",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "owner_request_created",
+        );
+      }
+
       res.status(201).json(request);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1006,6 +1112,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             }),
             "offer_accepted",
           );
+
+          // Notify the owner — confirmation of their acceptance (opt-in email).
+          const { data: ownerU } = await supabaseAdmin
+            .from("users")
+            .select("email")
+            .eq("id", request.owner_id)
+            .single();
+          await notify(
+            ownerU?.email,
+            "تم قبول العرض — عِمارة",
+            notificationEmail({
+              heading: "تم قبول العرض بنجاح",
+              body: "لقد قبلت عرض المزود على طلبك. يمكنك الآن مراجعة ملف العرض الكامل وبيانات التواصل مع المزود من لوحة التحكم لإتمام الخطوات التالية.",
+              ctaLabel: "عرض التفاصيل",
+              ctaUrl: "https://emaraa.app",
+            }),
+            "owner_offer_accepted",
+          );
         }
       }
 
@@ -1080,9 +1204,30 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         "offer_submitted",
       );
 
-      // Notify owner — new offer arrived: SKIPPED. Owners register by phone only and have no
-      // email on file (users table is phone-only). Re-enable once owner email is collected,
-      // or when an approved Authentica Sender Name lets us send the owner an SMS again.
+      // Notify owner — new offer arrived (opt-in: only if the owner saved an email).
+      const { data: reqRow } = await supabaseAdmin
+        .from("requests")
+        .select("owner_id")
+        .eq("id", offer.request_id)
+        .single();
+      if (reqRow?.owner_id) {
+        const { data: ownerU } = await supabaseAdmin
+          .from("users")
+          .select("email")
+          .eq("id", reqRow.owner_id)
+          .single();
+        await notify(
+          ownerU?.email,
+          "لديك عرض جديد — عِمارة",
+          notificationEmail({
+            heading: "وصلك عرض جديد على طلبك",
+            body: "قدّم أحد المزودين عرضاً على طلب الخدمة الخاص بك. سجّل دخولك لمراجعة العرض وملف الشركة واتخاذ قرارك.",
+            ctaLabel: "مراجعة العرض",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "owner_new_offer",
+        );
+      }
 
       res.json({ success: true });
     } catch {
