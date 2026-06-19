@@ -5,7 +5,14 @@ import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, buildAdminReport } from "./email.js";
+import {
+  sendEmail,
+  buildAdminReport,
+  notificationEmail,
+  commissionEmail,
+  commissionReminderEmail,
+  commissionConfigReady,
+} from "./email.js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -485,6 +492,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "اسم الشركة مطلوب" });
       }
 
+      // Email is REQUIRED for providers — it's the only channel we have to send them
+      // notifications (welcome, account approved, new requests, offer accepted).
+      const emailTrimmed = (email ?? "").trim();
+      const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
+
       const { data: existing } = await supabaseAdmin
         .from("providers")
         .select("id")
@@ -492,11 +504,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .maybeSingle();
 
       if (existing?.id) {
+        // Updates: if an email is supplied it must be valid; we don't wipe an existing one.
+        if (email !== undefined && !emailValid) {
+          return res.status(400).json({ error: "البريد الإلكتروني غير صحيح" });
+        }
         const { error } = await supabaseAdmin
           .from("providers")
           .update({
             company_name: company_name.trim(),
-            ...(email !== undefined && { email }),
+            ...(email !== undefined && { email: emailTrimmed }),
             ...(city !== undefined && { city }),
             ...(commercial_register_url !== undefined && { commercial_register_url }),
             ...(company_profile_url !== undefined && { company_profile_url }),
@@ -505,16 +521,34 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .eq("id", existing.id);
         if (error) return res.status(500).json({ error: error.message });
       } else {
+        // First-time profile creation: email is mandatory.
+        if (!emailValid) {
+          return res.status(400).json({ error: "البريد الإلكتروني مطلوب" });
+        }
         const { error } = await supabaseAdmin.from("providers").insert([{
           user_id: userId,
           company_name: company_name.trim(),
-          email: email || null,
+          email: emailTrimmed,
           city: city || null,
           commercial_register_url: commercial_register_url || null,
           company_profile_url: company_profile_url || null,
           fal_license_url: fal_license_url || null,
         }]);
         if (error) return res.status(500).json({ error: error.message });
+
+        // Welcome email — sent once, on first profile creation (the moment we first have
+        // their email). Confirms receipt + sets the expectation of an approval review.
+        await notify(
+          emailTrimmed,
+          "أهلاً بك في عِمارة",
+          notificationEmail({
+            heading: `أهلاً بك، ${company_name.trim()}`,
+            body: "شكراً لتسجيلك كمزود خدمة في عِمارة. تم استلام ملف شركتك ومستنداتك، وهي الآن قيد المراجعة من فريقنا. سنُرسل لك بريداً فور قبول حسابك لتتمكن من تقديم عروضك على طلبات الخدمة.",
+            ctaLabel: "عرض لوحة التحكم",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "provider_welcome",
+        );
       }
 
       res.json({ ok: true });
@@ -950,22 +984,60 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // UNIQUE(offer_id) makes this idempotent if the owner re-accepts.
         const { data: acceptedOffer } = await supabaseAdmin
           .from("provider_offers")
-          .select("id, provider_id, price_total")
+          .select("id, provider_id, price_total, providers(email)")
           .eq("id", req.params.id as string)
           .single();
         if (acceptedOffer) {
-          await supabaseAdmin.from("deals").upsert(
-            {
-              request_id: offer.request_id,
-              offer_id: acceptedOffer.id,
-              provider_id: acceptedOffer.provider_id,
-              owner_id: request.owner_id,
-              contract_value: acceptedOffer.price_total ?? null,
-              status: "pending",
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "offer_id" }
-          );
+          const { data: dealRow } = await supabaseAdmin
+            .from("deals")
+            .upsert(
+              {
+                request_id: offer.request_id,
+                offer_id: acceptedOffer.id,
+                provider_id: acceptedOffer.provider_id,
+                owner_id: request.owner_id,
+                contract_value: acceptedOffer.price_total ?? null,
+                status: "pending",
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "offer_id" }
+            )
+            .select("id, commission_email_sent_at")
+            .single();
+
+          // Notify the winning provider — their offer was accepted (providers have an email).
+          // If bank details are configured, this becomes the combined "accepted + transfer the
+          // 1% commission" email and starts the 1-day reminder chain. Until then it stays the
+          // plain congrats email and no reminder is scheduled (commission path is inert).
+          // Re-accept guard: only send the money email once — never re-send (or reset the
+          // reminder clock) if this deal already had its commission email.
+          const providerEmail = (acceptedOffer.providers as any)?.email;
+          const alreadyEmailed = !!dealRow?.commission_email_sent_at;
+          if (commissionConfigReady() && !alreadyEmailed) {
+            await notify(
+              providerEmail,
+              "تم قبول عرضك — تحويل عمولة عِمارة (1%)",
+              commissionEmail({ priceTotal: Number(acceptedOffer.price_total) || null }),
+              "commission_request",
+            );
+            // Stamp the deal so the daily reminder cron can find it 24h later.
+            await supabaseAdmin
+              .from("deals")
+              .update({ commission_email_sent_at: new Date().toISOString() })
+              .eq("offer_id", acceptedOffer.id);
+          } else if (!commissionConfigReady()) {
+            await notify(
+              providerEmail,
+              "تم قبول عرضك — عِمارة",
+              notificationEmail({
+                heading: "مبروك! تم قبول عرضك",
+                body: "قام المالك بقبول عرضك على طلب الخدمة. سجّل دخولك لمتابعة تفاصيل الصفقة والخطوات التالية.",
+                ctaLabel: "عرض الصفقة",
+                ctaUrl: "https://emaraa.app",
+              }),
+              "offer_accepted",
+            );
+          }
         }
       }
 
@@ -975,43 +1047,29 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Helper: send a plain SMS via Authentica (fire-and-forget)
-  async function sendSms(phone: string, message: string, messageType?: string) {
-    const e164 = phone.startsWith("+") ? phone : "+966" + phone.substring(1);
-    // Test mode (local + preview): never hit Authentica — no real SMS, no credit spent.
-    // The flow still works; we log it as suppressed so behaviour is observable. Production
-    // (OTP_TEST_MODE unset) sends real notifications normally.
+  // Helper: send a notification email via Zoho. MUST be awaited by callers — on Vercel the
+  // lambda freezes the instant the handler responds, so a fire-and-forget send would be lost.
+  // Notification SMS was removed (2026-06-17): Authentica's send-sms requires a registered
+  // Sender Name, which needs a CR we don't have yet. OTP still uses Authentica (shared sender).
+  // When a Sender Name is approved, SMS can be reintroduced alongside email.
+  async function notify(
+    email: string | null | undefined,
+    subject: string,
+    html: string,
+    kind: string,
+    cc?: string,
+  ) {
+    if (!email) return; // no address on file → nothing to send (e.g. owners have no email yet)
+    // Test mode (local + preview): never send real emails — log as suppressed so the flow
+    // is still observable. Production (OTP_TEST_MODE unset) sends normally.
     if (OTP_TEST_MODE) {
-      supabaseAdmin
-        .from("sms_log")
-        .insert([{ phone: e164, message_type: messageType ?? null, status: "suppressed_test", error: null }])
+      await supabaseAdmin
+        .from("email_log")
+        .insert([{ to_email: email, subject, kind, status: "suppressed_test", error: null }])
         .then(() => {}, () => {});
       return;
     }
-    let status = "sent";
-    let errorText: string | null = null;
-    try {
-      const resp = await fetch(`${AUTHENTICA_BASE}/send-sms`, {
-        method: "POST",
-        headers: authenticaHeaders,
-        body: JSON.stringify({ phone: e164, message }),
-      });
-      if (!resp.ok) {
-        status = "failed";
-        errorText = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 300)}`;
-      }
-    } catch (err: any) {
-      status = "failed";
-      errorText = (err?.message ?? "network error").slice(0, 300);
-    }
-    // Record every send for billing reconciliation + failure visibility (fire-and-forget).
-    supabaseAdmin
-      .from("sms_log")
-      .insert([{ phone: e164, message_type: messageType ?? null, status, error: errorText }])
-      .then(() => {}, () => {});
-    if (status === "failed" && process.env.NODE_ENV !== "production") {
-      console.error(`[sendSms] failed to ${e164}: ${errorText}`);
-    }
+    await sendEmail(supabaseAdmin, { to: email, cc, subject, html, kind });
   }
 
   // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
@@ -1036,47 +1094,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: offer } = await supabaseAdmin
         .from("provider_offers")
-        .select("id, request_id, provider_id, providers(user_id)")
+        .select("id, request_id, provider_id, providers(email)")
         .eq("id", offerId)
         .single();
       if (!offer) return res.status(404).json({ error: "Offer not found" });
 
-      const { data: request } = await supabaseAdmin
-        .from("requests")
-        .select("owner_id")
-        .eq("id", offer.request_id)
-        .single();
+      // Notify provider — offer confirmed (providers have an email on file)
+      const providerEmail = (offer.providers as any)?.email as string | undefined;
+      await notify(
+        providerEmail,
+        "تم إرسال عرضك — عِمارة",
+        notificationEmail({
+          heading: "تم إرسال عرضك بنجاح",
+          body: "وصلنا عرضك على طلب الخدمة. سنُعلمك فور قبوله من قِبل المالك.",
+          ctaLabel: "عرض لوحة التحكم",
+          ctaUrl: "https://emaraa.app",
+        }),
+        "offer_submitted",
+      );
 
-      // Notify provider — offer confirmed
-      const providerUserId = (offer.providers as any)?.user_id;
-      if (providerUserId) {
-        const { data: pu } = await supabaseAdmin
-          .from("users")
-          .select("phone")
-          .eq("id", providerUserId)
-          .single();
-        if (pu?.phone)
-          sendSms(
-            pu.phone,
-            "تم إرسال عرضك بنجاح على عِماره. سنُعلمك فور قبوله من قِبل المالك.",
-            "offer_submitted"
-          ).catch(() => {});
-      }
-
-      // Notify owner — new offer arrived
-      if (request?.owner_id) {
-        const { data: ou } = await supabaseAdmin
-          .from("users")
-          .select("phone")
-          .eq("id", request.owner_id)
-          .single();
-        if (ou?.phone)
-          sendSms(
-            ou.phone,
-            "لديك عرض جديد على طلبك في عِماره. سجّل دخولك لمراجعته: emaraa.vercel.app",
-            "new_offer"
-          ).catch(() => {});
-      }
+      // Notify owner — new offer arrived: SKIPPED. Owners register by phone only and have no
+      // email on file (users table is phone-only). Re-enable once owner email is collected,
+      // or when an approved Authentica Sender Name lets us send the owner an SMS again.
 
       res.json({ success: true });
     } catch {
@@ -1106,23 +1145,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: providers } = await supabaseAdmin
         .from("providers")
-        .select("user_id")
+        .select("email")
         .eq("approved", true)
         .eq("city", "الرياض");
 
+      // Email each approved Riyadh provider. Sequential awaits — fine at current provider
+      // counts (~tens); revisit with a background worker if this list grows into the hundreds.
       if (providers?.length) {
+        const html = notificationEmail({
+          heading: "طلب خدمة جديد في الرياض",
+          body: "تم نشر طلب خدمة جديد في الرياض. سجّل دخولك على عِمارة لتقديم عرضك قبل المزودين الآخرين.",
+          ctaLabel: "تقديم عرض الآن",
+          ctaUrl: "https://emaraa.app",
+        });
         for (const p of providers) {
-          const { data: u } = await supabaseAdmin
-            .from("users")
-            .select("phone")
-            .eq("id", p.user_id)
-            .single();
-          if (u?.phone)
-            sendSms(
-              u.phone,
-              "طلب خدمة جديد في الرياض! سجّل دخولك على عِماره لتقديم عرضك: emaraa.vercel.app",
-              "new_request"
-            ).catch(() => {});
+          await notify((p as any).email, "طلب خدمة جديد في الرياض — عِمارة", html, "new_request");
         }
       }
 
@@ -1384,22 +1421,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (approved) {
         const { data: provider } = await supabaseAdmin
           .from("providers")
-          .select("user_id")
+          .select("email")
           .eq("id", id)
           .single();
-        if (provider?.user_id) {
-          const { data: u } = await supabaseAdmin
-            .from("users")
-            .select("phone")
-            .eq("id", provider.user_id)
-            .single();
-          if (u?.phone)
-            sendSms(
-              u.phone,
-              "تهانينا! تم قبول حسابك في عِماره. يمكنك الآن تقديم عروضك على طلبات الخدمة: emaraa.vercel.app",
-              "provider_approved"
-            ).catch(() => {});
-        }
+        await notify(
+          provider?.email,
+          "تم قبول حسابك — عِمارة",
+          notificationEmail({
+            heading: "تهانينا! تم قبول حسابك",
+            body: "تم قبول حساب مزود الخدمة الخاص بك في عِمارة. يمكنك الآن تقديم عروضك على طلبات الخدمة.",
+            ctaLabel: "تصفّح الطلبات",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "provider_approved",
+        );
       }
 
       res.json({ success: true });
@@ -1612,6 +1647,50 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (e: any) {
       if (process.env.NODE_ENV !== "production") console.error("[cron weekly-report]", e?.message);
       res.status(500).json({ error: "report_failed" });
+    }
+  });
+
+  // Daily commission feedback reminder — hit by Vercel Cron. Secured by CRON_SECRET.
+  // Finds deals whose commission email went out 24h+ ago and that haven't been reminded yet,
+  // sends each provider a feedback/success-story reminder (cc info@emaraa.app), and stamps the deal.
+  app.get("/api/cron/commission-reminder", async (req, res) => {
+    const secret = process.env.CRON_SECRET ?? "";
+    const auth = req.headers["authorization"] ?? "";
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    try {
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: due } = await supabaseAdmin
+        .from("deals")
+        .select("id, providers(email)")
+        .not("commission_email_sent_at", "is", null)
+        .is("commission_reminder_sent_at", null)
+        .lte("commission_email_sent_at", cutoff);
+
+      let sent = 0;
+      for (const deal of due ?? []) {
+        const email = (deal.providers as any)?.email;
+        // Stamp first so a retry never double-sends, even if the send below fails.
+        await supabaseAdmin
+          .from("deals")
+          .update({ commission_reminder_sent_at: new Date().toISOString() })
+          .eq("id", deal.id);
+        if (email) {
+          await notify(
+            email,
+            "كيف كانت تجربتك مع عِمارة؟",
+            commissionReminderEmail(),
+            "commission_reminder",
+            "info@emaraa.app",
+          );
+          sent++;
+        }
+      }
+      res.json({ ok: true, sent });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[cron commission-reminder]", e?.message);
+      res.status(500).json({ error: "reminder_failed" });
     }
   });
 

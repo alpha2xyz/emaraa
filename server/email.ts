@@ -24,7 +24,7 @@ function getTransport() {
 // mirrors the sendSms / sms_log pattern). Never throws — returns status.
 export async function sendEmail(
   supabaseAdmin: SupabaseClient,
-  opts: { to?: string; subject: string; html: string; kind?: string },
+  opts: { to?: string; cc?: string; subject: string; html: string; kind?: string },
 ): Promise<{ status: string; error: string | null }> {
   const to = opts.to ?? REPORT_TO;
   let status = "sent";
@@ -37,6 +37,7 @@ export async function sendEmail(
       await getTransport().sendMail({
         from: `"عِمارة Emaraa" <${ZOHO_USER}>`,
         to,
+        ...(opts.cc ? { cc: opts.cc } : {}),
         subject: opts.subject,
         html: opts.html,
       });
@@ -64,6 +65,136 @@ export async function sendEmail(
 }
 
 const nf = (n: number) => Number(n || 0).toLocaleString("en-US");
+
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "https://emaraa.app";
+
+// Branded RTL notification email — one heading, a short body, an optional CTA button.
+// Mirrors the admin-report visual style (dark gradient header + white card).
+export function notificationEmail(opts: {
+  heading: string;
+  body: string; // plain Arabic text; \n becomes <br>
+  ctaLabel?: string;
+  ctaUrl?: string;
+}): string {
+  const cyan = "#0DB8D3", blue = "#1B7FDC", deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
+  const bodyHtml = opts.body.replace(/\n/g, "<br>");
+  const cta =
+    opts.ctaLabel && opts.ctaUrl
+      ? `<div style="margin-top:20px;">
+           <a href="${opts.ctaUrl}" style="display:inline-block;background:${blue};color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 26px;border-radius:10px;">${opts.ctaLabel}</a>
+         </div>`
+      : "";
+  return `
+  <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#F0F3F7;padding:24px;color:${ink};">
+    <div style="max-width:520px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
+        <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة Emaraa</div>
+        <div style="font-size:20px;font-weight:800;margin-top:8px;">${opts.heading}</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
+        <div style="font-size:15px;line-height:1.9;color:${ink};">${bodyHtml}</div>
+        ${cta}
+      </div>
+      <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
+        إشعار تلقائي من منصة عِمارة · <a href="${FRONTEND_URL}" style="color:${mut};">emaraa.app</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 1% Commission Workflow
+// ───────────────────────────────────────────────────────────────────────────
+// The "transfer the 1% commission" email is INERT until COMMISSION_BANK_IBAN is set.
+// Bank details + QR image arrive in a later prompt — until then the accept handler
+// sends only the existing plain congrats email and never starts the reminder chain.
+export const COMMISSION_RATE = 0.01;
+const BANK_NAME = process.env.COMMISSION_BANK_NAME ?? "";
+const BANK_ACCOUNT_NAME = process.env.COMMISSION_BANK_ACCOUNT_NAME ?? "";
+const BANK_IBAN = process.env.COMMISSION_BANK_IBAN ?? "";
+const BANK_QR_URL = process.env.COMMISSION_QR_URL ?? ""; // hosted https PNG — NOT base64 (clients strip it)
+
+// True once bank details exist — gates the whole commission email chain.
+export function commissionConfigReady(): boolean {
+  return !!BANK_IBAN;
+}
+
+// Combined "offer accepted + please transfer the 1% commission" email (Arabic RTL).
+// Sent to the winning provider the moment the owner accepts their offer.
+export function commissionEmail(opts: { priceTotal: number | null }): string {
+  const cyan = "#0DB8D3", blue = "#1B7FDC", deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
+  const price = Number(opts.priceTotal || 0);
+  const commission = price * COMMISSION_RATE;
+
+  const row = (label: string, value: string) =>
+    value
+      ? `<tr>
+           <td style="padding:8px 0;font-size:13px;color:${mut};white-space:nowrap;">${label}</td>
+           <td style="padding:8px 0;font-size:14px;font-weight:700;color:${ink};text-align:left;direction:ltr;">${value}</td>
+         </tr>`
+      : "";
+
+  const amountBox = `
+    <div style="background:linear-gradient(135deg,${deep},${blue});border-radius:12px;padding:18px;margin:16px 0;color:#fff;text-align:center;">
+      <div style="font-size:12px;opacity:.85;">عمولة عِمارة (<span dir="ltr" style="unicode-bidi:isolate">1%</span> من قيمة العرض)</div>
+      <div style="font-size:30px;font-weight:800;margin-top:6px;">${nf(commission)} <span style="font-size:16px;">ر.س</span></div>
+      ${price ? `<div style="font-size:11px;opacity:.8;margin-top:4px;">قيمة العرض: ${nf(price)} ر.س</div>` : ""}
+    </div>`;
+
+  const bankBox = `
+    <div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:12px;padding:16px;margin:16px 0;">
+      <div style="font-size:13px;font-weight:700;color:${deep};margin-bottom:8px;">بيانات التحويل البنكي</div>
+      <table cellpadding="0" cellspacing="0" style="width:100%;">
+        ${row("اسم البنك", BANK_NAME)}
+        ${row("اسم الحساب", BANK_ACCOUNT_NAME)}
+        ${row("الآيبان (IBAN)", BANK_IBAN)}
+      </table>
+    </div>`;
+
+  const qrBox = BANK_QR_URL
+    ? `<div style="text-align:center;margin:16px 0;">
+         <div style="font-size:12px;color:${mut};margin-bottom:8px;">امسح رمز QR للتحويل السريع</div>
+         <img src="${BANK_QR_URL}" alt="QR" width="160" height="160" style="border-radius:12px;border:1px solid #E3E9F0;" />
+       </div>`
+    : "";
+
+  return `
+  <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#F0F3F7;padding:24px;color:${ink};">
+    <div style="max-width:520px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
+        <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة Emaraa</div>
+        <div style="font-size:20px;font-weight:800;margin-top:8px;">مبروك! تم قبول عرضك 🎉</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
+        <div style="font-size:15px;line-height:1.9;color:${ink};">
+          قام المالك بقبول عرضك على طلب الخدمة. بعد إتمام الصفقة وتوقيع العقد، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب التالي.
+        </div>
+        ${amountBox}
+        ${bankBox}
+        ${qrBox}
+        <div style="font-size:13px;line-height:1.8;color:${mut};">
+          بعد التحويل، يرجى الاحتفاظ بإيصال العملية. سيتواصل معك فريق عِمارة لتأكيد استلام العمولة ومتابعة الخطوات التالية.
+        </div>
+      </div>
+      <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
+        إشعار تلقائي من منصة عِمارة · <a href="${FRONTEND_URL}" style="color:${mut};">emaraa.app</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+// 1-day-after feedback reminder email (Arabic RTL). CC: info@emaraa.app.
+export function commissionReminderEmail(): string {
+  return notificationEmail({
+    heading: "نود سماع رأيك 💬",
+    body:
+      "نشكرك على إتمام صفقتك عبر منصة عِمارة!\n\n" +
+      "سيتواصل معك فريق عِمارة قريبًا للاطلاع على تجربتك في عملية الخدمة، ومشاركة قصة نجاحك معنا.\n\n" +
+      "رأيك يساعدنا على تحسين المنصة، ويُبرز قصتك كنموذج ملهم لمزودي الخدمة الآخرين. نتطلع للحديث معك!",
+    ctaLabel: "زيارة عِمارة",
+    ctaUrl: FRONTEND_URL,
+  });
+}
 
 // Build the admin activity report: deltas since the last successful report + running totals.
 export async function buildAdminReport(

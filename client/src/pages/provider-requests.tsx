@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Lock,
   Clock,
+  BadgePercent,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,9 @@ export default function ProviderRequests() {
       pendingBtn: "بانتظار موافقة الإدارة",
       sqm: "م²",
       teaserRequestsAvailable: "طلبات متاحة",
+      commissionTitle: "عمولة عِمارة 1٪ فقط",
+      commissionBody:
+        "يلتزم مقدم الخدمة بسداد عمولة منصة عِمارة البالغة 1٪ فقط من قيمة العرض بعد توقيع العقد مع المالك. عِمارة سترسل بيانات التحويل آليًا عبر البريد الإلكتروني لكم بمجرد قبول المالك للعرض.",
       scopeShort:
         "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
     },
@@ -92,6 +96,9 @@ export default function ProviderRequests() {
       pendingBtn: "Awaiting admin approval",
       sqm: "m²",
       teaserRequestsAvailable: "requests available",
+      commissionTitle: "Just 1% Emaraa Commission",
+      commissionBody:
+        "The service provider agrees to pay Emaraa's commission of just 1% of the offer value after signing the contract with the owner. Emaraa will automatically email you the transfer details as soon as the owner accepts the offer.",
       scopeShort:
         "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
     },
@@ -520,6 +527,30 @@ export default function ProviderRequests() {
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {/* ── 1% commission notice (approved providers only) ── */}
+        {isProfileComplete && isApproved && (
+          <div
+            className="flex items-start gap-4 rounded-xl px-5 py-4"
+            style={{
+              background: "var(--provider-soft)",
+              border: "1px solid rgba(27,127,220,0.4)",
+            }}
+          >
+            <div
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ background: "var(--provider)" }}
+            >
+              <BadgePercent className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-foreground mb-1" style={{ color: "var(--provider)" }}>
+                {t.commissionTitle}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t.commissionBody}</p>
+            </div>
           </div>
         )}
       </div>
