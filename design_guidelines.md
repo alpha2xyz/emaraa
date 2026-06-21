@@ -1,106 +1,118 @@
-# Design Guidelines: Property & Service Request Application
+# Design Guidelines: Emaraa
+
+Emaraa (عِمارة) — Saudi B2B facility management marketplace. Property owners post service requests; service providers submit PDF proposals; admin manages the platform.
+
+> **Single source of truth for colors, fonts, and radius is `client/src/index.css` (`:root`).**
+> This document explains the *intent* behind those tokens. If the two ever disagree, `index.css` wins — update this file to match.
+> **Never hardcode hex values in components — always use the CSS variables / Tailwind tokens.**
 
 ## Design Approach
-**System-Based Approach** inspired by modern productivity tools (Linear, Notion, Asana) combined with property management platforms like Buildium. This utility-focused application prioritizes efficiency, clarity, and task completion while maintaining visual appeal.
+
+Dark, modern, trustworthy. System-based, inspired by Linear/Notion productivity tools, adapted for an Arabic-first (RTL) facility management audience. Utility-focused: clarity, efficiency, task completion.
 
 ## Core Design Elements
 
+### Theme — "Arctic Depths" (DARK)
+
+The entire app is a **dark theme**. Colors are centralized in `client/src/index.css` `:root` (shadcn HSL tokens flipped to dark + a brand block). To re-theme the whole app, edit that one block.
+
+| Element | CSS variable | Value |
+|---|---|---|
+| Page background | `--navy-2` | `#0F2733` |
+| Cards / surfaces | `--navy` | `#193546` |
+| Deepest surface | `--navy-3` | `#0A1C25` |
+| Primary text | `text-foreground` | `#EAF6FB` |
+| Muted text | `text-muted-foreground` | `#9FC2D3` |
+| Owner role accent | `--owner` / `--owner-soft` | Cyan `#0DB8D3` |
+| Provider role accent | `--provider` / `--provider-soft` | Blue `#1B7FDC` |
+| Secondary / deep | `--deep` (also `--primary`) | `#065B98` |
+| Residential property type | `--residential` / `--residential-soft` | Burgundy `#C75B72` (text `#E58AA0`) |
+| Commercial property type | `--commercial` / `--commercial-soft` | Terracotta `#E08A5B` (text `#F0A87F`) |
+| Success | `--ok` / `--ok-soft` | `#34D399` |
+| Warning | `--warn` / `--warn-soft` | `#FBBF24` |
+| Error | `--err` / `--err-soft` | `#F87171` |
+
+**Color rules:**
+- **Owner = Cyan, Provider = Blue.** The active role accent is exposed as `--role`, set per-layout in `App.tsx` (`DashboardLayout`).
+- **Solid OWNER buttons:** cyan background + **dark text** `#04222c` (white-on-cyan fails contrast).
+- **Solid PROVIDER buttons:** blue background + white text.
+- Building types keep their warm accents (burgundy/terracotta) so they stand out against the all-blue roles.
+- **Retired palette — do not reintroduce:** Navy `#2E4A6B`, Emerald `#0E7C66`, Sage `#6B7C5E`.
+
 ### Typography
-- **Primary Font**: Inter (Google Fonts) - clean, readable, professional
-- **Headings**: Font weights 600-700, sizes from text-3xl (page titles) to text-lg (section headers)
-- **Body Text**: Font weight 400, text-base for content, text-sm for secondary info
-- **Labels & Meta**: Font weight 500, text-sm, tracking-wide for form labels and badges
+
+- **Font:** **Cairo** (`--font-sans` / `--font-arabic`), with `Inter` as Latin fallback. Embed Cairo locally — never rely on a Google Fonts link for headless/render assets.
+- **Wordmark "Emaraa / عِمارة":** Cairo weight **800**.
+- **Headings:** weights 600–700; sizes from `text-3xl` (page titles) down to `text-lg` (section headers).
+- **Body:** weight 400; `text-base` for content, `text-sm` for secondary info.
+- **Labels & meta:** weight 500, `text-sm`.
+
+### Bilingual / RTL
+
+- **Arabic is primary**, default language is `ar`. English is the secondary string on every user-facing element.
+- RTL (`dir="rtl"`) is applied at `DashboardLayout` level when language is Arabic.
+- Language state: `client/src/hooks/use-lang.ts` (module-level global + listener, no React Context).
+- **Numbers:** always Western digits `1234567890` — never Arabic-Indic `٠١٢٣`. Avoid the `ar-SA` locale (it emits Indian digits).
 
 ### Layout System
-**Spacing Primitives**: Use Tailwind units of 2, 4, 6, 8, 12, 16, 20, 24 for consistent rhythm
-- Component padding: p-4 to p-8
-- Section spacing: py-12 to py-20
-- Card gaps: gap-4 to gap-6
-- Container max-width: max-w-7xl for main content, max-w-2xl for forms
+
+**Spacing primitives:** Tailwind units of 2, 4, 6, 8, 12, 16, 20, 24.
+- Component padding: `p-4` to `p-8`
+- Section spacing: `py-12` to `py-20`
+- Card gaps: `gap-4` to `gap-6`
+- Container max-width: `max-w-7xl` main content, `max-w-2xl` forms
+- Corner radius: `--radius: .5rem` (`rounded-lg`)
 
 ## Component Library
 
-### Navigation
-- **Top Navigation Bar**: Sticky header with logo, main navigation links, user profile dropdown, notification bell
-- Include quick-access "Submit Request" button prominently in header
-- Mobile: Hamburger menu with slide-in drawer
+shadcn/ui components live in `client/src/components/ui/`. **Don't edit those directly** — extend them from page/feature components.
 
-### Dashboard Layout
-- **Sidebar Navigation** (desktop): Fixed left sidebar (w-64) with request categories, property filters, quick stats
-- **Main Content Area**: Two-column grid on desktop (2/3 main feed, 1/3 sidebar for filters/recent activity)
-- **Request Feed**: Card-based layout with priority indicators, status badges, timestamps
+### Navigation
+- **Navbar** (`components/Navbar.tsx`): top bar with logo, links, gear/settings icon. Used by **all roles** (owner, provider, admin).
+- **No BottomNav** — it was removed (2026-05-31); the file is dead code. Owners have `pb-4`; everything else uses the standard Navbar layout.
 
 ### Forms
-- **Request Submission Form**: Multi-step if complex (property selection → issue details → attachments)
-- Grouped field sets with clear visual separation (border-t dividers)
-- Required field indicators (asterisk)
-- Inline validation with helpful error messages below fields
-- Large textarea for descriptions (min-h-32)
-- File upload area with drag-and-drop visual indicator
+- Grouped field sets with clear visual separation.
+- Required-field indicators; inline validation with helpful messages below the field.
+- Large textareas for descriptions; file upload areas with drag-and-drop affordance.
+- Building-type selection uses clickable cards (residential/commercial) with the warm accent colors above.
 
 ### Cards
-- **Request Cards**: Elevated cards (shadow-md) with rounded corners (rounded-lg)
-- Card structure: Header (request type + priority badge), body (description preview), footer (status + timestamp + assigned user)
-- Hover state: subtle shadow increase (hover:shadow-lg transition)
-- Status badges: Small pill badges (rounded-full px-3 py-1) - Open, In Progress, Completed, Urgent
-
-### Data Display
-- **Property List**: Grid layout (grid-cols-1 md:grid-cols-2 lg:grid-cols-3) showing property cards with thumbnail, address, active request count
-- **Request Table** (alternative view): Sortable columns for ID, Property, Type, Priority, Status, Date, Assigned To
-- **Status Timeline**: Vertical timeline component showing request progression with timestamps
+- Surfaces use `--navy` on the `--navy-2` page background.
+- Rounded corners (`rounded-lg`), subtle elevation, gentle hover transition.
+- Status uses pill badges via `components/StatusBadge.tsx` with the semantic `--ok` / `--warn` / `--err` tokens.
 
 ### Buttons & Actions
-- **Primary CTA**: Solid button (px-6 py-3 rounded-lg font-medium)
-- **Secondary Actions**: Outlined button variant (border-2)
-- **Icon Buttons**: Square or circular for compact actions (filter, sort, more options)
-- **Floating Action Button**: Fixed bottom-right "Quick Submit" for mobile
+- **Primary CTA:** solid, `px-6 py-3 rounded-lg font-medium` — colored by the active role (see color rules above).
+- **Secondary:** outlined variant.
+- **Icon buttons:** compact, with ARIA labels.
 
 ### Overlays
-- **Modal Forms**: Centered modal (max-w-2xl) for quick request submission
-- **Slideout Panel**: Right-side slideout for request details/editing
-- **Toast Notifications**: Top-right position for success/error feedback
-
-## Page-Specific Layouts
-
-### Landing Page (if public-facing)
-1. **Hero Section** (h-screen): Large hero with property management imagery, headline "Streamline Your Property Requests", CTA buttons
-2. **Features Grid**: 3-column showcase of key features (Submit Requests, Track Progress, Communicate)
-3. **How It Works**: 3-step process with icons and descriptions
-4. **CTA Section**: "Get Started" with demo request or signup form
-
-### Dashboard Home
-- Welcome header with user name and property overview stats (total properties, active requests, completion rate)
-- Quick actions section: prominent "New Request" card + "View All Properties" + "Contact Support"
-- Recent requests feed (5-8 most recent)
-- Right sidebar: Upcoming maintenance, announcements, priority alerts
-
-### Request Detail View
-- Full-width header with request ID, property address, status badge
-- Two-column layout: Left (request details, description, attachments), Right (activity timeline, assigned team member, actions)
-- Comment/update section at bottom
+- Modal forms centered (`max-w-2xl`).
+- Right-side slideout (`components/ui/sheet.tsx`) for detail/edit panels.
+- Toast notifications for success/error feedback.
 
 ## Icons
-**Library**: Heroicons (outline for navigation, solid for emphasis)
-- Use consistently: home, document-text, wrench, bell, user-circle, plus-circle, filter, search
 
-## Images
-**Hero Image**: Yes - professional property management photo (modern building exterior or clean maintenance workspace) with subtle overlay for text readability
-**Property Thumbnails**: Placeholder for property photos in listings (aspect-ratio-video, rounded-lg)
-**Empty States**: Friendly illustrations for "no requests yet" states
-**Avatar Placeholders**: User profile images in circular format
+**Library: Lucide** (`lucide-react`). Use Lucide consistently across the app — do not mix in other icon sets.
 
 ## Animations
-**Minimal, Purposeful Only**:
-- Smooth transitions on card hover (transition-shadow duration-200)
-- Modal fade-in (opacity + scale)
-- Slide-in for mobile menu
-- Status badge color transitions
-- No scroll-triggered or decorative animations
+
+Minimal and purposeful only:
+- Every page in `client/src/pages/` uses the `.page-enter` animation (defined in `index.css`).
+- Smooth card-hover and status transitions; modal fade-in; slideout transitions.
+- No decorative scroll-triggered animations in the app UI.
+
+> Note: premium *report/diagram* assets (flowcharts, mind maps, decks) have their own richer animated style — see `Reports/STYLE.md`. That standard is separate from this app UI standard.
 
 ## Accessibility
-- Consistent focus indicators (ring-2 ring-offset-2) on all interactive elements
-- ARIA labels on icon-only buttons
-- Semantic HTML throughout (main, section, article, aside)
-- Form labels properly associated with inputs
 
-**Overall Aesthetic**: Clean, professional, and trustworthy - balancing modern design with practical functionality for property managers and residents to efficiently handle service requests.
+- Consistent focus indicators (`ring-2 ring-offset-2`) on interactive elements.
+- ARIA labels on icon-only buttons.
+- Semantic HTML (`main`, `section`, `article`, `aside`).
+- Form labels properly associated with inputs.
+- Contrast-safe role buttons (the dark-text-on-cyan rule exists for this reason).
+
+---
+
+**Overall aesthetic:** clean, dark, professional, and trustworthy — Arabic-first, role-color-coded (owner cyan / provider blue), built for Saudi property owners and FM providers to handle service requests efficiently.
