@@ -17,6 +17,8 @@ import {
   ArrowLeft,
   ArrowDown,
   ChevronDown,
+  Instagram,
+  Linkedin,
 } from "lucide-react";
 
 // ── Building illustration ───────────────────────────────────────────────────
@@ -251,6 +253,7 @@ export default function LandingPage() {
       termsOfUse: "شروط الاستخدام",
       privacyPolicy: "سياسة الخصوصية",
       footerTagline: "عمارتك، مُدارة بشكل مثالي",
+      followUs: "تابعنا",
       footerCopyright: "© 2026 عِمــارة. جميع الحقوق محفوظة.",
     },
     en: {
@@ -340,6 +343,7 @@ export default function LandingPage() {
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
       footerTagline: "Your Building, Perfectly Managed",
+      followUs: "Follow us",
       footerCopyright: "© 2026 EMARAA. All rights reserved.",
     },
   };
@@ -757,7 +761,30 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 gap-8 mb-8">
             <div>
               <p className="text-xl font-extrabold mb-2" style={{ color: "var(--owner)" }}>{t.siteName}</p>
-              <p className="text-sm text-muted-foreground">{t.footerTagline}</p>
+              <p className="text-sm text-muted-foreground mb-4">{t.footerTagline}</p>
+              <div>
+                <h4 className="font-semibold text-foreground mb-3">{t.followUs}</h4>
+                <div className="flex gap-3">
+                  <a
+                    href="https://www.instagram.com/emaraa.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3]"
+                  >
+                    <Instagram className="h-5 w-5" />
+                  </a>
+                  <a
+                    href="https://www.linkedin.com/company/emaraafm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3]"
+                  >
+                    <Linkedin className="h-5 w-5" />
+                  </a>
+                </div>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold text-foreground mb-3">{t.quickLinks}</h4>
