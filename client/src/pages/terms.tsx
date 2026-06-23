@@ -12,7 +12,7 @@ const arSections: Section[] = [
       '"المستخدم / أنت / حسابك" — يعني أي شخص طبيعي أو كيان يصل إلى المنصة أو يستخدمها سواء بصفة مالك عقار أو مزود خدمة.',
       '"مالك العقار" — المستخدم المسجّل الذي ينشر طلبات الخدمة لعقاراته السكنية أو التجارية.',
       '"مزود الخدمة" — الشركة أو المؤسسة المُعتمدة من الإدارة التي تقدّم عروضها للخدمات المطلوبة.',
-      '"الخدمة" — ربط أصحاب العقارات بمزودي خدمات إدارة المرافق والنظافة داخل المملكة العربية السعودية عبر المنصة الرقمية.',
+      '"الخدمة" — ربط أصحاب العقارات بمزودي خدمات إدارة المرافق داخل المملكة العربية السعودية عبر المنصة الرقمية.',
     ],
   },
   {
@@ -26,7 +26,7 @@ const arSections: Section[] = [
   {
     title: "نطاق الخدمة",
     body: [
-      "عِمارة منصة إلكترونية سعودية تربط بين أصحاب العقارات السكنية والتجارية ومزودي خدمات إدارة المرافق والنظافة داخل المملكة العربية السعودية.",
+      "عِمارة منصة إلكترونية سعودية تربط بين أصحاب العقارات السكنية والتجارية ومزودي خدمات إدارة المرافق داخل المملكة العربية السعودية.",
       "تتيح المنصة لأصحاب العقارات نشر طلبات الخدمة، ولمزودي الخدمة تقديم عروضهم بصيغة PDF، ويتم انتقاء مزودي الخدمة وفق معايير الموافقة الإدارية.",
       "عِمارة وسيط رقمي فقط — العقد النهائي يُبرم مباشرةً بين مالك العقار ومزود الخدمة، ولا تكون المنصة طرفاً في أي علاقة تعاقدية بينهما.",
     ],
@@ -155,7 +155,7 @@ const enSections: Section[] = [
       '"User / You / Your Account" — means any natural person or entity accessing or using the platform, whether as a property owner or service provider.',
       '"Property Owner" — the registered user who posts service requests for their residential or commercial properties.',
       '"Service Provider" — a company or entity approved by administration that submits proposals for requested services.',
-      '"Service" — connecting property owners with facility management and cleaning service providers within the Kingdom of Saudi Arabia via the digital platform.',
+      '"Service" — connecting property owners with facility management service providers within the Kingdom of Saudi Arabia via the digital platform.',
     ],
   },
   {
@@ -169,7 +169,7 @@ const enSections: Section[] = [
   {
     title: "Scope of Service",
     body: [
-      "EMARAA is a Saudi digital marketplace connecting residential and commercial property owners with qualified facility management and cleaning service providers within the Kingdom of Saudi Arabia.",
+      "EMARAA is a Saudi digital marketplace connecting residential and commercial property owners with qualified facility management service providers within the Kingdom of Saudi Arabia.",
       "The platform enables owners to post service requests, providers to submit PDF proposals, and providers are onboarded subject to administrative approval.",
       "EMARAA is a digital intermediary only — the final contract is concluded directly between the property owner and the service provider. EMARAA is not a party to any contractual relationship between them.",
     ],
