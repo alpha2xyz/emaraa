@@ -199,7 +199,7 @@ export default function AboutPage() {
               >
                 <p
                   className="text-2xl font-extrabold mb-1"
-                  style={{ fontFamily: "Tajawal, sans-serif", color: "var(--owner)" }}
+                  style={{ color: "var(--owner)" }}
                 >
                   {s.num}
                 </p>
