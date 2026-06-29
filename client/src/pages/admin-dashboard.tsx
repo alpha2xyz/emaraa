@@ -338,6 +338,11 @@ export default function AdminDashboard() {
     localStorage.removeItem("userRole");
     localStorage.removeItem("adminId");
     localStorage.removeItem("adminSessionToken");
+    // Also drop any user session left over from impersonation so the next login starts clean.
+    localStorage.removeItem("sessionToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userPhone");
+    localStorage.removeItem("userName");
     setLocation("/admin");
   }
 
@@ -622,7 +627,8 @@ export default function AdminDashboard() {
                                     onClick={() =>
                                       openSignedPdf(
                                         "provider-documents",
-                                        profile.commercial_register_url
+                                        profile.commercial_register_url,
+                                        { admin: true }
                                       )
                                     }
                                   >
@@ -638,7 +644,8 @@ export default function AdminDashboard() {
                                     onClick={() =>
                                       openSignedPdf(
                                         "provider-documents",
-                                        profile.company_profile_url
+                                        profile.company_profile_url,
+                                        { admin: true }
                                       )
                                     }
                                   >
@@ -652,7 +659,9 @@ export default function AdminDashboard() {
                                     variant="outline"
                                     className="h-7 text-xs gap-1"
                                     onClick={() =>
-                                      openSignedPdf("provider-documents", profile.fal_license_url)
+                                      openSignedPdf("provider-documents", profile.fal_license_url, {
+                                        admin: true,
+                                      })
                                     }
                                   >
                                     <ExternalLink className="h-3 w-3" />
@@ -889,7 +898,9 @@ export default function AdminDashboard() {
                                         variant="outline"
                                         className="h-7 text-xs gap-1 shrink-0"
                                         onClick={() =>
-                                          openSignedPdf("provider-offers", o.offer_file_url)
+                                          openSignedPdf("provider-offers", o.offer_file_url, {
+                                            admin: true,
+                                          })
                                         }
                                       >
                                         <ExternalLink className="h-3 w-3" />

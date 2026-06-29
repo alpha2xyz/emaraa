@@ -56,6 +56,12 @@ export default function AdminLoginPage() {
         return;
       }
       const { id, token } = await res.json();
+      // Drop any leftover user session (e.g. from testing as an owner/provider or a
+      // prior impersonation) so admin pages can't send a stale user token → 403 on files.
+      localStorage.removeItem("sessionToken");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userPhone");
+      localStorage.removeItem("userName");
       localStorage.setItem("userRole", "admin");
       localStorage.setItem("adminId", id);
       localStorage.setItem("adminSessionToken", token);
