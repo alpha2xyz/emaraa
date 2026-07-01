@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "../hooks/use-lang";
+import { useSeo } from "../hooks/use-seo";
 
 type Section = { title: string; body: string[] };
 
@@ -294,6 +295,11 @@ export default function TermsPage() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
   const sections = isRTL ? arSections : enSections;
+  useSeo({
+    title: "شروط الاستخدام | عِمارة",
+    description: "شروط استخدام منصة عِمارة لملاك العقارات وشركات إدارة المرافق.",
+    path: "/terms",
+  });
 
   const labels = {
     ar: {
