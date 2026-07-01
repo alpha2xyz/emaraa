@@ -1,10 +1,16 @@
 import { useLang } from "@/hooks/use-lang";
+import { useSeo } from "@/hooks/use-seo";
 import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale, Globe } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AboutPage() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
+  useSeo({
+    title: "من نحن | عِمارة — منصة إدارة المرافق العقارية",
+    description: "تعرّف على عِمارة: منصة سعودية تربط ملاك العقارات بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار، بعروض تنافسية وتعاقد شفاف.",
+    path: "/about",
+  });
 
   return (
     <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>

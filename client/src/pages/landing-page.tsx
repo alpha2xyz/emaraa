@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "@/hooks/use-lang";
+import { useSeo } from "@/hooks/use-seo";
 import { Link } from "wouter";
 import {
   Globe,
@@ -236,11 +237,12 @@ export default function LandingPage() {
       faqTitle: "أسئلة شائعة",
       faqSubtitle: "كل ما تحتاج معرفته قبل البدء",
       faqs: [
-        { q: "كيف تتحققون من مقدمي الخدمة؟", a: "كل عرض يصلك يأتي من مزوّد مرخّص من الهيئة العامة للعقار ولديه سجل تجاري ساري، راجعه واعتمده فريقنا قبل أن يصل إليك. أنت تستلم عروضاً من جهات موثوقة فقط." },
-        { q: "أي مناطق تغطّيها المنصة حالياً؟", a: "نبدأ بمدينة الرياض في المرحلة الأولى، ونتوسّع تدريجياً إلى مدن أخرى." },
-        { q: "كم يستغرق استلام العروض؟", a: "بمجرد نشر طلبك يصل إشعار فوري للمزوّدين المعتمدين، وتبدأ العروض بالوصول عادةً خلال وقت قصير." },
-        { q: "هل بياناتي ورقمي خاصة؟", a: "نعم. لا يظهر رقمك لأي مزوّد إلا بعد قبولك لعرضه، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
-        { q: "ماذا لو وصلتني عدة عروض؟", a: "تقارن العروض جنباً إلى جنب — السعر الإجمالي والسعر لكل وحدة وملاحظات كل مزوّد — وتختار الأنسب لك. القرار بيدك." },
+        { q: "كيف أتأكد أن شركة إدارة المرافق موثوقة ومرخّصة؟", a: "كل عرض يصلك يأتي من شركة إدارة مرافق مرخّصة من الهيئة العامة للعقار (رخصة فال) ولديها سجل تجاري ساري، راجعها واعتمدها فريقنا قبل أن يصل عرضها إليك. أنت تستلم عروضاً من جهات موثوقة فقط." },
+        { q: "هل أقدر أجد شركة إدارة مرافق معتمدة في الرياض؟", a: "نعم، نبدأ بمدينة الرياض في المرحلة الأولى بشركات إدارة مرافق مرخّصة ومعتمدة، ونتوسّع تدريجياً إلى مدن أخرى." },
+        { q: "متى تصلني عروض الأسعار بعد نشر طلبي؟", a: "بمجرد نشر طلبك يصل إشعار فوري للشركات المعتمدة، وتبدأ عروض الأسعار بالوصول عادةً خلال وقت قصير." },
+        { q: "هل رقمي وبياناتي تبقى خاصة؟", a: "نعم. لا يظهر رقمك لأي شركة إلا بعد قبولك لعرضها، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
+        { q: "كيف أقارن بين عروض شركات إدارة المرافق؟", a: "تقارن العروض جنباً إلى جنب — السعر الإجمالي والسعر لكل وحدة وملاحظات كل شركة — وتختار الأنسب لعقارك. القرار بيدك." },
+        { q: "هل أقدر أتعاقد سنوياً لإدارة وصيانة عمارتي عبر المنصة؟", a: "نعم، المنصة متخصصة في عقود إدارة المرافق السنوية للعقارات السكنية والتجارية. تنشر احتياج عمارتك مرة واحدة، تستقبل عروضاً كاملة بنطاق الخدمة، وتتعاقد مع الشركة التي تختارها." },
       ],
       ctaTitle: "جاهز تبدأ بإدارة عمارتك بكفاءة؟",
       ctaDesc: "أضف عقارك خلال دقائق واستقبل عروضاً من مزوّدين موثوقين.",
@@ -326,11 +328,12 @@ export default function LandingPage() {
       faqTitle: "Frequently Asked Questions",
       faqSubtitle: "Everything you need to know before you start",
       faqs: [
-        { q: "How do you verify service providers?", a: "Every offer you receive comes from a provider who holds a valid REGA license and an active commercial registration, reviewed and approved by our team before it reaches you. You only get offers from trusted, vetted companies." },
-        { q: "Which areas do you currently cover?", a: "We're launching in Riyadh first, and expanding to other cities gradually." },
-        { q: "How long until I receive offers?", a: "As soon as you post your request, approved providers get an instant notification, and offers usually start arriving shortly after." },
-        { q: "Are my data and phone number private?", a: "Yes. Your number is never shown to a provider until you accept their offer, and the full proposal file only opens after you accept." },
-        { q: "What if I receive several offers?", a: "You compare them side by side — total price, per-unit price, and each provider's notes — and choose what suits you. The decision is yours." },
+        { q: "How can I be sure a facility management company is licensed and trustworthy?", a: "Every offer you receive comes from a facility management company holding a valid REGA (FAL) license and an active commercial registration, reviewed and approved by our team before it reaches you. You only get offers from trusted, vetted companies." },
+        { q: "Can I find an accredited facility management company in Riyadh?", a: "Yes — we're launching in Riyadh first with licensed, accredited facility management companies, and expanding to other cities gradually." },
+        { q: "When will I receive price offers after posting my request?", a: "As soon as you post your request, approved companies get an instant notification, and offers usually start arriving shortly after." },
+        { q: "Do my phone number and data stay private?", a: "Yes. Your number is never shown to a company until you accept their offer, and the full proposal file only opens after you accept." },
+        { q: "How do I compare offers from facility management companies?", a: "You compare them side by side — total price, per-unit price, and each company's notes — and choose what suits your property. The decision is yours." },
+        { q: "Can I sign an annual facility management contract for my building through the platform?", a: "Yes — the platform specializes in annual facility management contracts for residential and commercial properties. Post your building's needs once, receive complete scoped offers, and contract with the company you choose." },
       ],
       ctaTitle: "Ready to manage your building efficiently?",
       ctaDesc: "Add your property in minutes and receive offers from trusted providers.",
@@ -350,6 +353,24 @@ export default function LandingPage() {
 
   const t = content[lang];
   const isRTL = lang === "ar";
+
+  useSeo({
+    title: "عِمارة | منصة سعودية لربط ملاك العقارات بشركات إدارة المرافق المرخّصة",
+    description:
+      "عِمارة تربط ملاك العقارات السكنية والتجارية بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار في الرياض. انشر احتياج عقارك واستقبل عروض أسعار، قارن واختر الأفضل.",
+    path: "/",
+  });
+
+  // FAQPage structured data — always from the Arabic copy (primary language)
+  const faqJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: content.ar.faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  });
 
   return (
     <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
@@ -685,6 +706,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqJsonLd }} />
       <section className="py-20" style={{ background: "var(--navy-2)" }}>
         <div className="container mx-auto max-w-3xl px-4">
           <div className="mb-10 text-center">

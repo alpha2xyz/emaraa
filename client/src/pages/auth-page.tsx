@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLang } from "@/hooks/use-lang";
+import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,11 @@ import { useLocation } from "wouter";
 export default function AuthPage() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
+  useSeo({
+    title: "تسجيل الدخول | عِمارة",
+    description: "سجّل دخولك إلى منصة عِمارة — لملاك العقارات وشركات إدارة المرافق المرخّصة.",
+    path: "/auth",
+  });
   const [formData, setFormData] = useState({
     name: "",
     phone: "",

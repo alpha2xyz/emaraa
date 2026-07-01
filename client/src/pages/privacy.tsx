@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "../hooks/use-lang";
+import { useSeo } from "../hooks/use-seo";
 
 type Section = { title: string; body: string[] };
 
@@ -214,6 +215,11 @@ export default function PrivacyPage() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
   const sections = isRTL ? arSections : enSections;
+  useSeo({
+    title: "سياسة الخصوصية | عِمارة",
+    description: "كيف تتعامل منصة عِمارة مع بياناتك وخصوصيتك — رقمك لا يظهر لأي جهة إلا بعد موافقتك.",
+    path: "/privacy",
+  });
 
   const labels = {
     ar: {

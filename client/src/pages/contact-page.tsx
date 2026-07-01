@@ -2,11 +2,17 @@ import { Mail, Phone, MapPin, ArrowLeft, ArrowRight, MessageCircle } from "lucid
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "../hooks/use-lang";
+import { useSeo } from "../hooks/use-seo";
 import { Globe } from "lucide-react";
 
 export default function ContactPage() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
+  useSeo({
+    title: "اتصل بنا | عِمارة",
+    description: "تواصل مع فريق عِمارة عبر الواتساب أو البريد الإلكتروني — نجيب على استفسارات ملاك العقارات وشركات إدارة المرافق.",
+    path: "/contact",
+  });
   const t =
     lang === "ar"
       ? {
