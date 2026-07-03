@@ -342,8 +342,7 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 
 > Full backlog lives in `~/Documents/Emaraa with claude/_work/TODO.md`. This section is a quick reference for items with specific code locations.
 
-**All pre-launch items shipped as of 2026-05-21.** Open items tracked in TODO.md by stage:
-- **Launch Prep** — end-to-end smoke test on real iPhone
+**Emaraa is LIVE (launched June 2026).** Current phase: marketing and user acquisition. Open items tracked in TODO.md by stage:
 - **Stage 2** — Rate limiting, audit log, DDL migrations, role enforcement, MemStorage cleanup, .env.example vars
 - **Stage 3** — Contract signing (Signit API), subscription payments (Moyasar)
 
