@@ -16,7 +16,7 @@ export default function NotFound() {
       >
         <p className="font-bold text-xl">عِمارة</p>
         <div className="flex items-center gap-3">
-          <p className="font-extrabold" style={{ fontSize: "2.5rem", lineHeight: 1, opacity: 0.9 }}>٤٠٤</p>
+          <p className="font-extrabold" style={{ fontSize: "2.5rem", lineHeight: 1, opacity: 0.9 }}>404</p>
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
             className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1"
