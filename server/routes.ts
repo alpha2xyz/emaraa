@@ -314,6 +314,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (property.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
 
+      // Deleting a property cascades to its child requests (and their offers/deals). Block it if
+      // any of those requests has bidding history — otherwise we'd silently wipe GMV history.
+      const { data: propRequests } = await supabaseAdmin
+        .from("requests")
+        .select("id")
+        .eq("property_id", req.params.id);
+      const requestIds = (propRequests ?? []).map((r: any) => r.id);
+      if (requestIds.length > 0) {
+        const { count: activeOffers } = await supabaseAdmin
+          .from("provider_offers")
+          .select("id", { count: "exact", head: true })
+          .in("request_id", requestIds)
+          .neq("status", "rejected");
+        const { count: dealCount } = await supabaseAdmin
+          .from("deals")
+          .select("id", { count: "exact", head: true })
+          .in("request_id", requestIds);
+        if ((activeOffers ?? 0) > 0 || (dealCount ?? 0) > 0) {
+          return res.status(403).json({ error: "has_offers" });
+        }
+      }
+
       await supabaseAdmin.from("requests").delete().eq("property_id", req.params.id);
       const { error } = await supabaseAdmin.from("properties").delete().eq("id", req.params.id);
       if (error) throw error;
@@ -594,6 +616,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // First-time profile creation: email is mandatory.
         if (!emailValid) {
           return res.status(400).json({ error: "البريد الإلكتروني مطلوب" });
+        }
+        // Both documents are NOT NULL in the DB and required at first registration (mirrors the
+        // client's 3-doc requirement). Validate here so a missing doc returns a clean 400 instead
+        // of a raw 500 from the DB's NOT NULL constraint.
+        if (!commercial_register_url || !company_profile_url) {
+          return res.status(400).json({ error: "السجل التجاري والملف التعريفي للشركة مطلوبان" });
         }
         const { error } = await supabaseAdmin.from("providers").insert([{
           user_id: userId,
@@ -903,6 +931,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!property_id) {
         return res.status(400).json({ error: "property_id is required" });
       }
+
+      // Verify the target property belongs to this owner — prevents creating a request
+      // against another owner's property (which would leak its name/address/map_url to providers).
+      const { data: targetProperty, error: propError } = await supabaseAdmin
+        .from("properties")
+        .select("owner_id")
+        .eq("id", property_id)
+        .single();
+      if (propError || !targetProperty)
+        return res.status(404).json({ error: "Property not found" });
+      if (targetProperty.owner_id !== (req as any).userId)
+        return res.status(403).json({ error: "Forbidden: property does not belong to you" });
+
       const { count: activeCount } = await supabaseAdmin
         .from("requests")
         .select("id", { count: "exact", head: true })
@@ -982,6 +1023,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (existing.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
 
+      // Lock editing once the request has any non-rejected offer — a request a provider has
+      // bid on must not change underneath them. Owner re-opens it by rejecting all offers.
+      const { count: activeOffers } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", req.params.id)
+        .neq("status", "rejected");
+      if ((activeOffers ?? 0) > 0) {
+        return res.status(403).json({ error: "edit_locked" });
+      }
+
       const updateSchema = z.object({
         description: z.string().nullable().optional(),
         property_id: z.string().optional(),
@@ -1029,6 +1081,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(404).json({ error: "Service request not found" });
       if (request.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
+
+      // Block deleting a request that has bidding history — every FK cascades, so deleting
+      // would silently wipe provider_offers + deals (GMV history). Owner must reject offers first.
+      const { count: activeOffers } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", req.params.id)
+        .neq("status", "rejected");
+      const { count: dealCount } = await supabaseAdmin
+        .from("deals")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", req.params.id);
+      if ((activeOffers ?? 0) > 0 || (dealCount ?? 0) > 0) {
+        return res.status(403).json({ error: "has_offers" });
+      }
 
       const { error } = await supabaseAdmin.from("requests").delete().eq("id", req.params.id);
       if (error) throw error;

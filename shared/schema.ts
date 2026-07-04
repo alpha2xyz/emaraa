@@ -177,6 +177,21 @@ export const smsLog = pgTable("sms_log", {
 
 export type SmsLog = typeof smsLog.$inferSelect;
 
+// Email delivery log (mirrors sms_log) — one row per outbound email attempt.
+// Written by server/email.ts (sendEmail + suppressed_test path) and read by buildAdminReport
+// to find the "since last report" cutoff (kind=admin_report, status=sent).
+export const emailLog = pgTable("email_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  to_email: text("to_email").notNull(),
+  subject: text("subject"),
+  kind: text("kind"), // admin_report | offer_accepted | ... (nullable)
+  status: text("status").notNull(), // sent | failed | suppressed_test
+  error: text("error"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export type EmailLog = typeof emailLog.$inferSelect;
+
 // Sessions model (server-managed auth sessions)
 export const sessions = pgTable("sessions", {
   token: uuid("token").primaryKey().defaultRandom(),
