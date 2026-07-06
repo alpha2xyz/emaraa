@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "@/hooks/use-lang";
+import { useReveal } from "@/hooks/use-reveal";
 import { useSeo } from "@/hooks/use-seo";
 import { Link } from "wouter";
 import {
@@ -11,7 +11,8 @@ import {
   BarChart3,
   Home,
   Building2,
-  CheckCircle2,
+  CalendarClock,
+  KeyRound,
   ShieldCheck,
   Bell,
   MapPin,
@@ -22,6 +23,9 @@ import {
   Linkedin,
 } from "lucide-react";
 
+// Stagger helper for the [data-reveal] scroll animations (CSS in index.css)
+const revealDelay = (ms: number) => ({ "--reveal-delay": `${ms}ms` }) as CSSProperties;
+
 // ── Building illustration ───────────────────────────────────────────────────
 function HeroIllustration() {
   return (
@@ -29,7 +33,7 @@ function HeroIllustration() {
       viewBox="0 0 460 420"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="w-full h-auto max-h-[420px]"
+      className="w-full h-auto max-h-[290px] md:max-h-[420px]"
       aria-hidden="true"
     >
       <defs>
@@ -167,6 +171,7 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
 // ── Page ────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { lang, toggleLang } = useLang();
+  useReveal([lang]);
 
   const content = {
     ar: {
@@ -180,21 +185,22 @@ export default function LandingPage() {
       getStarted: "ابدأ مجاناً",
       learnMore: "اعرف المزيد",
       whoTitle: "من يستفيد من عِمــارة؟",
-      whoSubtitle: "سواء كنت مالك مبنى سكني أو تجاري، عِمــارة تُيسّر عليك إدارة مرافقك",
-      residentialTitle: "المباني السكنية",
-      residentialItems: [
-        "أبراج سكنية ومجمعات",
-        "فلل وملاحق",
-        "خدمات نظافة يومية",
-        "صيانة دورية للمرافق",
+      whoSubtitle: "سواء كنت مالك عقار سكني أو تجاري، أو تدير جمعية ملاك.. هذه اللحظات تعرفها جيدًا، وعِمــارة بُنيت لأجلها",
+      whoMoments: [
+        {
+          title: "عقدك السنوي قارب على الانتهاء؟",
+          desc: "لا تجدد قبل أن تقارن. انشر طلبك مرة واحدة، واستلم عروضًا مكتوبة بأسعار واضحة من شركات مرخّصة.",
+        },
+        {
+          title: "استلمت مبنى جديدًا؟",
+          desc: "عمارتك تحتاج تشغيلًا وصيانة من أول يوم. أضف عقارك خلال دقائق، واستقبل عروض الشركات في مكان واحد.",
+        },
+        {
+          title: "تبحث عن شركة صيانة موثوقة؟",
+          desc: "بدل السؤال في مجموعات الواتساب.. كل شركة تصلك هنا مرخّصة وراجعها فريقنا بنفسه، ورقمك لا يظهر إلا بعد قبولك للعرض.",
+        },
       ],
-      commercialTitle: "المباني التجارية",
-      commercialItems: [
-        "مكاتب وأبراج تجارية",
-        "مراكز تسوق ومحلات",
-        "مستودعات ومصانع",
-        "HVAC · مصاعد · مواقف · إطفاء",
-      ],
+      whoResolution: "في الحالات الثلاث، الطريقة واحدة: أضف عقارك، استلم عروضًا مكتوبة، وقارن بهدوء.",
       startNow: "ابدأ الآن",
       howItWorksTitle: "كيف تعمل المنصة",
       howItWorksDesc: "العثور على مزود الخدمة المناسب لم يكن أسهل من أي وقت مضى. ابدأ في دقائق.",
@@ -270,21 +276,23 @@ export default function LandingPage() {
       learnMore: "Learn More",
       whoTitle: "Who is EMARAA for?",
       whoSubtitle:
-        "Whether you own a residential or commercial building, EMARAA streamlines your facility management",
-      residentialTitle: "Residential Buildings",
-      residentialItems: [
-        "Apartment towers & complexes",
-        "Villas & annexes",
-        "Daily cleaning services",
-        "Periodic facility maintenance",
+        "Whether you own a residential or commercial property, or run a homeowners' association, you know these moments well. Emaraa was built for them.",
+      whoMoments: [
+        {
+          title: "Contract coming up for renewal?",
+          desc: "Don't renew before you compare. Post your request once and receive written offers with clear prices from licensed companies.",
+        },
+        {
+          title: "Just took over a new building?",
+          desc: "Your building needs operations and maintenance from day one. Add your property in minutes and receive companies' offers in one place.",
+        },
+        {
+          title: "Looking for a maintenance company you can trust?",
+          desc: "Instead of asking around in WhatsApp groups: every company here is licensed and reviewed by our own team, and your number stays hidden until you accept an offer.",
+        },
       ],
-      commercialTitle: "Commercial Buildings",
-      commercialItems: [
-        "Office towers & commercial buildings",
-        "Shopping centers & retail",
-        "Warehouses & factories",
-        "HVAC · Elevators · Parking · Fire systems",
-      ],
+      whoResolution:
+        "In all three cases the path is the same: add your property, receive written offers, and compare calmly.",
       startNow: "Get Started",
       howItWorksTitle: "How It Works",
       howItWorksDesc:
@@ -386,7 +394,7 @@ export default function LandingPage() {
                 variant="ghost"
                 size="sm"
                 onClick={toggleLang}
-                className="text-muted-foreground hover:text-[#0DB8D3] gap-1.5"
+                className="min-h-[40px] md:min-h-[36px] text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] gap-1.5"
               >
                 <Globe className="h-4 w-4" />
                 {lang === "ar" ? "EN" : "عربي"}
@@ -395,7 +403,7 @@ export default function LandingPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-xl text-foreground border-border hover:border-[#0DB8D3] hover:text-[#0DB8D3]"
+                  className="min-h-[40px] md:min-h-[36px] rounded-xl text-foreground border-border hover:border-[#0DB8D3] hover:text-[#0DB8D3] active:border-[#0DB8D3] active:text-[#0DB8D3]"
                 >
                   {t.login}
                 </Button>
@@ -406,29 +414,47 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="py-20 md:py-28" style={{ background: "linear-gradient(160deg, #0f3a47, #0F2733 75%)" }}>
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <section className="relative overflow-hidden py-14 md:py-28" style={{ background: "linear-gradient(160deg, #0f3a47, #0F2733 75%)" }}>
+        {/* faint dot pattern */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)",
+            backgroundSize: "26px 26px",
+          }}
+        />
+        {/* cyan glow behind the text block */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 h-[420px] w-[420px] rounded-full start-[-120px]"
+          style={{ background: "radial-gradient(circle, rgba(13,184,211,0.16) 0%, transparent 70%)" }}
+        />
+        <div className="relative container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Text side */}
-            <div className="flex flex-col gap-6">
-              <div className="inline-flex">
+            <div className="flex flex-col gap-5 md:gap-6">
+              <div className="inline-flex" data-reveal>
                 <span className="text-xs font-semibold px-3 py-1.5 rounded-full tracking-wide" style={{ color: "var(--owner)", background: "var(--owner-soft)" }}>
                   {t.chip}
                 </span>
               </div>
-              <div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-3">
+              <h1 data-reveal style={revealDelay(90)}>
+                <span className="block text-[clamp(2.1rem,8.5vw,3.75rem)] font-extrabold text-white leading-tight mb-2 md:mb-3">
                   {t.heroTitle}
-                </h1>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight" style={{ color: "var(--owner)" }}>
+                </span>
+                <span className="block text-[clamp(2.1rem,8.5vw,3.75rem)] font-extrabold leading-tight" style={{ color: "var(--owner)" }}>
                   {t.heroHighlight}
-                </h1>
-              </div>
-              <p className="text-lg leading-relaxed max-w-lg" style={{ color: "rgba(255,255,255,0.7)" }}>{t.heroDesc}</p>
-              <div className="flex">
+                </span>
+              </h1>
+              <p className="text-base md:text-lg leading-relaxed max-w-lg" data-reveal style={{ ...revealDelay(180), color: "rgba(255,255,255,0.7)" }}>
+                {t.heroDesc}
+              </p>
+              <div className="flex" data-reveal style={revealDelay(260)}>
                 <Button
                   size="lg"
-                  className="px-8 gap-2 active:scale-95 transition-transform shadow-md hover:shadow-lg hover:opacity-90"
+                  className="w-full sm:w-auto px-8 gap-2 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
                   style={{ background: "var(--owner)", color: "#04222c" }}
                   onClick={() => {
                     const el = document.getElementById("how-it-works");
@@ -442,87 +468,78 @@ export default function LandingPage() {
             </div>
 
             {/* Illustration side */}
-            <div className="flex items-center justify-center">
-              <HeroIllustration />
+            <div className="flex items-center justify-center" data-reveal style={revealDelay(150)}>
+              <div className="float-slow w-full max-w-[420px]">
+                <HeroIllustration />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Trust strip ─────────────────────────────────────────────────── */}
-      <div className="py-6 bg-card border-y border-border">
+      <section className="py-4 md:py-6 bg-card border-y border-border">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <div className="grid grid-cols-2 gap-2.5 md:flex md:flex-wrap md:items-center md:justify-center md:gap-10">
+            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal>
               <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: "var(--provider)" }} />
               <span>{lang === "ar" ? "مزوّدون مرخّصون من الهيئة" : "REGA-licensed providers"}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(70)}>
               <Home className="w-5 h-5 flex-shrink-0" style={{ color: "#E58AA0" }} />
               <span>{lang === "ar" ? "مرافق سكنية وتجارية" : "Residential & Commercial"}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(140)}>
               <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--owner)" }} />
               <span>{lang === "ar" ? "إشعارات فورية" : "Instant Notifications"}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(210)}>
               <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#F0A87F" }} />
               <span>{lang === "ar" ? "الرياض — المرحلة الأولى" : "Riyadh — Phase One"}</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Who benefits ────────────────────────────────────────────────── */}
-      <section className="py-20" style={{ background: "var(--navy-2)" }}>
+      {/* ── Who benefits — the 3 moments an owner needs Emaraa ──────────── */}
+      <section className="py-14 md:py-20" style={{ background: "var(--navy-2)" }}>
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">{t.whoTitle}</h2>
+          <div className="text-center mb-10 md:mb-12" data-reveal>
+            <h2 className="text-[clamp(1.75rem,5.5vw,2.25rem)] font-extrabold text-foreground mb-4">{t.whoTitle}</h2>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">{t.whoSubtitle}</p>
           </div>
-          <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {/* Residential */}
-            <Card className="hover:shadow-md transition-shadow duration-200">
-              <CardContent className="p-8">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--residential-soft)" }}>
-                  <Home className="w-7 h-7" strokeWidth={1.5} style={{ color: "#E58AA0" }} />
+          <div className="grid gap-4 md:gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+            {t.whoMoments.map((m, i) => {
+              const MomentIcon = [CalendarClock, KeyRound, ShieldCheck][i] ?? ShieldCheck;
+              return (
+                <div
+                  key={i}
+                  data-reveal
+                  className="rounded-2xl p-px"
+                  style={{
+                    ...revealDelay(i * 110),
+                    background:
+                      "linear-gradient(165deg, rgba(13,184,211,0.35), rgba(13,184,211,0.05) 45%, rgba(27,127,220,0.14))",
+                  }}
+                >
+                  <div className="h-full rounded-[15px] p-6 md:p-7" style={{ background: "var(--navy)" }}>
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
+                      <MomentIcon className="h-6 w-6" strokeWidth={1.75} style={{ color: "var(--owner)" }} />
+                    </div>
+                    <h3 className="mb-2.5 text-lg font-extrabold leading-snug text-foreground">{m.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{m.desc}</p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-4">{t.residentialTitle}</h3>
-                <ul className="space-y-2.5 mb-6">
-                  {t.residentialItems.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "#E58AA0" }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Commercial */}
-            <Card className="hover:shadow-md transition-shadow duration-200">
-              <CardContent className="p-8">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--commercial-soft)" }}>
-                  <Building2 className="w-7 h-7" strokeWidth={1.5} style={{ color: "#F0A87F" }} />
-                </div>
-                <h3 className="text-xl font-bold text-foreground mb-4">{t.commercialTitle}</h3>
-                <ul className="space-y-2.5 mb-6">
-                  {t.commercialItems.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "#F0A87F" }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+              );
+            })}
           </div>
-          {/* Single shared owner CTA */}
-          <div className="text-center mt-10">
+          {/* Shared resolution + single owner CTA */}
+          <div className="mx-auto mt-8 md:mt-10 max-w-2xl text-center" data-reveal>
+            <p className="mb-6 text-sm md:text-base leading-relaxed text-muted-foreground">{t.whoResolution}</p>
             <Link href="/auth?role=owner">
               <Button
                 size="lg"
-                className="px-12 active:scale-95 transition-transform shadow-md hover:shadow-lg hover:opacity-90"
+                className="w-full sm:w-auto px-12 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
                 style={{ background: "var(--owner)", color: "#04222c" }}
               >
                 {t.startNow}

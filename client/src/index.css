@@ -23,6 +23,37 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* ── Scroll reveal (landing page) ──────────────────────────────────────────
+     Elements marked [data-reveal] start hidden and rise in when they enter the
+     viewport (class added by useReveal hook). Stagger via --reveal-delay.
+     Entirely disabled for prefers-reduced-motion users. */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      transition-delay: var(--reveal-delay, 0ms);
+    }
+    [data-reveal].is-visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    @keyframes float-y {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-12px); }
+    }
+    .float-slow {
+      animation: float-y 7s ease-in-out infinite;
+    }
+
+    details[open] > .faq-answer {
+      animation: page-fade-in 0.25s ease-out;
+    }
+  }
+
   /* ── Skeleton shimmer ──────────────────────────────────────────────────── */
   @keyframes shimmer {
     0%   { background-position: -200% 0; }
