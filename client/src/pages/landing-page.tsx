@@ -159,7 +159,7 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-border px-2 text-[10px] text-muted-foreground" style={{ background: "var(--navy-2)" }}>
+        <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-border px-2 text-[11px] text-muted-foreground" style={{ background: "var(--navy-2)" }}>
           {url}
         </span>
       </div>
@@ -188,15 +188,15 @@ export default function LandingPage() {
       whoSubtitle: "سواء كنت مالك عقار سكني أو تجاري، أو تدير جمعية ملاك.. هذه اللحظات تعرفها جيدًا، وعِمــارة بُنيت لأجلها",
       whoMoments: [
         {
-          title: "عقدك السنوي يقترب من الانتهاء",
+          title: "عقدك السنوي قارب على الانتهاء؟",
           desc: "لا تجدد قبل أن تقارن. انشر طلبك مرة واحدة، واستلم عروضًا مكتوبة بأسعار واضحة من شركات مرخّصة.",
         },
         {
-          title: "استلمت مبنى جديدًا",
+          title: "استلمت مبنى جديدًا؟",
           desc: "عمارتك تحتاج تشغيلًا وصيانة من أول يوم. أضف عقارك خلال دقائق، واستقبل عروض الشركات في مكان واحد.",
         },
         {
-          title: "تحتاج شركة صيانة موثوقة",
+          title: "تبحث عن شركة صيانة موثوقة؟",
           desc: "بدل السؤال في مجموعات الواتساب.. كل شركة تصلك هنا مرخّصة وراجعها فريقنا بنفسه، ورقمك لا يظهر إلا بعد قبولك للعرض.",
         },
       ],
@@ -279,15 +279,15 @@ export default function LandingPage() {
         "Whether you own a residential or commercial property, or run a homeowners' association, you know these moments well. Emaraa was built for them.",
       whoMoments: [
         {
-          title: "Your contract is coming up for renewal",
+          title: "Contract coming up for renewal?",
           desc: "Don't renew before you compare. Post your request once and receive written offers with clear prices from licensed companies.",
         },
         {
-          title: "You just took over a new building",
+          title: "Just took over a new building?",
           desc: "Your building needs operations and maintenance from day one. Add your property in minutes and receive companies' offers in one place.",
         },
         {
-          title: "You need a maintenance company you can trust",
+          title: "Looking for a maintenance company you can trust?",
           desc: "Instead of asking around in WhatsApp groups: every company here is licensed and reviewed by our own team, and your number stays hidden until you accept an offer.",
         },
       ],
@@ -550,10 +550,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works (real product screens) ─────────────────────────── */}
-      <section id="how-it-works" className="py-24 bg-card">
+      <section id="how-it-works" className="py-16 md:py-24 bg-card">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">
+          <div className="text-center mb-10 md:mb-16" data-reveal>
+            <h2 className="text-[clamp(1.75rem,5.5vw,2.25rem)] font-extrabold text-foreground mb-4">
               {t.howItWorksTitle}
             </h2>
             <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
@@ -561,10 +561,10 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="max-w-5xl mx-auto flex flex-col gap-16 md:gap-20">
+          <div className="max-w-5xl mx-auto flex flex-col gap-12 md:gap-20">
             {/* Step 1 — list property */}
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              <div>
+              <div data-reveal>
                 <div className="mb-3 flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
                     <ClipboardList className="h-5 w-5" style={{ color: "var(--owner)" }} />
@@ -575,6 +575,7 @@ export default function LandingPage() {
                 <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step1Desc}</p>
                 <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step1Reassurance}</p>
               </div>
+              <div data-reveal style={revealDelay(120)}>
               <BrowserFrame url={t.screens.urlForm}>
                 <div className="rounded-xl border border-border p-4" style={{ background: "var(--card)" }}>
                   <p className="mb-1.5 text-xs font-bold text-foreground">{t.screens.propLabel}</p>
@@ -603,11 +604,12 @@ export default function LandingPage() {
                   <div className="flex h-9 items-center justify-center rounded-lg text-xs font-bold" style={{ background: "var(--owner)", color: "#04222c" }}>{t.screens.saveBtn}</div>
                 </div>
               </BrowserFrame>
+              </div>
             </div>
 
             {/* Step 2 — receive offers (reversed on desktop) */}
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              <div className="md:order-2">
+              <div className="md:order-2" data-reveal>
                 <div className="mb-3 flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
                     <Search className="h-5 w-5" style={{ color: "var(--owner)" }} />
@@ -617,7 +619,7 @@ export default function LandingPage() {
                 <h3 className="mb-2 text-xl font-extrabold text-foreground">{t.step2Title}</h3>
                 <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step2Desc}</p>
               </div>
-              <div className="md:order-1">
+              <div className="md:order-1" data-reveal style={revealDelay(120)}>
                 <BrowserFrame url={t.screens.urlDash}>
                   <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-foreground">
                     <Bell className="h-3.5 w-3.5" style={{ color: "var(--owner)" }} />
@@ -633,9 +635,9 @@ export default function LandingPage() {
                       </span>
                       <div className="flex-1">
                         <p className="text-xs font-bold text-foreground">{c.n}</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">{c.s}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">{c.s}</p>
                       </div>
-                      <span className="rounded-full px-2 py-1 text-[10px] font-bold" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>{t.screens.newBadge}</span>
+                      <span className="rounded-full px-2 py-1 text-[11px] font-bold" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>{t.screens.newBadge}</span>
                     </div>
                   ))}
                 </BrowserFrame>
@@ -644,7 +646,7 @@ export default function LandingPage() {
 
             {/* Step 3 — compare & choose */}
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              <div>
+              <div data-reveal>
                 <div className="mb-3 flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--owner-soft)" }}>
                     <BarChart3 className="h-5 w-5" style={{ color: "var(--owner)" }} />
@@ -654,6 +656,7 @@ export default function LandingPage() {
                 <h3 className="mb-2 text-xl font-extrabold text-foreground">{t.step3Title}</h3>
                 <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{t.step3Desc}</p>
               </div>
+              <div data-reveal style={revealDelay(120)}>
               <BrowserFrame url={t.screens.urlDash}>
                 <p className="mb-3 flex items-center gap-1.5 text-xs font-extrabold text-foreground">
                   <BarChart3 className="h-3.5 w-3.5" style={{ color: "var(--owner)" }} />
@@ -665,9 +668,9 @@ export default function LandingPage() {
                   </span>
                   <div className="flex-1">
                     <p className="text-xs font-bold text-foreground">{t.screens.co2}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">{t.screens.totalLabel}: 24,000 {t.screens.riyal} · {t.screens.perUnit} 2,000</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{t.screens.totalLabel}: 24,000 {t.screens.riyal} · {t.screens.perUnit} 2,000</p>
                   </div>
-                  <span className="rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white" style={{ background: "var(--provider)" }}>{t.screens.selectBtn} ✓</span>
+                  <span className="rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-white" style={{ background: "var(--provider)" }}>{t.screens.selectBtn} ✓</span>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-xl border border-border p-2.5" style={{ background: "var(--card)" }}>
                   <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: "var(--provider-soft)" }}>
@@ -675,11 +678,12 @@ export default function LandingPage() {
                   </span>
                   <div className="flex-1">
                     <p className="text-xs font-bold text-foreground">{t.screens.co1}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">{t.screens.totalLabel}: 27,600 {t.screens.riyal} · {t.screens.perUnit} 2,300</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{t.screens.totalLabel}: 27,600 {t.screens.riyal} · {t.screens.perUnit} 2,300</p>
                   </div>
-                  <span className="rounded-lg border border-border px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground">{t.screens.selectBtn}</span>
+                  <span className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-bold text-muted-foreground">{t.screens.selectBtn}</span>
                 </div>
               </BrowserFrame>
+              </div>
             </div>
           </div>
         </div>
@@ -687,7 +691,7 @@ export default function LandingPage() {
 
       {/* ── Closing owner CTA (full-bleed band) ──────────────────────────── */}
       <section
-        className="relative overflow-hidden py-16 text-center"
+        className="relative overflow-hidden py-12 md:py-16 text-center"
         style={{ background: "linear-gradient(135deg, #0f3a47 0%, #0F2733 75%)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}
       >
         {/* faint dot pattern */}
@@ -700,9 +704,15 @@ export default function LandingPage() {
             backgroundSize: "26px 26px",
           }}
         />
+        {/* soft cyan corner glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-32 h-[360px] w-[360px] rounded-full end-[-80px]"
+          style={{ background: "radial-gradient(circle, rgba(13,184,211,0.14) 0%, transparent 70%)" }}
+        />
         <div className="relative container mx-auto px-4">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="mb-3 text-2xl md:text-3xl font-extrabold text-white">{t.ctaTitle}</h2>
+          <div className="mx-auto max-w-2xl" data-reveal>
+            <h2 className="mb-3 text-[clamp(1.5rem,5vw,1.875rem)] font-extrabold text-white">{t.ctaTitle}</h2>
             <p className="mx-auto mb-4 max-w-lg text-base" style={{ color: "rgba(255,255,255,0.82)" }}>
               {t.ctaDesc}
             </p>
@@ -712,7 +722,7 @@ export default function LandingPage() {
             <Link href="/auth?role=owner">
               <Button
                 size="lg"
-                className="px-12 font-semibold hover:opacity-90 active:scale-95 transition-transform"
+                className="w-full sm:w-auto px-12 font-semibold hover:opacity-90 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)]"
                 style={{ background: "var(--owner)", color: "#04222c" }}
               >
                 {t.ctaBtn}
@@ -724,23 +734,25 @@ export default function LandingPage() {
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqJsonLd }} />
-      <section className="py-20" style={{ background: "var(--navy-2)" }}>
+      <section className="py-14 md:py-20" style={{ background: "var(--navy-2)" }}>
         <div className="container mx-auto max-w-3xl px-4">
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 text-3xl md:text-4xl font-extrabold text-foreground">{t.faqTitle}</h2>
+          <div className="mb-8 md:mb-10 text-center" data-reveal>
+            <h2 className="mb-3 text-[clamp(1.75rem,5.5vw,2.25rem)] font-extrabold text-foreground">{t.faqTitle}</h2>
             <p className="text-base md:text-lg text-muted-foreground">{t.faqSubtitle}</p>
           </div>
           <div className="space-y-3">
             {t.faqs.map((f, i) => (
               <details
                 key={i}
-                className="group rounded-xl border border-border bg-card px-5 py-4 [&_summary::-webkit-details-marker]:hidden"
+                data-reveal
+                style={revealDelay(Math.min(i * 60, 240))}
+                className="group rounded-xl border border-border bg-card px-5 py-4 transition-colors open:border-[rgba(13,184,211,0.45)] [&_summary::-webkit-details-marker]:hidden"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-foreground">
+                <summary className="flex min-h-[44px] cursor-pointer select-none list-none items-center justify-between gap-4 text-base font-bold text-foreground">
                   {f.q}
                   <ChevronDown className="h-5 w-5 flex-none text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
+                <p className="faq-answer mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
               </details>
             ))}
           </div>
@@ -769,8 +781,8 @@ export default function LandingPage() {
           style={{ background: "radial-gradient(circle, rgba(255,255,255,0.09) 0%, transparent 70%)" }}
         />
         <div className="relative container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
+          <div className="max-w-2xl mx-auto" data-reveal>
+            <h2 className="text-[clamp(1.75rem,5.5vw,2.25rem)] font-extrabold text-white mb-4">
               {t.providerCTATitle}
             </h2>
             <p className="text-base md:text-lg mb-8 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.8)" }}>
@@ -795,7 +807,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-card border-t border-border py-12">
+      <footer className="bg-card border-t border-border py-10 md:py-12 pb-safe">
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 gap-8 mb-8">
             <div>
@@ -809,7 +821,7 @@ export default function LandingPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Instagram"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3]"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
                   >
                     <Instagram className="h-5 w-5" />
                   </a>
@@ -818,7 +830,7 @@ export default function LandingPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="LinkedIn"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3]"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
                   >
                     <Linkedin className="h-5 w-5" />
                   </a>
@@ -831,7 +843,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/contact"
-                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.contactUs}
                   </Link>
@@ -839,7 +851,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/about"
-                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.aboutUs}
                   </Link>
@@ -849,7 +861,7 @@ export default function LandingPage() {
                     href="/emaraa-guide.html"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.viewDemo}
                   </a>
@@ -857,7 +869,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/terms"
-                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.termsOfUse}
                   </Link>
@@ -865,7 +877,7 @@ export default function LandingPage() {
                 <li>
                   <Link
                     href="/privacy"
-                    className="text-muted-foreground hover:text-[#0DB8D3] transition-colors no-underline"
+                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
                   >
                     {t.privacyPolicy}
                   </Link>
@@ -885,7 +897,7 @@ export default function LandingPage() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t.whatsappLabel}
-        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#1EA952] shadow-lg transition-transform hover:scale-105 active:scale-95"
+        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#1EA952] shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="#fff" aria-hidden="true">
           <path d="M17.6 6.32A8 8 0 0 0 4.21 16.05L3 21l5.06-1.18A8 8 0 1 0 17.6 6.32zM12 19.4a6.9 6.9 0 0 1-3.5-.96l-.25-.15-2.6.68.7-2.53-.16-.26A6.9 6.9 0 1 1 12 19.4zm3.9-5.2c-.21-.1-1.26-.62-1.45-.69s-.34-.1-.48.11-.55.68-.67.82-.25.16-.46.05a5.66 5.66 0 0 1-2.83-2.47c-.21-.36.21-.34.6-1.12a.38.38 0 0 0-.02-.36c-.05-.1-.48-1.15-.66-1.57s-.35-.36-.48-.36h-.41a.79.79 0 0 0-.57.27 2.4 2.4 0 0 0-.75 1.78 4.17 4.17 0 0 0 .87 2.2 9.54 9.54 0 0 0 3.65 3.23c2.27.99 2.27.66 2.68.62a2.18 2.18 0 0 0 1.43-1.01 1.78 1.78 0 0 0 .12-1.01c-.05-.1-.19-.16-.4-.26z" />
