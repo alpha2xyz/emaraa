@@ -188,15 +188,15 @@ export default function LandingPage() {
       whoSubtitle: "سواء كنت مالك عقار سكني أو تجاري، أو تدير جمعية ملاك.. هذه اللحظات تعرفها جيدًا، وعِمــارة بُنيت لأجلها",
       whoMoments: [
         {
-          title: "عقدك السنوي قارب على الانتهاء؟",
+          title: "عقدك السنوي يقترب من الانتهاء",
           desc: "لا تجدد قبل أن تقارن. انشر طلبك مرة واحدة، واستلم عروضًا مكتوبة بأسعار واضحة من شركات مرخّصة.",
         },
         {
-          title: "استلمت مبنى جديدًا؟",
+          title: "استلمت مبنى جديدًا",
           desc: "عمارتك تحتاج تشغيلًا وصيانة من أول يوم. أضف عقارك خلال دقائق، واستقبل عروض الشركات في مكان واحد.",
         },
         {
-          title: "تبحث عن شركة صيانة موثوقة؟",
+          title: "تحتاج شركة صيانة موثوقة",
           desc: "بدل السؤال في مجموعات الواتساب.. كل شركة تصلك هنا مرخّصة وراجعها فريقنا بنفسه، ورقمك لا يظهر إلا بعد قبولك للعرض.",
         },
       ],
@@ -279,15 +279,15 @@ export default function LandingPage() {
         "Whether you own a residential or commercial property, or run a homeowners' association, you know these moments well. Emaraa was built for them.",
       whoMoments: [
         {
-          title: "Contract coming up for renewal?",
+          title: "Your contract is coming up for renewal",
           desc: "Don't renew before you compare. Post your request once and receive written offers with clear prices from licensed companies.",
         },
         {
-          title: "Just took over a new building?",
+          title: "You just took over a new building",
           desc: "Your building needs operations and maintenance from day one. Add your property in minutes and receive companies' offers in one place.",
         },
         {
-          title: "Looking for a maintenance company you can trust?",
+          title: "You need a maintenance company you can trust",
           desc: "Instead of asking around in WhatsApp groups: every company here is licensed and reviewed by our own team, and your number stays hidden until you accept an offer.",
         },
       ],
