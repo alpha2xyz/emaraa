@@ -435,12 +435,12 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Text side */}
             <div className="flex flex-col gap-5 md:gap-6">
-              <div className="inline-flex" data-reveal>
+              <div className="inline-flex rise-in">
                 <span className="text-xs font-semibold px-3 py-1.5 rounded-full tracking-wide" style={{ color: "var(--owner)", background: "var(--owner-soft)" }}>
                   {t.chip}
                 </span>
               </div>
-              <h1 data-reveal style={revealDelay(90)}>
+              <h1 className="rise-in" style={revealDelay(90)}>
                 <span className="block text-[clamp(2.1rem,8.5vw,3.75rem)] font-extrabold text-white leading-tight mb-2 md:mb-3">
                   {t.heroTitle}
                 </span>
@@ -448,10 +448,10 @@ export default function LandingPage() {
                   {t.heroHighlight}
                 </span>
               </h1>
-              <p className="text-base md:text-lg leading-relaxed max-w-lg" data-reveal style={{ ...revealDelay(180), color: "rgba(255,255,255,0.7)" }}>
+              <p className="rise-in text-base md:text-lg leading-relaxed max-w-lg" style={{ ...revealDelay(180), color: "rgba(255,255,255,0.7)" }}>
                 {t.heroDesc}
               </p>
-              <div className="flex" data-reveal style={revealDelay(260)}>
+              <div className="flex rise-in" style={revealDelay(260)}>
                 <Button
                   size="lg"
                   className="w-full sm:w-auto px-8 gap-2 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
@@ -468,7 +468,7 @@ export default function LandingPage() {
             </div>
 
             {/* Illustration side */}
-            <div className="flex items-center justify-center" data-reveal style={revealDelay(150)}>
+            <div className="flex items-center justify-center rise-in" style={revealDelay(150)}>
               <div className="float-slow w-full max-w-[420px]">
                 <HeroIllustration />
               </div>
