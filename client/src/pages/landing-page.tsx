@@ -16,11 +16,11 @@ import {
   ShieldCheck,
   Bell,
   MapPin,
-  ArrowLeft,
   ArrowDown,
   ChevronDown,
   Instagram,
   Linkedin,
+  XIcon,
 } from "lucide-react";
 
 // Stagger helper for the [data-reveal] scroll animations (CSS in index.css)
@@ -189,25 +189,23 @@ export default function LandingPage() {
       whoMoments: [
         {
           title: "عقدك السنوي قارب على الانتهاء؟",
-          desc: "لا تجدد قبل أن تقارن. انشر طلبك مرة واحدة، واستلم عروضًا مكتوبة بأسعار واضحة من شركات مرخّصة.",
+          desc: "لا تُجدد عقد إدارة المرافق قبل أن تقارن. انشر طلب عقارك مرة واحدة، واستلم عروضًا مكتوبة بأسعار واضحة من شركات مرخّصة.",
         },
         {
           title: "استلمت مبنى جديدًا؟",
-          desc: "عمارتك تحتاج تشغيلًا وصيانة من أول يوم. أضف عقارك خلال دقائق، واستقبل عروض الشركات في مكان واحد.",
+          desc: "عمارتك تحتاج تشغيلًا وصيانة من أول يوم. أضف عقارك خلال دقائق، واستقبل عروض شركات إدارة المرافق في مكان واحد.",
         },
         {
-          title: "تبحث عن شركة صيانة موثوقة؟",
+          title: "تبحث عن شركة إدارة مرافق موثوقة؟",
           desc: "بدل السؤال في مجموعات الواتساب.. كل شركة تصلك هنا مرخّصة وراجعها فريقنا بنفسه، ورقمك لا يظهر إلا بعد قبولك للعرض.",
         },
       ],
-      whoResolution: "في الحالات الثلاث، الطريقة واحدة: أضف عقارك، استلم عروضًا مكتوبة، وقارن بهدوء.",
-      startNow: "ابدأ الآن",
       howItWorksTitle: "كيف تعمل المنصة",
       howItWorksDesc: "العثور على مزود الخدمة المناسب لم يكن أسهل من أي وقت مضى. ابدأ في دقائق.",
       step1Title: "أضف عقارك",
       step1Desc: "أضف تفاصيل عِمارتك (سكني أو تجاري) والخدمات التي تحتاجها",
       step1Reassurance: "أسهل من أي وقت مضى، ابدأ وفي دقائق ستجد مزود الخدمة المناسب لك",
-      howItWorksCtaNudge: "العثور على مزود الخدمة المناسب أصبح أسهل من أي وقت، ابدأ الآن",
+      howItWorksCtaNudge: "العثور على مزود الخدمة المناسب أصبح أسهل من أي وقت مضى",
       step2Title: "احصل على عروض",
       step2Desc: "مقدمو الخدمات المؤهلون يقدمون عروضهم على طلباتك",
       step3Title: "قارن واختر",
@@ -251,7 +249,7 @@ export default function LandingPage() {
         { q: "هل أقدر أتعاقد سنوياً لإدارة وصيانة عمارتي عبر المنصة؟", a: "نعم، المنصة متخصصة في عقود إدارة المرافق السنوية للعقارات السكنية والتجارية. تنشر احتياج عمارتك مرة واحدة، تستقبل عروضاً كاملة بنطاق الخدمة، وتتعاقد مع الشركة التي تختارها." },
       ],
       ctaTitle: "جاهز تبدأ بإدارة عمارتك بكفاءة؟",
-      ctaDesc: "أضف عقارك خلال دقائق واستقبل عروضاً من مزوّدين موثوقين.",
+      ctaDesc: "أضف عقارك خلال دقائق واستقبل عروضاً من شركات إدارة مرافق موثوقة.",
       ctaBtn: "ابدأ الآن",
       whatsappLabel: "تواصل معنا عبر واتساب",
       quickLinks: "روابط سريعة",
@@ -280,27 +278,24 @@ export default function LandingPage() {
       whoMoments: [
         {
           title: "Contract coming up for renewal?",
-          desc: "Don't renew before you compare. Post your request once and receive written offers with clear prices from licensed companies.",
+          desc: "Don't renew your facility management contract before you compare. Post your property request once and receive written offers with clear prices from licensed companies.",
         },
         {
           title: "Just took over a new building?",
-          desc: "Your building needs operations and maintenance from day one. Add your property in minutes and receive companies' offers in one place.",
+          desc: "Your building needs operations and maintenance from day one. Add your property in minutes and receive facilities management companies' offers in one place.",
         },
         {
-          title: "Looking for a maintenance company you can trust?",
+          title: "Looking for a facility management company you can trust?",
           desc: "Instead of asking around in WhatsApp groups: every company here is licensed and reviewed by our own team, and your number stays hidden until you accept an offer.",
         },
       ],
-      whoResolution:
-        "In all three cases the path is the same: add your property, receive written offers, and compare calmly.",
-      startNow: "Get Started",
       howItWorksTitle: "How It Works",
       howItWorksDesc:
         "Finding the right service provider has never been easier. Get started in minutes.",
       step1Title: "List Your Property",
       step1Desc: "Add your building details (residential or commercial) and the services you need",
       step1Reassurance: "Easier than ever — start now and find the right service provider in minutes.",
-      howItWorksCtaNudge: "Finding the right provider is easier than ever — start now.",
+      howItWorksCtaNudge: "Finding the right provider is easier than ever.",
       step2Title: "Get Matched",
       step2Desc: "Qualified service providers bid on your requests",
       step3Title: "Compare & Choose",
@@ -344,7 +339,7 @@ export default function LandingPage() {
         { q: "Can I sign an annual facility management contract for my building through the platform?", a: "Yes — the platform specializes in annual facility management contracts for residential and commercial properties. Post your building's needs once, receive complete scoped offers, and contract with the company you choose." },
       ],
       ctaTitle: "Ready to manage your building efficiently?",
-      ctaDesc: "Add your property in minutes and receive offers from trusted providers.",
+      ctaDesc: "Add your property in minutes and receive offers from trusted facilities management providers.",
       ctaBtn: "Get Started",
       whatsappLabel: "Chat with us on WhatsApp",
       quickLinks: "Quick Links",
@@ -457,7 +452,7 @@ export default function LandingPage() {
                   className="w-full sm:w-auto px-8 gap-2 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
                   style={{ background: "var(--owner)", color: "#04222c" }}
                   onClick={() => {
-                    const el = document.getElementById("how-it-works");
+                    const el = document.getElementById("who-for");
                     if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" });
                   }}
                 >
@@ -502,7 +497,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Who benefits — the 3 moments an owner needs Emaraa ──────────── */}
-      <section className="py-14 md:py-20" style={{ background: "var(--navy-2)" }}>
+      <section id="who-for" className="py-14 md:py-20" style={{ background: "var(--navy-2)" }}>
         <div className="container mx-auto px-4">
           <div className="text-center mb-10 md:mb-12" data-reveal>
             <h2 className="text-[clamp(1.75rem,5.5vw,2.25rem)] font-extrabold text-foreground mb-4">{t.whoTitle}</h2>
@@ -532,19 +527,6 @@ export default function LandingPage() {
                 </div>
               );
             })}
-          </div>
-          {/* Shared resolution + single owner CTA */}
-          <div className="mx-auto mt-8 md:mt-10 max-w-2xl text-center" data-reveal>
-            <p className="mb-6 text-sm md:text-base leading-relaxed text-muted-foreground">{t.whoResolution}</p>
-            <Link href="/auth?role=owner">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto px-12 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
-                style={{ background: "var(--owner)", color: "#04222c" }}
-              >
-                {t.startNow}
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -792,12 +774,9 @@ export default function LandingPage() {
               <Link href="/auth?role=provider">
                 <Button
                   size="lg"
-                  className="group h-auto gap-3.5 rounded-full ps-1.5 pe-7 py-1.5 text-base font-bold text-white shadow-lg transition-transform active:scale-95 hover:opacity-90"
+                  className="h-auto rounded-full px-8 py-3 text-base font-bold text-white shadow-lg transition-transform active:scale-95 hover:opacity-90"
                   style={{ background: "var(--provider)" }}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full transition-colors" style={{ background: "#0e2f4d" }}>
-                    <ArrowLeft className="text-white" />
-                  </span>
                   {t.joinProvider}
                 </Button>
               </Link>
@@ -833,6 +812,15 @@ export default function LandingPage() {
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
                   >
                     <Linkedin className="h-5 w-5" />
+                  </a>
+                  <a
+                    href="https://x.com/Emaraa_app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="X (Twitter)"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
+                  >
+                    <XIcon className="h-5 w-5" />
                   </a>
                 </div>
               </div>
