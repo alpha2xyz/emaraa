@@ -35,11 +35,13 @@ shared/        # schema.ts — Drizzle schema + Zod types shared by both
 
 **Path aliases**: `@/` → `client/src/`, `@shared/` → `shared/`
 
-### Data Flow — Two Separate Patterns
+### Data Flow — Server-side via `supabaseAdmin`
 
-The Express server (`server/`) uses an `IStorage` interface backed by in-memory `MemStorage`. This handles only a small subset of local CRUD (properties, requests). **Most real data operations happen client-side via the Supabase JS client** (`client/src/lib/supabase.ts`) — pages call `supabase.from(...)` directly for users, providers, offers, and admin operations.
+**Most authenticated data operations go through Express endpoints in `server/routes.ts`** using the **`supabaseAdmin`** service-role client (~138 call sites). Pages fetch from `/api/...`; the server does the Supabase work and enforces ownership/role. The client-side Supabase client (`client/src/lib/supabase.ts`) is now a **plain anon client** used for a minimal set of reads only.
 
-Admin auth specifically goes through the Express server → Supabase RPC (`check_admin_login`, `verify_admin_session` functions in the DB).
+**Why it's this way (do not revert):** on 2026-06-01 two things forced offers, provider profiles, and owner reads onto the server — (1) an RLS recursion cycle (`42P17`) between `provider_offers` ↔ `providers`, and (2) the Supabase project rotating to asymmetric **ES256** JWT signing, which made the old HS256 `supabaseToken` path dead (PostgREST rejects it). The dead token path and the client `from(...)` reads that rode it were removed. Reaching for client-side `supabase.from(...)` on authenticated data will re-introduce the exact RLS/auth bugs already fixed. Route new authenticated data ops through the server with `supabaseAdmin`.
+
+Admin auth goes through the Express server → Supabase RPC (`check_admin_login`, `verify_admin_session` functions in the DB).
 
 ### Auth & Roles
 
@@ -56,7 +58,7 @@ Wouter (`wouter`) handles client-side routing. Route groups in `App.tsx`:
 - Owner: `/dashboard/owner/**` — wrapped in `DashboardLayout role="owner"`
 - Provider: `/dashboard/provider/**` — wrapped in `DashboardLayout role="provider"`
 
-`DashboardLayout` wraps all authenticated routes: applies `RequireAuth`, renders `Navbar` + `BottomNav`, and sets `dir="rtl"` when language is Arabic.
+`DashboardLayout` (a helper defined **inside `App.tsx`**, not a standalone component file) wraps all authenticated routes: applies `RequireAuth`, renders **`Navbar` only** (BottomNav was removed 2026-05-31 — all roles use the Navbar gear menu; `BottomNav.tsx` is deleted), and sets `dir="rtl"` when language is Arabic.
 
 ### Owner Onboarding Flow (added 2026-05-26, v3 2026-05-28)
 
@@ -101,7 +103,7 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 - `client/src/pages/owner-offers-page.tsx`
 
 **`owner-dashboard.tsx` structure (single scrollable page):**
-1. **Greeting** — "أهلاً، [name]" small black text (`text-gray-900`); chips for city + building type
+1. **Greeting / header** — dark-theme tokens (`text-foreground`, role accent `var(--owner)`); chips for city + building type. (The old light-theme `text-gray-900` greeting is retired — Arctic Depths rebrand 2026-06-11. Never reintroduce light-theme hex here.)
 2. **Section ① — العقار وطلب الخدمة** — property info (inline editable) merged with request status (shown below border-top divider with status badge + date + notes)
 3. **Section ② — عروض المزودين** — lists all offers received
 
@@ -119,9 +121,9 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 - Enforced server-side: `GET /api/owner/offers/:requestId` nulls out `offer_file_url` for any offer whose status is not `accepted` — the path never reaches the owner's browser until accept
 - Provider's own view (`GET /api/provider/all-offers`) and admin views are unchanged — they still see PDFs
 
-**Bottom nav:** `if (isOwner) return null` — owners have no bottom nav; provider 4-tab nav unchanged
+**Bottom nav:** removed entirely (2026-05-31). All roles navigate via the `Navbar` gear menu; there is no BottomNav for any role.
 
-**`App.tsx` padding:** `role === "owner" ? "pb-4" : "pb-20"` (owner has no bottom nav)
+**`App.tsx` padding:** `<main className="pb-4">` — flat `pb-4` for all roles (no more per-role `pb-20`, since no bottom nav exists).
 
 **Technical documents:** `Reports/technical/owner-onboarding-plan-2026-05-27-v3.html`
 
@@ -187,7 +189,7 @@ PDF proposals and company documents are stored in Supabase Storage. `client/src/
 - All pages in `client/src/pages/` have a `.page-enter` CSS animation (defined in `index.css`).
 - shadcn/ui components live in `client/src/components/ui/` — don't edit these directly; extend them from page/feature components.
 - `env.ts` at the root exports `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `AUTHENTICA_API_KEY` — imported by both server and client.
-- The `server/storage.ts` `MemStorage` is used for local dev scaffolding only; it does not persist. Real data is in Supabase.
+- `server/storage.ts` (the old `MemStorage`/`IStorage` scaffold) was **deleted 2026-06-12** — it was imported by nothing. All data lives in Supabase, accessed server-side via `supabaseAdmin`. Do not recreate a MemStorage layer.
 - `console.error` is guarded by `import.meta.env.DEV` throughout client code.
 
 ---
@@ -295,6 +297,8 @@ This folder is a git repo deployed to Vercel — it must stay clean. Everything 
 | ZIP snapshots of the project (taken once per session before major changes) | `~/Documents/Emaraa with claude/backups/` |
 | Raw market data — REGA annual reports (PDF + MD), FAL Excel, provider datasets, REGA stats summaries | `~/Documents/Emaraa with claude/Resources/` |
 
+The authoritative map of the whole workspace — every folder's purpose, what belongs, what does NOT — is `~/Documents/Emaraa with claude/FOLDER-MAP.md`. Read it before placing any non-code file; if it doesn't answer, ask in one line instead of inventing a location.
+
 If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file — it doesn't belong here.
 
 ### SQL Files
@@ -314,11 +318,27 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 - **ZERO diagnostic/TEMP commits on `main`.** Debugging happens on a branch against the Preview deployment, never on `main`.
 
 ### Model routing
+
+**Main seat (Abdallah switches with `/model`):** match the model to the size of the job.
+
+> **Fable 5 has limited/rotating availability — it comes and goes.** Keep the *saved default* model on **Opus 4.8** (always available); switch to Fable with `/model` only for the session you want it, so a disappearance never leaves a new session with no valid default. Do NOT save Fable as the default and leave it there when it rotates out.
+
 | Model | Use for |
 |---|---|
-| **Fable 5** | Monthly audits, architecture decisions, multi-layer debugging, plans handed to subagents |
-| **Opus 4.8** | Feature implementation, bug fixes, UI work, reports, subagent swarms |
-| **Sonnet 4.6** | Quick questions, docs, single-file tweaks, research |
+| **Fable 5** (when available) | Monthly deep audits, architecture decisions, multi-layer debugging, plans handed to subagents. If unavailable, use Opus 4.8. |
+| **Opus 4.8** | Feature implementation, bug fixes, UI work, reports, orchestrating subagent swarms |
+| **Sonnet 5** | Quick questions, docs, single-file tweaks, research |
+
+**Delegation layer (the enforcement mechanism):** the main seat stays on judgment work. Anything **mechanical or multi-place** is delegated to a named subagent in `.claude/agents/`, each pinned to a cheap model so the premium seat isn't spent on it. This is how the "cheap model for easy tasks" rule is actually enforced — a subagent's `model:` field is fixed, unlike the main seat.
+
+| Agent | Model | Use for |
+|---|---|---|
+| `backend-auditor` | Sonnet | weekly backend/DB/RLS audit (runs `.claude/commands/emaraa/backend.md`) |
+| `frontend-auditor` | Sonnet | weekly UI/theme/bilingual audit (runs `.claude/commands/emaraa/frontend.md`) |
+| `copy-reviewer` | Sonnet | read-only fresh-eyes pass on post batches vs BRAND-VOICE/PRODUCT-FACTS/APPROVED-POSTS (BRAND-VOICE §12هـ) |
+| `housekeeper` | Haiku | TODO cleanup, session-log appends, file moves, ZIP backups |
+
+Default to subagents for any check/edit/gather spanning **more than one file or source**, split **by file/resource, not by task** (parallel agents must never edit the same file). Reserve stronger models for reasoning-heavy or security-sensitive work. Live-prod DB writes and merges to `main` still need Abdallah's explicit OK — subagents never do those silently.
 
 ### Audit rhythm
 - `/emaraa:backend` — weekly
