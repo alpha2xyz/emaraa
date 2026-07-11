@@ -73,13 +73,13 @@ export default function ContactPage() {
       <div
         style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}
         className="text-white py-6 px-4 flex items-center justify-between"
-        dir="rtl"
+        dir={isRTL ? "rtl" : "ltr"}
       >
-        <p className="font-bold text-xl">عِمارة</p>
+        <p className="font-bold text-xl">{isRTL ? "عِمارة" : "Emaraa"}</p>
         <div className="flex items-center gap-3">
           <div className="text-start">
             <p className="text-xl font-bold">{t.title}</p>
-            <p className="text-sm opacity-75">Contact Us</p>
+            <p className="text-sm opacity-75">{isRTL ? "Contact Us" : "تواصل معنا"}</p>
           </div>
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}

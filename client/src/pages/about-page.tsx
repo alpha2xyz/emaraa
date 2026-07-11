@@ -256,7 +256,7 @@ export default function AboutPage() {
       {/* ── Saudi Made badge ── */}
       <div className="flex justify-end px-6 pb-6">
         <img
-          src="https://www.tameeni.com/images/saudi-made-ar.png"
+          src="/saudi-made-ar.png"
           alt="صنع في السعودية"
           className="h-9 object-contain opacity-70"
         />

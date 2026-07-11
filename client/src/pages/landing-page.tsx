@@ -203,7 +203,7 @@ export default function LandingPage() {
       howItWorksTitle: "كيف تعمل المنصة",
       howItWorksDesc: "العثور على مزود الخدمة المناسب لم يكن أسهل من أي وقت مضى. ابدأ في دقائق.",
       step1Title: "أضف عقارك",
-      step1Desc: "أضف تفاصيل عِمارتك (سكني أو تجاري) والخدمات التي تحتاجها",
+      step1Desc: "أضف تفاصيل عِمارتك (سكني أو تجاري) وانشر طلبًا شاملًا لتشغيل وصيانة عقارك",
       step1Reassurance: "أسهل من أي وقت مضى، ابدأ وفي دقائق ستجد مزود الخدمة المناسب لك",
       howItWorksCtaNudge: "العثور على مزود الخدمة المناسب أصبح أسهل من أي وقت مضى",
       step2Title: "احصل على عروض",
@@ -293,7 +293,7 @@ export default function LandingPage() {
       howItWorksDesc:
         "Finding the right service provider has never been easier. Get started in minutes.",
       step1Title: "List Your Property",
-      step1Desc: "Add your building details (residential or commercial) and the services you need",
+      step1Desc: "Add your building details (residential or commercial) and post one comprehensive O&M request",
       step1Reassurance: "Easier than ever — start now and find the right service provider in minutes.",
       howItWorksCtaNudge: "Finding the right provider is easier than ever.",
       step2Title: "Get Matched",
@@ -881,7 +881,7 @@ export default function LandingPage() {
 
       {/* ── Floating WhatsApp button ─────────────────────────────────────── */}
       <a
-        href="https://wa.me/966501315725?text=مرحباً، لدي استفسار عن منصة عِمارة"
+        href={`https://wa.me/966501315725?text=${encodeURIComponent(isRTL ? "مرحباً، لدي استفسار عن منصة عِمارة" : "Hello, I have a question about the Emaraa platform")}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t.whatsappLabel}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useLang } from "@/hooks/use-lang";
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -7,6 +8,7 @@ interface RequireAuthProps {
 }
 
 export default function RequireAuth({ children, role }: RequireAuthProps) {
+  const { lang } = useLang();
   const [, setLocation] = useLocation();
   const [verified, setVerified] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -52,7 +54,7 @@ export default function RequireAuth({ children, role }: RequireAuthProps) {
   if (checking || !verified) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground text-sm">جارٍ التحقق…</p>
+        <p className="text-muted-foreground text-sm">{lang === "ar" ? "جارٍ التحقق…" : "Verifying…"}</p>
       </div>
     );
   }

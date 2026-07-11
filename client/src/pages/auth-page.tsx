@@ -231,7 +231,7 @@ export default function AuthPage() {
       }
     } catch (err) {
       if (import.meta.env.DEV) console.error("Error:", err);
-      setError("حدث خطأ، حاول مرة أخرى");
+      setError(lang === "ar" ? "حدث خطأ، حاول مرة أخرى" : "Something went wrong, please try again");
     } finally {
       setLoading(false);
     }

@@ -126,40 +126,40 @@ function getRequestStatusConfig(status: string) {
       return {
         label: "قيد الانتظار",
         labelEn: "Pending",
-        bg: "#FEF3C7",
-        color: "#92400E",
+        bg: "var(--warn-soft)",
+        color: "var(--warn)",
         isActive: true,
       };
     case "in_progress":
       return {
         label: "نشط",
         labelEn: "Active",
-        bg: "#D1FAE5",
-        color: "#065F46",
+        bg: "var(--ok-soft)",
+        color: "var(--ok)",
         isActive: true,
       };
     case "completed":
       return {
         label: "مغلق",
         labelEn: "Closed",
-        bg: "#F3F4F6",
-        color: "#6B7280",
+        bg: "hsl(var(--muted))",
+        color: "hsl(var(--muted-foreground))",
         isActive: false,
       };
     case "cancelled":
       return {
         label: "ملغي",
         labelEn: "Cancelled",
-        bg: "#F3F4F6",
-        color: "#6B7280",
+        bg: "hsl(var(--muted))",
+        color: "hsl(var(--muted-foreground))",
         isActive: false,
       };
     default:
       return {
         label: status,
         labelEn: status,
-        bg: "#F3F4F6",
-        color: "#6B7280",
+        bg: "hsl(var(--muted))",
+        color: "hsl(var(--muted-foreground))",
         isActive: false,
       };
   }

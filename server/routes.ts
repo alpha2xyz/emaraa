@@ -1003,13 +1003,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .select("email, name")
         .eq("id", data.owner_id)
         .single();
+      const { data: prop } = await supabaseAdmin
+        .from("properties")
+        .select("name, building_type, city, units_count")
+        .eq("id", property_id)
+        .single();
+      const btype = prop?.building_type === "residential" ? "سكني" : prop?.building_type === "commercial" ? "تجاري" : (prop?.building_type ?? "—");
       if (ownerU?.email) {
-        const { data: prop } = await supabaseAdmin
-          .from("properties")
-          .select("name, building_type, city, units_count")
-          .eq("id", property_id)
-          .single();
-        const btype = prop?.building_type === "residential" ? "سكني" : prop?.building_type === "commercial" ? "تجاري" : (prop?.building_type ?? "—");
         const lines = [
           `العقار: ${prop?.name ?? "—"}`,
           `نوع العقار: ${btype}`,
@@ -1031,6 +1031,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           "owner_request_created",
         );
       }
+
+      // Real-time admin notification: a new service request landed on the platform.
+      await notify(
+        ADMIN_NOTIFY_EMAIL,
+        `طلب خدمة جديد — ${prop?.name ?? "عقار"} (${prop?.city ?? "—"})`,
+        notificationEmail({
+          heading: "طلب خدمة جديد على المنصة",
+          body: [
+            `المالك: ${ownerU?.name ?? "—"}`,
+            `العقار: ${prop?.name ?? "—"}`,
+            `نوع العقار: ${btype}`,
+            `المدينة: ${prop?.city ?? "—"}`,
+            `عدد الوحدات: ${prop?.units_count ?? "—"}`,
+            `ملاحظات المالك: ${request.description ? request.description : "(بدون ملاحظات)"}`,
+          ].join("\n"),
+          ctaLabel: "فتح لوحة الإدارة",
+          ctaUrl: "https://emaraa.app/admin",
+        }),
+        "admin_new_request",
+      );
 
       res.status(201).json(request);
     } catch (error) {
@@ -1266,6 +1286,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.status(500).json({ error: "Failed to update offer status" });
     }
   });
+
+  // Admin real-time notifications (new registration / new request) go to this inbox.
+  const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_REPORT_TO ?? "info@emaraa.app";
 
   // Helper: send a notification email via Zoho. MUST be awaited by callers — on Vercel the
   // lambda freezes the instant the handler responds, so a fire-and-forget send would be lost.
@@ -1579,6 +1602,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (sessionError || !session) {
         console.error("[otp/verify] session insert error:", sessionError);
         return res.status(500).json({ error: "Failed to create session" });
+      }
+
+      // Real-time admin notification: a brand-new user (owner or provider) registered.
+      if (mode === "register") {
+        const roleAr = role === "provider" ? "مزود خدمة" : "مالك";
+        await notify(
+          ADMIN_NOTIFY_EMAIL,
+          `تسجيل جديد — ${roleAr}${userName ? ` (${userName})` : ""}`,
+          notificationEmail({
+            heading: `مستخدم جديد على المنصة: ${roleAr}`,
+            body: [
+              `الاسم: ${userName || "—"}`,
+              `الدور: ${roleAr}`,
+              `الجوال: ${phone}`,
+            ].join("\n"),
+            ctaLabel: "فتح لوحة الإدارة",
+            ctaUrl: "https://emaraa.app/admin",
+          }),
+          "admin_new_user",
+        );
       }
 
       res.json({ token: session.token, userId, phone, role, name: userName });
