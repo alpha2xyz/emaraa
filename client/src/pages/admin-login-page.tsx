@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { useLang } from "../hooks/use-lang";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function AdminLoginPage() {
   const { lang } = useLang();
@@ -75,9 +76,10 @@ export default function AdminLoginPage() {
 
   return (
     <div
-      className="page-enter min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4"
+      className="page-enter min-h-screen flex items-center justify-center p-4"
       dir={isRTL ? "rtl" : "ltr"}
     >
+      <AmbientBackground />
       <div className="absolute top-4 end-4">
         <LanguageToggle className="text-slate-300" />
       </div>

@@ -1,13 +1,15 @@
 import { SearchX, Globe } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "@/hooks/use-lang";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function NotFound() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
 
   return (
-    <div className="min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+      <AmbientBackground />
       {/* Header strip */}
       <div
         style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}

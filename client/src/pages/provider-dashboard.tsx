@@ -209,7 +209,6 @@ export default function ProviderDashboard() {
   return (
     <div
       className="page-enter min-h-screen"
-      style={{ background: "var(--navy-2)" }}
       dir={isRTL ? "rtl" : "ltr"}
     >
       <ProviderHeader />

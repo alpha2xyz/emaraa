@@ -472,7 +472,7 @@ export default function OwnerDashboard() {
 
   if (isLoading) {
     return (
-      <div className="page-enter min-h-screen bg-background p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="page-enter min-h-screen p-4 sm:p-6" dir={isRTL ? "rtl" : "ltr"}>
         <div className="max-w-2xl mx-auto space-y-6">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-4 w-64" />
@@ -494,7 +494,7 @@ export default function OwnerDashboard() {
   const offersList = offers ?? [];
 
   return (
-    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
