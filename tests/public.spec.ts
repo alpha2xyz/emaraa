@@ -30,7 +30,7 @@ test.describe("Landing Page", () => {
   test("shows the provider CTA section", async ({ page }) => {
     await page.goto("/");
     // Provider CTA heading
-    await expect(page.locator("text=هل أنت مزود خدمة؟")).toBeVisible();
+    await expect(page.locator("text=هل أنت شركة إدارة مرافق؟")).toBeVisible();
   });
 
   test("footer shows copyright", async ({ page }) => {
