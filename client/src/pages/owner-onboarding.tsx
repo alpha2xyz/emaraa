@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Home, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/hooks/use-lang";
+import AmbientBackground from "@/components/AmbientBackground";
 import {
   Select,
   SelectContent,
@@ -325,7 +326,8 @@ export default function OwnerOnboarding() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="page-enter min-h-screen" style={{ background: "var(--navy-2)" }} dir="rtl">
+    <div className="page-enter min-h-screen" dir="rtl">
+      <AmbientBackground />
       {/* ── Branded header ── */}
       <div
         className="px-6 pt-8 pb-7 text-white"

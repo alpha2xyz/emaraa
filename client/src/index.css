@@ -66,6 +66,18 @@
       animation: float-y 7s ease-in-out infinite;
     }
 
+    /* Ambient background glow — slow continuous drift + gentle pulse so every
+       page has subtle life. Purely decorative (behind content), so it never
+       affects readability; disabled automatically for reduced-motion users. */
+    @keyframes ambient-drift {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
+      50%      { transform: translate(48px, 32px) scale(1.18); opacity: 0.72; }
+    }
+    .ambient-glow {
+      animation: ambient-drift 16s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
     details[open] > .faq-answer {
       animation: page-fade-in 0.25s ease-out;
     }

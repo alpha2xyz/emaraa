@@ -2,6 +2,7 @@ import { useLang } from "@/hooks/use-lang";
 import { useSeo } from "@/hooks/use-seo";
 import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale, Globe } from "lucide-react";
 import { Link } from "wouter";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function AboutPage() {
   const { lang, setLang } = useLang();
@@ -13,7 +14,8 @@ export default function AboutPage() {
   });
 
   return (
-    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+      <AmbientBackground />
       {/* ── Hero ── */}
       <div className="text-white py-10 px-6 text-center relative overflow-hidden" style={{ background: "linear-gradient(160deg, #0f3a47, #0F2733 75%)", borderBottom: "2px solid var(--owner)" }}>
         <div

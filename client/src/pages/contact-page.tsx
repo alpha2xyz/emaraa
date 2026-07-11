@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "../hooks/use-lang";
 import { useSeo } from "../hooks/use-seo";
 import { Globe } from "lucide-react";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function ContactPage() {
   const { lang, setLang } = useLang();
@@ -68,7 +69,8 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+      <AmbientBackground />
       {/* Header strip */}
       <div
         style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}

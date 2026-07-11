@@ -305,7 +305,7 @@ export default function ProviderOfferForm() {
         : "Residential";
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--navy-2)" }} dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="min-h-screen" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Emerald gradient header strip */}
       <div
         style={{ background: "linear-gradient(135deg, #0e3a5c, #193546)" }}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function AuthPage() {
   const { lang } = useLang();
@@ -254,7 +255,8 @@ export default function AuthPage() {
       : ["Easy property management", "Vetted service providers", "Transparent, reliable offers"];
 
   return (
-    <div className="page-enter min-h-screen bg-background flex">
+    <div className="page-enter min-h-screen flex">
+      <AmbientBackground />
       {/* Left marketing panel — desktop only */}
       <div
         className="hidden lg:flex w-5/12 flex-col justify-center p-14 text-white"

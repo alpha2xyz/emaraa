@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "../hooks/use-lang";
 import { useSeo } from "../hooks/use-seo";
+import AmbientBackground from "@/components/AmbientBackground";
 
 type Section = { title: string; body: string[] };
 
@@ -316,7 +317,8 @@ export default function TermsPage() {
   const l = labels[lang];
 
   return (
-    <div className="page-enter min-h-screen bg-background" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+      <AmbientBackground />
       {/* Header strip */}
       <div
         style={{ background: "linear-gradient(135deg, #0f3a47, #193546)", borderBottom: "2px solid var(--owner)" }}

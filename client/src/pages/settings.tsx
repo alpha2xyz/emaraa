@@ -144,7 +144,6 @@ export default function Settings() {
   return (
     <div
       className="page-enter min-h-screen"
-      style={{ background: "var(--navy-2)" }}
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Role-aware gradient header strip */}

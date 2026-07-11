@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Save, Loader2, Upload, FileText, CheckCircle2, Clock, ChevronRight, ChevronLeft, Lock, AlertTriangle, Info } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function ProviderProfile() {
   const { lang } = useLang();
@@ -292,9 +293,9 @@ export default function ProviderProfile() {
   return (
     <div
       className="page-enter min-h-screen"
-      style={{ background: "var(--navy-2)" }}
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
+      <AmbientBackground glow="provider" />
       {/* Emerald gradient header strip */}
       <div
         style={{ background: "linear-gradient(135deg, #0e3a5c, #193546)" }}

@@ -46,6 +46,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useLang } from "@/hooks/use-lang";
 import { Navbar } from "@/components/Navbar";
 import RequireAuth from "@/components/RequireAuth";
+import AmbientBackground from "@/components/AmbientBackground";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 // ── Pages ──────────────────────────────────────────────────────────────────
@@ -106,10 +107,11 @@ function DashboardLayout({
         </div>
       )}
       <div
-        className="min-h-screen bg-background"
+        className="min-h-screen"
         dir={isRTL ? "rtl" : "ltr"}
         style={{ ["--role" as string]: role === "provider" ? "var(--provider)" : "var(--owner)" } as React.CSSProperties}
       >
+        <AmbientBackground glow={role === "provider" ? "provider" : "owner"} />
         <Navbar />
         <main className="pb-4">{children}</main>
       </div>

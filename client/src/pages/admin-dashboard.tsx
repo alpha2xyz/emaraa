@@ -27,6 +27,7 @@ import { openSignedPdf } from "../lib/storage";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { useToast } from "@/hooks/use-toast";
 import { StatusBadge } from "@/components/StatusBadge";
+import AmbientBackground from "@/components/AmbientBackground";
 
 export default function AdminDashboard() {
   const { lang } = useLang();
@@ -407,7 +408,8 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="page-enter min-h-screen" style={{ background: "var(--navy-2)" }} dir={isRTL ? "rtl" : "ltr"}>
+    <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+      <AmbientBackground />
       {/* Header */}
       <header className="bg-card border-b border-border shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
