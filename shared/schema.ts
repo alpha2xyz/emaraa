@@ -6,20 +6,12 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   phone: text("phone").notNull().unique(),
-  name: text("name"),
+  name: text("name").notNull(),
   email: text("email"), // optional — owners opt in to email notifications about their requests
   role: text("role").notNull().default("owner"), // owner, provider
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = z.object({
-  phone: z.string(),
-  name: z.string().nullable().optional(),
-  email: z.string().nullable().optional(),
-  role: z.string().optional(),
-});
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
 // Property model - المحدث بالكامل
@@ -90,26 +82,13 @@ export const providers = pgTable("providers", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-export const insertProviderSchema = z.object({
-  user_id: z.string().uuid(),
-  company_name: z.string(),
-  email: z.string().nullable().optional(),
-  city: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  commercial_register_url: z.string(),
-  company_profile_url: z.string(),
-  fal_license_url: z.string().nullable().optional(),
-  status: z.string().nullable().optional(),
-});
-
-export type InsertProvider = z.infer<typeof insertProviderSchema>;
 export type Provider = typeof providers.$inferSelect;
 
 // Provider offers model
 export const providerOffers = pgTable("provider_offers", {
   id: uuid("id").primaryKey().defaultRandom(),
-  request_id: uuid("request_id"),
-  provider_id: uuid("provider_id"),
+  request_id: uuid("request_id").notNull(),
+  provider_id: uuid("provider_id").notNull(),
   offer_file_url: text("offer_file_url"),
   notes: text("notes"),
   price_total: numeric("price_total"),
@@ -117,16 +96,6 @@ export const providerOffers = pgTable("provider_offers", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertProviderOfferSchema = z.object({
-  request_id: z.string().uuid(),
-  provider_id: z.string().uuid(),
-  offer_file_url: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  price_total: z.string().nullable().optional(),
-  status: z.string().optional(),
-});
-
-export type InsertProviderOffer = z.infer<typeof insertProviderOfferSchema>;
 export type ProviderOffer = typeof providerOffers.$inferSelect;
 
 // Deals model — captures a closed contract + its value (powers GMV / case studies / REGA file)
@@ -151,18 +120,6 @@ export const deals = pgTable("deals", {
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
-export const insertDealSchema = z.object({
-  request_id: z.string().uuid(),
-  offer_id: z.string().uuid(),
-  provider_id: z.string().uuid(),
-  owner_id: z.string().uuid(),
-  contract_value: z.string().nullable().optional(),
-  status: z.string().optional(),
-  signed_at: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-});
-
-export type InsertDeal = z.infer<typeof insertDealSchema>;
 export type Deal = typeof deals.$inferSelect;
 
 // SMS log — every Authentica send is recorded with its outcome (billing reconciliation + failure visibility)

@@ -460,6 +460,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!(b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46)) {
         return res.status(415).json({ error: "Invalid file type — PDF required" });
       }
+
+      // Ownership scoping: the client names files `${providerId}_${requestId}_${Date.now()}.pdf`
+      // (mirrors the `${userId}/${folder}/${filename}` scoping used in /api/upload/provider-document).
+      // Without this check, any approved provider could overwrite another provider's offer PDF
+      // by guessing/reusing its filename (upsert: true).
+      const userId = (req as any).userId as string;
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.status(403).json({ error: "provider_not_found" });
+      const filenameProviderId = filename.split("_")[0];
+      if (filenameProviderId !== provider.id) {
+        return res.status(403).json({ error: "Invalid filename — provider mismatch" });
+      }
+
       const { data, error } = await supabaseAdmin.storage
         .from("provider-offers")
         .upload(filename, req.body as Buffer, { contentType: "application/pdf", upsert: true });
@@ -772,6 +789,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .maybeSingle();
       if (!provider) return res.status(403).json({ error: "provider_not_found" });
       if (!provider.approved) return res.status(403).json({ error: "not_approved" });
+
+      // The request must still be pending — a rejected/in_progress/closed request
+      // may not receive a new or revived offer (the UI only lists pending requests,
+      // but a direct API call could otherwise bypass that).
+      const { data: targetRequest } = await supabaseAdmin
+        .from("requests")
+        .select("status")
+        .eq("id", request_id)
+        .maybeSingle();
+      if (!targetRequest) return res.status(404).json({ error: "الطلب غير موجود" });
+      if (targetRequest.status !== "pending") {
+        return res.status(403).json({ error: "لا يمكن تقديم عرض على طلب غير متاح" });
+      }
 
       // One offer per (request, provider). A previously rejected offer can be
       // re-submitted: the owner rejected all offers and re-opened the request,
