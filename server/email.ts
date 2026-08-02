@@ -126,7 +126,7 @@ export function ownerOfferWhatsappText(opts: {
   propertyName?: string | null;
 }): string {
   const greet = opts.ownerName ? `السلام عليكم ${opts.ownerName}` : "السلام عليكم";
-  const prop = opts.propertyName ? ` الخاص بـ ${opts.propertyName}` : "";
+  const prop = opts.propertyName ? ` الخاص بعقار ${opts.propertyName}` : "";
   return [
     `${greet}، معك عبدالله الفرائضي من منصة عِمارة.`,
     "",
@@ -175,11 +175,14 @@ export function adminOfferEmail(opts: {
       }</div>
     </div>`;
 
-  // Owner contact status: was an automatic email already sent to this owner, or is
-  // WhatsApp the only channel? This decides whether Abdallah needs to act.
+  // Owner contact status. Deliberately states only what this handler KNOWS: whether an
+  // address is on file. The owner's own "new offer" email is triggered by a separate
+  // client-side call (/api/sms/offer-submitted) that can silently fail, so claiming
+  // "the owner was already notified" here could be false — and would be exactly the
+  // case where skipping the WhatsApp leaves the owner in the dark.
   const contactNote = opts.ownerEmail
     ? `<div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:10px;padding:12px;font-size:13px;color:${mut};line-height:1.7;">
-         بريد المالك مسجّل (<span dir="ltr" style="unicode-bidi:isolate">${opts.ownerEmail}</span>) وأُرسل له إشعار تلقائي بالعرض. رسالة الواتساب أدناه للمتابعة إن أردت.
+         بريد المالك مسجّل: <span dir="ltr" style="unicode-bidi:isolate">${opts.ownerEmail}</span>. أرسِل رسالة الواتساب أدناه للتأكد من وصول الخبر.
        </div>`
     : `<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px;font-size:13px;color:#9A3412;line-height:1.7;">
          <b>لا يوجد بريد مسجّل لهذا المالك</b> ولم يصله أي إشعار تلقائي. الواتساب هو القناة الوحيدة للوصول إليه.
