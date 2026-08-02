@@ -218,20 +218,12 @@ export default function ProviderOfferForm() {
       }
       return submitRes.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({ title: t.success, variant: "default" });
       queryClient.invalidateQueries({ queryKey: ["/api/provider/all-offers"] });
-      // Fire SMS notifications (non-blocking)
-      if (data?.id) {
-        const token = localStorage.getItem("sessionToken");
-        if (token) {
-          fetch("/api/sms/offer-submitted", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ offerId: data.id }),
-          }).catch(() => {});
-        }
-      }
+      // Notification emails (provider, owner, admin) are sent server-side inside
+      // POST /api/provider/offers. Do not add a client-side trigger here — the old
+      // fire-and-forget call could silently fail and drop the owner's alert.
       setLocation("/dashboard/provider");
     },
     onError: (error: any) => {

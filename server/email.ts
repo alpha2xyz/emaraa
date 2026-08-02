@@ -175,11 +175,11 @@ export function adminOfferEmail(opts: {
       }</div>
     </div>`;
 
-  // Owner contact status. Deliberately states only what this handler KNOWS: whether an
-  // address is on file. The owner's own "new offer" email is triggered by a separate
-  // client-side call (/api/sms/offer-submitted) that can silently fail, so claiming
-  // "the owner was already notified" here could be false — and would be exactly the
-  // case where skipping the WhatsApp leaves the owner in the dark.
+  // Owner contact status. States only what is certain: whether an address is on file.
+  // The owner's own "new offer" email is now sent server-side in the same handler, but
+  // an SMTP failure would still make "the owner was notified" a false claim — and that
+  // is exactly the case where skipping the WhatsApp leaves the owner in the dark. So
+  // the copy always asks for the WhatsApp, and the block below is always shown.
   const contactNote = opts.ownerEmail
     ? `<div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:10px;padding:12px;font-size:13px;color:${mut};line-height:1.7;">
          بريد المالك مسجّل: <span dir="ltr" style="unicode-bidi:isolate">${opts.ownerEmail}</span>. أرسِل رسالة الواتساب أدناه للتأكد من وصول الخبر.

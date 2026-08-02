@@ -867,14 +867,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         data = inserted;
       }
 
-      // Real-time admin alert — BOTH paths (fresh offer and revived re-offer) land here.
-      // Deliberately NOT in /api/sms/offer-submitted: that endpoint is a client-side
-      // fire-and-forget call (can silently fail) and is capped at 5/hour per provider,
-      // so admin alerts would be dropped during a burst. Owners register with phone only
-      // (email optional), so the email carries a ready-to-send WhatsApp message for the
-      // owner. Never let a notification failure fail the offer submission itself.
+      // All three offer notifications (provider confirmation, owner alert, admin alert)
+      // fire here, server-side. BOTH paths — fresh offer and revived re-offer — land here.
+      // They used to hang off /api/sms/offer-submitted, a client-side fire-and-forget call
+      // that could silently fail and was capped at 5/hour per provider, so a burst dropped
+      // notifications. That endpoint is gone; do not reintroduce a client-triggered send.
+      // Never let a notification failure fail the offer submission itself.
       try {
-        await notifyAdminNewOffer(request_id, provider.id, {
+        await notifyOfferSubmitted(request_id, provider.id, {
           priceTotal: price_total ?? null,
           notes: notes ?? null,
           isReOffer: !!existingOffer,
@@ -1417,16 +1417,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     commercial: "تجاري",
   };
 
-  // Gather the full context for an offer (provider + owner + property) and send the
-  // admin alert. Called from POST /api/provider/offers so every offer is reported,
-  // including re-offers on a re-opened request.
-  async function notifyAdminNewOffer(
+  // Gather the full context for an offer (provider + owner + property) and send all
+  // three notifications: provider confirmation, owner alert, admin alert. Called from
+  // POST /api/provider/offers so every offer is reported, including re-offers on a
+  // re-opened request.
+  async function notifyOfferSubmitted(
     requestId: string,
     providerId: string,
     offer: { priceTotal: number | null; notes: string | null; isReOffer: boolean },
   ) {
     const [{ data: providerRow }, { data: reqRow }] = await Promise.all([
-      supabaseAdmin.from("providers").select("company_name").eq("id", providerId).maybeSingle(),
+      supabaseAdmin
+        .from("providers")
+        .select("company_name, email")
+        .eq("id", providerId)
+        .maybeSingle(),
       supabaseAdmin.from("requests").select("owner_id, property_id").eq("id", requestId).maybeSingle(),
     ]);
 
@@ -1448,6 +1453,35 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       prop?.name ? ` على ${prop.name}` : ""
     }`;
 
+    // 1) Provider — confirmation that their offer went through.
+    await notify(
+      providerRow?.email,
+      "تم إرسال عرضك — عِمارة",
+      notificationEmail({
+        heading: "تم إرسال عرضك بنجاح",
+        body: "وصلنا عرضك على طلب الخدمة. سنُعلمك فور قبوله من قِبل المالك.",
+        ctaLabel: "عرض لوحة التحكم",
+        ctaUrl: "https://emaraa.app",
+      }),
+      "offer_submitted",
+    );
+
+    // 2) Owner — a new offer landed. Opt-in: owners register with phone only, so this
+    // sends only when an email is on file. When it is not, the admin alert below is
+    // the safety net (it carries a ready-to-send WhatsApp message).
+    await notify(
+      ownerU?.email,
+      "لديك عرض جديد — عِمارة",
+      notificationEmail({
+        heading: "وصلك عرض جديد على طلبك",
+        body: "قدّم أحد المزودين عرضاً على طلب الخدمة الخاص بك. سجّل دخولك لمراجعة العرض وملف الشركة واتخاذ قرارك.",
+        ctaLabel: "مراجعة العرض",
+        ctaUrl: "https://emaraa.app",
+      }),
+      "owner_new_offer",
+    );
+
+    // 3) Admin — always, with full context and the WhatsApp handoff.
     await notify(
       ADMIN_NOTIFY_EMAIL,
       subject,
@@ -1468,77 +1502,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     );
   }
 
-  // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
-  app.post("/api/sms/offer-submitted", requireSession, requireProvider, async (req, res) => {
-    try {
-      // Rate limit: max 5 SMS triggers per user per hour (DB-backed, survives cold starts)
-      const userId = (req as any).userId as string;
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { count: smsCount } = await supabaseAdmin
-        .from("sms_rate_limits")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("endpoint", "offer-submitted")
-        .gte("created_at", oneHourAgo);
-      if ((smsCount ?? 0) >= 5) {
-        return res.status(429).json({ error: "Too many SMS requests. Try again later." });
-      }
-      await supabaseAdmin.from("sms_rate_limits").insert([{ user_id: userId, endpoint: "offer-submitted" }]);
-
-      const { offerId } = req.body;
-      if (!offerId) return res.status(400).json({ error: "offerId required" });
-
-      const { data: offer } = await supabaseAdmin
-        .from("provider_offers")
-        .select("id, request_id, provider_id, providers(email)")
-        .eq("id", offerId)
-        .single();
-      if (!offer) return res.status(404).json({ error: "Offer not found" });
-
-      // Notify provider — offer confirmed (providers have an email on file)
-      const providerEmail = (offer.providers as any)?.email as string | undefined;
-      await notify(
-        providerEmail,
-        "تم إرسال عرضك — عِمارة",
-        notificationEmail({
-          heading: "تم إرسال عرضك بنجاح",
-          body: "وصلنا عرضك على طلب الخدمة. سنُعلمك فور قبوله من قِبل المالك.",
-          ctaLabel: "عرض لوحة التحكم",
-          ctaUrl: "https://emaraa.app",
-        }),
-        "offer_submitted",
-      );
-
-      // Notify owner — new offer arrived (opt-in: only if the owner saved an email).
-      const { data: reqRow } = await supabaseAdmin
-        .from("requests")
-        .select("owner_id")
-        .eq("id", offer.request_id)
-        .single();
-      if (reqRow?.owner_id) {
-        const { data: ownerU } = await supabaseAdmin
-          .from("users")
-          .select("email")
-          .eq("id", reqRow.owner_id)
-          .single();
-        await notify(
-          ownerU?.email,
-          "لديك عرض جديد — عِمارة",
-          notificationEmail({
-            heading: "وصلك عرض جديد على طلبك",
-            body: "قدّم أحد المزودين عرضاً على طلب الخدمة الخاص بك. سجّل دخولك لمراجعة العرض وملف الشركة واتخاذ قرارك.",
-            ctaLabel: "مراجعة العرض",
-            ctaUrl: "https://emaraa.app",
-          }),
-          "owner_new_offer",
-        );
-      }
-
-      res.json({ success: true });
-    } catch {
-      res.status(500).json({ error: "Failed" });
-    }
-  });
 
   // SMS — notify all approved Riyadh providers when a new request is posted
   app.post("/api/sms/new-request", requireSession, requireOwner, async (req, res) => {
