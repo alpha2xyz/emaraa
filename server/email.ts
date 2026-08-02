@@ -103,6 +103,148 @@ export function notificationEmail(opts: {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// Admin: new offer landed — with a ready-to-send WhatsApp message for the owner
+// ───────────────────────────────────────────────────────────────────────────
+// Owners register with phone only (email is optional — PRODUCT-FACTS §2.1), so most
+// owners cannot be emailed when an offer arrives. This email gives Abdallah the full
+// context plus a one-tap WhatsApp link, so the owner still gets told.
+
+// Saudi mobiles are stored as 05XXXXXXXX (see the OTP route's /^05\d{8}$/ check).
+// wa.me needs the international form with no plus and no leading zero: 9665XXXXXXXX.
+export function waNumber(phone: string | null | undefined): string | null {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+  if (/^05\d{8}$/.test(digits)) return "966" + digits.slice(1);
+  if (/^9665\d{8}$/.test(digits)) return digits;
+  return null;
+}
+
+// The message Abdallah sends the owner. Owner voice (BRAND-VOICE §5): plain benefit,
+// control, reassurance. Light colloquial is allowed in WhatsApp scripts (§6).
+// No em dash, Western digits, founder name عبدالله الفرائضي.
+export function ownerOfferWhatsappText(opts: {
+  ownerName?: string | null;
+  propertyName?: string | null;
+}): string {
+  const greet = opts.ownerName ? `السلام عليكم ${opts.ownerName}` : "السلام عليكم";
+  const prop = opts.propertyName ? ` الخاص بـ ${opts.propertyName}` : "";
+  return [
+    `${greet}، معك عبدالله الفرائضي من منصة عِمارة.`,
+    "",
+    `وصلك عرض جديد على طلب الخدمة${prop}.`,
+    "تقدر تراجع السعر وتفاصيل العرض من لوحة التحكم: https://emaraa.app",
+    "",
+    "رقمك ما يظهر لأي مزوّد إلا بعد ما تقبل عرضه. القرار بيدك.",
+    "وأي استفسار راسلني هنا مباشرة.",
+  ].join("\n");
+}
+
+export function adminOfferEmail(opts: {
+  companyName?: string | null;
+  priceTotal?: number | null;
+  offerNotes?: string | null;
+  propertyName?: string | null;
+  buildingType?: string | null;
+  city?: string | null;
+  unitsCount?: number | string | null;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+  ownerEmail?: string | null;
+  isReOffer?: boolean;
+}): string {
+  const cyan = "#0DB8D3", blue = "#1B7FDC", deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
+  const dash = (v: any) => (v === 0 || v ? String(v) : "—");
+
+  const waText = ownerOfferWhatsappText({
+    ownerName: opts.ownerName,
+    propertyName: opts.propertyName,
+  });
+  const wa = waNumber(opts.ownerPhone);
+  const waHref = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(waText)}` : null;
+
+  const row = (label: string, value: string) => `
+    <tr>
+      <td style="padding:8px 0;font-size:13px;color:${mut};white-space:nowrap;vertical-align:top;">${label}</td>
+      <td style="padding:8px 0 8px 12px;font-size:14px;font-weight:700;color:${ink};">${value}</td>
+    </tr>`;
+
+  const priceBox = `
+    <div style="background:linear-gradient(135deg,${deep},${blue});border-radius:12px;padding:16px;margin:16px 0;color:#fff;text-align:center;">
+      <div style="font-size:12px;opacity:.85;">قيمة العرض</div>
+      <div style="font-size:28px;font-weight:800;margin-top:6px;">${
+        opts.priceTotal ? `${nf(Number(opts.priceTotal))} <span style="font-size:15px;">ر.س</span>` : "غير محدّدة"
+      }</div>
+    </div>`;
+
+  // Owner contact status: was an automatic email already sent to this owner, or is
+  // WhatsApp the only channel? This decides whether Abdallah needs to act.
+  const contactNote = opts.ownerEmail
+    ? `<div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:10px;padding:12px;font-size:13px;color:${mut};line-height:1.7;">
+         بريد المالك مسجّل (<span dir="ltr" style="unicode-bidi:isolate">${opts.ownerEmail}</span>) وأُرسل له إشعار تلقائي بالعرض. رسالة الواتساب أدناه للمتابعة إن أردت.
+       </div>`
+    : `<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px;font-size:13px;color:#9A3412;line-height:1.7;">
+         <b>لا يوجد بريد مسجّل لهذا المالك</b> ولم يصله أي إشعار تلقائي. الواتساب هو القناة الوحيدة للوصول إليه.
+       </div>`;
+
+  const waBlock = `
+    <div style="background:#fff;border-radius:14px;padding:20px;margin-top:14px;border:1px solid #E3E9F0;">
+      <div style="font-size:13px;font-weight:700;color:${deep};margin-bottom:10px;">رسالة الواتساب الجاهزة للمالك</div>
+      ${contactNote}
+      <div style="background:#F7FAFC;border:1px dashed #C7D3E0;border-radius:10px;padding:14px;margin-top:12px;font-size:14px;line-height:1.9;color:${ink};white-space:pre-wrap;">${waText}</div>
+      ${
+        waHref
+          ? `<div style="margin-top:14px;">
+               <a href="${waHref}" style="display:inline-block;background:#25D366;color:#0B3D22;text-decoration:none;font-weight:800;font-size:14px;padding:12px 26px;border-radius:10px;">فتح واتساب مع الرسالة جاهزة</a>
+               <div style="font-size:11px;color:${mut};margin-top:8px;">إن لم تفتح الرسالة تلقائيًّا، انسخ النص أعلاه يدويًّا.</div>
+             </div>`
+          : `<div style="font-size:12px;color:#9A3412;margin-top:12px;">رقم الجوال غير صالح للربط المباشر (${dash(opts.ownerPhone)}) — انسخ النص وأرسله يدويًّا.</div>`
+      }
+    </div>`;
+
+  return `
+  <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#F0F3F7;padding:24px;color:${ink};">
+    <div style="max-width:560px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
+        <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة — إشعار إداري</div>
+        <div style="font-size:20px;font-weight:800;margin-top:8px;">
+          ${opts.isReOffer ? "عرض مُعاد على طلب خدمة" : "عرض جديد على طلب خدمة"}
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:14px;padding:20px;margin-top:14px;border:1px solid #E3E9F0;">
+        <div style="font-size:13px;font-weight:700;color:${deep};margin-bottom:6px;">تفاصيل العرض</div>
+        ${priceBox}
+        <table cellpadding="0" cellspacing="0" style="width:100%;">
+          ${row("المزوّد", dash(opts.companyName))}
+          ${row("ملاحظات المزوّد", opts.offerNotes ? opts.offerNotes : "(بدون ملاحظات)")}
+        </table>
+      </div>
+
+      <div style="background:#fff;border-radius:14px;padding:20px;margin-top:14px;border:1px solid #E3E9F0;">
+        <div style="font-size:13px;font-weight:700;color:${deep};margin-bottom:6px;">المالك والعقار</div>
+        <table cellpadding="0" cellspacing="0" style="width:100%;">
+          ${row("المالك", dash(opts.ownerName))}
+          ${row("الجوال", `<span dir="ltr" style="unicode-bidi:isolate">${dash(opts.ownerPhone)}</span>`)}
+          ${row("العقار", dash(opts.propertyName))}
+          ${row("نوع العقار", dash(opts.buildingType))}
+          ${row("المدينة", dash(opts.city))}
+          ${row("عدد الوحدات", dash(opts.unitsCount))}
+        </table>
+      </div>
+
+      ${waBlock}
+
+      <div style="margin-top:16px;text-align:center;">
+        <a href="${FRONTEND_URL}/admin" style="display:inline-block;background:${blue};color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 26px;border-radius:10px;">فتح لوحة الإدارة</a>
+      </div>
+
+      <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
+        إشعار تلقائي من منصة عِمارة · <a href="${FRONTEND_URL}" style="color:${mut};">emaraa.app</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // 1% Commission Workflow
 // ───────────────────────────────────────────────────────────────────────────
 // The "transfer the 1% commission" email is INERT until COMMISSION_BANK_IBAN is set.

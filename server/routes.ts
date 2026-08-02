@@ -12,6 +12,7 @@ import {
   commissionEmail,
   commissionReminderEmail,
   commissionConfigReady,
+  adminOfferEmail,
 } from "./email.js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
@@ -664,6 +665,27 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           }),
           "provider_welcome",
         );
+
+        // Real-time admin notification: a provider submitted documents and is now
+        // waiting on manual review (PRODUCT-FACTS §3.3).
+        await notify(
+          ADMIN_NOTIFY_EMAIL,
+          `مزوّد بانتظار المراجعة — ${company_name.trim()}`,
+          notificationEmail({
+            heading: "ملف مزوّد جديد بانتظار الموافقة",
+            body: [
+              `الشركة: ${company_name.trim()}`,
+              `البريد: ${emailTrimmed}`,
+              `المدينة: ${city || "—"}`,
+              `السجل التجاري: ${commercial_register_url ? "مرفوع" : "غير مرفوع"}`,
+              `الملف التعريفي: ${company_profile_url ? "مرفوع" : "غير مرفوع"}`,
+              `رخصة فال: ${fal_license_url ? "مرفوعة" : "غير مرفوعة"}`,
+            ].join("\n"),
+            ctaLabel: "مراجعة الطلب في لوحة الإدارة",
+            ctaUrl: "https://emaraa.app/admin",
+          }),
+          "admin_provider_profile",
+        );
       }
 
       res.json({ ok: true });
@@ -818,9 +840,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(409).json({ error: "already_submitted" });
       }
 
+      let data: any;
       if (existingOffer) {
         // Re-offer: revive the rejected row as a fresh pending offer.
-        const { data, error } = await supabaseAdmin
+        const { data: revived, error } = await supabaseAdmin
           .from("provider_offers")
           .update({
             offer_file_url,
@@ -833,15 +856,33 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .select()
           .single();
         if (error) return res.status(500).json({ error: error.message });
-        return res.json(data);
+        data = revived;
+      } else {
+        const { data: inserted, error } = await supabaseAdmin
+          .from("provider_offers")
+          .insert([{ request_id, provider_id: provider.id, offer_file_url, notes: notes || null, price_total: price_total || null }])
+          .select()
+          .single();
+        if (error) return res.status(500).json({ error: error.message });
+        data = inserted;
       }
 
-      const { data, error } = await supabaseAdmin
-        .from("provider_offers")
-        .insert([{ request_id, provider_id: provider.id, offer_file_url, notes: notes || null, price_total: price_total || null }])
-        .select()
-        .single();
-      if (error) return res.status(500).json({ error: error.message });
+      // Real-time admin alert — BOTH paths (fresh offer and revived re-offer) land here.
+      // Deliberately NOT in /api/sms/offer-submitted: that endpoint is a client-side
+      // fire-and-forget call (can silently fail) and is capped at 5/hour per provider,
+      // so admin alerts would be dropped during a burst. Owners register with phone only
+      // (email optional), so the email carries a ready-to-send WhatsApp message for the
+      // owner. Never let a notification failure fail the offer submission itself.
+      try {
+        await notifyAdminNewOffer(request_id, provider.id, {
+          priceTotal: price_total ?? null,
+          notes: notes ?? null,
+          isReOffer: !!existingOffer,
+        });
+      } catch {
+        // offer is already saved — alerting is best-effort
+      }
+
       res.json(data);
     } catch {
       res.status(500).json({ error: "Failed to submit offer" });
@@ -1278,7 +1319,63 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             }),
             "owner_offer_accepted",
           );
+
+          // Real-time admin notification: a deal was struck — the 1% commission event.
+          const { data: provRow } = await supabaseAdmin
+            .from("providers")
+            .select("company_name")
+            .eq("id", acceptedOffer.provider_id)
+            .maybeSingle();
+          const { data: ownerFull } = await supabaseAdmin
+            .from("users")
+            .select("name, phone")
+            .eq("id", request.owner_id)
+            .maybeSingle();
+          const priceNum = Number(acceptedOffer.price_total) || 0;
+          await notify(
+            ADMIN_NOTIFY_EMAIL,
+            `تم قبول عرض — ${provRow?.company_name ?? "مزوّد"}${
+              priceNum ? ` (${priceNum.toLocaleString("en-US")} ر.س)` : ""
+            }`,
+            notificationEmail({
+              heading: "صفقة جديدة: المالك قبِل العرض",
+              body: [
+                `المزوّد: ${provRow?.company_name ?? "—"}`,
+                `المالك: ${ownerFull?.name ?? "—"}`,
+                `جوال المالك: ${ownerFull?.phone ?? "—"}`,
+                `قيمة العرض: ${priceNum ? `${priceNum.toLocaleString("en-US")} ر.س` : "غير محدّدة"}`,
+                `عمولة عِمارة (1%): ${
+                  priceNum ? `${Math.round(priceNum * 0.01).toLocaleString("en-US")} ر.س` : "—"
+                }`,
+                `بريد العمولة للمزوّد: ${
+                  commissionConfigReady() ? (alreadyEmailed ? "سبق إرساله" : "أُرسل الآن") : "غير مُفعّل"
+                }`,
+              ].join("\n"),
+              ctaLabel: "فتح لوحة الإدارة",
+              ctaUrl: "https://emaraa.app/admin",
+            }),
+            "admin_offer_accepted",
+          );
         }
+      } else if (status === "rejected") {
+        // Terse admin note — useful signal (a request may be re-opening for new offers).
+        const { data: rejected } = await supabaseAdmin
+          .from("provider_offers")
+          .select("providers(company_name)")
+          .eq("id", req.params.id as string)
+          .maybeSingle();
+        const rejectedCompany = (rejected?.providers as any)?.company_name ?? "مزوّد";
+        await notify(
+          ADMIN_NOTIFY_EMAIL,
+          `تم رفض عرض — ${rejectedCompany}`,
+          notificationEmail({
+            heading: "المالك رفض عرضاً",
+            body: `المزوّد: ${rejectedCompany}\n\nإن رفض المالك جميع العروض، يُفتح الطلب من جديد لاستقبال عروض أخرى.`,
+            ctaLabel: "فتح لوحة الإدارة",
+            ctaUrl: "https://emaraa.app/admin",
+          }),
+          "admin_offer_rejected",
+        );
       }
 
       res.json({ success: true });
@@ -1313,6 +1410,62 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return;
     }
     await sendEmail(supabaseAdmin, { to: email, cc, subject, html, kind });
+  }
+
+  const BUILDING_TYPE_AR: Record<string, string> = {
+    residential: "سكني",
+    commercial: "تجاري",
+  };
+
+  // Gather the full context for an offer (provider + owner + property) and send the
+  // admin alert. Called from POST /api/provider/offers so every offer is reported,
+  // including re-offers on a re-opened request.
+  async function notifyAdminNewOffer(
+    requestId: string,
+    providerId: string,
+    offer: { priceTotal: number | null; notes: string | null; isReOffer: boolean },
+  ) {
+    const [{ data: providerRow }, { data: reqRow }] = await Promise.all([
+      supabaseAdmin.from("providers").select("company_name").eq("id", providerId).maybeSingle(),
+      supabaseAdmin.from("requests").select("owner_id, property_id").eq("id", requestId).maybeSingle(),
+    ]);
+
+    const [{ data: ownerU }, { data: prop }] = await Promise.all([
+      reqRow?.owner_id
+        ? supabaseAdmin.from("users").select("name, phone, email").eq("id", reqRow.owner_id).maybeSingle()
+        : Promise.resolve({ data: null } as any),
+      reqRow?.property_id
+        ? supabaseAdmin
+            .from("properties")
+            .select("name, building_type, city, units_count")
+            .eq("id", reqRow.property_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null } as any),
+    ]);
+
+    const company = providerRow?.company_name ?? "مزوّد";
+    const subject = `${offer.isReOffer ? "عرض مُعاد" : "عرض جديد"} — ${company}${
+      prop?.name ? ` على ${prop.name}` : ""
+    }`;
+
+    await notify(
+      ADMIN_NOTIFY_EMAIL,
+      subject,
+      adminOfferEmail({
+        companyName: providerRow?.company_name ?? null,
+        priceTotal: offer.priceTotal,
+        offerNotes: offer.notes,
+        propertyName: prop?.name ?? null,
+        buildingType: prop?.building_type ? BUILDING_TYPE_AR[prop.building_type] ?? prop.building_type : null,
+        city: prop?.city ?? null,
+        unitsCount: prop?.units_count ?? null,
+        ownerName: ownerU?.name ?? null,
+        ownerPhone: ownerU?.phone ?? null,
+        ownerEmail: ownerU?.email ?? null,
+        isReOffer: offer.isReOffer,
+      }),
+      "admin_new_offer",
+    );
   }
 
   // SMS — notify provider (confirmation) + owner (new offer) after offer submitted
