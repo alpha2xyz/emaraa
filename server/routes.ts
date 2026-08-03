@@ -1294,15 +1294,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // mass-reject below, a provider whose offer was already rejected earlier is
       // indistinguishable from one who just lost this round — and mailing "you lost"
       // to someone who lost days ago is worse than saying nothing.
-      const { data: contenders } = await supabaseAdmin
-        .from("provider_offers")
-        .select("id, providers(email)")
-        .eq("request_id", offer.request_id)
-        .eq("status", "pending");
-      const losingEmails: string[] = (contenders ?? [])
-        .filter((o: any) => o.id !== (req.params.id as string))
-        .map((o: any) => o.providers?.email)
-        .filter((e: any): e is string => !!e);
+      const { data: contenders } =
+        status === "accepted"
+          ? await supabaseAdmin
+              .from("provider_offers")
+              .select("id, providers(email)")
+              .eq("request_id", offer.request_id)
+              .eq("status", "pending")
+          : { data: null as any };
+      // Only mail losers on a first accept. If this offer was NOT itself pending, the
+      // owner is re-accepting an already-accepted offer, and everyone else was told
+      // the first time round — mailing again would repeat bad news.
+      const isFirstAccept = (contenders ?? []).some((o: any) => o.id === (req.params.id as string));
+      const losingEmails: string[] = isFirstAccept
+        ? (contenders ?? [])
+            .filter((o: any) => o.id !== (req.params.id as string))
+            .map((o: any) => o.providers?.email)
+            .filter((e: any): e is string => !!e)
+        : [];
 
       const { error: updateError } = await supabaseAdmin
         .from("provider_offers")
