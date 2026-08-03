@@ -292,17 +292,10 @@ export default function OwnerOnboarding() {
       });
     }
 
-    // Step 6 — fire-and-forget SMS
-    if (newRequestId && token) {
-      fetch("/api/sms/new-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ requestId: newRequestId }),
-      }).catch(() => {});
-    }
+    // Provider notifications are sent server-side inside POST /api/requests.
+    // Do not add a client-side trigger here — the old fire-and-forget call ran
+    // just before the redirect below, so a failed call or a closed tab meant no
+    // provider was ever told the request existed.
 
     // Step 7 — invalidate query cache (include "owner-property" so dashboard loads fresh data)
     queryClient.invalidateQueries({ queryKey: ["owner-stats"] });

@@ -125,7 +125,11 @@ export function ownerOfferWhatsappText(opts: {
   ownerName?: string | null;
   propertyName?: string | null;
 }): string {
-  const greet = opts.ownerName ? `السلام عليكم ${opts.ownerName}` : "السلام عليكم";
+  // First name only. Full names read stiff in a WhatsApp opener, and stored names are
+  // often Latin script ("السلام عليكم Mohammed Alshehri"), which reads worse. Taking the
+  // first token works for both scripts without inventing a transliteration.
+  const firstName = String(opts.ownerName ?? "").trim().split(/\s+/)[0];
+  const greet = firstName ? `السلام عليكم ${firstName}` : "السلام عليكم";
   const prop = opts.propertyName ? ` الخاص بعقار ${opts.propertyName}` : "";
   return [
     `${greet}، معك عبدالله الفرائضي من منصة عِمارة.`,

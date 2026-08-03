@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2, Upload, FileText, CheckCircle2, Clock, ChevronRight, ChevronLeft, Lock, AlertTriangle, Info } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,11 @@ export default function ProviderProfile() {
   const [formData, setFormData] = useState({
     company_name: "",
     email: "",
+    // City drives which providers get emailed about a new request. Riyadh is the only
+    // active city (phase 1), and property city is hardcoded "الرياض" on the owner side,
+    // so this is a Select rather than free text: a typo here would silently stop this
+    // company from ever hearing about a request.
+    city: "الرياض",
   });
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
@@ -122,6 +128,7 @@ export default function ProviderProfile() {
       setFormData({
         company_name: p.company_name || "",
         email: p.email || "",
+        city: p.city || "الرياض",
       });
     }
   }, [existingProvider]);
@@ -242,6 +249,7 @@ export default function ProviderProfile() {
         body: JSON.stringify({
           company_name: formData.company_name,
           email: emailTrimmed,
+          city: formData.city || null,
           commercial_register_url: commercialRegisterPath,
           company_profile_url: companyProfilePath,
           fal_license_url: falLicensePath,
@@ -410,6 +418,22 @@ export default function ProviderProfile() {
                   disabled={isApproved}
                   className={isApproved ? "bg-white/5" : ""}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="city">{t.city}</Label>
+                <Select
+                  value={formData.city}
+                  onValueChange={(v) => setFormData({ ...formData, city: v })}
+                  disabled={isApproved}
+                >
+                  <SelectTrigger id="city" className={`w-full h-10 text-sm${isApproved ? " bg-white/5" : ""}`}>
+                    <SelectValue placeholder={t.cityPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="الرياض">{lang === "ar" ? "الرياض" : "Riyadh"}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
