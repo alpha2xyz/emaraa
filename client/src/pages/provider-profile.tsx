@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2, Upload, FileText, CheckCircle2, Clock, ChevronRight, ChevronLeft, Lock, AlertTriangle, Info } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
@@ -23,10 +22,10 @@ export default function ProviderProfile() {
   const [formData, setFormData] = useState({
     company_name: "",
     email: "",
-    // City drives which providers get emailed about a new request. Riyadh is the only
-    // active city (phase 1), and property city is hardcoded "الرياض" on the owner side,
-    // so this is a Select rather than free text: a typo here would silently stop this
-    // company from ever hearing about a request.
+    // City drives which providers get emailed about a new request. It is fixed to
+    // "الرياض" (phase 1) and shown read-only, exactly like the owner form: the value
+    // must match the property's hardcoded "الرياض" for the broadcast to find this
+    // company, so it is never free text.
     city: "الرياض",
   });
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
@@ -420,20 +419,22 @@ export default function ProviderProfile() {
                 />
               </div>
 
+              {/* City — fixed, read-only. Mirrors the owner onboarding form.
+                  The stored value is always the Arabic "الرياض" regardless of the
+                  display language, because the new-request broadcast matches it against
+                  the property's city, which is written as that exact string. */}
               <div className="space-y-2">
                 <Label htmlFor="city">{t.city}</Label>
-                <Select
-                  value={formData.city}
-                  onValueChange={(v) => setFormData({ ...formData, city: v })}
-                  disabled={isApproved}
-                >
-                  <SelectTrigger id="city" className={`w-full h-10 text-sm${isApproved ? " bg-white/5" : ""}`}>
-                    <SelectValue placeholder={t.cityPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="الرياض">{lang === "ar" ? "الرياض" : "Riyadh"}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="city"
+                  value={lang === "ar" ? "الرياض" : "Riyadh"}
+                  disabled
+                  readOnly
+                  className="opacity-50 cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {lang === "ar" ? "الإصدار الأول — الرياض فقط" : "V1 — Riyadh only"}
+                </p>
               </div>
 
               <div className="space-y-2">
