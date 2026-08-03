@@ -22,6 +22,11 @@ export default function ProviderProfile() {
   const [formData, setFormData] = useState({
     company_name: "",
     email: "",
+    // City drives which providers get emailed about a new request. It is fixed to
+    // "الرياض" (phase 1) and shown read-only, exactly like the owner form: the value
+    // must match the property's hardcoded "الرياض" for the broadcast to find this
+    // company, so it is never free text.
+    city: "الرياض",
   });
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
@@ -122,6 +127,7 @@ export default function ProviderProfile() {
       setFormData({
         company_name: p.company_name || "",
         email: p.email || "",
+        city: p.city || "الرياض",
       });
     }
   }, [existingProvider]);
@@ -242,6 +248,7 @@ export default function ProviderProfile() {
         body: JSON.stringify({
           company_name: formData.company_name,
           email: emailTrimmed,
+          city: formData.city || null,
           commercial_register_url: commercialRegisterPath,
           company_profile_url: companyProfilePath,
           fal_license_url: falLicensePath,
@@ -410,6 +417,24 @@ export default function ProviderProfile() {
                   disabled={isApproved}
                   className={isApproved ? "bg-white/5" : ""}
                 />
+              </div>
+
+              {/* City — fixed, read-only. Mirrors the owner onboarding form.
+                  The stored value is always the Arabic "الرياض" regardless of the
+                  display language, because the new-request broadcast matches it against
+                  the property's city, which is written as that exact string. */}
+              <div className="space-y-2">
+                <Label htmlFor="city">{t.city}</Label>
+                <Input
+                  id="city"
+                  value={lang === "ar" ? "الرياض" : "Riyadh"}
+                  disabled
+                  readOnly
+                  className="opacity-50 cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {lang === "ar" ? "الإصدار الأول — الرياض فقط" : "V1 — Riyadh only"}
+                </p>
               </div>
 
               <div className="space-y-2">

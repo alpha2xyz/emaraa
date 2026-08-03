@@ -1093,6 +1093,70 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         "admin_new_request",
       );
 
+      // Broadcast the new request to approved providers. This runs SERVER-SIDE here,
+      // not from the browser: it used to be a fire-and-forget POST /api/sms/new-request
+      // fired from owner-onboarding.tsx just before the redirect, so a failed call or a
+      // closed tab meant no provider was ever told and nothing recorded the miss.
+      //
+      // Matching: providers whose city equals the property's city, PLUS providers with no
+      // city on file. The city column was never collected until 2026-08-03 (the profile
+      // form defined the label but rendered no input), so most rows are NULL and an exact
+      // `.eq("city", …)` filter silently matched almost nobody. Including NULL keeps those
+      // providers reachable until they fill it in; the filter still works once they do.
+      try {
+        const { data: approvedProviders } = await supabaseAdmin
+          .from("providers")
+          .select("email, city")
+          .eq("approved", true);
+
+        const propCity = prop?.city ?? null;
+        const recipients = (approvedProviders ?? []).filter(
+          (p: any) => p.email && (p.city == null || p.city === propCity),
+        );
+
+        if (recipients.length === 0) {
+          // Never fail silently again: if a new request reaches nobody, say so loudly.
+          await notify(
+            ADMIN_NOTIFY_EMAIL,
+            `⚠ طلب جديد لم يصل لأي مزوّد — ${prop?.name ?? "عقار"}`,
+            notificationEmail({
+              heading: "تحذير: لم يُرسَل الطلب لأي مزوّد",
+              body: [
+                `نُشر طلب خدمة جديد ولم يُطابق أي مزوّد معتمد، فلم يصل إشعار لأحد.`,
+                ``,
+                `العقار: ${prop?.name ?? "—"}`,
+                `مدينة الطلب: ${propCity ?? "—"}`,
+                `عدد المزودين المعتمدين: ${(approvedProviders ?? []).length}`,
+                ``,
+                `راجِع حالة الاعتماد ومدينة كل مزوّد في لوحة الإدارة.`,
+              ].join("\n"),
+              ctaLabel: "فتح لوحة الإدارة",
+              ctaUrl: "https://emaraa.app/admin",
+            }),
+            "admin_broadcast_empty",
+          );
+        } else {
+          const html = notificationEmail({
+            heading: `طلب خدمة جديد في ${propCity ?? "الرياض"}`,
+            body: "تم نشر طلب خدمة جديد. سجّل دخولك على عِمارة لتقديم عرضك قبل المزودين الآخرين.",
+            ctaLabel: "تقديم عرض الآن",
+            ctaUrl: "https://emaraa.app",
+          });
+          // Sequential awaits — fine at current provider counts (~tens). Revisit with a
+          // background worker if this list grows into the hundreds.
+          for (const p of recipients) {
+            await notify(
+              (p as any).email,
+              `طلب خدمة جديد في ${propCity ?? "الرياض"} — عِمارة`,
+              html,
+              "new_request",
+            );
+          }
+        }
+      } catch {
+        // The request itself is already created — broadcasting is best-effort.
+      }
+
       res.status(201).json(request);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1226,6 +1290,29 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(403).json({ error: "Forbidden" });
       }
 
+      // Capture who is still in the running BEFORE any status change. After the
+      // mass-reject below, a provider whose offer was already rejected earlier is
+      // indistinguishable from one who just lost this round — and mailing "you lost"
+      // to someone who lost days ago is worse than saying nothing.
+      const { data: contenders } =
+        status === "accepted"
+          ? await supabaseAdmin
+              .from("provider_offers")
+              .select("id, providers(email)")
+              .eq("request_id", offer.request_id)
+              .eq("status", "pending")
+          : { data: null as any };
+      // Only mail losers on a first accept. If this offer was NOT itself pending, the
+      // owner is re-accepting an already-accepted offer, and everyone else was told
+      // the first time round — mailing again would repeat bad news.
+      const isFirstAccept = (contenders ?? []).some((o: any) => o.id === (req.params.id as string));
+      const losingEmails: string[] = isFirstAccept
+        ? (contenders ?? [])
+            .filter((o: any) => o.id !== (req.params.id as string))
+            .map((o: any) => o.providers?.email)
+            .filter((e: any): e is string => !!e)
+        : [];
+
       const { error: updateError } = await supabaseAdmin
         .from("provider_offers")
         .update({ status })
@@ -1242,6 +1329,27 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .update({ status: "rejected" })
           .eq("request_id", offer.request_id)
           .neq("id", req.params.id as string);
+
+        // Tell the providers who lost. Nothing told them before — they simply never
+        // heard back. Copy is deliberately accurate: accepting moves the request to
+        // in_progress, and POST /api/provider/offers rejects any offer on a non-pending
+        // request, so re-offering on THIS request is impossible. Never imply otherwise.
+        for (const email of losingEmails) {
+          await notify(
+            email,
+            "نتيجة عرضك — عِمارة",
+            notificationEmail({
+              heading: "لم يُقبل عرضك هذه المرة",
+              body:
+                "شكراً لتقديم عرض شركتك عبر منصة عِمارة.\n\n" +
+                "اختار المالك عرضاً آخر لهذا الطلب، ولم يعد الطلب مفتوحاً لاستقبال العروض.\n\n" +
+                "تصل طلبات الخدمة الجديدة إلى بريد شركتك فور نشرها، ويمكنك تقديم عرضك عليها مباشرة من لوحة التحكم.",
+              ctaLabel: "تصفّح الطلبات",
+              ctaUrl: "https://emaraa.app",
+            }),
+            "offer_not_selected",
+          );
+        }
 
         // Auto-create a pending deal capturing the accepted offer's value.
         // Admin later confirms the final contract value and marks it closed.
@@ -1361,10 +1469,37 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // Terse admin note — useful signal (a request may be re-opening for new offers).
         const { data: rejected } = await supabaseAdmin
           .from("provider_offers")
-          .select("providers(company_name)")
+          .select("providers(company_name, email)")
           .eq("id", req.params.id as string)
           .maybeSingle();
         const rejectedCompany = (rejected?.providers as any)?.company_name ?? "مزوّد";
+
+        // Tell the rejected provider. Unlike the accept path, the request itself is
+        // untouched here — so if it is still pending, this provider genuinely CAN bid
+        // again (POST /api/provider/offers revives their rejected row). Only promise
+        // that when the request is actually still open.
+        const { data: reqState } = await supabaseAdmin
+          .from("requests")
+          .select("status")
+          .eq("id", offer.request_id)
+          .maybeSingle();
+        const stillOpen = reqState?.status === "pending";
+        await notify(
+          (rejected?.providers as any)?.email,
+          "نتيجة عرضك — عِمارة",
+          notificationEmail({
+            heading: "لم يُقبل عرضك",
+            body:
+              "شكراً لتقديم عرض شركتك عبر منصة عِمارة.\n\n" +
+              "راجع المالك عرضك ولم يقبله هذه المرة.\n\n" +
+              (stillOpen
+                ? "ما زال الطلب مفتوحاً، ويمكن لشركتك تقديم عرض جديد عليه من لوحة التحكم."
+                : "تصل طلبات الخدمة الجديدة إلى بريد شركتك فور نشرها، ويمكنك تقديم عرضك عليها مباشرة من لوحة التحكم."),
+            ctaLabel: stillOpen ? "تقديم عرض جديد" : "تصفّح الطلبات",
+            ctaUrl: "https://emaraa.app",
+          }),
+          "offer_rejected",
+        );
         await notify(
           ADMIN_NOTIFY_EMAIL,
           `تم رفض عرض — ${rejectedCompany}`,
@@ -1502,52 +1637,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     );
   }
 
-
-  // SMS — notify all approved Riyadh providers when a new request is posted
-  app.post("/api/sms/new-request", requireSession, requireOwner, async (req, res) => {
-    try {
-      // Rate limit: max 3 SMS broadcasts per owner per hour (DB-backed, survives cold starts)
-      const userId = (req as any).userId as string;
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { count: smsCount } = await supabaseAdmin
-        .from("sms_rate_limits")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("endpoint", "new-request")
-        .gte("created_at", oneHourAgo);
-      if ((smsCount ?? 0) >= 3) {
-        return res.status(429).json({ error: "Too many SMS requests. Try again later." });
-      }
-      await supabaseAdmin.from("sms_rate_limits").insert([{ user_id: userId, endpoint: "new-request" }]);
-
-      const { requestId } = req.body;
-      if (!requestId) return res.status(400).json({ error: "requestId required" });
-
-      const { data: providers } = await supabaseAdmin
-        .from("providers")
-        .select("email")
-        .eq("approved", true)
-        .eq("city", "الرياض");
-
-      // Email each approved Riyadh provider. Sequential awaits — fine at current provider
-      // counts (~tens); revisit with a background worker if this list grows into the hundreds.
-      if (providers?.length) {
-        const html = notificationEmail({
-          heading: "طلب خدمة جديد في الرياض",
-          body: "تم نشر طلب خدمة جديد في الرياض. سجّل دخولك على عِمارة لتقديم عرضك قبل المزودين الآخرين.",
-          ctaLabel: "تقديم عرض الآن",
-          ctaUrl: "https://emaraa.app",
-        });
-        for (const p of providers) {
-          await notify((p as any).email, "طلب خدمة جديد في الرياض — عِمارة", html, "new_request");
-        }
-      }
-
-      res.json({ success: true });
-    } catch {
-      res.status(500).json({ error: "Failed" });
-    }
-  });
 
   // OTP — Send SMS OTP via Authentica
   app.post("/api/otp/send", async (req, res) => {
@@ -1801,7 +1890,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     });
   });
 
-  // Approve or reject a provider. Sends SMS to provider on approval.
+  // Approve or reject a provider. Emails the provider on approval.
   app.post("/api/admin/approve-provider", async (req, res) => {
     try {
       const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
