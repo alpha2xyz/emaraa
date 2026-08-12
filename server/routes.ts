@@ -918,11 +918,45 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, created_at, requests(id, service_category, properties(name, city, building_type))"
+          "id, offer_file_url, notes, status, created_at, requests(id, owner_id, service_category, properties(name, city, building_type))"
         )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
-      res.json(data ?? []);
+
+      // Mirror image of the owner's phone reveal (GET /api/owner/offers/:requestId):
+      // the owner's contact is attached ONLY to an offer this provider got accepted.
+      // A pending or rejected offer never carries it — that gate is the whole point,
+      // so the owner row is fetched separately and attached, never embedded in the
+      // query above. An embed would pull the owner for every offer and leave hiding
+      // them to a mapping step, one refactor away from leaking to a losing bidder.
+      const offers = data ?? [];
+      const acceptedOwnerIds = Array.from(
+        new Set<string>(
+          offers
+            .filter((o: any) => o.status === "accepted")
+            .map((o: any) => o.requests?.owner_id)
+            .filter(Boolean)
+        )
+      );
+      const ownersById = new Map<string, { name: string | null; phone: string | null }>();
+      if (acceptedOwnerIds.length) {
+        const { data: owners } = await supabaseAdmin
+          .from("users")
+          .select("id, name, phone")
+          .in("id", acceptedOwnerIds);
+        for (const u of owners ?? []) ownersById.set(u.id, { name: u.name, phone: u.phone });
+      }
+
+      const safe = offers.map((o: any) => {
+        // owner_id is a lookup key, not payload — strip it before it reaches the browser.
+        const { owner_id, ...request } = o.requests ?? {};
+        return {
+          ...o,
+          requests: o.requests ? request : null,
+          owner: o.status === "accepted" ? ownersById.get(owner_id) ?? null : null,
+        };
+      });
+      res.json(safe);
     } catch {
       res.status(500).json({ error: "Failed to fetch provider offers" });
     }
@@ -1356,7 +1390,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // UNIQUE(offer_id) makes this idempotent if the owner re-accepts.
         const { data: acceptedOffer } = await supabaseAdmin
           .from("provider_offers")
-          .select("id, provider_id, price_total, providers(email)")
+          .select("id, provider_id, price_total, providers(email, company_name, users(phone))")
           .eq("id", req.params.id as string)
           .single();
         if (acceptedOffer) {
@@ -1377,19 +1411,36 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             .select("id, commission_email_sent_at")
             .single();
 
+          // Acceptance is the moment both sides get each other's number, so the owner's
+          // contact is read once here and reused by the provider email, the owner email
+          // and the admin alert below.
+          const { data: ownerU } = await supabaseAdmin
+            .from("users")
+            .select("name, phone, email")
+            .eq("id", request.owner_id)
+            .single();
+          const providerPhone = (acceptedOffer.providers as any)?.users?.phone ?? null;
+          const providerCompany = (acceptedOffer.providers as any)?.company_name ?? null;
+
           // Notify the winning provider — their offer was accepted (providers have an email).
           // If bank details are configured, this becomes the combined "accepted + transfer the
           // 1% commission" email and starts the 1-day reminder chain. Until then it stays the
           // plain congrats email and no reminder is scheduled (commission path is inert).
           // Re-accept guard: only send the money email once — never re-send (or reset the
-          // reminder clock) if this deal already had its commission email.
+          // reminder clock) if this deal already had its commission email. The plain path and
+          // the owner confirmation ride on isFirstAccept for the same reason: both now carry a
+          // phone number, and a re-accept must not mail it out again.
           const providerEmail = (acceptedOffer.providers as any)?.email;
           const alreadyEmailed = !!dealRow?.commission_email_sent_at;
           if (commissionConfigReady() && !alreadyEmailed) {
             await notify(
               providerEmail,
               "تم قبول عرضك — تحويل عمولة عِمارة (1%)",
-              commissionEmail({ priceTotal: Number(acceptedOffer.price_total) || null }),
+              commissionEmail({
+                priceTotal: Number(acceptedOffer.price_total) || null,
+                ownerName: ownerU?.name ?? null,
+                ownerPhone: ownerU?.phone ?? null,
+              }),
               "commission_request",
             );
             // Stamp the deal so the daily reminder cron can find it 24h later.
@@ -1397,13 +1448,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               .from("deals")
               .update({ commission_email_sent_at: new Date().toISOString() })
               .eq("offer_id", acceptedOffer.id);
-          } else if (!commissionConfigReady()) {
+          } else if (!commissionConfigReady() && isFirstAccept) {
             await notify(
               providerEmail,
               "تم قبول عرضك — عِمارة",
               notificationEmail({
                 heading: "مبروك! تم قبول عرضك",
-                body: "قام المالك بقبول عرضك على طلب الخدمة. سجّل دخولك لمتابعة تفاصيل الصفقة والخطوات التالية.",
+                body: "قام المالك بقبول عرضك على طلب الخدمة. بيانات التواصل معه موضحة أدناه للتنسيق المباشر وتوقيع العقد.",
+                contact: {
+                  title: "بيانات التواصل مع المالك",
+                  name: ownerU?.name ?? null,
+                  phone: ownerU?.phone ?? null,
+                },
                 ctaLabel: "عرض الصفقة",
                 ctaUrl: "https://emaraa.app",
               }),
@@ -1411,46 +1467,40 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             );
           }
           // Notify the owner — confirmation of their acceptance (opt-in email).
-          const { data: ownerU } = await supabaseAdmin
-            .from("users")
-            .select("email")
-            .eq("id", request.owner_id)
-            .single();
-          await notify(
-            ownerU?.email,
-            "تم قبول العرض — عِمارة",
-            notificationEmail({
-              heading: "تم قبول العرض بنجاح",
-              body: "لقد قبلت عرض المزود على طلبك. يمكنك الآن مراجعة ملف العرض الكامل وبيانات التواصل مع المزود من لوحة التحكم لإتمام الخطوات التالية.",
-              ctaLabel: "عرض التفاصيل",
-              ctaUrl: "https://emaraa.app",
-            }),
-            "owner_offer_accepted",
-          );
+          if (isFirstAccept) {
+            await notify(
+              ownerU?.email,
+              "تم قبول العرض — عِمارة",
+              notificationEmail({
+                heading: "تم قبول العرض بنجاح",
+                body: "لقد قبلت عرض المزود على طلبك، وأصبح ملف العرض الكامل متاحاً في لوحة التحكم. بيانات التواصل مع المزود موضحة أدناه.",
+                contact: {
+                  title: `بيانات التواصل مع المزود${providerCompany ? ` — ${providerCompany}` : ""}`,
+                  name: providerCompany,
+                  phone: providerPhone,
+                },
+                ctaLabel: "عرض التفاصيل",
+                ctaUrl: "https://emaraa.app",
+              }),
+              "owner_offer_accepted",
+            );
+          }
 
           // Real-time admin notification: a deal was struck — the 1% commission event.
-          const { data: provRow } = await supabaseAdmin
-            .from("providers")
-            .select("company_name")
-            .eq("id", acceptedOffer.provider_id)
-            .maybeSingle();
-          const { data: ownerFull } = await supabaseAdmin
-            .from("users")
-            .select("name, phone")
-            .eq("id", request.owner_id)
-            .maybeSingle();
+          // Provider and owner rows were both read above; no second lookup needed.
           const priceNum = Number(acceptedOffer.price_total) || 0;
           await notify(
             ADMIN_NOTIFY_EMAIL,
-            `تم قبول عرض — ${provRow?.company_name ?? "مزوّد"}${
+            `تم قبول عرض — ${providerCompany ?? "مزوّد"}${
               priceNum ? ` (${priceNum.toLocaleString("en-US")} ر.س)` : ""
             }`,
             notificationEmail({
               heading: "صفقة جديدة: المالك قبِل العرض",
               body: [
-                `المزوّد: ${provRow?.company_name ?? "—"}`,
-                `المالك: ${ownerFull?.name ?? "—"}`,
-                `جوال المالك: ${ownerFull?.phone ?? "—"}`,
+                `المزوّد: ${providerCompany ?? "—"}`,
+                `جوال المزوّد: ${providerPhone ?? "—"}`,
+                `المالك: ${ownerU?.name ?? "—"}`,
+                `جوال المالك: ${ownerU?.phone ?? "—"}`,
                 `قيمة العرض: ${priceNum ? `${priceNum.toLocaleString("en-US")} ر.س` : "غير محدّدة"}`,
                 `عمولة عِمارة (1%): ${
                   priceNum ? `${Math.round(priceNum * 0.01).toLocaleString("en-US")} ر.س` : "—"

@@ -87,7 +87,8 @@ export default function ProviderDashboard() {
       underReview: "طلبك قيد المراجعة",
       underReviewDesc: "سيتم إشعارك عند قبول حسابك من قِبل الإدارة",
       phoneDisclosure:
-        "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
+        "في حال قبول عرضك، يتم تبادل رقم الجوال بينك وبين مالك العقار للتواصل المباشر. ولا يظهر رقم المالك إلا للمزود الذي قُبل عرضه.",
+      ownerContact: "بيانات التواصل مع المالك",
       browseRequests: "تصفح الطلبات",
       updateProfile: "تحديث الملف",
       noOffers: "لم تقدم أي عروض بعد",
@@ -110,7 +111,8 @@ export default function ProviderDashboard() {
       underReview: "Your registration is under review",
       underReviewDesc: "You will be notified once your account is approved by admin",
       phoneDisclosure:
-        "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
+        "If your offer is accepted, you and the property owner exchange phone numbers for direct contact. The owner's number is shown only to the provider whose offer was accepted.",
+      ownerContact: "Owner Contact",
       browseRequests: "Browse Requests",
       updateProfile: "Update Profile",
       noOffers: "You haven't submitted any offers yet",
@@ -394,6 +396,36 @@ export default function ProviderDashboard() {
                         <p className="text-sm text-muted-foreground bg-white/5 rounded-lg p-2">
                           {offer.notes}
                         </p>
+                      )}
+
+                      {/* Owner contact — server sends it only on an accepted offer */}
+                      {offer.status === "accepted" && offer.owner?.phone && (
+                        <div
+                          className="flex items-center gap-2 rounded-lg px-3 py-2"
+                          style={{
+                            background: "var(--provider-soft)",
+                            border: "1px solid rgba(27,127,220,0.4)",
+                          }}
+                        >
+                          <Phone
+                            className="w-4 h-4 flex-shrink-0"
+                            style={{ color: "var(--provider)" }}
+                          />
+                          <div>
+                            <p className="text-xs font-medium" style={{ color: "var(--provider)" }}>
+                              {t.ownerContact}
+                              {offer.owner.name ? ` — ${offer.owner.name}` : ""}
+                            </p>
+                            <a
+                              href={`tel:${offer.owner.phone}`}
+                              className="text-sm font-bold hover:underline"
+                              style={{ color: "#7bb6f0" }}
+                              dir="ltr"
+                            >
+                              {offer.owner.phone}
+                            </a>
+                          </div>
+                        </div>
                       )}
 
                       {/* View PDF */}

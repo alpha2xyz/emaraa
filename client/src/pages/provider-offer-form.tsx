@@ -72,7 +72,7 @@ export default function ProviderOfferForm() {
       residential: "سكني",
       notApproved: "حسابك لم يتم قبوله بعد من قِبل الإدارة — لا يمكنك تقديم عروض حتى يتم القبول.",
       phoneDisclosure:
-        "في حال قبول عرضك، سيتم مشاركة رقم جوالك المسجل في حسابك مع صاحب العقار للتواصل المباشر.",
+        "في حال قبول عرضك، يتم تبادل رقم الجوال بينك وبين مالك العقار للتواصل المباشر.",
       invalidFileType: "يجب أن يكون الملف بصيغة PDF فقط",
       fileTooLarge: "حجم الملف يتجاوز 10 ميغابايت",
     },
@@ -115,7 +115,7 @@ export default function ProviderOfferForm() {
       notApproved:
         "Your account has not been approved by admin yet — you cannot submit offers until approved.",
       phoneDisclosure:
-        "If your offer is accepted, your registered phone number will be shared with the property owner for direct contact.",
+        "If your offer is accepted, you and the property owner exchange phone numbers for direct contact.",
       invalidFileType: "Only PDF files are accepted",
       fileTooLarge: "File size exceeds 10MB",
     },
@@ -358,8 +358,8 @@ export default function ProviderOfferForm() {
             className="text-sm text-foreground cursor-pointer leading-relaxed"
           >
             {lang === "ar"
-              ? "أوافق على مشاركة رقم جوالي المسجّل مع مالك العقار في حال قبول عرضي"
-              : "I agree to share my registered phone number with the property owner if my offer is accepted"}
+              ? "أوافق على تبادل رقم الجوال مع مالك العقار في حال قبول عرضي"
+              : "I agree to exchange phone numbers with the property owner if my offer is accepted"}
           </label>
         </div>
 
