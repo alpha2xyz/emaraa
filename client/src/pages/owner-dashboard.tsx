@@ -1203,8 +1203,8 @@ export default function OwnerDashboard() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {lang === "ar"
-                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF) ويظهر رقم مزود الخدمة للتواصل معه، وسيؤدي تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
-                : "Accepting this offer unlocks the provider's full proposal (PDF), reveals their phone number for direct contact, and automatically rejects all other offers. Are you sure?"}
+                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF)، ويتم تبادل رقم الجوال بينك وبين هذا المزود للتواصل المباشر — ولا يظهر رقمك لأي مزود آخر. كما سيؤدي القبول تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
+                : "Accepting this offer unlocks the provider's full proposal (PDF) and exchanges phone numbers between you and this provider for direct contact — your number stays hidden from every other provider. It also automatically rejects all other offers. Are you sure?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

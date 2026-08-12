@@ -68,16 +68,48 @@ const nf = (n: number) => Number(n || 0).toLocaleString("en-US");
 
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "https://emaraa.app";
 
-// Branded RTL notification email — one heading, a short body, an optional CTA button.
+// Contact card — the name + phone of the other party, shown after an offer is accepted.
+// The phone is force-isolated LTR: Saudi numbers are Western digits inside an RTL line,
+// which reorders visually without it.
+export function contactCardHtml(opts: {
+  title: string;
+  name?: string | null;
+  phone?: string | null;
+}): string {
+  const deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
+  if (!opts.phone && !opts.name) return "";
+  const row = (label: string, value: string, ltr = false) =>
+    value
+      ? `<tr>
+           <td style="padding:6px 0;font-size:13px;color:${mut};white-space:nowrap;">${label}</td>
+           <td style="padding:6px 0 6px 12px;font-size:14px;font-weight:700;color:${ink};">${
+             ltr ? `<span dir="ltr" style="unicode-bidi:isolate">${value}</span>` : value
+           }</td>
+         </tr>`
+      : "";
+  return `
+    <div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:12px;padding:16px;margin:16px 0;">
+      <div style="font-size:13px;font-weight:700;color:${deep};margin-bottom:8px;">${opts.title}</div>
+      <table cellpadding="0" cellspacing="0" style="width:100%;">
+        ${row("الاسم", opts.name ?? "")}
+        ${row("الجوال", opts.phone ?? "", true)}
+      </table>
+    </div>`;
+}
+
+// Branded RTL notification email — one heading, a short body, an optional CTA button,
+// and an optional contact card (body is plain text, so contact details cannot ride in it).
 // Mirrors the admin-report visual style (dark gradient header + white card).
 export function notificationEmail(opts: {
   heading: string;
   body: string; // plain Arabic text; \n becomes <br>
   ctaLabel?: string;
   ctaUrl?: string;
+  contact?: { title: string; name?: string | null; phone?: string | null };
 }): string {
   const cyan = "#0DB8D3", blue = "#1B7FDC", deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
   const bodyHtml = opts.body.replace(/\n/g, "<br>");
+  const contact = opts.contact ? contactCardHtml(opts.contact) : "";
   const cta =
     opts.ctaLabel && opts.ctaUrl
       ? `<div style="margin-top:20px;">
@@ -93,6 +125,7 @@ export function notificationEmail(opts: {
       </div>
       <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
         <div style="font-size:15px;line-height:1.9;color:${ink};">${bodyHtml}</div>
+        ${contact}
         ${cta}
       </div>
       <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
@@ -270,7 +303,11 @@ export function commissionConfigReady(): boolean {
 
 // Combined "offer accepted + please transfer the 1% commission" email (Arabic RTL).
 // Sent to the winning provider the moment the owner accepts their offer.
-export function commissionEmail(opts: { priceTotal: number | null }): string {
+export function commissionEmail(opts: {
+  priceTotal: number | null;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+}): string {
   const cyan = "#0DB8D3", blue = "#1B7FDC", deep = "#065B98", ink = "#0F2233", mut = "#5A6880";
   const price = Number(opts.priceTotal || 0);
   const commission = price * COMMISSION_RATE;
@@ -282,6 +319,12 @@ export function commissionEmail(opts: { priceTotal: number | null }): string {
            <td style="padding:8px 0;font-size:14px;font-weight:700;color:${ink};text-align:left;direction:ltr;">${value}</td>
          </tr>`
       : "";
+
+  const contactBox = contactCardHtml({
+    title: "بيانات التواصل مع المالك",
+    name: opts.ownerName,
+    phone: opts.ownerPhone,
+  });
 
   const amountBox = `
     <div style="background:linear-gradient(135deg,${deep},${blue});border-radius:12px;padding:18px;margin:16px 0;color:#fff;text-align:center;">
@@ -316,8 +359,9 @@ export function commissionEmail(opts: { priceTotal: number | null }): string {
       </div>
       <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
         <div style="font-size:15px;line-height:1.9;color:${ink};">
-          قام المالك بقبول عرضك على طلب الخدمة. بعد إتمام الصفقة وتوقيع العقد، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب التالي.
+          قام المالك بقبول عرضك على طلب الخدمة، وبيانات التواصل معه موضحة أدناه للتنسيق المباشر وتوقيع العقد. بعد إتمام الصفقة، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب التالي.
         </div>
+        ${contactBox}
         ${amountBox}
         ${bankBox}
         ${qrBox}
