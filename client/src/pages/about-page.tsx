@@ -191,7 +191,7 @@ export default function AboutPage() {
               },
               {
                 num: "9,354",
-                label: isRTL ? "جمعية ملاك نشطة في المملكة" : "Active owners associations in KSA",
+                label: isRTL ? "اتحاد ملاك نشط في المملكة" : "Active owners associations in KSA",
                 src: "REGA 2024",
               },
               {
