@@ -71,6 +71,9 @@ export default function AuthPage() {
       phonePlaceholder: "05xxxxxxxx",
       phoneExists: "رقم الجوال مسجل مسبقاً",
       phoneNotFound: "رقم الجوال غير مسجل",
+      phoneExistsOtherRolePrefix: "هذا الرقم مسجّل بحساب",
+      phoneExistsOtherRoleSuffix:
+        "سجّل الدخول من التبويب الصحيح، أو تواصل معنا لتغيير نوع الحساب عبر info@emaraa.app أو واتساب 0501315725",
       registrationSuccess: "تم التسجيل بنجاح!",
       loginSuccess: "تم تسجيل الدخول بنجاح!",
       phoneInvalid: "رقم جوال سعودي فقط (يبدأ بـ 05 ويتكون من 10 أرقام)",
@@ -104,6 +107,9 @@ export default function AuthPage() {
       phonePlaceholder: "05xxxxxxxx",
       phoneExists: "Phone number already registered",
       phoneNotFound: "Phone number not found",
+      phoneExistsOtherRolePrefix: "This number is already registered as a",
+      phoneExistsOtherRoleSuffix:
+        "Log in from the correct tab, or contact us to change your account type via info@emaraa.app or WhatsApp 0501315725",
       registrationSuccess: "Registration successful!",
       loginSuccess: "Login successful!",
       phoneInvalid: "Saudi phone number only (starts with 05 and 10 digits)",
@@ -120,6 +126,14 @@ export default function AuthPage() {
   };
 
   const t = content[lang];
+
+  // Label for the role a phone number is actually registered under (used in the
+  // "PHONE_EXISTS_OTHER_ROLE" error message so it matches the tab the user should click).
+  const getRegisteredRoleLabel = (registeredRole: string) =>
+    registeredRole === "provider" ? t.providerTab : t.ownerTab;
+
+  const getOtherRoleMessage = (registeredRole: string) =>
+    `${t.phoneExistsOtherRolePrefix} ${getRegisteredRoleLabel(registeredRole)}. ${t.phoneExistsOtherRoleSuffix}`;
 
   // ✅ Validate Saudi phone number
   const validatePhone = (phone: string): boolean => {
@@ -163,11 +177,14 @@ export default function AuthPage() {
       const res = await fetch("/api/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone, mode }),
+        body: JSON.stringify({ phone: formData.phone, mode, role }),
       });
 
       if (!res.ok) {
-        if (res.status === 404) setError(t.phoneNotFound);
+        const data = await res.json().catch(() => ({}) as { error?: string; registeredRole?: string });
+        if (data?.error === "PHONE_EXISTS_OTHER_ROLE" && data.registeredRole) {
+          setError(getOtherRoleMessage(data.registeredRole));
+        } else if (res.status === 404) setError(t.phoneNotFound);
         else if (res.status === 409) setError(t.phoneExists);
         else setError(t.otpSendFailed);
         setLoading(false);
@@ -202,7 +219,10 @@ export default function AuthPage() {
       });
 
       if (!res.ok) {
-        if (res.status === 409) setError(t.phoneExists);
+        const data = await res.json().catch(() => ({}) as { error?: string; registeredRole?: string });
+        if (data?.error === "PHONE_EXISTS_OTHER_ROLE" && data.registeredRole) {
+          setError(getOtherRoleMessage(data.registeredRole));
+        } else if (res.status === 409) setError(t.phoneExists);
         else if (res.status === 404) setError(t.phoneNotFound);
         else setError(t.otpInvalid);
         setLoading(false);

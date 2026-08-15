@@ -1691,7 +1691,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // OTP — Send SMS OTP via Authentica
   app.post("/api/otp/send", async (req, res) => {
     try {
-      const { phone, mode } = req.body;
+      const { phone, mode, role } = req.body;
       if (!phone || !/^05\d{8}$/.test(phone)) {
         return res.status(400).json({ error: "Invalid phone number" });
       }
@@ -1700,18 +1700,37 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (mode !== "login" && mode !== "register") {
         return res.status(400).json({ error: "Invalid mode. Must be 'login' or 'register'" });
       }
+      if (!role || !["owner", "provider"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
 
       // Check phone existence BEFORE sending OTP (saves SMS credit + gives instant feedback)
       const { data: existingUser } = await supabaseAdmin
         .from("users")
-        .select("id")
+        .select("id, role")
         .eq("phone", phone)
         .maybeSingle();
 
-      if (mode === "login" && !existingUser) {
-        return res.status(404).json({ error: "Phone not registered" });
+      if (mode === "login") {
+        if (!existingUser) {
+          return res.status(404).json({ error: "Phone not registered" });
+        }
+        // Registered, but under the other role — don't send a real OTP for a login
+        // that can never succeed; tell the user which role the number actually has.
+        if (existingUser.role !== role) {
+          return res.status(409).json({
+            error: "PHONE_EXISTS_OTHER_ROLE",
+            registeredRole: existingUser.role,
+          });
+        }
       }
       if (mode === "register" && existingUser) {
+        if (existingUser.role !== role) {
+          return res.status(409).json({
+            error: "PHONE_EXISTS_OTHER_ROLE",
+            registeredRole: existingUser.role,
+          });
+        }
         return res.status(409).json({ error: "Phone already registered" });
       }
 
@@ -1811,11 +1830,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (mode === "register") {
         const { data: existing } = await supabaseAdmin
           .from("users")
-          .select("id")
+          .select("id, role")
           .eq("phone", phone)
           .maybeSingle();
 
         if (existing) {
+          if (existing.role !== role) {
+            return res.status(409).json({
+              error: "PHONE_EXISTS_OTHER_ROLE",
+              registeredRole: existing.role,
+            });
+          }
           return res.status(409).json({ error: "Phone already registered" });
         }
 
@@ -1834,13 +1859,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       } else {
         const { data: user } = await supabaseAdmin
           .from("users")
-          .select("id, name")
+          .select("id, name, role")
           .eq("phone", phone)
-          .eq("role", role)
           .maybeSingle();
 
         if (!user) {
           return res.status(404).json({ error: "User not found" });
+        }
+        // Registered, but under the other role — never claim "not found" for a phone
+        // that does exist, just under a different account type.
+        if (user.role !== role) {
+          return res.status(409).json({
+            error: "PHONE_EXISTS_OTHER_ROLE",
+            registeredRole: user.role,
+          });
         }
         userId = user.id;
         userName = user.name ?? "";
