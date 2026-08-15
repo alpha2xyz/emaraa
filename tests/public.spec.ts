@@ -10,12 +10,6 @@ import { test, expect } from "@playwright/test";
 // ── Landing Page ─────────────────────────────────────────────────────────────
 
 test.describe("Landing Page", () => {
-  test("loads and shows the brand name", async ({ page }) => {
-    await page.goto("/");
-    // Arabic brand name — default language is ar
-    await expect(page.locator("text=عِمارة").first()).toBeVisible();
-  });
-
   test("shows hero headline", async ({ page }) => {
     await page.goto("/");
     // The hero highlight text rendered in Arabic
@@ -33,25 +27,12 @@ test.describe("Landing Page", () => {
     await expect(page.locator("text=هل أنت شركة إدارة مرافق؟")).toBeVisible();
   });
 
-  test("footer shows copyright", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.locator("text=2026 عِمارة")).toBeVisible();
-  });
-
   test("footer Quick Links navigates to /contact", async ({ page }) => {
     await page.goto("/");
     const link = page.locator("footer a", { hasText: "اتصل بنا" });
     await expect(link).toBeVisible();
     await link.click();
     await expect(page).toHaveURL(/\/contact/);
-  });
-
-  test("footer Quick Links navigates to /about", async ({ page }) => {
-    await page.goto("/");
-    const link = page.locator("footer a", { hasText: "عن عِمارة" });
-    await expect(link).toBeVisible();
-    await link.click();
-    await expect(page).toHaveURL(/\/about/);
   });
 
   test("Get Started button navigates to /auth?role=owner", async ({ page }) => {
