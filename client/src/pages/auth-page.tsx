@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Building2, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 import AmbientBackground from "@/components/AmbientBackground";
+import { trackConversion } from "@/lib/gtag";
 
 export default function AuthPage() {
   const { lang } = useLang();
@@ -244,6 +245,13 @@ export default function AuthPage() {
       localStorage.setItem("userPhone", phone);
       localStorage.setItem("userRole", userRole);
       localStorage.setItem("userName", returnedName || formData.name || "");
+
+      // Secondary Google Ads conversion — OTP verified; a new owner account is
+      // the more valuable signal, so it also fires its own named event.
+      trackConversion("otp_verify_success", { role: userRole, mode });
+      if (mode === "register" && userRole === "owner") {
+        trackConversion("owner_signup");
+      }
 
       if (userRole === "owner") {
         setLocation(mode === "register" ? "/dashboard/owner/onboarding" : "/dashboard/owner");
