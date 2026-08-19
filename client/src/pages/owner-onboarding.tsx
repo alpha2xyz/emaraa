@@ -10,6 +10,7 @@ import { Loader2, AlertCircle, Building2, ClipboardList, FileText, Home, Mail } 
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/hooks/use-lang";
 import AmbientBackground from "@/components/AmbientBackground";
+import { trackConversion } from "@/lib/gtag";
 import {
   Select,
   SelectContent,
@@ -308,6 +309,12 @@ export default function OwnerOnboarding() {
       description:
         "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض — بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض.",
       variant: "default",
+    });
+
+    // Primary Google Ads conversion — property + service request submitted.
+    trackConversion("request_submitted", {
+      building_type: buildingType,
+      has_request: newRequestId !== null,
     });
 
     // Step 9 — navigate
