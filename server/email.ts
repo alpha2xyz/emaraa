@@ -20,8 +20,8 @@ function getTransport() {
   return transporter;
 }
 
-// Send an email via Zoho and record it in email_log (fire-and-forget log,
-// mirrors the sendSms / sms_log pattern). Never throws — returns status.
+// Send an email via Zoho and record it in email_log (fire-and-forget log).
+// Never throws — returns status.
 export async function sendEmail(
   supabaseAdmin: SupabaseClient,
   opts: { to?: string; cc?: string; subject: string; html: string; kind?: string },

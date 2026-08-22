@@ -38,6 +38,9 @@ export default function AdminDashboard() {
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
   const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "error">("checking");
   const abortRef = useRef<AbortController | null>(null);
+  // Consecutive failed checks. Lives in a ref, not state: it must survive re-renders
+  // without causing one, and only flips the indicator red on the 2nd failure in a row.
+  const dbFailCountRef = useRef(0);
 
   const t =
     lang === "ar"
@@ -173,17 +176,35 @@ export default function AdminDashboard() {
       if (abortRef.current) abortRef.current.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      // 10s, not 3s: a cold serverless start or a slow mobile connection routinely
+      // exceeds 3s while the dashboard's own queries succeed, which showed a red
+      // "connection error" over a fully-working page (observed 2026-08-03).
+      let timedOut = false;
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 10_000);
       try {
         const res = await fetch("/api/admin/stats", {
           headers: { Authorization: `Bearer ${localStorage.getItem("adminSessionToken")}` },
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
-        setDbStatus(res.ok ? "connected" : "error");
-      } catch {
+        if (res.ok) {
+          dbFailCountRef.current = 0;
+          setDbStatus("connected");
+        } else {
+          dbFailCountRef.current += 1;
+          if (dbFailCountRef.current >= 2) setDbStatus("error");
+        }
+      } catch (err) {
         clearTimeout(timeoutId);
-        setDbStatus("error");
+        // A deliberate abort is not a connection failure: we abort on the next poll
+        // and on unmount. Leave the indicator untouched. A timeout also surfaces as
+        // an AbortError but IS a real failure, so `timedOut` separates the two.
+        if ((err as any)?.name === "AbortError" && !timedOut) return;
+        dbFailCountRef.current += 1;
+        if (dbFailCountRef.current >= 2) setDbStatus("error");
       }
     };
 

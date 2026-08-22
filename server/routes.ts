@@ -346,20 +346,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Owner stats — dashboard summary
-  app.get("/api/owner/stats", requireSession, requireOwner, async (req, res) => {
-    try {
-      const userId = (req as any).userId;
-      const [{ data: properties }, { data: requests }] = await Promise.all([
-        supabaseAdmin.from("properties").select("*").eq("owner_id", userId),
-        supabaseAdmin.from("requests").select("*").eq("owner_id", userId),
-      ]);
-      res.json({ properties: properties || [], requests: requests || [] });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch stats" });
-    }
-  });
-
   // Server-side file upload — receives raw file bytes, uploads via supabaseAdmin (no JWT needed)
   app.post(
     "/api/upload/provider-document",
