@@ -2265,6 +2265,58 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Supabase Database Webhooks → Slack #business-alerts. Secured by SUPABASE_WEBHOOK_SECRET,
+  // sent as a custom header (configured in the Supabase Dashboard, not a query param — keeps
+  // it out of logs/URLs). One shared endpoint for all four events; SLACK_BUSINESS_ALERTS_WEBHOOK_URL
+  // unset means this silently no-ops rather than failing the DB trigger.
+  app.post("/api/webhooks/business-event", async (req, res) => {
+    const secret = process.env.SUPABASE_WEBHOOK_SECRET ?? "";
+    const auth = req.headers["x-webhook-secret"] ?? "";
+    if (!secret || auth !== secret) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    const slackWebhookUrl = process.env.SLACK_BUSINESS_ALERTS_WEBHOOK_URL;
+    if (!slackWebhookUrl) return res.json({ ok: true, skipped: "no_slack_webhook_configured" });
+
+    try {
+      const { type, table, record } = req.body ?? {};
+      if (type !== "INSERT" || !record) return res.json({ ok: true, skipped: "not_insert" });
+
+      let text: string | null = null;
+      switch (table) {
+        case "users":
+          if (record.role === "owner") {
+            text = `🟦 مالك جديد سجّل: *${record.name}* — ${record.phone}`;
+          }
+          break;
+        case "providers":
+          text = `🟦 مزوّد جديد سجّل: *${record.company_name}*${record.city ? ` — ${record.city}` : ""}`;
+          break;
+        case "provider_offers": {
+          const price = record.price_total
+            ? `${Number(record.price_total).toLocaleString("en-US")} ر.س`
+            : "بدون سعر محدد";
+          text = `📄 عرض جديد بقيمة ${price}`;
+          break;
+        }
+        case "deals":
+          text = `✅ صفقة جديدة — عرض تم قبوله`;
+          break;
+      }
+      if (!text) return res.json({ ok: true, skipped: "unhandled_table_or_role" });
+
+      await fetch(slackWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      res.json({ ok: true });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[webhook business-event]", e?.message);
+      res.status(500).json({ error: "webhook_failed" });
+    }
+  });
+
   return httpServer;
 }
 
