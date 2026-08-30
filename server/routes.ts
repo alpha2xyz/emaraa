@@ -826,9 +826,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       // One offer per (request, provider). A previously rejected offer can be
-      // re-submitted: the owner rejected all offers and re-opened the request,
-      // so we reuse the rejected row (the UNIQUE(request_id, provider_id)
-      // constraint forbids a second row).
+      // re-submitted any time the request is still pending — resubmission isn't
+      // gated on every other offer also being rejected, only on the request not
+      // yet having an accepted winner. We reuse the rejected row (the
+      // UNIQUE(request_id, provider_id) constraint forbids a second row).
       const { data: existingOffer } = await supabaseAdmin
         .from("provider_offers")
         .select("id, status")
@@ -1498,7 +1499,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           );
         }
       } else if (status === "rejected") {
-        // Terse admin note — useful signal (a request may be re-opening for new offers).
+        // A rejection never touches requests.status — the request was never "closed" by
+        // it, so there's nothing to "reopen". If it's still pending (no one else has been
+        // accepted), this provider can resubmit right away — no need to wait for every
+        // other offer on the request to also be rejected.
         const { data: rejected } = await supabaseAdmin
           .from("provider_offers")
           .select("providers(company_name, email)")
@@ -1537,7 +1541,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           `تم رفض عرض — ${rejectedCompany}`,
           notificationEmail({
             heading: "المالك رفض عرضاً",
-            body: `المزوّد: ${rejectedCompany}\n\nإن رفض المالك جميع العروض، يُفتح الطلب من جديد لاستقبال عروض أخرى.`,
+            body: `المزوّد: ${rejectedCompany}\n\n${
+              stillOpen
+                ? "الطلب لا يزال متاحاً، ويمكن لهذا المزوّد تقديم عرض جديد عليه فوراً — لا يُشترط رفض بقية العروض أولاً."
+                : "الطلب لم يعد متاحاً (تم قبول عرض آخر عليه)."
+            }`,
             ctaLabel: "فتح لوحة الإدارة",
             ctaUrl: "https://emaraa.app/admin",
           }),
