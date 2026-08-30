@@ -301,8 +301,9 @@ export function commissionConfigReady(): boolean {
   return !!BANK_IBAN;
 }
 
-// Combined "offer accepted + please transfer the 1% commission" email (Arabic RTL).
-// Sent to the winning provider the moment the owner accepts their offer.
+// 1% commission-transfer ask (Arabic RTL). Sent by the day-21 pass of
+// /api/cron/commission-reminder, not at accept-time — owners take 1-2 weeks to
+// consult co-owners before a contract exists, so asking for money on day 0 was premature.
 export function commissionEmail(opts: {
   priceTotal: number | null;
   ownerName?: string | null;
@@ -355,11 +356,11 @@ export function commissionEmail(opts: {
     <div style="max-width:520px;margin:0 auto;">
       <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
         <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة Emaraa</div>
-        <div style="font-size:20px;font-weight:800;margin-top:8px;">مبروك! تم قبول عرضك 🎉</div>
+        <div style="font-size:20px;font-weight:800;margin-top:8px;">متابعة عرضك المقبول</div>
       </div>
       <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
         <div style="font-size:15px;line-height:1.9;color:${ink};">
-          قام المالك بقبول عرضك على طلب الخدمة، وبيانات التواصل معه موضحة أدناه للتنسيق المباشر وتوقيع العقد. بعد إتمام الصفقة، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب التالي.
+          قبل 3 أسابيع قبِل المالك عرضك على طلب الخدمة. إذا كنت أتممت توقيع العقد معه، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب أدناه. وإذا لم تكتمل الصفقة بعد أو احتجت أي مساعدة، راسلنا على info@emaraa.app.
         </div>
         ${contactBox}
         ${amountBox}
@@ -376,14 +377,16 @@ export function commissionEmail(opts: {
   </div>`;
 }
 
-// 1-day-after feedback reminder email (Arabic RTL). CC: info@emaraa.app.
+// Day-7 check-in email (Arabic RTL). Sent by the day-7 pass of
+// /api/cron/commission-reminder — a light nudge, not a post-deal survey, since the
+// deal is often still mid-negotiation at this point (owners take 1-2 weeks to
+// consult co-owners). CC: info@emaraa.app.
 export function commissionReminderEmail(): string {
   return notificationEmail({
-    heading: "نود سماع رأيك 💬",
+    heading: "نتابع معك",
     body:
-      "نشكرك على إتمام صفقتك عبر منصة عِمارة!\n\n" +
-      "سيتواصل معك فريق عِمارة قريبًا للاطلاع على تجربتك في عملية الخدمة، ومشاركة قصة نجاحك معنا.\n\n" +
-      "رأيك يساعدنا على تحسين المنصة، ويُبرز قصتك كنموذج ملهم لمزودي الخدمة الآخرين. نتطلع للحديث معك!",
+      "قبِل المالك عرضك على طلب الخدمة قبل أسبوع. نتمنى أن تسير المحادثات معه بشكل جيد.\n\n" +
+      "إذا احتجت أي مساعدة أو كان لديك استفسار، فريق عِمارة جاهز على info@emaraa.app في أي وقت.",
     ctaLabel: "زيارة عِمارة",
     ctaUrl: FRONTEND_URL,
   });

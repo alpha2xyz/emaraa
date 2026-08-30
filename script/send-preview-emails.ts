@@ -8,7 +8,7 @@
  * Subjects are prefixed with [معاينة] so they're obvious test sends.
  */
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail, notificationEmail } from "../server/email.js";
+import { sendEmail, notificationEmail, commissionEmail, commissionReminderEmail } from "../server/email.js";
 
 const TO = "info@emaraa.app";
 const db = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -72,7 +72,36 @@ async function main() {
     });
     console.log(`${e.kind.padEnd(20)} -> ${r.status}${r.error ? "  (" + r.error + ")" : ""}`);
   }
-  console.log(`\nDone. ${emails.length} preview emails sent to ${TO}.`);
+
+  // These two use their own custom templates (contact card / bank details / QR for
+  // commissionEmail), not the generic notificationEmail shape above — sent separately.
+  const custom = [
+    {
+      kind: "commission_reminder",
+      subject: "كيف تسير الأمور مع طلبك؟",
+      html: commissionReminderEmail(),
+    },
+    {
+      kind: "commission_request",
+      subject: "تذكير: عمولة عِمارة (1%) على عرضك المقبول",
+      html: commissionEmail({
+        priceTotal: 45000,
+        ownerName: "مالك الاختبار",
+        ownerPhone: "0501234567",
+      }),
+    },
+  ];
+  for (const e of custom) {
+    const r = await sendEmail(db, {
+      to: TO,
+      subject: `[معاينة] ${e.subject}`,
+      html: e.html,
+      kind: `preview_${e.kind}`,
+    });
+    console.log(`${e.kind.padEnd(20)} -> ${r.status}${r.error ? "  (" + r.error + ")" : ""}`);
+  }
+
+  console.log(`\nDone. ${emails.length + custom.length} preview emails sent to ${TO}.`);
 }
 
 main().catch((err) => {

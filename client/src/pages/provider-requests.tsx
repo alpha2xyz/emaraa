@@ -66,9 +66,9 @@ export default function ProviderRequests() {
       pendingBtn: "بانتظار موافقة الإدارة",
       sqm: "م²",
       teaserRequestsAvailable: "طلبات متاحة",
-      commissionTitle: "عمولة عِمارة 1٪ فقط",
+      commissionTitle: "عمولة عِمارة 1% فقط",
       commissionBody:
-        "يلتزم مقدم الخدمة بسداد عمولة منصة عِمارة البالغة 1٪ فقط من قيمة العرض بعد توقيع العقد مع المالك. عِمارة سترسل بيانات التحويل آليًا عبر البريد الإلكتروني لكم بمجرد قبول المالك للعرض.",
+        "يلتزم مقدم الخدمة بسداد عمولة منصة عِمارة البالغة 1% فقط من قيمة العرض بعد توقيع العقد مع المالك. عِمارة سترسل بيانات التحويل آليًا عبر البريد الإلكتروني بعد قبول المالك للعرض بفترة قصيرة.",
       scopeShort:
         "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
     },
@@ -98,7 +98,7 @@ export default function ProviderRequests() {
       teaserRequestsAvailable: "requests available",
       commissionTitle: "Just 1% Emaraa Commission",
       commissionBody:
-        "The service provider agrees to pay Emaraa's commission of just 1% of the offer value after signing the contract with the owner. Emaraa will automatically email you the transfer details as soon as the owner accepts the offer.",
+        "The service provider agrees to pay Emaraa's commission of just 1% of the offer value after signing the contract with the owner. Emaraa will automatically email you the transfer details a short while after the owner accepts the offer.",
       scopeShort:
         "Daily cleaning of common areas, rooftops, tanks, and waste removal; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency support; utility bill payments; with clarification of working arrangements during holidays and national occasions.",
     },

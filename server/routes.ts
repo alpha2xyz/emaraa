@@ -1394,7 +1394,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .eq("id", req.params.id as string)
           .single();
         if (acceptedOffer) {
-          const { data: dealRow } = await supabaseAdmin
+          await supabaseAdmin
             .from("deals")
             .upsert(
               {
@@ -1408,8 +1408,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               },
               { onConflict: "offer_id" }
             )
-            .select("id, commission_email_sent_at")
+            .select("id")
             .single();
+          // deals.created_at (set on first insert) is the scheduling anchor the
+          // commission-reminder cron uses for the day-7 check-in and day-21
+          // commission-request emails — see /api/cron/commission-reminder.
 
           // Acceptance is the moment both sides get each other's number, so the owner's
           // contact is read once here and reused by the provider email, the owner email
@@ -1423,32 +1426,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           const providerCompany = (acceptedOffer.providers as any)?.company_name ?? null;
 
           // Notify the winning provider — their offer was accepted (providers have an email).
-          // If bank details are configured, this becomes the combined "accepted + transfer the
-          // 1% commission" email and starts the 1-day reminder chain. Until then it stays the
-          // plain congrats email and no reminder is scheduled (commission path is inert).
-          // Re-accept guard: only send the money email once — never re-send (or reset the
-          // reminder clock) if this deal already had its commission email. The plain path and
-          // the owner confirmation ride on isFirstAccept for the same reason: both now carry a
-          // phone number, and a re-accept must not mail it out again.
+          // Plain congrats + owner contact only. The 1% commission ask no longer rides on
+          // this moment (owners take 1-2 weeks to consult co-owners before a contract even
+          // exists) — it's sent by the day-21 pass of /api/cron/commission-reminder instead.
           const providerEmail = (acceptedOffer.providers as any)?.email;
-          const alreadyEmailed = !!dealRow?.commission_email_sent_at;
-          if (commissionConfigReady() && !alreadyEmailed) {
-            await notify(
-              providerEmail,
-              "تم قبول عرضك — تحويل عمولة عِمارة (1%)",
-              commissionEmail({
-                priceTotal: Number(acceptedOffer.price_total) || null,
-                ownerName: ownerU?.name ?? null,
-                ownerPhone: ownerU?.phone ?? null,
-              }),
-              "commission_request",
-            );
-            // Stamp the deal so the daily reminder cron can find it 24h later.
-            await supabaseAdmin
-              .from("deals")
-              .update({ commission_email_sent_at: new Date().toISOString() })
-              .eq("offer_id", acceptedOffer.id);
-          } else if (!commissionConfigReady() && isFirstAccept) {
+          if (isFirstAccept) {
             await notify(
               providerEmail,
               "تم قبول عرضك — عِمارة",
@@ -1506,7 +1488,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
                   priceNum ? `${Math.round(priceNum * 0.01).toLocaleString("en-US")} ر.س` : "—"
                 }`,
                 `بريد العمولة للمزوّد: ${
-                  commissionConfigReady() ? (alreadyEmailed ? "سبق إرساله" : "أُرسل الآن") : "غير مُفعّل"
+                  commissionConfigReady() ? "مجدولة تلقائياً بعد 21 يوماً" : "غير مُفعّل"
                 }`,
               ].join("\n"),
               ctaLabel: "فتح لوحة الإدارة",
@@ -2221,9 +2203,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Daily commission feedback reminder — hit by Vercel Cron. Secured by CRON_SECRET.
-  // Finds deals whose commission email went out 24h+ ago and that haven't been reminded yet,
-  // sends each provider a feedback/success-story reminder (cc info@emaraa.app), and stamps the deal.
+  // Daily commission-flow cron — hit by Vercel Cron. Secured by CRON_SECRET.
+  // Owners take 1-2 weeks to consult co-owners before a contract even exists, so neither
+  // provider email fires at accept-time anymore (see PUT /api/provider/offers/:id) — both
+  // are scheduled off deals.created_at (the acceptance moment) and run here instead:
+  //   Pass A (day 7):  light check-in — commission_reminder_sent_at
+  //   Pass B (day 21): the 1% commission-transfer ask — commission_email_sent_at
+  // Both skip deals.status = "cancelled" and stamp before sending (retry-safe, no double-send).
   app.get("/api/cron/commission-reminder", async (req, res) => {
     const secret = process.env.CRON_SECRET ?? "";
     const auth = req.headers["authorization"] ?? "";
@@ -2231,16 +2217,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return res.status(401).json({ error: "unauthorized" });
     }
     try {
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { data: due } = await supabaseAdmin
-        .from("deals")
-        .select("id, providers(email)")
-        .not("commission_email_sent_at", "is", null)
-        .is("commission_reminder_sent_at", null)
-        .lte("commission_email_sent_at", cutoff);
+      const day7Cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const day21Cutoff = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
 
-      let sent = 0;
-      for (const deal of due ?? []) {
+      // Pass A — day 7 check-in.
+      const { data: dueCheckins } = await supabaseAdmin
+        .from("deals")
+        .select("id, providers!deals_provider_fk(email)")
+        .is("commission_reminder_sent_at", null)
+        .neq("status", "cancelled")
+        .lte("created_at", day7Cutoff);
+
+      let checkinsSent = 0;
+      for (const deal of dueCheckins ?? []) {
         const email = (deal.providers as any)?.email;
         // Stamp first so a retry never double-sends, even if the send below fails.
         await supabaseAdmin
@@ -2250,15 +2239,53 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (email) {
           await notify(
             email,
-            "كيف كانت تجربتك مع عِمارة؟",
+            "كيف تسير الأمور مع طلبك؟",
             commissionReminderEmail(),
             "commission_reminder",
             "info@emaraa.app",
           );
-          sent++;
+          checkinsSent++;
         }
       }
-      res.json({ ok: true, sent });
+
+      // Pass B — day 21 commission-transfer ask. No config, no send: same fallback as before.
+      let commissionSent = 0;
+      if (commissionConfigReady()) {
+        const { data: dueCommission } = await supabaseAdmin
+          .from("deals")
+          .select(
+            "id, providers!deals_provider_fk(email), owner:users!deals_owner_fk(name, phone), provider_offers!deals_offer_fk(price_total)"
+          )
+          .is("commission_email_sent_at", null)
+          .neq("status", "cancelled")
+          .lte("created_at", day21Cutoff);
+
+        for (const deal of dueCommission ?? []) {
+          const email = (deal.providers as any)?.email;
+          const owner = deal.owner as any;
+          const priceTotal = (deal.provider_offers as any)?.price_total ?? null;
+          // Stamp first so a retry never double-sends, even if the send below fails.
+          await supabaseAdmin
+            .from("deals")
+            .update({ commission_email_sent_at: new Date().toISOString() })
+            .eq("id", deal.id);
+          if (email) {
+            await notify(
+              email,
+              "تذكير: عمولة عِمارة (1%) على عرضك المقبول",
+              commissionEmail({
+                priceTotal: Number(priceTotal) || null,
+                ownerName: owner?.name ?? null,
+                ownerPhone: owner?.phone ?? null,
+              }),
+              "commission_request",
+            );
+            commissionSent++;
+          }
+        }
+      }
+
+      res.json({ ok: true, checkinsSent, commissionSent });
     } catch (e: any) {
       if (process.env.NODE_ENV !== "production") console.error("[cron commission-reminder]", e?.message);
       res.status(500).json({ error: "reminder_failed" });
