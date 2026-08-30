@@ -111,9 +111,11 @@ export const deals = pgTable("deals", {
   status: text("status").notNull().default("pending"), // pending | closed | cancelled
   signed_at: timestamp("signed_at", { withTimezone: true }),
   notes: text("notes"),
-  // 1% commission workflow — timestamps drive the email chain + dedup.
-  // commission_email_sent_at: set when the "transfer the 1% commission" email goes out (on accept).
-  // commission_reminder_sent_at: set when the 1-day feedback/reminder email goes out (daily cron).
+  // 1% commission workflow — both timestamps are stamped by the daily cron
+  // (/api/cron/commission-reminder), scheduled off created_at (the acceptance moment),
+  // not at accept-time. Independent of each other; dedup only.
+  // commission_reminder_sent_at: set when the day-7 check-in email goes out.
+  // commission_email_sent_at: set when the day-21 "transfer the 1% commission" email goes out.
   commission_email_sent_at: timestamp("commission_email_sent_at", { withTimezone: true }),
   commission_reminder_sent_at: timestamp("commission_reminder_sent_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
