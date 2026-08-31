@@ -10,7 +10,10 @@ if (dsn) {
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE,
-    tracesSampleRate: 0.1,
+    integrations: [Sentry.browserTracingIntegration()],
+    // Sample every pageload while traffic is low; at this volume 10% would
+    // yield only a handful of page loads a week, which is not enough to see.
+    tracesSampleRate: 1.0,
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
   });
