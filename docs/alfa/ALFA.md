@@ -30,6 +30,20 @@ from Emaraa's own backlog.
 7. Open one PR per idea, linked to its issue, describing what changed, how to try it,
    and any risk or open decision. Abdallah reviews and merges. You never merge.
 
+## Scope of a build
+
+Build the feature itself, nothing around it. Never mock up Emaraa, never rebuild or
+restyle existing pages to showcase the work, and never create a parallel demo copy of
+the product. The real codebase is the demo.
+
+Make it directly testable: one self-contained entry point — its own route, screen or
+script — that Abdallah can open and try on its own, without walking the full product
+flow to reach it. State in the PR exactly where to click and what to expect.
+
+Touch only the files the feature needs. Related pages, shared layouts and existing
+styling stay untouched unless the feature genuinely cannot work otherwise — and then
+say so explicitly in the PR.
+
 ## Style
 
 Code, comments, commits, PR text: English. Replies to Abdallah in issues: Arabic, Saudi
