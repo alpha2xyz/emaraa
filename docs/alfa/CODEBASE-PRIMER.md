@@ -12,7 +12,7 @@ provider_offers (PDF + price + status) · deals (auto-created on acceptance, 1% 
 sms_log/email_log · admins.
 
 **Product flow**: owner registers (phone OTP) → creates a service request → approved
-providers are SMS'd → they submit PDF proposals → owner sees price only (PDF locked) →
+providers are emailed (all notifications are email-only; SMS is OTP-only) → they submit PDF proposals → owner sees price only (PDF locked) →
 owner accepts one → PDF unlocks, a `deals` row is created → admin confirms final contract
 value → cron sends the 1% commission reminder (day 7) and request (day 21).
 
