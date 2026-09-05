@@ -299,7 +299,6 @@ export default function OwnerOnboarding() {
     // provider was ever told the request existed.
 
     // Step 7 — invalidate query cache (include "owner-property" so dashboard loads fresh data)
-    queryClient.invalidateQueries({ queryKey: ["owner-stats"] });
     queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
     queryClient.invalidateQueries({ queryKey: ["owner-property"] });
 

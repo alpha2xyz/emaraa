@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -154,7 +153,6 @@ export default function ProviderDashboard() {
   const availableRequests: any[] = data?.availableRequests || [];
   const myOffersStats: any[] = data?.myOffers || [];
 
-  const companyName = providerData?.provider?.company_name || "";
   const isProfileComplete = !!providerData?.provider?.company_name;
   const isApproved = providerData?.provider?.approved;
 
