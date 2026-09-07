@@ -39,7 +39,7 @@ const arSections: Section[] = [
       "يُحظر على المستخدمين القيام بأي نشاط يُخلّ بأمن المنصة أو سلامتها أو يستهدف الوصول غير المصرّح إلى خوادمها أو بيانات المستخدمين الآخرين — وهذا يُعدّ انتهاكاً صريحاً لنظام مكافحة الجرائم المعلوماتية السعودي.",
       "يُحظر نسخ أو تنزيل أو إعادة نشر أي محتوى من المنصة دون إذن خطي مسبق.",
       "المنصة مقيّدة للمستخدمين البالغين (18 عاماً فأكثر).",
-      "المستخدم مسؤول مسؤولية كاملة عن سرية بيانات حسابه وكلمة المرور وعن أي نشاط يجري من خلال حسابه.",
+      "المستخدم مسؤول مسؤولية كاملة عن سرية بيانات حسابه وعن أي نشاط يجري من خلال حسابه.",
       "يُحظر استخدام المنصة كوسيط أو سمسار لصالح طرف ثالث دون موافقة صريحة من الإدارة.",
     ],
   },
@@ -55,16 +55,16 @@ const arSections: Section[] = [
     title: "حسابات المستخدمين",
     body: [
       "يُنشأ الحساب عبر رقم جوال سعودي يُتحقق منه برمز OTP مؤقت مُرسَل عبر مزود الرسائل النصية المعتمد.",
-      "حساب مالك العقار مقيّد بعقار واحد وطلب نشط واحد في المرحلة الحالية.",
+      "حساب مالك العقار مقيّد بعقار واحد، وبحد أقصى طلبين نشطين على العقار نفسه في المرحلة الحالية.",
       "يحق لإدارة المنصة تعليق الحسابات المخالفة لهذه الشروط أو إلغاؤها دون إشعار مسبق.",
-      "تسجيل الدخول من خلال حسابك يُعدّ موافقةً على تلقّي رسائل نصية تتعلق بالخدمة كجزء من عمل المنصة.",
+      "تسجيل الدخول من خلال حسابك يُعدّ موافقةً على تلقّي رمز التحقق (OTP) عبر رسالة نصية عند كل عملية دخول.",
     ],
   },
   {
     title: "التزامات مالك العقار",
     body: [
       "تقديم معلومات دقيقة ومحدَّثة عن العقار والخدمة المطلوبة.",
-      "بعد قبول عرض من مزود خدمة، لا يحق لصاحب الحساب نشر طلبات جديدة حتى إغلاق الطلب الحالي رسمياً.",
+      "لا يمكن نشر طلب جديد على العقار نفسه إذا كان يوجد عليه طلبان نشطان بالفعل، إلى أن يُغلق أحدهما.",
       "بقبولك لعرض مزود خدمة، توافق على مشاركة رقم جوالك مع ذلك المزود تحديداً لغرض التواصل المباشر وإتمام التعاقد. ولا يُشارَك رقمك مع أي مزود آخر.",
       "الالتزام بالتواصل المهني مع مزودي الخدمة واستخدام المنصة للأغراض المشروعة فقط.",
       "المنصة وسيط فقط — العقد النهائي يُبرم مباشرةً بين مالك العقار ومزود الخدمة.",
@@ -73,13 +73,13 @@ const arSections: Section[] = [
   {
     title: "التزامات مزود الخدمة",
     body: [
-      "تقديم مستندات صحيحة وسارية المفعول عند التسجيل (سجل تجاري، ملف الشركة بصيغة PDF).",
+      "تقديم مستندات صحيحة وسارية المفعول عند التسجيل (سجل تجاري، ملف الشركة بصيغة PDF، رخصة فال).",
       "يسري الحساب على منصة عِمارة فقط بعد الحصول على موافقة إدارية صريحة.",
       "يلتزم مزود الخدمة بتنفيذ الخدمة وفق العرض المقدَّم وفي الوقت المحدد.",
       "يُحظر على مزود الخدمة التواصل مع الملاك خارج إطار المنصة بهدف تجاوز آلية العروض الرسمية.",
       "عند قبول المالك لعرضك، يُشارَك رقم جوال المالك معك لغرض التواصل المباشر وإتمام التعاقد فقط. ويُحظر استخدامه لأي غرض تسويقي أو مشاركته مع أي طرف ثالث.",
       "أي تغيير جوهري في بيانات الشركة (السجل التجاري، الرخص) يجب إبلاغ الإدارة به فوراً.",
-      "يلتزم مزود الخدمة بسداد عمولة عِمارة البالغة 1% من قيمة الصفقة عن طريق التحويل إلى الحساب البنكي لعِمارة بعد إتمام الصفقة بنجاح من خلال المنصة.",
+      "يلتزم مزود الخدمة بسداد عمولة عِمارة البالغة 1% من قيمة الصفقة عن طريق التحويل إلى الحساب البنكي لعِمارة بعد إتمام الصفقة بنجاح.",
     ],
   },
   {
@@ -200,16 +200,17 @@ const enSections: Section[] = [
     title: "User Accounts",
     body: [
       "Accounts are created via a Saudi mobile number verified by a one-time OTP sent through the approved SMS provider.",
-      "Owner accounts are restricted to one property and one active service request in the current phase.",
+      "Owner accounts are restricted to one property, with a maximum of 2 active requests on the same property in the current phase.",
       "EMARAA reserves the right to suspend or terminate accounts that violate these Terms without prior notice.",
-      "Logging into your account constitutes consent to receiving service-related SMS messages as part of normal platform operation.",
+      "Logging into your account constitutes consent to receiving a one-time SMS verification code (OTP) on each login.",
     ],
   },
   {
     title: "Owner Obligations",
     body: [
       "Provide accurate and current information about the property and service required.",
-      "Once an offer is accepted, the account cannot post new requests until the current request is formally closed.",
+      "A new request cannot be posted on the same property if it already has 2 active requests, until one of them is closed.",
+      "By accepting a service provider's offer, you agree to share your phone number with that specific provider for direct contact and to complete the contract. Your number is not shared with any other provider.",
       "Maintain professional communication with service providers and use the platform for legitimate purposes only.",
       "EMARAA is an intermediary only — the final contract is concluded directly between the property owner and the service provider.",
     ],
@@ -217,12 +218,13 @@ const enSections: Section[] = [
   {
     title: "Provider Obligations",
     body: [
-      "Submit valid and current documents upon registration (commercial registration, company profile in PDF format).",
+      "Submit valid and current documents upon registration (commercial registration, company profile in PDF format, FAL license).",
       "Provider accounts are only activated after receiving explicit administrative approval.",
       "Providers are committed to delivering the service as proposed and within the agreed timeline.",
       "Providers are prohibited from contacting owners outside the platform in order to bypass the official proposal mechanism.",
+      "Once the owner accepts your offer, the owner's phone number is shared with you solely for direct contact and completing the contract. Using it for marketing purposes or sharing it with any third party is prohibited.",
       "Any material change to company information (commercial registration, licenses) must be reported to administration immediately.",
-      "The provider agrees to pay Emaraa's 1% commission on the deal value via transfer to Emaraa's bank account after the deal is successfully completed through the platform.",
+      "The provider agrees to pay Emaraa's 1% commission on the deal value via transfer to Emaraa's bank account after the deal is successfully completed.",
     ],
   },
   {

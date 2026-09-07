@@ -10,9 +10,9 @@ const arSections: Section[] = [
   {
     title: "البيانات التي نجمعها",
     body: [
-      "رقم الجوال: يُجمع عند التسجيل ويُستخدم للتحقق عبر رمز OTP وللتواصل داخل المنصة.",
+      "رقم الجوال: يُجمع عند التسجيل ويُستخدم للتحقق عبر رمز OTP، ويُشارك مع مزود الخدمة بعد قبول عرضه لغرض التواصل المباشر.",
       "الاسم الكامل: يُجمع عند إنشاء الحساب لعرضه في واجهة المنصة.",
-      "بيانات مزود الخدمة: اسم الشركة، المدينة، البريد الإلكتروني، السجل التجاري (PDF)، ملف الشركة (PDF).",
+      "بيانات مزود الخدمة: اسم الشركة، المدينة، البريد الإلكتروني، السجل التجاري (PDF)، ملف الشركة (PDF)، رخصة فال (PDF).",
       "بيانات العقار والطلبات: تفاصيل المبنى ونوعه وعنوانه وطلبات الخدمة التي ينشرها مالك العقار.",
       "العروض المقدَّمة: ملفات PDF للعروض التي يرفعها مزودو الخدمة.",
       "البيانات التقنية: بيانات الجلسة المُخزَّنة محلياً في المتصفح (localStorage) لإدارة الدخول والخروج.",
@@ -64,7 +64,7 @@ const arSections: Section[] = [
     body: [
       "يُرسَل رمز التحقق عبر شركة Authentica (portal.authentica.sa) وهي مزود سعودي مرخّص للرسائل النصية.",
       "رقم جوالك يُرسَل إلى Authentica حصراً لغرض إيصال الرمز ولا يُستخدم لأي غرض تسويقي أو تجاري.",
-      "إنشاء حسابك يُعدّ موافقةً على تلقّي رسائل نصية تتعلق بالخدمة (رموز OTP، إشعارات المنصة).",
+      "إنشاء حسابك يُعدّ موافقةً على تلقّي رمز التحقق (OTP) عبر رسالة نصية.",
     ],
   },
   {
@@ -115,9 +115,9 @@ const enSections: Section[] = [
   {
     title: "Data We Collect",
     body: [
-      "Mobile number: collected at registration, used for OTP verification and in-platform communication.",
+      "Mobile number: collected at registration, used for OTP verification, and shared with the service provider after their offer is accepted for direct contact.",
       "Full name: collected at account creation and displayed within the platform interface.",
-      "Provider data: company name, city, email, commercial registration (PDF), company profile (PDF).",
+      "Provider data: company name, city, email, commercial registration (PDF), company profile (PDF), FAL license (PDF).",
       "Property and request data: building details, type, address, and service requests posted by property owners.",
       "Submitted offers: PDF files uploaded by service providers.",
       "Technical data: session data stored locally in the browser (localStorage) to manage login and logout.",
@@ -148,7 +148,9 @@ const enSections: Section[] = [
       "We do not sell or rent your personal data to any third party for commercial or marketing purposes.",
       "Your mobile number is sent to the SMS provider (Authentica) solely to deliver the OTP code and is not used for any other purpose.",
       "Data may be shared with Saudi regulatory or judicial authorities when there is a clear legal obligation.",
-      "Property owner data is visible only to approved service providers within the context of the relevant request and associated proposals.",
+      "Property owner data is visible only to approved service providers within the context of the relevant request and associated proposals, and does not include the owner's phone number.",
+      "The owner's phone number is not shown to any service provider before their offer is accepted. Once the owner accepts a provider's offer, phone numbers are exchanged between both parties (the owner and the accepted provider) for direct contact and to complete the contract.",
+      "A provider whose offer was not accepted — whether still under review or rejected — never receives the owner's phone number, under any circumstances.",
       "Provider proposals are visible only to the relevant property owners.",
     ],
   },
@@ -167,7 +169,7 @@ const enSections: Section[] = [
     body: [
       "Verification codes are delivered via Authentica (portal.authentica.sa), a licensed Saudi-native SMS provider.",
       "Your mobile number is sent to Authentica solely for the purpose of delivering the code and is not used for any marketing or commercial purpose.",
-      "Creating an account constitutes consent to receiving service-related SMS messages (OTP codes, platform notifications).",
+      "Creating an account constitutes consent to receiving a one-time SMS verification code (OTP).",
     ],
   },
   {
