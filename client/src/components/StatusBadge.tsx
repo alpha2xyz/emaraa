@@ -1,8 +1,8 @@
 import type React from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Clock, Hourglass } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Hourglass, CalendarX } from "lucide-react";
 
-type Status = "pending" | "accepted" | "rejected" | "in_progress";
+type Status = "pending" | "accepted" | "rejected" | "in_progress" | "expired";
 
 const statusConfig: Record<
   Status,
@@ -27,6 +27,11 @@ const statusConfig: Record<
     icon: Hourglass,
     className: "bg-blue-500/15 text-blue-300 border-blue-500/30",
     label: { ar: "جاري التنفيذ", en: "In Progress" },
+  },
+  expired: {
+    icon: CalendarX,
+    className: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+    label: { ar: "منتهي (عدم نشاط المالك)", en: "Expired (owner inactive)" },
   },
 };
 

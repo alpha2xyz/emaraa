@@ -9,7 +9,6 @@ import {
   Save,
   Lock,
   Phone,
-  CheckCircle2,
   XCircle,
   ExternalLink,
   Home,
@@ -421,12 +420,13 @@ export default function OwnerDashboard() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error((body as any).error || "Failed");
       }
+      return body as { offer_file_url?: string | null };
     },
-    onSuccess: (_, { status }) => {
+    onSuccess: (body, { status }) => {
       toast({
         title:
           status === "accepted"
@@ -438,6 +438,11 @@ export default function OwnerDashboard() {
               : "Offer rejected",
       });
       queryClient.invalidateQueries({ queryKey: ["owner", "offers", requestId] });
+      // Open the now-unlocked quotation immediately — the owner clicked "View Full
+      // Quotation" to get here, accepting was a side effect of that, not a separate step.
+      if (status === "accepted" && body?.offer_file_url) {
+        openSignedPdf("provider-offers", body.offer_file_url);
+      }
     },
     onError: () => {
       toast({
@@ -983,6 +988,20 @@ export default function OwnerDashboard() {
             )}
           </div>
 
+          {offersList.length > 0 && (
+            <div
+              className="flex items-start gap-2 rounded-lg px-3 py-2 mb-3 text-xs"
+              style={{ background: "rgba(255,255,255,0.04)", color: "#9FC2D3", border: "1px solid var(--border)" }}
+            >
+              <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+              <span>
+                {lang === "ar"
+                  ? "يسعّر مزوّدونا بناءً على تفاصيل عقارك وموقعه على الخريطة، ويمكنك دائماً مناقشة التفاصيل النهائية مباشرة مع المزود قبل التوقيع."
+                  : "Our providers price from the property details and map location you provide, and you can always discuss the final details directly with the provider before signing."}
+              </span>
+            </div>
+          )}
+
           {offersLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
@@ -1106,21 +1125,6 @@ export default function OwnerDashboard() {
                       </div>
                     )}
 
-                    {/* PDF proposal — locked until the owner accepts the offer */}
-                    {offer.status === "pending" && (
-                      <div
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                        style={{ background: "rgba(255,255,255,0.04)", color: "#9FC2D3", border: "1px solid var(--border)" }}
-                      >
-                        <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>
-                          {lang === "ar"
-                            ? "يُفتح ملف العرض بعد قبوله"
-                            : "Proposal unlocks after you accept"}
-                        </span>
-                      </div>
-                    )}
-
                     {/* Actions */}
                     <div className="flex gap-2 flex-wrap">
                       {/* Company profile — open to the owner before accepting, helps compare offers */}
@@ -1140,6 +1144,21 @@ export default function OwnerDashboard() {
                           {lang === "ar" ? "الملف التعريفي للشركة" : "Company Profile"}
                         </Button>
                       )}
+                      {/* Viewing the full quotation IS the accept action — opening it commits
+                          you to this offer and rejects every other offer on the request. The
+                          confirm dialog below discloses this before anything happens. */}
+                      {offer.status === "pending" && (
+                        <Button
+                          size="sm"
+                          disabled={offerStatusMutation.isPending}
+                          onClick={() => setAcceptingOfferId(offer.id)}
+                          className="gap-1.5"
+                          style={{ background: "var(--owner)", color: "#04222c" }}
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          {lang === "ar" ? "عرض العرض الكامل" : "View Full Quotation"}
+                        </Button>
+                      )}
                       {offer.status === "accepted" && offer.offer_file_url && (
                         <Button
                           variant="outline"
@@ -1151,34 +1170,25 @@ export default function OwnerDashboard() {
                           {lang === "ar" ? "عرض الملف" : "View File"}
                         </Button>
                       )}
+                      {/* Accept is no longer a separate button — "View Full Quotation" above
+                          triggers the same confirm dialog and does both at once. Reject stays
+                          independent since it doesn't require opening anything first. */}
                       {offer.status === "pending" && (
-                        <>
-                          <Button
-                            size="sm"
-                            disabled={offerStatusMutation.isPending}
-                            onClick={() => setAcceptingOfferId(offer.id)}
-                            className="gap-1.5 text-white"
-                            style={{ background: "var(--owner)", color: "#04222c" }}
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            {lang === "ar" ? "قبول" : "Accept"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={offerStatusMutation.isPending}
-                            onClick={() =>
-                              offerStatusMutation.mutate({
-                                offerId: offer.id,
-                                status: "rejected",
-                              })
-                            }
-                            className="gap-1.5"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                            {lang === "ar" ? "رفض" : "Reject"}
-                          </Button>
-                        </>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={offerStatusMutation.isPending}
+                          onClick={() =>
+                            offerStatusMutation.mutate({
+                              offerId: offer.id,
+                              status: "rejected",
+                            })
+                          }
+                          className="gap-1.5"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          {lang === "ar" ? "رفض" : "Reject"}
+                        </Button>
                       )}
                     </div>
                   </CardContent>
@@ -1196,15 +1206,18 @@ export default function OwnerDashboard() {
           if (!open) setAcceptingOfferId(null);
         }}
       >
-        <AlertDialogContent>
+        {/* Radix portals this to document.body, outside the page's own dir wrapper —
+            index.html hardcodes dir="rtl" on <html>, so English text here would
+            otherwise inherit RTL and mis-order trailing punctuation. */}
+        <AlertDialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {lang === "ar" ? "تأكيد القبول" : "Confirm Accept"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {lang === "ar"
-                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF)، ويتم تبادل رقم الجوال بينك وبين هذا المزود للتواصل المباشر — ولا يظهر رقمك لأي مزود آخر. كما سيؤدي القبول تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
-                : "Accepting this offer unlocks the provider's full proposal (PDF) and exchanges phone numbers between you and this provider for direct contact — your number stays hidden from every other provider. It also automatically rejects all other offers. Are you sure?"}
+                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF) فوراً، ويتم تبادل رقم الجوال بينك وبين هذا المزود للتواصل المباشر — ولا يظهر رقمك لأي مزود آخر. كما سيؤدي القبول تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
+                : "Accepting this offer opens the provider's full proposal (PDF) immediately, and exchanges phone numbers between you and this provider for direct contact — your number stays hidden from every other provider. It also automatically rejects all other offers. Are you sure?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
