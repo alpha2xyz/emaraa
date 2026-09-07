@@ -10,6 +10,9 @@ export const users = pgTable("users", {
   email: text("email"), // optional — owners opt in to email notifications about their requests
   role: text("role").notNull().default("owner"), // owner, provider
   created_at: timestamp("created_at").defaultNow(),
+  // Written on every successful OTP verify (register + login) — powers the
+  // 2-month owner-inactivity auto-drop in /api/cron/request-lifecycle.
+  last_login_at: timestamp("last_login_at", { withTimezone: true }),
 });
 
 export type User = typeof users.$inferSelect;

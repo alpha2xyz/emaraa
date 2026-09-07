@@ -3,7 +3,8 @@
   "outputDirectory": "dist/public",
   "crons": [
     { "path": "/api/cron/weekly-report", "schedule": "0 5 * * 0" },
-    { "path": "/api/cron/commission-reminder", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/commission-reminder", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/request-lifecycle", "schedule": "0 8 * * *" }
   ],
   "rewrites": [
     { "source": "/api/:proxy*", "destination": "/api/index" },

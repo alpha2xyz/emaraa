@@ -13,6 +13,7 @@ import {
   commissionReminderEmail,
   commissionConfigReady,
   adminOfferEmail,
+  requestExpiredEmail,
 } from "./email.js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
@@ -905,7 +906,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, created_at, requests(id, owner_id, service_category, properties(name, city, building_type))"
+          "id, offer_file_url, notes, status, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
         )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
@@ -993,6 +994,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .from("requests")
         .select("*, properties(id, name, city)")
         .eq("owner_id", (req as any).userId)
+        // An expired request is gone from the owner's page — same state as a
+        // first-time user, they must resubmit rather than resume it.
+        .neq("status", "expired")
         .order("created_at", { ascending: false });
       if (error) throw error;
       res.json(data || []);
@@ -1041,7 +1045,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .select("id", { count: "exact", head: true })
         .eq("owner_id", (req as any).userId)
         .eq("property_id", property_id)
-        .neq("status", "closed");
+        .neq("status", "closed")
+        .neq("status", "expired");
       if ((activeCount ?? 0) >= 2) {
         return res.status(400).json({
           error: "active_requests_limit",
@@ -1340,6 +1345,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .eq("id", req.params.id as string);
       if (updateError) throw updateError;
 
+      // Returned to the client on accept so it can open the now-unlocked PDF
+      // immediately, without a second round-trip to re-fetch the offer.
+      let acceptedOfferFileUrl: string | null = null;
+
       if (status === "accepted") {
         await supabaseAdmin
           .from("requests")
@@ -1377,10 +1386,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // UNIQUE(offer_id) makes this idempotent if the owner re-accepts.
         const { data: acceptedOffer } = await supabaseAdmin
           .from("provider_offers")
-          .select("id, provider_id, price_total, providers(email, company_name, users(phone))")
+          .select("id, provider_id, price_total, offer_file_url, providers(email, company_name, users(phone))")
           .eq("id", req.params.id as string)
           .single();
         if (acceptedOffer) {
+          acceptedOfferFileUrl = acceptedOffer.offer_file_url ?? null;
           await supabaseAdmin
             .from("deals")
             .upsert(
@@ -1539,7 +1549,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         );
       }
 
-      res.json({ success: true });
+      res.json({ success: true, offer_file_url: acceptedOfferFileUrl });
     } catch (error) {
       res.status(500).json({ error: "Failed to update offer status" });
     }
@@ -1866,6 +1876,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         console.error("[otp/verify] session insert error:", sessionError);
         return res.status(500).json({ error: "Failed to create session" });
       }
+
+      // Powers the 2-month owner-inactivity auto-drop (/api/cron/request-lifecycle).
+      // Fire-and-forget — a failed timestamp write shouldn't fail a real login.
+      supabaseAdmin
+        .from("users")
+        .update({ last_login_at: new Date().toISOString() })
+        .eq("id", userId)
+        .then(() => {}, () => {});
 
       // Real-time admin notification: a brand-new user (owner or provider) registered.
       if (mode === "register") {
@@ -2268,6 +2286,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               email,
               "تذكير: عمولة عِمارة (1%) على عرضك المقبول",
               commissionEmail({
+                dealId: deal.id,
                 priceTotal: Number(priceTotal) || null,
                 ownerName: owner?.name ?? null,
                 ownerPhone: owner?.phone ?? null,
@@ -2283,6 +2302,123 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (e: any) {
       if (process.env.NODE_ENV !== "production") console.error("[cron commission-reminder]", e?.message);
       res.status(500).json({ error: "reminder_failed" });
+    }
+  });
+
+  // Daily request-lifecycle sweep — hit by Vercel Cron. Secured by CRON_SECRET.
+  // Two jobs share one run since both scan requests/provider_offers and only need
+  // one admin email between them:
+  //   Pass A — auto-drop: a `pending` request whose owner hasn't logged in for
+  //     60+ days is expired; any pending offers on it are expired too (distinct
+  //     from a real rejection — see requestExpiredEmail) and their providers told why.
+  //     Never touches `in_progress` requests — a deal already accepted is signed
+  //     off-platform, so owner-dashboard inactivity doesn't mean the deal is dead.
+  //   Pass B — stale-offer nudge: a `pending` offer sitting unreviewed 5+ days on a
+  //     request that did NOT just expire in Pass A goes into the same admin digest.
+  app.get("/api/cron/request-lifecycle", async (req, res) => {
+    const secret = process.env.CRON_SECRET ?? "";
+    const auth = req.headers["authorization"] ?? "";
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    try {
+      const inactivityCutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+      const staleOfferCutoff = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+
+      // ── Pass A: auto-drop requests whose owner has gone quiet for 2+ months ──
+      const { data: pendingRequests } = await supabaseAdmin
+        .from("requests")
+        .select("id, owner_id, properties(name)")
+        .eq("status", "pending");
+
+      const ownerIds = Array.from(new Set((pendingRequests ?? []).map((r: any) => r.owner_id)));
+      const lastLoginByOwner = new Map<string, string | null>();
+      if (ownerIds.length) {
+        const { data: owners } = await supabaseAdmin
+          .from("users")
+          .select("id, last_login_at")
+          .in("id", ownerIds);
+        for (const u of owners ?? []) lastLoginByOwner.set(u.id, u.last_login_at);
+      }
+
+      // A request with no last_login_at on file (pre-migration row) is NOT eligible
+      // here — the one-time backfill (UPDATE users SET last_login_at = created_at
+      // WHERE last_login_at IS NULL) is what makes old accounts eligible, not this
+      // fallback. This is belt-and-suspenders against a missed/partial backfill.
+      const expiredRequests = (pendingRequests ?? []).filter((r: any) => {
+        const lastLogin = lastLoginByOwner.get(r.owner_id);
+        return !!lastLogin && lastLogin < inactivityCutoff;
+      });
+
+      const expiredSummaryLines: string[] = [];
+      for (const r of expiredRequests) {
+        await supabaseAdmin.from("requests").update({ status: "expired" }).eq("id", r.id);
+        expiredSummaryLines.push(`- ${(r as any).properties?.name ?? r.id}`);
+
+        const { data: pendingOffers } = await supabaseAdmin
+          .from("provider_offers")
+          .select("id, providers(email)")
+          .eq("request_id", r.id)
+          .eq("status", "pending");
+        for (const o of pendingOffers ?? []) {
+          await supabaseAdmin.from("provider_offers").update({ status: "expired" }).eq("id", o.id);
+          const email = (o.providers as any)?.email;
+          if (email) {
+            await notify(email, "الطلب أُغلق لعدم نشاط المالك", requestExpiredEmail(), "request_expired");
+          }
+        }
+      }
+
+      // ── Pass B: nudge — offers pending review 5+ days on a request that's still
+      //    alive (didn't just get swept into Pass A above) ──
+      const expiredRequestIds = new Set(expiredRequests.map((r: any) => r.id));
+      const { data: staleOffers } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id, request_id, providers(company_name), requests(properties(name))")
+        .eq("status", "pending")
+        .lte("created_at", staleOfferCutoff);
+
+      const staleSummaryLines = (staleOffers ?? [])
+        .filter((o: any) => !expiredRequestIds.has(o.request_id))
+        .map(
+          (o: any) =>
+            `- ${(o.providers as any)?.company_name ?? "مزوّد"} → ${
+              (o.requests as any)?.properties?.name ?? o.request_id
+            }`,
+        );
+
+      // ── One combined admin digest — only if there's something to report ──
+      if (expiredRequests.length > 0 || staleSummaryLines.length > 0) {
+        await notify(
+          ADMIN_NOTIFY_EMAIL,
+          `دورة الطلبات: ${expiredRequests.length} طلب منتهٍ، ${staleSummaryLines.length} عرض معلّق`,
+          notificationEmail({
+            heading: "دورة نشاط الطلبات اليومية",
+            body: [
+              expiredRequests.length > 0
+                ? `طلبات أُغلقت لعدم نشاط المالك (${expiredRequests.length}):\n${expiredSummaryLines.join("\n")}`
+                : null,
+              staleSummaryLines.length > 0
+                ? `عروض معلّقة أكثر من 5 أيام (${staleSummaryLines.length}):\n${staleSummaryLines.join("\n")}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join("\n\n"),
+            ctaLabel: "فتح لوحة الإدارة",
+            ctaUrl: "https://emaraa.app/admin",
+          }),
+          "admin_request_lifecycle",
+        );
+      }
+
+      res.json({
+        ok: true,
+        requestsExpired: expiredRequests.length,
+        staleOffersFlagged: staleSummaryLines.length,
+      });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[cron request-lifecycle]", e?.message);
+      res.status(500).json({ error: "lifecycle_failed" });
     }
   });
 
