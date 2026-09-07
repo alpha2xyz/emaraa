@@ -77,7 +77,6 @@ export const providers = pgTable("providers", {
   company_profile_url: text("company_profile_url").notNull(),
   fal_license_url: text("fal_license_url"),
   approved: boolean("approved").default(false),
-  status: text("status").default("pending"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -124,19 +123,7 @@ export const deals = pgTable("deals", {
 
 export type Deal = typeof deals.$inferSelect;
 
-// SMS log — every Authentica send is recorded with its outcome (billing reconciliation + failure visibility)
-export const smsLog = pgTable("sms_log", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  phone: text("phone").notNull(),
-  message_type: text("message_type"), // new_request | offer_submitted | offer_accepted | provider_approved | otp
-  status: text("status").notNull(), // sent | failed
-  error: text("error"),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
-
-export type SmsLog = typeof smsLog.$inferSelect;
-
-// Email delivery log (mirrors sms_log) — one row per outbound email attempt.
+// Email delivery log — one row per outbound email attempt.
 // Written by server/email.ts (sendEmail + suppressed_test path) and read by buildAdminReport
 // to find the "since last report" cutoff (kind=admin_report, status=sent).
 export const emailLog = pgTable("email_log", {
@@ -191,16 +178,6 @@ export const adminLoginAttempts = pgTable("admin_login_attempts", {
 });
 
 export type AdminLoginAttempt = typeof adminLoginAttempts.$inferSelect;
-
-// SMS rate limits (per-user, per-endpoint)
-export const smsRateLimits = pgTable("sms_rate_limits", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  user_id: uuid("user_id").notNull(),
-  endpoint: text("endpoint").notNull(),
-  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
-export type SmsRateLimit = typeof smsRateLimits.$inferSelect;
 
 // Admin impersonation log (audit trail)
 export const adminImpersonationLog = pgTable("admin_impersonation_log", {
