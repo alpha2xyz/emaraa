@@ -40,18 +40,19 @@ export default function NotFound() {
             strokeWidth={1.5}
           />
           <h1 className="text-xl font-bold mb-2" style={{ color: "var(--owner)" }}>
-            الصفحة غير موجودة
+            {lang === "ar" ? "الصفحة غير موجودة" : "Page Not Found"}
           </h1>
-          <p className="text-sm text-muted-foreground mb-1">
-            لم نتمكن من العثور على الصفحة التي تبحث عنها
+          <p className="text-sm text-muted-foreground mb-6">
+            {lang === "ar"
+              ? "لم نتمكن من العثور على الصفحة التي تبحث عنها"
+              : "We couldn't find the page you're looking for."}
           </p>
-          <p className="text-xs text-muted-foreground mb-6">Page not found</p>
           <Link href="/">
             <button
               className="font-semibold px-6 py-3 rounded-xl transition-opacity hover:opacity-90"
               style={{ background: "var(--owner)", color: "#04222c" }}
             >
-              العودة للرئيسية
+              {lang === "ar" ? "العودة للرئيسية" : "Back to Home"}
             </button>
           </Link>
         </div>

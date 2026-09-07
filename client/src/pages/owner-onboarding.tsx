@@ -178,7 +178,10 @@ export default function OwnerOnboarding() {
     // Step 1 — validate
     setShowValidation(true);
     if (!isFormValid) {
-      toast({ title: "يرجى إكمال جميع الحقول المطلوبة", variant: "destructive" });
+      toast({
+        title: lang === "ar" ? "يرجى إكمال جميع الحقول المطلوبة" : "Please complete all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -221,7 +224,7 @@ export default function OwnerOnboarding() {
       if (!propertyRes.ok) {
         if (propertyBody.error === "limit_reached") {
           toast({
-            title: "لديك عقار مسجل مسبقاً",
+            title: lang === "ar" ? "لديك عقار مسجل مسبقاً" : "You already have a registered property",
             variant: "destructive",
           });
           setIsSubmitting(false);
@@ -229,7 +232,11 @@ export default function OwnerOnboarding() {
           return;
         }
         toast({
-          title: propertyBody.error ?? `خطأ في الخادم (${propertyRes.status})`,
+          title:
+            propertyBody.error ??
+            (lang === "ar"
+              ? `خطأ في الخادم (${propertyRes.status})`
+              : `Server error (${propertyRes.status})`),
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -239,7 +246,10 @@ export default function OwnerOnboarding() {
       propertyData = propertyBody as PropertyResponse;
     } catch {
       toast({
-        title: "تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مجدداً.",
+        title:
+          lang === "ar"
+            ? "تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مجدداً."
+            : "Could not reach the server. Check your connection and try again.",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -282,13 +292,19 @@ export default function OwnerOnboarding() {
         newRequestId = requestBody.id ?? null;
       } else {
         toast({
-          title: "تم إنشاء العقار. يمكنك رفع الطلب من لوحة التحكم.",
+          title:
+            lang === "ar"
+              ? "تم إنشاء العقار. يمكنك رفع الطلب من لوحة التحكم."
+              : "Property created. You can submit the request from your dashboard.",
           variant: "default",
         });
       }
     } catch {
       toast({
-        title: "تم إنشاء العقار. يمكنك رفع الطلب من لوحة التحكم.",
+        title:
+          lang === "ar"
+            ? "تم إنشاء العقار. يمكنك رفع الطلب من لوحة التحكم."
+            : "Property created. You can submit the request from your dashboard.",
         variant: "default",
       });
     }
@@ -304,9 +320,14 @@ export default function OwnerOnboarding() {
 
     // Step 8 — success toast
     toast({
-      title: "تم إرسال طلبك بنجاح! سيتواصل معك المزودون قريباً.",
+      title:
+        lang === "ar"
+          ? "تم إرسال طلبك بنجاح! سيتواصل معك المزودون قريباً."
+          : "Your request was submitted! Providers will be in touch soon.",
       description:
-        "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض — بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض.",
+        lang === "ar"
+          ? "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض — بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض."
+          : "You can edit your request from the dashboard before the first offer arrives — editing locks after the first offer until you reject all offers.",
       variant: "default",
     });
 
@@ -337,13 +358,15 @@ export default function OwnerOnboarding() {
       >
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
-            <span className="text-xl font-bold tracking-wide">عِمارة</span>
+            <span className="text-xl font-bold tracking-wide">{lang === "ar" ? "عِمارة" : "Emaraa"}</span>
           </div>
           <h1 className="text-2xl font-bold leading-snug mb-2">
-            أهلاً! سجّل عقارك وأرسل أول طلب خدمة
+            {lang === "ar" ? "أهلاً! سجّل عقارك وأرسل أول طلب خدمة" : "Welcome! Register your property and send your first service request"}
           </h1>
           <p className="text-sm" style={{ opacity: 0.78 }}>
-            خطوة واحدة تنشئ حسابك كاملاً وتُخطر المزودين المعتمدين في الرياض
+            {lang === "ar"
+              ? "خطوة واحدة تنشئ حسابك كاملاً وتُخطر المزودين المعتمدين في الرياض"
+              : "One step creates your full account and notifies approved providers in Riyadh"}
           </p>
         </div>
       </div>
@@ -364,16 +387,16 @@ export default function OwnerOnboarding() {
               >
                 1
               </span>
-              بيانات العقار
+              {lang === "ar" ? "بيانات العقار" : "Property Details"}
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6 space-y-5">
                 {/* Property name */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="propertyName">اسم العقار *</Label>
+                  <Label htmlFor="propertyName">{lang === "ar" ? "اسم العقار *" : "Property Name *"}</Label>
                   <Input
                     id="propertyName"
-                    placeholder="مثال: برج الياسمين"
+                    placeholder={lang === "ar" ? "مثال: برج الياسمين" : "e.g. Al Yasmin Tower"}
                     value={propertyName}
                     onChange={(e) => setPropertyName(e.target.value)}
                     className={
@@ -385,14 +408,14 @@ export default function OwnerOnboarding() {
                   {showValidation && !isPropertyNameValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      اسم العقار مطلوب
+                      {lang === "ar" ? "اسم العقار مطلوب" : "Property name is required"}
                     </p>
                   )}
                 </div>
 
                 {/* Building type — tag selector */}
                 <div className="space-y-1.5">
-                  <Label>نوع المبنى *</Label>
+                  <Label>{lang === "ar" ? "نوع المبنى *" : "Building Type *"}</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -412,7 +435,7 @@ export default function OwnerOnboarding() {
                         className="text-sm font-medium"
                         style={{ color: buildingType === "residential" ? "#E58AA0" : "#9FC2D3" }}
                       >
-                        سكني
+                        {lang === "ar" ? "سكني" : "Residential"}
                       </span>
                     </button>
 
@@ -434,7 +457,7 @@ export default function OwnerOnboarding() {
                         className="text-sm font-medium"
                         style={{ color: buildingType === "commercial" ? "#F0A87F" : "#9FC2D3" }}
                       >
-                        تجاري
+                        {lang === "ar" ? "تجاري" : "Commercial"}
                       </span>
                     </button>
                   </div>
@@ -485,12 +508,12 @@ export default function OwnerOnboarding() {
                 {/* Units count (residential) / Area in m² (commercial) */}
                 {buildingType === "commercial" ? (
                   <div className="space-y-1.5">
-                    <Label htmlFor="areaSqm">المساحة (م²) *</Label>
+                    <Label htmlFor="areaSqm">{lang === "ar" ? "المساحة (م²) *" : "Area (m²) *"}</Label>
                     <Input
                       id="areaSqm"
                       type="number"
                       min="1"
-                      placeholder="أدخل مساحة العقار بالمتر المربع"
+                      placeholder={lang === "ar" ? "أدخل مساحة العقار بالمتر المربع" : "Enter the property area in square meters"}
                       value={areaSqm}
                       onChange={(e) => setAreaSqm(e.target.value)}
                       className={
@@ -500,13 +523,13 @@ export default function OwnerOnboarding() {
                     {showValidation && !isUnitsValid && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
                         <AlertCircle className="w-3.5 h-3.5" />
-                        يرجى إدخال المساحة بالمتر المربع
+                        {lang === "ar" ? "يرجى إدخال المساحة بالمتر المربع" : "Please enter the area in square meters"}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <Label>عدد الوحدات *</Label>
+                    <Label>{lang === "ar" ? "عدد الوحدات *" : "Number of Units *"}</Label>
                     <Select
                       value={unitsCount}
                       onValueChange={(v) => {
@@ -519,15 +542,15 @@ export default function OwnerOnboarding() {
                           showValidation && unitsCount === "" ? " border-red-500 ring-red-400" : ""
                         }`}
                       >
-                        <SelectValue placeholder="اختر عدد الوحدات..." />
+                        <SelectValue placeholder={lang === "ar" ? "اختر عدد الوحدات..." : "Select number of units..."} />
                       </SelectTrigger>
                       <SelectContent>
                         {UNIT_OPTIONS.map((n) => (
                           <SelectItem key={n} value={String(n)}>
-                            {n} وحدة
+                            {lang === "ar" ? `${n} وحدة` : `${n} units`}
                           </SelectItem>
                         ))}
-                        <SelectItem value="other">أخرى / Other</SelectItem>
+                        <SelectItem value="other">{lang === "ar" ? "أخرى" : "Other"}</SelectItem>
                       </SelectContent>
                     </Select>
                     <div
@@ -540,7 +563,7 @@ export default function OwnerOnboarding() {
                       <Input
                         type="number"
                         min="1"
-                        placeholder="أدخل عدد الوحدات"
+                        placeholder={lang === "ar" ? "أدخل عدد الوحدات" : "Enter number of units"}
                         value={customUnits}
                         onChange={(e) => setCustomUnits(e.target.value)}
                         className={`mt-2 ${
@@ -554,8 +577,12 @@ export default function OwnerOnboarding() {
                       <p className="text-red-500 text-xs flex items-center gap-1">
                         <AlertCircle className="w-3.5 h-3.5" />
                         {unitsCount === "other"
-                          ? "يرجى إدخال عدد الوحدات"
-                          : "يرجى اختيار عدد الوحدات"}
+                          ? lang === "ar"
+                            ? "يرجى إدخال عدد الوحدات"
+                            : "Please enter the number of units"
+                          : lang === "ar"
+                            ? "يرجى اختيار عدد الوحدات"
+                            : "Please select the number of units"}
                       </p>
                     )}
                   </div>
@@ -563,7 +590,7 @@ export default function OwnerOnboarding() {
 
                 {/* Google Maps URL */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="mapUrl">رابط الموقع على Google Maps *</Label>
+                  <Label htmlFor="mapUrl">{lang === "ar" ? "رابط الموقع على Google Maps *" : "Google Maps Location Link *"}</Label>
                   <Input
                     id="mapUrl"
                     type="url"
@@ -580,13 +607,15 @@ export default function OwnerOnboarding() {
                   {(showValidation || mapUrlTouched) && !isMapUrlPresent && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      رابط الخريطة مطلوب
+                      {lang === "ar" ? "رابط الخريطة مطلوب" : "Map link is required"}
                     </p>
                   )}
                   {(showValidation || mapUrlTouched) && isMapUrlPresent && !isMapUrlValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      الرابط غير صحيح — استخدم رابطاً من Google Maps
+                      {lang === "ar"
+                        ? "الرابط غير صحيح — استخدم رابطاً من Google Maps"
+                        : "Invalid link — use a Google Maps link"}
                     </p>
                   )}
                 </div>
@@ -594,13 +623,15 @@ export default function OwnerOnboarding() {
                 {/* National address — optional */}
                 <div className="space-y-1.5">
                   <Label htmlFor="nationalAddress" className="flex items-center gap-1.5">
-                    العنوان الوطني{" "}
-                    <span className="text-muted-foreground font-normal text-xs">(اختياري)</span>
+                    {lang === "ar" ? "العنوان الوطني" : "National Address"}{" "}
+                    <span className="text-muted-foreground font-normal text-xs">
+                      {lang === "ar" ? "(اختياري)" : "(optional)"}
+                    </span>
                   </Label>
                   <Input
                     id="nationalAddress"
                     type="text"
-                    placeholder="مثال: RUYF1234"
+                    placeholder={lang === "ar" ? "مثال: RUYF1234" : "e.g. RUYF1234"}
                     value={nationalAddress}
                     maxLength={8}
                     onChange={(e) =>
@@ -617,7 +648,9 @@ export default function OwnerOnboarding() {
                   {nationalAddress.trim() !== "" && !isNationalAddressValid && (
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام — مثال: RUYF1234
+                      {lang === "ar"
+                        ? "العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام — مثال: RUYF1234"
+                        : "Short national address: 4 letters then 4 digits — e.g. RUYF1234"}
                     </p>
                   )}
                 </div>
@@ -637,7 +670,7 @@ export default function OwnerOnboarding() {
               >
                 2
               </span>
-              نطاق الخدمة
+              {lang === "ar" ? "نطاق الخدمة" : "Service Scope"}
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6">
@@ -646,7 +679,9 @@ export default function OwnerOnboarding() {
                     className="w-5 h-5 mt-0.5 flex-shrink-0"
                     style={{ color: "var(--owner)" }}
                   />
-                  <p className="text-sm font-medium text-foreground">نطاق الخدمات المطلوبة</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {lang === "ar" ? "نطاق الخدمات المطلوبة" : "Required Service Scope"}
+                  </p>
                 </div>
                 <div className="space-y-3 text-sm text-foreground leading-relaxed">
                   <p>{UNIFIED_SCOPE.part1}</p>
@@ -673,19 +708,19 @@ export default function OwnerOnboarding() {
               >
                 3
               </span>
-              ملاحظات للمزودين (اختياري)
+              {lang === "ar" ? "ملاحظات للمزودين (اختياري)" : "Notes for Providers (optional)"}
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   <Label htmlFor="notes" className="text-sm text-muted-foreground">
-                    تفاصيل أو ملاحظات إضافية للمزودين
+                    {lang === "ar" ? "تفاصيل أو ملاحظات إضافية للمزودين" : "Additional details or notes for providers"}
                   </Label>
                 </div>
                 <Textarea
                   id="notes"
-                  placeholder="اكتب أي تفاصيل تريد إيصالها للمزودين..."
+                  placeholder={lang === "ar" ? "اكتب أي تفاصيل تريد إيصالها للمزودين..." : "Write any details you'd like providers to know..."}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value.slice(0, 500))}
                   rows={4}
@@ -706,12 +741,12 @@ export default function OwnerOnboarding() {
               >
                 <Mail className="w-4 h-4" />
               </span>
-              البريد الإلكتروني للإشعارات (اختياري)
+              {lang === "ar" ? "البريد الإلكتروني للإشعارات (اختياري)" : "Notification Email (optional)"}
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6 space-y-2">
                 <Label htmlFor="owner_email" className="text-sm text-muted-foreground">
-                  أضف بريدك لتصلك إشعارات عن طلبك
+                  {lang === "ar" ? "أضف بريدك لتصلك إشعارات عن طلبك" : "Add your email to get notifications about your request"}
                 </Label>
                 <Input
                   id="owner_email"
@@ -724,7 +759,9 @@ export default function OwnerOnboarding() {
                   className="text-base text-start"
                 />
                 <p className="text-xs text-muted-foreground text-start">
-                  سنُرسل لك بريداً عند استلام طلبك، ووصول عرض جديد، وقبول العرض — بدون الحاجة لتسجيل الدخول للتحقق.
+                  {lang === "ar"
+                    ? "سنُرسل لك بريداً عند استلام طلبك، ووصول عرض جديد، وقبول العرض — بدون الحاجة لتسجيل الدخول للتحقق."
+                    : "We'll email you when your request is received, when a new offer arrives, and when you accept an offer — no need to log in to check."}
                 </p>
               </CardContent>
             </Card>
@@ -741,17 +778,21 @@ export default function OwnerOnboarding() {
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  جاري الإرسال...
+                  {lang === "ar" ? "جاري الإرسال..." : "Sending..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <Building2 className="w-5 h-5" />
-                  أرسل طلبي — ينشئ عقاراً وطلباً في خطوة واحدة
+                  {lang === "ar"
+                    ? "أرسل طلبي — ينشئ عقاراً وطلباً في خطوة واحدة"
+                    : "Send My Request — creates a property and a request in one step"}
                 </span>
               )}
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
-              ستُنشأ تلقائياً: عقار + طلب خدمة + إشعار للمزودين
+              {lang === "ar"
+                ? "ستُنشأ تلقائياً: عقار + طلب خدمة + إشعار للمزودين"
+                : "This will automatically create: a property + a service request + a provider notification"}
             </p>
           </div>
         </form>

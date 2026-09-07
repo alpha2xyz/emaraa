@@ -44,7 +44,7 @@ export function Navbar() {
                   className="text-xs font-medium px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "var(--provider-soft)", color: "#7bb6f0" }}
                 >
-                  مزود
+                  {lang === "ar" ? "مزود" : "Provider"}
                 </span>
               )}
             </div>
@@ -76,7 +76,7 @@ export function Navbar() {
                   className="text-sm px-2 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-2 w-full transition-colors text-foreground"
                 >
                   <Settings size={15} />
-                  الإعدادات
+                  {lang === "ar" ? "الإعدادات" : "Settings"}
                 </Link>
               )}
 
@@ -89,7 +89,7 @@ export function Navbar() {
                   className="text-sm text-red-400 hover:bg-red-500/10 px-2 py-1.5 rounded-lg flex items-center gap-2 w-full transition-colors"
                 >
                   <LogOut size={15} />
-                  تسجيل الخروج
+                  {lang === "ar" ? "تسجيل الخروج" : "Sign Out"}
                 </button>
               )}
             </PopoverContent>
