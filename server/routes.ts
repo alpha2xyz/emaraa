@@ -2286,7 +2286,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               email,
               "تذكير: عمولة عِمارة (1%) على عرضك المقبول",
               commissionEmail({
-                dealId: deal.id,
                 priceTotal: Number(priceTotal) || null,
                 ownerName: owner?.name ?? null,
                 ownerPhone: owner?.phone ?? null,
