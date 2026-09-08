@@ -400,6 +400,9 @@ export function commissionEmail(opts: {
         <div style="font-size:13px;line-height:1.8;color:${mut};">
           بعد التحويل، يرجى الاحتفاظ بإيصال العملية. سيتواصل معك فريق عِمارة لتأكيد استلام العمولة ومتابعة الخطوات التالية.
         </div>
+        <div style="font-size:11px;line-height:1.7;color:${mut};margin-top:10px;padding-top:10px;border-top:1px dashed #E3E9F0;">
+          هذا إشعار طلب سداد عمولة، وليس فاتورة ضريبية بموجب نظام ضريبة القيمة المضافة — عِمارة غير مسجّلة حالياً في ضريبة القيمة المضافة.
+        </div>
       </div>
       <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
         إشعار تلقائي من منصة عِمارة · <a href="${FRONTEND_URL}" style="color:${mut};">emaraa.app</a>
