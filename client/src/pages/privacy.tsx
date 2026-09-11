@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "../hooks/use-lang";
+import { useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import AmbientBackground from "@/components/AmbientBackground";
 
@@ -45,14 +46,14 @@ const arSections: Section[] = [
       "قد تُشارَك البيانات مع الجهات التنظيمية أو القضائية السعودية عند وجود التزام قانوني صريح.",
       "بيانات العقار والطلب تظهر لمزودي الخدمة المعتمدين فقط وذلك ضمن سياق الطلب والعروض المرتبطة به، ولا تتضمن رقم جوال المالك.",
       "لا يظهر رقم جوال المالك لأي مزود خدمة قبل قبول عرضه. وعند قبول المالك لعرض مزوّد، يُتبادَل رقم الجوال بين الطرفين (المالك والمزود المقبول عرضه) لغرض التواصل المباشر وإتمام التعاقد.",
-      "المزود الذي لم يُقبل عرضه — سواء كان عرضه قيد المراجعة أو مرفوضاً — لا يحصل على رقم جوال المالك في أي حال.",
+      "المزود الذي لم يُقبل عرضه (سواء كان عرضه قيد المراجعة أو مرفوضاً) لا يحصل على رقم جوال المالك في أي حال.",
       "عروض مزودي الخدمة تظهر لأصحاب العقارات المعنيين فقط.",
     ],
   },
   {
     title: "تخزين البيانات والاحتفاظ بها",
     body: [
-      "تُخزَّن البيانات في قواعد بيانات Supabase (خوادم سحابية — منطقة الشرق الأوسط أو أوروبا حسب إعدادات المشروع).",
+      "تُخزَّن البيانات في قواعد بيانات Supabase (خوادم سحابية، منطقة الشرق الأوسط أو أوروبا حسب إعدادات المشروع).",
       "ملفات PDF تُخزَّن في Supabase Storage وتُتاح عبر روابط موقتة (مدة صلاحيتها ساعة واحدة).",
       "رموز OTP مؤقتة وتنتهي صلاحيتها خلال 5 دقائق.",
       "جلسات تسجيل الدخول تنتهي تلقائياً بعد 30 يوماً.",
@@ -150,14 +151,14 @@ const enSections: Section[] = [
       "Data may be shared with Saudi regulatory or judicial authorities when there is a clear legal obligation.",
       "Property owner data is visible only to approved service providers within the context of the relevant request and associated proposals, and does not include the owner's phone number.",
       "The owner's phone number is not shown to any service provider before their offer is accepted. Once the owner accepts a provider's offer, phone numbers are exchanged between both parties (the owner and the accepted provider) for direct contact and to complete the contract.",
-      "A provider whose offer was not accepted — whether still under review or rejected — never receives the owner's phone number, under any circumstances.",
+      "A provider whose offer was not accepted (whether still under review or rejected) never receives the owner's phone number, under any circumstances.",
       "Provider proposals are visible only to the relevant property owners.",
     ],
   },
   {
     title: "Data Storage & Retention",
     body: [
-      "Data is stored in Supabase databases (cloud servers — Middle East or Europe region depending on project settings).",
+      "Data is stored in Supabase databases (cloud servers, Middle East or Europe region depending on project settings).",
       "PDF files are stored in Supabase Storage and accessed via temporary signed URLs (1-hour validity).",
       "OTP codes are temporary and expire within 5 minutes.",
       "Login sessions expire automatically after 30 days.",
@@ -222,9 +223,10 @@ export default function PrivacyPage() {
   const sections = isRTL ? arSections : enSections;
   useSeo({
     title: "سياسة الخصوصية | عِمارة",
-    description: "كيف تتعامل منصة عِمارة مع بياناتك وخصوصيتك — رقمك لا يظهر لأي جهة إلا بعد موافقتك.",
+    description: "كيف تتعامل منصة عِمارة مع بياناتك وخصوصيتك: رقمك لا يظهر لأي جهة إلا بعد موافقتك.",
     path: "/privacy",
   });
+  useReveal([lang]);
 
   const labels = {
     ar: {
@@ -278,7 +280,7 @@ export default function PrivacyPage() {
 
         <div className="space-y-8">
           {sections.map((sec, i) => (
-            <div key={i} className="border-b border-border pb-8 last:border-0">
+            <div key={i} className="border-b border-border pb-8 last:border-0" data-reveal>
               <h2 className="text-base font-bold mb-3" style={{ color: "var(--owner)" }}>
                 {i + 1}. {sec.title}
               </h2>

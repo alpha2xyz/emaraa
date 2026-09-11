@@ -1,4 +1,5 @@
 import { useLang } from "@/hooks/use-lang";
+import { revealDelay, useReveal } from "@/hooks/use-reveal";
 import { useSeo } from "@/hooks/use-seo";
 import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale, Globe } from "lucide-react";
 import { Link } from "wouter";
@@ -8,10 +9,11 @@ export default function AboutPage() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
   useSeo({
-    title: "من نحن | عِمارة — منصة إدارة المرافق العقارية",
+    title: "من نحن | عِمارة · منصة إدارة المرافق العقارية",
     description: "تعرّف على عِمارة: منصة سعودية تربط ملاك العقارات بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار، بعروض تنافسية وتعاقد شفاف.",
     path: "/about",
   });
+  useReveal([lang]);
 
   return (
     <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
@@ -50,7 +52,7 @@ export default function AboutPage() {
 
       {/* ── Why Emaraa ── */}
       <div className="max-w-3xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12" data-reveal>
           <h2 className="text-3xl font-extrabold text-foreground mb-4">
             {isRTL ? "لماذا عِمارة؟" : "Why Emaraa?"}
           </h2>
@@ -68,40 +70,41 @@ export default function AboutPage() {
               icon: <FileText className="w-6 h-6" />,
               ar: {
                 title: "عروض مكتوبة لا شفهية",
-                body: "كل مزود يُقدّم عرضه بصيغة PDF رسمية — لا وعود شفهية، لا مفاجآت في السعر.",
+                body: "كل مزود يُقدّم عرضه بصيغة PDF رسمية. لا وعود شفهية، لا مفاجآت في السعر.",
               },
               en: {
                 title: "Written Offers, Not Verbal",
-                body: "Every provider submits a formal PDF proposal — no verbal promises, no price surprises.",
+                body: "Every provider submits a formal PDF proposal. No verbal promises, no price surprises.",
               },
             },
             {
               icon: <ShieldCheck className="w-6 h-6" />,
               ar: {
                 title: "مزودون مُتحقَّق منهم فقط",
-                body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال — قبل أي تواصل مع المُلاك.",
+                body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال، قبل أي تواصل مع المُلاك.",
               },
               en: {
                 title: "Verified Providers Only",
-                body: "Every company goes through manual review: commercial register, profile, and FAL license — before any contact with owners.",
+                body: "Every company goes through manual review: commercial register, profile, and FAL license, before any contact with owners.",
               },
             },
             {
               icon: <Scale className="w-6 h-6" />,
               ar: {
                 title: "المقارنة بين يديك",
-                body: 'تصلك عروض متعددة على نفس الطلب — تختار بمعلومة كاملة، لا بـ "هذا اللي أعرفه".',
+                body: 'تصلك عروض متعددة على نفس الطلب. تختار بمعلومة كاملة، لا بـ "هذا اللي أعرفه".',
               },
               en: {
                 title: "Comparison Is Yours",
-                body: "Multiple offers arrive for the same request — you choose with full information, not just 'who I know'.",
+                body: "Multiple offers arrive for the same request. You choose with full information, not just 'who I know'.",
               },
             },
           ].map((item, i) => (
             <div
               key={i}
               className="rounded-2xl border border-border shadow-sm p-6 text-center hover:shadow-md transition-shadow"
-              style={{ background: "var(--card)" }}
+              style={{ background: "var(--card)", ...revealDelay(i * 120) }}
+              data-reveal
             >
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "var(--owner-soft)", color: "var(--owner)" }}>
                 {item.icon}
@@ -117,7 +120,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── Values ── */}
-        <div className="rounded-2xl p-8 text-white mb-16" style={{ background: "var(--navy)", border: "1px solid var(--border)" }}>
+        <div className="rounded-2xl p-8 text-white mb-16" style={{ background: "var(--navy)", border: "1px solid var(--border)" }} data-reveal>
           <h2 className="text-2xl font-extrabold mb-6 text-center">
             {isRTL ? "ما الذي نؤمن به" : "What We Stand For"}
           </h2>
@@ -127,11 +130,11 @@ export default function AboutPage() {
                 icon: <ShieldCheck className="w-5 h-5" />,
                 ar: {
                   title: "الثقة تُبنى بالتوثيق",
-                  body: "لا نثق بالكلام — كل مزود معنا يُثبت هويته ورخصته قبل أن يصل للمُلاك.",
+                  body: "لا نثق بالكلام. كل مزود معنا يُثبت هويته ورخصته قبل أن يصل للمُلاك.",
                 },
                 en: {
                   title: "Trust Is Built With Documentation",
-                  body: "We don't take anyone's word for it — every provider proves their identity and license before reaching owners.",
+                  body: "We don't take anyone's word for it. Every provider proves their identity and license before reaching owners.",
                 },
               },
               {
@@ -173,14 +176,14 @@ export default function AboutPage() {
         </div>
 
         {/* ── Market Numbers ── */}
-        <div className="mb-16">
+        <div className="mb-16" data-reveal>
           <h2 className="text-2xl font-extrabold text-foreground text-center mb-2">
             {isRTL ? "الفرصة في الرياض" : "The Riyadh Opportunity"}
           </h2>
           <p className="text-center text-muted-foreground text-sm mb-8">
             {isRTL
-              ? "أرقام رسمية — هذا هو السوق الذي ينتظرك"
-              : "Official figures — this is the market waiting for you"}
+              ? "أرقام رسمية · هذا هو السوق الذي ينتظرك"
+              : "Official figures · this is the market waiting for you"}
           </p>
           <div className="grid grid-cols-3 gap-4">
             {[
@@ -190,9 +193,9 @@ export default function AboutPage() {
                 src: isRTL ? "إحصاء 2022" : "Census 2022",
               },
               {
-                num: "9,354",
-                label: isRTL ? "اتحاد ملاك نشط في المملكة" : "Active owners associations in KSA",
-                src: "REGA 2024",
+                num: "17,000+",
+                label: isRTL ? "اتحاد ملاك معتمد في المملكة" : "Approved owners associations in KSA",
+                src: isRTL ? "الهيئة العامة للعقار، 2025" : "REGA, H1-2025",
               },
               {
                 num: "3.4%",
@@ -219,7 +222,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── Founder Note ── */}
-        <div className="rounded-2xl p-7 mb-16" style={{ background: "var(--owner-soft)", border: "1px solid var(--border)" }}>
+        <div className="rounded-2xl p-7 mb-16" style={{ background: "var(--owner-soft)", border: "1px solid var(--border)" }} data-reveal>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--owner)" }}>
               <Users className="w-5 h-5" style={{ color: "#04222c" }} />
@@ -229,19 +232,19 @@ export default function AboutPage() {
                 {isRTL ? "من المؤسس" : "From the Founder"}
               </p>
               <p className="text-xs text-muted-foreground">
-                {isRTL ? "عبدالله الفرائضي — الرياض" : "Abdallah Alfaraidi — Riyadh"}
+                {isRTL ? "عبدالله الفرائضي · الرياض" : "Abdallah Alfaraidi · Riyadh"}
               </p>
             </div>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
             {isRTL
-              ? '"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات — رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذه هي عِمارة."'
-              : '"I built Emaraa because I saw how owners dealt with service providers — scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That\'s Emaraa."'}
+              ? '"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات: رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذه هي عِمارة."'
+              : '"I built Emaraa because I saw how owners dealt with service providers: scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That\'s Emaraa."'}
           </p>
         </div>
 
         {/* ── CTA ── */}
-        <div className="text-center">
+        <div className="text-center" data-reveal>
           <p className="text-muted-foreground text-sm mb-5">
             {isRTL
               ? "هل لديك عقار سكني في الرياض؟"
