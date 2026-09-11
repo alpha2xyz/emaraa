@@ -9,7 +9,7 @@ export default function AboutPage() {
   const { lang, setLang } = useLang();
   const isRTL = lang === "ar";
   useSeo({
-    title: "من نحن | عِمارة — منصة إدارة المرافق العقارية",
+    title: "من نحن | عِمارة · منصة إدارة المرافق العقارية",
     description: "تعرّف على عِمارة: منصة سعودية تربط ملاك العقارات بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار، بعروض تنافسية وتعاقد شفاف.",
     path: "/about",
   });
@@ -70,33 +70,33 @@ export default function AboutPage() {
               icon: <FileText className="w-6 h-6" />,
               ar: {
                 title: "عروض مكتوبة لا شفهية",
-                body: "كل مزود يُقدّم عرضه بصيغة PDF رسمية — لا وعود شفهية، لا مفاجآت في السعر.",
+                body: "كل مزود يُقدّم عرضه بصيغة PDF رسمية. لا وعود شفهية، لا مفاجآت في السعر.",
               },
               en: {
                 title: "Written Offers, Not Verbal",
-                body: "Every provider submits a formal PDF proposal — no verbal promises, no price surprises.",
+                body: "Every provider submits a formal PDF proposal. No verbal promises, no price surprises.",
               },
             },
             {
               icon: <ShieldCheck className="w-6 h-6" />,
               ar: {
                 title: "مزودون مُتحقَّق منهم فقط",
-                body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال — قبل أي تواصل مع المُلاك.",
+                body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال، قبل أي تواصل مع المُلاك.",
               },
               en: {
                 title: "Verified Providers Only",
-                body: "Every company goes through manual review: commercial register, profile, and FAL license — before any contact with owners.",
+                body: "Every company goes through manual review: commercial register, profile, and FAL license, before any contact with owners.",
               },
             },
             {
               icon: <Scale className="w-6 h-6" />,
               ar: {
                 title: "المقارنة بين يديك",
-                body: 'تصلك عروض متعددة على نفس الطلب — تختار بمعلومة كاملة، لا بـ "هذا اللي أعرفه".',
+                body: 'تصلك عروض متعددة على نفس الطلب. تختار بمعلومة كاملة، لا بـ "هذا اللي أعرفه".',
               },
               en: {
                 title: "Comparison Is Yours",
-                body: "Multiple offers arrive for the same request — you choose with full information, not just 'who I know'.",
+                body: "Multiple offers arrive for the same request. You choose with full information, not just 'who I know'.",
               },
             },
           ].map((item, i) => (
@@ -130,11 +130,11 @@ export default function AboutPage() {
                 icon: <ShieldCheck className="w-5 h-5" />,
                 ar: {
                   title: "الثقة تُبنى بالتوثيق",
-                  body: "لا نثق بالكلام — كل مزود معنا يُثبت هويته ورخصته قبل أن يصل للمُلاك.",
+                  body: "لا نثق بالكلام. كل مزود معنا يُثبت هويته ورخصته قبل أن يصل للمُلاك.",
                 },
                 en: {
                   title: "Trust Is Built With Documentation",
-                  body: "We don't take anyone's word for it — every provider proves their identity and license before reaching owners.",
+                  body: "We don't take anyone's word for it. Every provider proves their identity and license before reaching owners.",
                 },
               },
               {
@@ -182,8 +182,8 @@ export default function AboutPage() {
           </h2>
           <p className="text-center text-muted-foreground text-sm mb-8">
             {isRTL
-              ? "أرقام رسمية — هذا هو السوق الذي ينتظرك"
-              : "Official figures — this is the market waiting for you"}
+              ? "أرقام رسمية · هذا هو السوق الذي ينتظرك"
+              : "Official figures · this is the market waiting for you"}
           </p>
           <div className="grid grid-cols-3 gap-4">
             {[
@@ -232,14 +232,14 @@ export default function AboutPage() {
                 {isRTL ? "من المؤسس" : "From the Founder"}
               </p>
               <p className="text-xs text-muted-foreground">
-                {isRTL ? "عبدالله الفرائضي — الرياض" : "Abdallah Alfaraidi — Riyadh"}
+                {isRTL ? "عبدالله الفرائضي · الرياض" : "Abdallah Alfaraidi · Riyadh"}
               </p>
             </div>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
             {isRTL
-              ? '"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات — رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذه هي عِمارة."'
-              : '"I built Emaraa because I saw how owners dealt with service providers — scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That\'s Emaraa."'}
+              ? '"بنيت عِمارة لأني رأيت كيف يتعامل الملاك مع مزودي الخدمات: رسائل متناثرة في واتساب، أسعار شفهية، وثقة مبنية على الحظ. أردت أن يكون هناك مكان واحد، منظّم، يُعطي المالك خيارات حقيقية ويُعطي المزود الجيّد فرصة حقيقية. هذه هي عِمارة."'
+              : '"I built Emaraa because I saw how owners dealt with service providers: scattered WhatsApp messages, verbal prices, and trust built on luck. I wanted one organized place that gives owners real choices and gives good providers a real chance. That\'s Emaraa."'}
           </p>
         </div>
 

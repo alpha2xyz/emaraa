@@ -11,11 +11,11 @@ const arSections: Section[] = [
   {
     title: "التعريفات",
     body: [
-      '"المنصة / عِمارة / نحن / لنا" — تعني منصة عِمارة الإلكترونية المملوكة والمُدارة من قِبل فريق عِمارة داخل المملكة العربية السعودية.',
-      '"المستخدم / أنت / حسابك" — يعني أي شخص طبيعي أو كيان يصل إلى المنصة أو يستخدمها سواء بصفة مالك عقار أو مزود خدمة.',
-      '"مالك العقار" — المستخدم المسجّل الذي ينشر طلبات الخدمة لعقاراته السكنية أو التجارية.',
-      '"مزود الخدمة" — الشركة أو المؤسسة المُعتمدة من الإدارة التي تقدّم عروضها للخدمات المطلوبة.',
-      '"الخدمة" — ربط أصحاب العقارات بمزودي خدمات إدارة المرافق داخل المملكة العربية السعودية عبر المنصة الرقمية.',
+      '"المنصة / عِمارة / نحن / لنا": تعني منصة عِمارة الإلكترونية المملوكة والمُدارة من قِبل فريق عِمارة داخل المملكة العربية السعودية.',
+      '"المستخدم / أنت / حسابك": يعني أي شخص طبيعي أو كيان يصل إلى المنصة أو يستخدمها سواء بصفة مالك عقار أو مزود خدمة.',
+      '"مالك العقار": المستخدم المسجّل الذي ينشر طلبات الخدمة لعقاراته السكنية أو التجارية.',
+      '"مزود الخدمة": الشركة أو المؤسسة المُعتمدة من الإدارة التي تقدّم عروضها للخدمات المطلوبة.',
+      '"الخدمة": ربط أصحاب العقارات بمزودي خدمات إدارة المرافق داخل المملكة العربية السعودية عبر المنصة الرقمية.',
     ],
   },
   {
@@ -31,13 +31,13 @@ const arSections: Section[] = [
     body: [
       "عِمارة منصة إلكترونية سعودية تربط بين أصحاب العقارات السكنية والتجارية ومزودي خدمات إدارة المرافق داخل المملكة العربية السعودية.",
       "تتيح المنصة لأصحاب العقارات نشر طلبات الخدمة، ولمزودي الخدمة تقديم عروضهم بصيغة PDF، ويتم انتقاء مزودي الخدمة وفق معايير الموافقة الإدارية.",
-      "عِمارة وسيط رقمي فقط — العقد النهائي يُبرم مباشرةً بين مالك العقار ومزود الخدمة، ولا تكون المنصة طرفاً في أي علاقة تعاقدية بينهما.",
+      "عِمارة وسيط رقمي فقط. العقد النهائي يُبرم مباشرةً بين مالك العقار ومزود الخدمة، ولا تكون المنصة طرفاً في أي علاقة تعاقدية بينهما.",
     ],
   },
   {
     title: "استخدام المنصة",
     body: [
-      "يُحظر على المستخدمين القيام بأي نشاط يُخلّ بأمن المنصة أو سلامتها أو يستهدف الوصول غير المصرّح إلى خوادمها أو بيانات المستخدمين الآخرين — وهذا يُعدّ انتهاكاً صريحاً لنظام مكافحة الجرائم المعلوماتية السعودي.",
+      "يُحظر على المستخدمين القيام بأي نشاط يُخلّ بأمن المنصة أو سلامتها أو يستهدف الوصول غير المصرّح إلى خوادمها أو بيانات المستخدمين الآخرين. وهذا يُعدّ انتهاكاً صريحاً لنظام مكافحة الجرائم المعلوماتية السعودي.",
       "يُحظر نسخ أو تنزيل أو إعادة نشر أي محتوى من المنصة دون إذن خطي مسبق.",
       "المنصة مقيّدة للمستخدمين البالغين (18 عاماً فأكثر).",
       "المستخدم مسؤول مسؤولية كاملة عن سرية بيانات حسابه وعن أي نشاط يجري من خلال حسابه.",
@@ -68,7 +68,7 @@ const arSections: Section[] = [
       "لا يمكن نشر طلب جديد على العقار نفسه إذا كان يوجد عليه طلبان نشطان بالفعل، إلى أن يُغلق أحدهما.",
       "بقبولك لعرض مزود خدمة، توافق على مشاركة رقم جوالك مع ذلك المزود تحديداً لغرض التواصل المباشر وإتمام التعاقد. ولا يُشارَك رقمك مع أي مزود آخر.",
       "الالتزام بالتواصل المهني مع مزودي الخدمة واستخدام المنصة للأغراض المشروعة فقط.",
-      "المنصة وسيط فقط — العقد النهائي يُبرم مباشرةً بين مالك العقار ومزود الخدمة.",
+      "المنصة وسيط فقط. العقد النهائي يُبرم مباشرةً بين مالك العقار ومزود الخدمة.",
     ],
   },
   {
@@ -87,7 +87,7 @@ const arSections: Section[] = [
     title: "الموافقة الإدارية",
     body: [
       "تحتفظ عِمارة بحق مراجعة طلبات تسجيل مزودي الخدمة ورفض أو قبول أي طلب دون إبداء الأسباب.",
-      "الموافقة ليست ضماناً لجودة الخدمة المقدَّمة من مزود الخدمة — المنصة وسيط وليست طرفاً في العقد.",
+      "الموافقة ليست ضماناً لجودة الخدمة المقدَّمة من مزود الخدمة. المنصة وسيط وليست طرفاً في العقد.",
       "تحتفظ الإدارة بحق سحب الموافقة وتعليق حساب مزود الخدمة عند ثبوت انتهاك هذه الشروط.",
     ],
   },
@@ -111,7 +111,7 @@ const arSections: Section[] = [
   {
     title: "الروابط الخارجية",
     body: [
-      "قد تحتوي المنصة على روابط لمواقع خارجية لأغراض إعلامية فقط — عِمارة لا تتحمل مسؤولية محتواها.",
+      "قد تحتوي المنصة على روابط لمواقع خارجية لأغراض إعلامية فقط. عِمارة لا تتحمل مسؤولية محتواها.",
       "الوصول إلى أي رابط خارجي يكون على مسؤولية المستخدم الكامل.",
       "يُحظر ربط أي موقع آخر بمنصة عِمارة دون إذن خطي مسبق من الإدارة.",
     ],
@@ -156,11 +156,11 @@ const enSections: Section[] = [
   {
     title: "Definitions",
     body: [
-      '"Platform / EMARAA / We / Us" — refers to the EMARAA digital platform owned and operated by the EMARAA team within the Kingdom of Saudi Arabia.',
-      '"User / You / Your Account" — means any natural person or entity accessing or using the platform, whether as a property owner or service provider.',
-      '"Property Owner" — the registered user who posts service requests for their residential or commercial properties.',
-      '"Service Provider" — a company or entity approved by administration that submits proposals for requested services.',
-      '"Service" — connecting property owners with facility management service providers within the Kingdom of Saudi Arabia via the digital platform.',
+      '"Platform / EMARAA / We / Us": refers to the EMARAA digital platform owned and operated by the EMARAA team within the Kingdom of Saudi Arabia.',
+      '"User / You / Your Account": means any natural person or entity accessing or using the platform, whether as a property owner or service provider.',
+      '"Property Owner": the registered user who posts service requests for their residential or commercial properties.',
+      '"Service Provider": a company or entity approved by administration that submits proposals for requested services.',
+      '"Service": connecting property owners with facility management service providers within the Kingdom of Saudi Arabia via the digital platform.',
     ],
   },
   {
@@ -176,13 +176,13 @@ const enSections: Section[] = [
     body: [
       "EMARAA is a Saudi digital marketplace connecting residential and commercial property owners with qualified facility management service providers within the Kingdom of Saudi Arabia.",
       "The platform enables owners to post service requests, providers to submit PDF proposals, and providers are onboarded subject to administrative approval.",
-      "EMARAA is a digital intermediary only — the final contract is concluded directly between the property owner and the service provider. EMARAA is not a party to any contractual relationship between them.",
+      "EMARAA is a digital intermediary only. The final contract is concluded directly between the property owner and the service provider. EMARAA is not a party to any contractual relationship between them.",
     ],
   },
   {
     title: "Platform Usage",
     body: [
-      "Users are prohibited from conducting any activity that compromises the security or integrity of the platform, or from attempting unauthorized access to its servers or other users' data — this constitutes a direct violation of the Saudi Anti-Cybercrime Law.",
+      "Users are prohibited from conducting any activity that compromises the security or integrity of the platform, or from attempting unauthorized access to its servers or other users' data. This constitutes a direct violation of the Saudi Anti-Cybercrime Law.",
       "Copying, downloading, or republishing any platform content without prior written permission is strictly prohibited.",
       "The platform is restricted to adult users (18 years and above).",
       "Users are fully responsible for maintaining the confidentiality of their account credentials and for all activity conducted through their accounts.",
@@ -213,7 +213,7 @@ const enSections: Section[] = [
       "A new request cannot be posted on the same property if it already has 2 active requests, until one of them is closed.",
       "By accepting a service provider's offer, you agree to share your phone number with that specific provider for direct contact and to complete the contract. Your number is not shared with any other provider.",
       "Maintain professional communication with service providers and use the platform for legitimate purposes only.",
-      "EMARAA is an intermediary only — the final contract is concluded directly between the property owner and the service provider.",
+      "EMARAA is an intermediary only. The final contract is concluded directly between the property owner and the service provider.",
     ],
   },
   {
@@ -232,7 +232,7 @@ const enSections: Section[] = [
     title: "Administrative Approval",
     body: [
       "EMARAA reserves the right to review, approve, or reject provider registration requests without providing reasons.",
-      "Approval is not a guarantee of service quality — EMARAA is an intermediary and not a party to the contract.",
+      "Approval is not a guarantee of service quality. EMARAA is an intermediary and not a party to the contract.",
       "Administration reserves the right to revoke approval and suspend a provider account upon verified violation of these Terms.",
     ],
   },
@@ -256,7 +256,7 @@ const enSections: Section[] = [
   {
     title: "External Links",
     body: [
-      "The platform may contain links to external websites for informational purposes only — EMARAA bears no responsibility for their content.",
+      "The platform may contain links to external websites for informational purposes only. EMARAA bears no responsibility for their content.",
       "Accessing any external link is entirely at the user's own risk.",
       "Linking any other website to the EMARAA platform without prior written permission from administration is prohibited.",
     ],

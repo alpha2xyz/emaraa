@@ -242,7 +242,7 @@ export default function LandingPage() {
         { q: "هل أقدر أجد شركة إدارة مرافق معتمدة في الرياض؟", a: "نعم، نبدأ بمدينة الرياض في المرحلة الأولى بشركات إدارة مرافق مرخّصة ومعتمدة، ونتوسّع تدريجياً إلى مدن أخرى." },
         { q: "متى تصلني عروض الأسعار بعد نشر طلبي؟", a: "بمجرد نشر طلبك يصل إشعار فوري للشركات المعتمدة، وتبدأ عروض الأسعار بالوصول عادةً خلال وقت قصير." },
         { q: "هل رقمي وبياناتي تبقى خاصة؟", a: "نعم. لا يظهر رقمك لأي شركة إلا بعد قبولك لعرضها، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
-        { q: "كيف أقارن بين عروض شركات إدارة المرافق؟", a: "تقارن العروض جنباً إلى جنب — السعر الإجمالي والسعر لكل وحدة وملاحظات كل شركة — وتختار الأنسب لعقارك. القرار بيدك." },
+        { q: "كيف أقارن بين عروض شركات إدارة المرافق؟", a: "تقارن العروض جنباً إلى جنب: السعر الإجمالي والسعر لكل وحدة وملاحظات كل شركة، وتختار الأنسب لعقارك. القرار بيدك." },
         { q: "هل أقدر أتعاقد سنوياً لإدارة وصيانة عمارتي عبر المنصة؟", a: "نعم، المنصة متخصصة في عقود إدارة المرافق السنوية للعقارات السكنية والتجارية. تنشر احتياج عمارتك مرة واحدة، تستقبل عروضاً كاملة بنطاق الخدمة، وتتعاقد مع الشركة التي تختارها." },
       ],
       ctaTitle: "جاهز تبدأ بإدارة عمارتك بكفاءة؟",
@@ -266,7 +266,7 @@ export default function LandingPage() {
       heroTitle: "EMARAA,",
       heroHighlight: "Your Building, Perfectly Managed",
       heroDesc:
-        "Search, compare, and contract annually with REGA-licensed facility management companies — on the first platform specialized in property facility management contracts.",
+        "Search, compare, and contract annually with REGA-licensed facility management companies, on the first platform specialized in property facility management contracts.",
       getStarted: "Get Started Free",
       learnMore: "Learn More",
       whoTitle: "Who is EMARAA for?",
@@ -291,7 +291,7 @@ export default function LandingPage() {
         "Finding the right service provider has never been easier. Get started in minutes.",
       step1Title: "List Your Property",
       step1Desc: "Add your building details (residential or commercial) and post one comprehensive O&M request",
-      step1Reassurance: "Easier than ever — start now and find the right service provider in minutes.",
+      step1Reassurance: "Easier than ever. Start now and find the right service provider in minutes.",
       howItWorksCtaNudge: "Finding the right provider is easier than ever.",
       step2Title: "Get Matched",
       step2Desc: "Qualified service providers bid on your requests",
@@ -329,11 +329,11 @@ export default function LandingPage() {
       faqSubtitle: "Everything you need to know before you start",
       faqs: [
         { q: "How can I be sure a facility management company is licensed and trustworthy?", a: "Every offer you receive comes from a facility management company holding a valid REGA (FAL) license and an active commercial registration, reviewed and approved by our team before it reaches you. You only get offers from trusted, vetted companies." },
-        { q: "Can I find an accredited facility management company in Riyadh?", a: "Yes — we're launching in Riyadh first with licensed, accredited facility management companies, and expanding to other cities gradually." },
+        { q: "Can I find an accredited facility management company in Riyadh?", a: "Yes, we're launching in Riyadh first with licensed, accredited facility management companies, and expanding to other cities gradually." },
         { q: "When will I receive price offers after posting my request?", a: "As soon as you post your request, approved companies get an instant notification, and offers usually start arriving shortly after." },
         { q: "Do my phone number and data stay private?", a: "Yes. Your number is never shown to a company until you accept their offer, and the full proposal file only opens after you accept." },
-        { q: "How do I compare offers from facility management companies?", a: "You compare them side by side — total price, per-unit price, and each company's notes — and choose what suits your property. The decision is yours." },
-        { q: "Can I sign an annual facility management contract for my building through the platform?", a: "Yes — the platform specializes in annual facility management contracts for residential and commercial properties. Post your building's needs once, receive complete scoped offers, and contract with the company you choose." },
+        { q: "How do I compare offers from facility management companies?", a: "You compare them side by side: total price, per-unit price, and each company's notes, and choose what suits your property. The decision is yours." },
+        { q: "Can I sign an annual facility management contract for my building through the platform?", a: "Yes, the platform specializes in annual facility management contracts for residential and commercial properties. Post your building's needs once, receive complete scoped offers, and contract with the company you choose." },
       ],
       ctaTitle: "Ready to manage your building efficiently?",
       ctaDesc: "Add your property in minutes and receive offers from trusted facilities management providers.",
@@ -487,7 +487,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(210)}>
               <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#F0A87F" }} />
-              <span>{lang === "ar" ? "الرياض — المرحلة الأولى" : "Riyadh — Phase One"}</span>
+              <span>{lang === "ar" ? "الرياض · المرحلة الأولى" : "Riyadh · Phase One"}</span>
             </div>
           </div>
         </div>
