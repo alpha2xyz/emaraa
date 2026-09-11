@@ -295,22 +295,38 @@ const BANK_NAME = process.env.COMMISSION_BANK_NAME ?? "";
 const BANK_ACCOUNT_NAME = process.env.COMMISSION_BANK_ACCOUNT_NAME ?? "";
 const BANK_IBAN = process.env.COMMISSION_BANK_IBAN ?? "";
 const BANK_QR_URL = process.env.COMMISSION_QR_URL ?? ""; // hosted https PNG — NOT base64 (clients strip it)
+// Emaraa's unified establishment/CR number (سجل تجاري), issued 2026-09-11 — see
+// memory/project_session_2026_09_10_cr_filing.md. Gates the invoice-shaped layout below;
+// unset it and commissionEmail() falls back to the plain pre-CR wording automatically.
+const CR_NUMBER = process.env.EMARAA_CR_NUMBER ?? "";
 
 // True once bank details exist — gates the whole commission email chain.
 export function commissionConfigReady(): boolean {
   return !!BANK_IBAN;
 }
 
+// True once Emaraa's CR number is on file — gates the invoice-shaped layout in commissionEmail().
+export function crNumberReady(): boolean {
+  return !!CR_NUMBER;
+}
+
 // 1% commission-transfer ask (Arabic RTL). Sent by the day-21 pass of
 // /api/cron/commission-reminder, not at accept-time — owners take 1-2 weeks to
 // consult co-owners before a contract exists, so asking for money on day 0 was premature.
 //
-// NOTE (2026-09-08): an invoice-shaped version of this (invoice number, issue/due
-// dates, line-item table) was drafted and reverted at Abdallah's request — hold off
-// on invoice-style formatting until Emaraa has a CR. See git history / the plan at
-// ~/.claude/plans/soft-foraging-truffle.md and memory/project_emaraa_feedback_ibrahim_sakina9.md
-// for the parked design once that's ready to revisit.
+// Renders as a real (non-VAT) commercial invoice once EMARAA_CR_NUMBER is set — invoice
+// number, issue/due dates, a line item, Emaraa's CR number, and a disclaimer that this is
+// not a ZATCA VAT tax invoice (Emaraa isn't VAT-registered; see
+// memory/project_emaraa_feedback_ibrahim_sakina9.md for why that disclaimer matters here).
+// Until then it falls back to the original plain payment-request wording untouched.
+//
+// The 1% is computed on price_total exactly as the provider entered it at submission —
+// terms.tsx's commission clause pins the base to that number explicitly, so this
+// deliberately does not try to strip out VAT (see the memory file above for why: not
+// every provider is VAT-registered, so there's no reliable way to know per-row whether
+// a given price_total included VAT in the first place).
 export function commissionEmail(opts: {
+  dealId: string;
   priceTotal: number | null;
   ownerName?: string | null;
   ownerPhone?: string | null;
@@ -333,13 +349,6 @@ export function commissionEmail(opts: {
     phone: opts.ownerPhone,
   });
 
-  const amountBox = `
-    <div style="background:linear-gradient(135deg,${deep},${blue});border-radius:12px;padding:18px;margin:16px 0;color:#fff;text-align:center;">
-      <div style="font-size:12px;opacity:.85;">عمولة عِمارة (<span dir="ltr" style="unicode-bidi:isolate">1%</span> من قيمة العرض)</div>
-      <div style="font-size:30px;font-weight:800;margin-top:6px;">${nf(commission)} <span style="font-size:16px;">ر.س</span></div>
-      ${price ? `<div style="font-size:11px;opacity:.8;margin-top:4px;">قيمة العرض: ${nf(price)} ر.س</div>` : ""}
-    </div>`;
-
   const bankBox = `
     <div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:12px;padding:16px;margin:16px 0;">
       <div style="font-size:13px;font-weight:700;color:${deep};margin-bottom:8px;">بيانات التحويل البنكي</div>
@@ -357,23 +366,98 @@ export function commissionEmail(opts: {
        </div>`
     : "";
 
+  if (!crNumberReady()) {
+    const amountBox = `
+      <div style="background:linear-gradient(135deg,${deep},${blue});border-radius:12px;padding:18px;margin:16px 0;color:#fff;text-align:center;">
+        <div style="font-size:12px;opacity:.85;">عمولة عِمارة (<span dir="ltr" style="unicode-bidi:isolate">1%</span> من قيمة العرض)</div>
+        <div style="font-size:30px;font-weight:800;margin-top:6px;">${nf(commission)} <span style="font-size:16px;">ر.س</span></div>
+        ${price ? `<div style="font-size:11px;opacity:.8;margin-top:4px;">قيمة العرض: ${nf(price)} ر.س</div>` : ""}
+      </div>`;
+
+    return `
+    <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#F0F3F7;padding:24px;color:${ink};">
+      <div style="max-width:520px;margin:0 auto;">
+        <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
+          <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة Emaraa</div>
+          <div style="font-size:20px;font-weight:800;margin-top:8px;">متابعة عرضك المقبول</div>
+        </div>
+        <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
+          <div style="font-size:15px;line-height:1.9;color:${ink};">
+            قبل 3 أسابيع قبِل المالك عرضك على طلب الخدمة. إذا كنت أتممت توقيع العقد معه، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب أدناه. وإذا لم تكتمل الصفقة بعد أو احتجت أي مساعدة، راسلنا على info@emaraa.app.
+          </div>
+          ${contactBox}
+          ${amountBox}
+          ${bankBox}
+          ${qrBox}
+          <div style="font-size:13px;line-height:1.8;color:${mut};">
+            بعد التحويل، يرجى الاحتفاظ بإيصال العملية. سيتواصل معك فريق عِمارة لتأكيد استلام العمولة ومتابعة الخطوات التالية.
+          </div>
+        </div>
+        <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
+          إشعار تلقائي من منصة عِمارة · <a href="${FRONTEND_URL}" style="color:${mut};">emaraa.app</a>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Invoice-shaped layout — EMARAA_CR_NUMBER is set.
+  const invoiceNumber = `EMR-${opts.dealId.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+  const issueDate = new Date();
+  const dueDate = new Date(issueDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const fmtDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+  const invoiceMetaBox = `
+    <div style="background:#F7FAFC;border:1px solid #E3E9F0;border-radius:12px;padding:16px;margin:16px 0;">
+      <table cellpadding="0" cellspacing="0" style="width:100%;">
+        ${row("رقم الفاتورة", `<span dir="ltr" style="unicode-bidi:isolate">${invoiceNumber}</span>`)}
+        ${row("تاريخ الإصدار", `<span dir="ltr" style="unicode-bidi:isolate">${fmtDate(issueDate)}</span>`)}
+        ${row("تاريخ الاستحقاق", `<span dir="ltr" style="unicode-bidi:isolate">${fmtDate(dueDate)}</span>`)}
+        ${row("المُصدِر", `مؤسسة عبدالله حاتم الفرائضي (عِمارة Emaraa)`)}
+        ${row("السجل التجاري", `<span dir="ltr" style="unicode-bidi:isolate">${CR_NUMBER}</span>`)}
+      </table>
+    </div>`;
+
+  const lineItemBox = `
+    <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <thead>
+        <tr>
+          <th style="text-align:right;padding:8px 0;font-size:12px;color:${mut};border-bottom:1px solid #E3E9F0;">البند</th>
+          <th style="text-align:left;padding:8px 0;font-size:12px;color:${mut};border-bottom:1px solid #E3E9F0;">القيمة</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px 0;font-size:14px;color:${ink};border-bottom:1px solid #E3E9F0;">قيمة العرض المقبول</td>
+          <td style="padding:10px 0;font-size:14px;color:${ink};text-align:left;direction:ltr;border-bottom:1px solid #E3E9F0;">${price ? `${nf(price)} ر.س` : "—"}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;font-size:14px;font-weight:700;color:${deep};">عمولة عِمارة (<span dir="ltr" style="unicode-bidi:isolate">1%</span>) — المستحقة</td>
+          <td style="padding:10px 0;font-size:16px;font-weight:800;color:${deep};text-align:left;direction:ltr;">${nf(commission)} ر.س</td>
+        </tr>
+      </tbody>
+    </table>`;
+
   return `
   <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#F0F3F7;padding:24px;color:${ink};">
     <div style="max-width:520px;margin:0 auto;">
       <div style="background:linear-gradient(135deg,${deep},${blue} 70%,${cyan});border-radius:16px;padding:24px;color:#fff;">
         <div style="font-size:12px;opacity:.85;letter-spacing:1px;">عِمارة Emaraa</div>
-        <div style="font-size:20px;font-weight:800;margin-top:8px;">متابعة عرضك المقبول</div>
+        <div style="font-size:20px;font-weight:800;margin-top:8px;">فاتورة عمولة الربط</div>
       </div>
       <div style="background:#fff;border-radius:14px;padding:22px;margin-top:14px;border:1px solid #E3E9F0;">
         <div style="font-size:15px;line-height:1.9;color:${ink};">
-          قبل 3 أسابيع قبِل المالك عرضك على طلب الخدمة. إذا كنت أتممت توقيع العقد معه، يُرجى تحويل عمولة عِمارة البالغة <b dir="ltr" style="unicode-bidi:isolate">1%</b> من قيمة العرض إلى الحساب أدناه. وإذا لم تكتمل الصفقة بعد أو احتجت أي مساعدة، راسلنا على info@emaraa.app.
+          قبل 3 أسابيع قبِل المالك عرضك على طلب الخدمة. إذا كنت أتممت توقيع العقد معه، يُرجى تحويل عمولة عِمارة أدناه قبل تاريخ الاستحقاق. وإذا لم تكتمل الصفقة بعد أو احتجت أي مساعدة، راسلنا على info@emaraa.app.
         </div>
+        ${invoiceMetaBox}
+        ${lineItemBox}
         ${contactBox}
-        ${amountBox}
         ${bankBox}
         ${qrBox}
         <div style="font-size:13px;line-height:1.8;color:${mut};">
           بعد التحويل، يرجى الاحتفاظ بإيصال العملية. سيتواصل معك فريق عِمارة لتأكيد استلام العمولة ومتابعة الخطوات التالية.
+        </div>
+        <div style="font-size:11px;line-height:1.7;color:${mut};margin-top:10px;padding-top:10px;border-top:1px dashed #E3E9F0;">
+          هذا إشعار طلب سداد عمولة، وليس فاتورة ضريبية بموجب نظام ضريبة القيمة المضافة. عِمارة غير مسجّلة حالياً في ضريبة القيمة المضافة.
         </div>
       </div>
       <div style="text-align:center;color:${mut};font-size:11px;margin-top:18px;">
