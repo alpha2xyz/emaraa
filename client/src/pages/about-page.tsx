@@ -193,9 +193,9 @@ export default function AboutPage() {
                 src: isRTL ? "إحصاء 2022" : "Census 2022",
               },
               {
-                num: "9,354",
-                label: isRTL ? "اتحاد ملاك نشط في المملكة" : "Active owners associations in KSA",
-                src: "REGA 2024",
+                num: "17,000+",
+                label: isRTL ? "اتحاد ملاك معتمد في المملكة" : "Approved owners associations in KSA",
+                src: isRTL ? "الهيئة العامة للعقار، 2025" : "REGA, H1-2025",
               },
               {
                 num: "3.4%",
