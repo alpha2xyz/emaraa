@@ -2,6 +2,7 @@ import { Mail, Phone, MapPin, ArrowLeft, ArrowRight, MessageCircle } from "lucid
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "../hooks/use-lang";
+import { revealDelay, useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import { Globe } from "lucide-react";
 import AmbientBackground from "@/components/AmbientBackground";
@@ -14,6 +15,7 @@ export default function ContactPage() {
     description: "تواصل مع فريق عِمارة عبر الواتساب أو البريد الإلكتروني — نجيب على استفسارات ملاك العقارات وشركات إدارة المرافق.",
     path: "/contact",
   });
+  useReveal([lang]);
   const t =
     lang === "ar"
       ? {
@@ -104,8 +106,8 @@ export default function ContactPage() {
         </Link>
         <p className="text-muted-foreground mb-8">{t.subtitle}</p>
         <div className="space-y-4">
-          {contacts.map(({ icon: Icon, label, value, href, external }) => (
-            <Card key={label} className="hover:shadow-md transition-shadow">
+          {contacts.map(({ icon: Icon, label, value, href, external }, i) => (
+            <Card key={label} className="hover:shadow-md transition-shadow" data-reveal style={revealDelay(i * 70)}>
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "var(--owner-soft)" }}>
                   <Icon className="w-6 h-6" style={{ color: "var(--owner)" }} />

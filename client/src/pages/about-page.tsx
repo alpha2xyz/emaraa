@@ -1,4 +1,5 @@
 import { useLang } from "@/hooks/use-lang";
+import { revealDelay, useReveal } from "@/hooks/use-reveal";
 import { useSeo } from "@/hooks/use-seo";
 import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale, Globe } from "lucide-react";
 import { Link } from "wouter";
@@ -12,6 +13,7 @@ export default function AboutPage() {
     description: "تعرّف على عِمارة: منصة سعودية تربط ملاك العقارات بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار، بعروض تنافسية وتعاقد شفاف.",
     path: "/about",
   });
+  useReveal([lang]);
 
   return (
     <div className="page-enter min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
@@ -50,7 +52,7 @@ export default function AboutPage() {
 
       {/* ── Why Emaraa ── */}
       <div className="max-w-3xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12" data-reveal>
           <h2 className="text-3xl font-extrabold text-foreground mb-4">
             {isRTL ? "لماذا عِمارة؟" : "Why Emaraa?"}
           </h2>
@@ -101,7 +103,8 @@ export default function AboutPage() {
             <div
               key={i}
               className="rounded-2xl border border-border shadow-sm p-6 text-center hover:shadow-md transition-shadow"
-              style={{ background: "var(--card)" }}
+              style={{ background: "var(--card)", ...revealDelay(i * 120) }}
+              data-reveal
             >
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "var(--owner-soft)", color: "var(--owner)" }}>
                 {item.icon}
@@ -117,7 +120,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── Values ── */}
-        <div className="rounded-2xl p-8 text-white mb-16" style={{ background: "var(--navy)", border: "1px solid var(--border)" }}>
+        <div className="rounded-2xl p-8 text-white mb-16" style={{ background: "var(--navy)", border: "1px solid var(--border)" }} data-reveal>
           <h2 className="text-2xl font-extrabold mb-6 text-center">
             {isRTL ? "ما الذي نؤمن به" : "What We Stand For"}
           </h2>
@@ -173,7 +176,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── Market Numbers ── */}
-        <div className="mb-16">
+        <div className="mb-16" data-reveal>
           <h2 className="text-2xl font-extrabold text-foreground text-center mb-2">
             {isRTL ? "الفرصة في الرياض" : "The Riyadh Opportunity"}
           </h2>
@@ -219,7 +222,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── Founder Note ── */}
-        <div className="rounded-2xl p-7 mb-16" style={{ background: "var(--owner-soft)", border: "1px solid var(--border)" }}>
+        <div className="rounded-2xl p-7 mb-16" style={{ background: "var(--owner-soft)", border: "1px solid var(--border)" }} data-reveal>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--owner)" }}>
               <Users className="w-5 h-5" style={{ color: "#04222c" }} />
@@ -241,7 +244,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── CTA ── */}
-        <div className="text-center">
+        <div className="text-center" data-reveal>
           <p className="text-muted-foreground text-sm mb-5">
             {isRTL
               ? "هل لديك عقار سكني في الرياض؟"

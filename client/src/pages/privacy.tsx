@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useLang } from "../hooks/use-lang";
+import { useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import AmbientBackground from "@/components/AmbientBackground";
 
@@ -225,6 +226,7 @@ export default function PrivacyPage() {
     description: "كيف تتعامل منصة عِمارة مع بياناتك وخصوصيتك — رقمك لا يظهر لأي جهة إلا بعد موافقتك.",
     path: "/privacy",
   });
+  useReveal([lang]);
 
   const labels = {
     ar: {
@@ -278,7 +280,7 @@ export default function PrivacyPage() {
 
         <div className="space-y-8">
           {sections.map((sec, i) => (
-            <div key={i} className="border-b border-border pb-8 last:border-0">
+            <div key={i} className="border-b border-border pb-8 last:border-0" data-reveal>
               <h2 className="text-base font-bold mb-3" style={{ color: "var(--owner)" }}>
                 {i + 1}. {sec.title}
               </h2>

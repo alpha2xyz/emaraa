@@ -1,7 +1,7 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/hooks/use-lang";
-import { useReveal } from "@/hooks/use-reveal";
+import { revealDelay, useReveal } from "@/hooks/use-reveal";
 import { useSeo } from "@/hooks/use-seo";
 import { Link } from "wouter";
 import {
@@ -22,9 +22,6 @@ import {
   Linkedin,
   XIcon,
 } from "lucide-react";
-
-// Stagger helper for the [data-reveal] scroll animations (CSS in index.css)
-const revealDelay = (ms: number) => ({ "--reveal-delay": `${ms}ms` }) as CSSProperties;
 
 // ── Building illustration ───────────────────────────────────────────────────
 function HeroIllustration() {

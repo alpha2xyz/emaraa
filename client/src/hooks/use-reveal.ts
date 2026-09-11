@@ -1,4 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
+
+/** Stagger helper for [data-reveal] elements — sets the --reveal-delay CSS var. */
+export const revealDelay = (ms: number) => ({ "--reveal-delay": `${ms}ms` }) as CSSProperties;
 
 /**
  * Reveals elements marked with [data-reveal] as they enter the viewport by

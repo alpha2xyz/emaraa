@@ -23,7 +23,7 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* ── Scroll reveal (landing page) ──────────────────────────────────────────
+  /* ── Scroll reveal (site-wide) ─────────────────────────────────────────────
      Elements marked [data-reveal] start hidden and rise in when they enter the
      viewport (class added by useReveal hook). Stagger via --reveal-delay.
      Entirely disabled for prefers-reduced-motion users. */
