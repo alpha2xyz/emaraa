@@ -80,7 +80,7 @@ const arSections: Section[] = [
       "يُحظر على مزود الخدمة التواصل مع الملاك خارج إطار المنصة بهدف تجاوز آلية العروض الرسمية.",
       "عند قبول المالك لعرضك، يُشارَك رقم جوال المالك معك لغرض التواصل المباشر وإتمام التعاقد فقط. ويُحظر استخدامه لأي غرض تسويقي أو مشاركته مع أي طرف ثالث.",
       "أي تغيير جوهري في بيانات الشركة (السجل التجاري، الرخص) يجب إبلاغ الإدارة به فوراً.",
-      "يلتزم مزود الخدمة بسداد عمولة عِمارة البالغة 1% من قيمة الصفقة عن طريق التحويل إلى الحساب البنكي لعِمارة بعد إتمام الصفقة بنجاح.",
+      "يلتزم مزود الخدمة بسداد عمولة عِمارة البالغة 1% من إجمالي قيمة العرض كما أدخلها مزود الخدمة عند التقديم على المنصة، عن طريق التحويل إلى الحساب البنكي لعِمارة بعد إتمام الصفقة بنجاح.",
     ],
   },
   {
@@ -225,7 +225,7 @@ const enSections: Section[] = [
       "Providers are prohibited from contacting owners outside the platform in order to bypass the official proposal mechanism.",
       "Once the owner accepts your offer, the owner's phone number is shared with you solely for direct contact and completing the contract. Using it for marketing purposes or sharing it with any third party is prohibited.",
       "Any material change to company information (commercial registration, licenses) must be reported to administration immediately.",
-      "The provider agrees to pay Emaraa's 1% commission on the deal value via transfer to Emaraa's bank account after the deal is successfully completed.",
+      "The provider agrees to pay Emaraa's 1% commission on the total offer value as entered by the provider when submitting on the platform, via transfer to Emaraa's bank account after the deal is successfully completed.",
     ],
   },
   {

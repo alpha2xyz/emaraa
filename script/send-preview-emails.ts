@@ -85,6 +85,7 @@ async function main() {
       kind: "commission_request",
       subject: "تذكير: عمولة عِمارة (1%) على عرضك المقبول",
       html: commissionEmail({
+        dealId: "preview-test-deal-0001",
         priceTotal: 45000,
         ownerName: "مالك الاختبار",
         ownerPhone: "0501234567",
