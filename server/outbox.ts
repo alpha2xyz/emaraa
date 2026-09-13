@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmail } from "./email.js";
 
 /**
@@ -22,6 +23,15 @@ import { sendEmail } from "./email.js";
  * longer scales its duration with the number of providers.
  */
 
+type OutboxRow = {
+  id: string;
+  to_email: string;
+  subject: string;
+  html: string;
+  kind: string | null;
+  attempts: number | null;
+};
+
 export type OutboxItem = {
   to_email: string;
   subject: string;
@@ -31,7 +41,7 @@ export type OutboxItem = {
 
 /** Writes pending rows. Fast, one insert, regardless of recipient count. */
 export async function enqueueEmails(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseClient,
   items: OutboxItem[]
 ): Promise<string[]> {
   if (items.length === 0) return [];
@@ -43,7 +53,7 @@ export async function enqueueEmails(
     console.error("[outbox] enqueue failed:", error.message);
     return [];
   }
-  return (data ?? []).map((r: any) => r.id);
+  return (data ?? []).map((r: { id: string }) => r.id);
 }
 
 /**
@@ -54,7 +64,7 @@ export async function enqueueEmails(
  * abort the batch.
  */
 export async function drainOutbox(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseClient,
   opts: { ids?: string[]; limit?: number; maxAttempts?: number } = {}
 ): Promise<{ sent: number; failed: number }> {
   const maxAttempts = opts.maxAttempts ?? 3;
@@ -72,12 +82,12 @@ export async function drainOutbox(
   if (error || !rows?.length) return { sent: 0, failed: 0 };
 
   const results = await Promise.allSettled(
-    rows.map(async (row: any) => {
+    rows.map(async (row: OutboxRow) => {
       await sendEmail(supabaseAdmin, {
         to: row.to_email,
         subject: row.subject,
         html: row.html,
-        kind: row.kind,
+        kind: row.kind ?? undefined,
       });
       return row.id;
     })

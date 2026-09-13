@@ -29,7 +29,7 @@ jobs:
         # all no-explicit-any in server/routes.ts around Supabase result handling)
         # is tracked in TODO.md rather than fixed in a single risky sweep. Lower
         # this number as that backlog comes down; never raise it.
-        run: npx eslint . --max-warnings=137
+        run: npx eslint . --max-warnings=133
 
   e2e-public:
     name: Playwright (public pages)

@@ -32,7 +32,7 @@ const REDACT_KEYS = new Set([
 function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, unknown> | undefined = undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -128,12 +128,13 @@ export function createApp(): Express {
  */
 export function mountErrorHandler(
   app: Express,
-  opts: { onError?: (err: any) => void; rethrow?: boolean } = {}
+  opts: { onError?: (err: unknown) => void; rethrow?: boolean } = {}
 ) {
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     opts.onError?.(err);
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const e = (err ?? {}) as { status?: number; statusCode?: number; message?: string };
+    const status = e.status || e.statusCode || 500;
+    const message = e.message || "Internal Server Error";
 
     res.status(status).json({ message });
     if (opts.rethrow) throw err;
