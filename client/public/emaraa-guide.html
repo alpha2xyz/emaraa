@@ -3,154 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دليل المستخدم · منصة عِمارة</title>
+<title>دليل منصة عِمارة</title>
+<meta name="description" content="دليل استخدام منصة عِمارة: كيف ينشر مالك العقار طلبه ويستقبل العروض، وكيف تسجّل شركة إدارة المرافق وتقدّم عروضها.">
+<link rel="icon" type="image/png" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-body { background: #F9F9FF; color: #1A2E42; direction: rtl; }
+  /* Arctic Depths, same tokens as client/src/index.css. This file is standalone
+     static HTML served from /public, so the values are duplicated here rather than
+     imported. If the brand block in index.css changes, update these too. */
+  :root{
+    --owner:#0DB8D3; --owner-soft:rgba(13,184,211,.14);
+    --provider:#1B7FDC; --provider-soft:rgba(27,127,220,.18);
+    --deep:#065B98;
+    --navy:#193546; --navy-2:#0F2733; --navy-3:#0A1C25;
+    --fg:#EAF6FB; --muted:#9FC2D3; --border:#2F4654;
+    --ok:#34D399; --ok-soft:rgba(52,211,153,.14);
+    --warn:#FBBF24; --warn-soft:rgba(251,191,36,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{color-scheme:dark}
+  body{font-family:'Cairo',system-ui,sans-serif;background:var(--navy-2);color:var(--fg);line-height:1.85;font-size:15px}
+  .num,.en{font-variant-numeric:tabular-nums}
+  a{color:var(--owner)}
+  .wrap{max-width:860px;margin:0 auto;padding:0 18px 56px}
 
-/* ── Hero ── */
-.hero {
-  background: linear-gradient(135deg, #1A2E42 0%, #2E4A6B 60%, #3A6A9E 100%);
-  color: #fff;
-  text-align: center;
-  padding: 48px 24px 40px;
-  position: relative;
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06) 1px, transparent 1px),
-                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 60px 60px;
-}
-.hero-inner { position: relative; max-width: 640px; margin: 0 auto; }
-.hero h1 { font-size: 26pt; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px; }
-.hero p  { font-size: 11pt; color: #93C5FD; line-height: 1.7; }
-.hero-chips { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-.chip {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 999px;
-  padding: 5px 16px;
-  font-size: 9.5pt;
-  font-weight: 700;
-  color: #fff;
-}
+  /* Hero */
+  .hero{background:linear-gradient(160deg,#0f3a47,var(--navy-2) 75%);border-bottom:1px solid var(--border);padding:40px 18px 34px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;top:-120px;inset-inline-start:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(13,184,211,.16) 0%,transparent 70%);pointer-events:none}
+  .hero-inner{max-width:860px;margin:0 auto;position:relative}
+  .brand{font-size:1.6rem;font-weight:900;color:var(--owner);letter-spacing:.5px;margin-bottom:14px}
+  h1{font-size:clamp(1.6rem,5vw,2.3rem);font-weight:800;line-height:1.3;margin-bottom:10px}
+  .hero p{color:var(--muted);max-width:620px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .chip{font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px;border:1px solid var(--border)}
+  .chip.o{color:var(--owner);background:var(--owner-soft);border-color:transparent}
+  .chip.p{color:var(--provider);background:var(--provider-soft);border-color:transparent}
 
-/* ── URL bar ── */
-.url-bar {
-  background: #1F2937;
-  border-radius: 12px;
-  padding: 10px 20px;
-  text-align: center;
-  margin: 24px auto 0;
-  max-width: 640px;
-  display: block;
-}
-.url-bar span { font-size: 11pt; color: #60A5FA; font-weight: 700; direction: ltr; display: inline-block; }
+  /* Sections */
+  .section{background:var(--navy);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:22px}
+  .section-header{display:flex;align-items:center;gap:13px;padding-bottom:16px;margin-bottom:6px;border-bottom:1px solid var(--border)}
+  .icon-box{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .icon-box.o{background:var(--owner-soft)} .icon-box.p{background:var(--provider-soft)}
+  .icon-box svg{width:21px;height:21px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .icon-box.o svg{stroke:var(--owner)} .icon-box.p svg{stroke:var(--provider)}
+  .section-title{font-size:1.15rem;font-weight:800}
+  .section-sub{font-size:13px;color:var(--muted)}
 
-/* ── Wrap ── */
-.wrap { max-width: 680px; margin: 0 auto; padding: 28px 16px 64px; }
+  /* Steps */
+  .step{display:flex;gap:14px;padding:15px 0;border-bottom:1px dashed var(--border)}
+  .step:last-child{border-bottom:0;padding-bottom:0}
+  .num-badge{width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;margin-top:2px}
+  .num-badge.o{background:var(--owner);color:#04222c}
+  .num-badge.p{background:var(--provider);color:#fff}
+  .step-body strong{display:block;font-weight:800;margin-bottom:3px}
+  .step-body span{display:block;color:var(--muted);font-size:14px}
+  .tip{margin-top:9px;border-radius:9px;padding:9px 13px;font-size:13px;border-inline-start:3px solid}
+  .tip strong{display:block;font-weight:800;margin-bottom:2px;font-size:12.5px}
+  .tip.a{background:var(--warn-soft);border-color:var(--warn)} .tip.a strong{color:var(--warn)}
+  .tip.g{background:var(--ok-soft);border-color:var(--ok)} .tip.g strong{color:var(--ok)}
+  .tip span{color:var(--muted)}
 
-/* ── Section cards ── */
-.section {
-  background: #fff;
-  border-radius: 20px;
-  margin-bottom: 20px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  border: 1px solid #F0F4F8;
-}
-.section-header {
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.section-header.owner    { background: #EEF2F7; }
-.section-header.provider { background: #F0FDF4; }
+  /* Fee callout (provider lane only) */
+  .fee{margin-top:18px;background:var(--provider-soft);border:1px solid rgba(27,127,220,.35);border-radius:12px;padding:16px 18px}
+  .fee strong{display:block;color:var(--provider);font-weight:800;margin-bottom:5px}
+  .fee span{color:var(--muted);font-size:14px}
 
-.icon-box {
-  width: 42px; height: 42px;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.icon-box.owner    { background: #2E4A6B; }
-.icon-box.provider { background: #166534; }
-.icon-box svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* CTA */
+  .cta{margin-top:26px;text-align:center;background:var(--navy);border:1px solid var(--border);border-radius:14px;padding:26px 22px}
+  .cta h2{font-size:1.2rem;font-weight:800;margin-bottom:6px}
+  .cta p{color:var(--muted);font-size:14px;margin-bottom:16px}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .btn{display:inline-block;padding:11px 26px;border-radius:9px;font-weight:800;font-size:14.5px;text-decoration:none;transition:opacity .15s}
+  .btn:hover{opacity:.9}
+  .btn.p{background:var(--provider);color:#fff}
+  .btn.o{background:var(--owner);color:#04222c}
+  .btn.ghost{border:1px solid var(--border);color:var(--fg)}
 
-.section-title { font-size: 14pt; font-weight: 800; }
-.section-header.owner    .section-title { color: #2E4A6B; }
-.section-header.provider .section-title { color: #166534; }
-.section-sub { font-size: 9pt; color: #6B7280; margin-top: 3px; }
-
-/* ── Steps ── */
-.steps { padding: 20px 24px 26px; }
-.step { display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start; }
-.step:last-child { margin-bottom: 0; }
-
-.num {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12pt; font-weight: 800; color: #fff;
-  flex-shrink: 0; margin-top: 2px;
-}
-.num.o { background: #2E4A6B; }
-.num.p { background: #166534; }
-
-.step-body strong { display: block; font-size: 10.5pt; font-weight: 700; color: #1A2E42; margin-bottom: 4px; }
-.step-body span   { font-size: 9.5pt; color: #5A6880; line-height: 1.7; }
-
-/* ── Tips ── */
-.tip {
-  background: #F8FAFC;
-  border-right: 3px solid #2E4A6B;
-  border-radius: 0 10px 10px 0;
-  padding: 10px 14px;
-  margin-top: 8px;
-  font-size: 9pt;
-  color: #2E4A6B;
-  line-height: 1.6;
-}
-.tip strong { display: block; margin-bottom: 2px; font-size: 8.5pt; color: #1A2E42; font-weight: 800; }
-
-.tip.green {
-  border-right-color: #166534;
-  color: #166534;
-}
-.tip.green strong { color: #14532D; }
-
-/* ── Divider ── */
-.divider { height: 1px; background: #EEF2F7; margin: 16px 0; }
-
-/* ── Footer ── */
-.footer {
-  text-align: center;
-  font-size: 9pt;
-  color: #9CA3AF;
-  padding-top: 12px;
-  border-top: 1px solid #EEF2F7;
-}
-.footer strong { color: #2E4A6B; }
+  footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;padding-top:18px;border-top:1px solid var(--border)}
+  footer strong{color:var(--owner)}
+  @media (max-width:520px){ .step{gap:11px} body{font-size:14.5px} }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
 <body>
 
-<!-- ── Hero ── -->
 <div class="hero">
   <div class="hero-inner">
+    <div class="brand">عِمــارة</div>
     <h1>دليل منصة عِمارة</h1>
-    <p>منصة B2B لربط مُلاك العقارات بمزودي خدمات إدارة المرافق في الرياض</p>
-    <div class="hero-chips">
-      <span class="chip">مالك العقار</span>
-      <span class="chip">مزود الخدمة</span>
+    <p>أول منصة سعودية متخصصة في ربط شركات إدارة المرافق المرخّصة (فال) بملاك العقارات في الرياض مباشرة.</p>
+    <div class="chips">
+      <span class="chip o">مالك العقار</span>
+      <span class="chip p">مزود الخدمة</span>
     </div>
   </div>
 </div>
@@ -158,58 +104,59 @@ body { background: #F9F9FF; color: #1A2E42; direction: rtl; }
 <div class="wrap">
 
   <!-- ─── OWNER ─── -->
-  <div class="section" style="margin-top: 24px;">
-    <div class="section-header owner">
-      <div class="icon-box owner">
-        <!-- building icon -->
+  <div class="section">
+    <div class="section-header">
+      <div class="icon-box o">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       </div>
       <div>
         <div class="section-title">مالك العقار</div>
-        <div class="section-sub">انشر طلبك، استقبل العروض، اختر أفضل مزود</div>
+        <div class="section-sub">انشر احتياج عمارتك، استقبل عروضاً مكتوبة، اختر الأنسب</div>
       </div>
     </div>
-    <div class="steps">
+    <div>
 
       <div class="step">
-        <div class="num o">1</div>
+        <div class="num-badge o">1</div>
         <div class="step-body">
           <strong>أنشئ حسابك</strong>
-          <span>من صفحة تسجيل الدخول، اختر "مالك عقار" ← أدخل رقم جوالك ← أدخل رمز SMS المرسل إليك.</span>
+          <span>من صفحة التسجيل اختر «مالك عقار»، أدخل اسمك ورقم جوالك، ثم أدخل رمز التحقق الذي يصلك برسالة نصية. لا حاجة لكلمة مرور.</span>
+          <div class="tip g"><strong>مجاني بالكامل</strong><span>لا توجد أي رسوم على الملاك: النشر واستقبال العروض والمقارنة كلها مجانية.</span></div>
         </div>
       </div>
 
       <div class="step">
-        <div class="num o">2</div>
+        <div class="num-badge o">2</div>
         <div class="step-body">
-          <strong>أضف عقارك</strong>
-          <span>من لوحة التحكم ← "عقاراتي" ← "إضافة عقار" ← أدخل الاسم والنوع والحي ورابط الخريطة.</span>
-          <div class="tip"><strong>ملاحظة</strong>عقار واحد لكل حساب في المرحلة الحالية، وتحديد الرياض فقط.</div>
+          <strong>أضف عقارك وانشر طلبك في خطوة واحدة</strong>
+          <span>بعد التحقق تصل مباشرة إلى استمارة واحدة: اسم العقار، نوعه (سكني أو تجاري)، الحي، عدد الوحدات، ورابط الموقع على الخريطة، مع ملاحظاتك للمزودين. تُنشئ الاستمارة العقار وطلب التشغيل والصيانة معاً.</span>
+          <div class="tip a"><strong>حدود المرحلة الحالية</strong><span>عقار واحد لكل حساب، والرياض فقط، وحتى طلبين نشطين لكل عقار.</span></div>
         </div>
       </div>
 
       <div class="step">
-        <div class="num o">3</div>
+        <div class="num-badge o">3</div>
         <div class="step-body">
-          <strong>انشر طلب خدمة</strong>
-          <span>من "طلبات الخدمة" ← "طلب جديد" ← اختر عقارك واكتب وصف احتياجك ← "إرسال".</span>
+          <strong>تصلك العروض في حسابك</strong>
+          <span>يصل إشعار إلى شركات إدارة المرافق المعتمدة في الرياض، وتظهر عروضها في لوحتك: السعر الإجمالي، والسعر لكل وحدة، وملاحظات كل شركة.</span>
         </div>
       </div>
 
       <div class="step">
-        <div class="num o">4</div>
+        <div class="num-badge o">4</div>
         <div class="step-body">
-          <strong>استقبل العروض وقارنها</strong>
-          <span>المزودون المعتمدون يرسلون عروضهم بصيغة PDF. من "عروضي" تجد كل عرض مع السعر الإجمالي وملاحظات المزود.</span>
+          <strong>اطّلع على العرض الكامل واقبله</strong>
+          <span>زر «عرض التسعير الكامل» يفتح تأكيداً، وعند تأكيدك يُقبل العرض ويُفتح ملف العرض الكامل فوراً. يُرفض بقية العروض تلقائياً على الطلب نفسه.</span>
+          <div class="tip a"><strong>رقمك محمي حتى لحظة القبول</strong><span>لا يظهر رقم جوالك لأي شركة قبل قبولك لعرضها. وعند القبول يُتبادل الرقمان بينك وبين تلك الشركة وحدها، ولا يصل رقمك لأي شركة أخرى.</span></div>
         </div>
       </div>
 
       <div class="step">
-        <div class="num o">5</div>
+        <div class="num-badge o">5</div>
         <div class="step-body">
-          <strong>اقبل العرض وتواصل مع المزود</strong>
-          <span>اضغط "قبول" على العرض المناسب ← يظهر رقم جوال المزود مباشرة ← تواصل معه لترتيب التنفيذ.</span>
-          <div class="tip"><strong>مهم</strong>الدفع يتم مباشرة مع المزود. عِمارة وسيط وليست طرفاً في المعاملة المالية.</div>
+          <strong>تعاقد مباشرة مع الشركة</strong>
+          <span>تتواصلان مباشرة لترتيب التنفيذ وتوقيع العقد السنوي.</span>
+          <div class="tip a"><strong>الدفع خارج المنصة</strong><span>الدفع يتم مباشرة مع الشركة. عِمارة تربط الطرفين وليست طرفاً في المعاملة المالية، ولا تصيغ العقود ولا توثّقها.</span></div>
         </div>
       </div>
 
@@ -218,66 +165,81 @@ body { background: #F9F9FF; color: #1A2E42; direction: rtl; }
 
   <!-- ─── PROVIDER ─── -->
   <div class="section">
-    <div class="section-header provider">
-      <div class="icon-box provider">
-        <!-- wrench/tools icon -->
+    <div class="section-header">
+      <div class="icon-box p">
         <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
       </div>
       <div>
         <div class="section-title">مزود الخدمة</div>
-        <div class="section-sub">سجّل شركتك، تصفّح الطلبات، قدّم عروضك</div>
+        <div class="section-sub">سجّل شركتك، استقبل طلبات الملاك، قدّم عروضك</div>
       </div>
     </div>
-    <div class="steps">
+    <div>
 
       <div class="step">
-        <div class="num p">1</div>
+        <div class="num-badge p">1</div>
         <div class="step-body">
-          <strong>سجّل حسابك</strong>
-          <span>من صفحة تسجيل الدخول، اختر "مزود خدمة" ← أدخل رقم جوالك ← أدخل رمز SMS.</span>
+          <strong>سجّل حساب شركتك</strong>
+          <span>من صفحة التسجيل اختر «مزود خدمة»، أدخل اسمك ورقم جوالك، ثم رمز التحقق الذي يصلك برسالة نصية.</span>
         </div>
       </div>
 
       <div class="step">
-        <div class="num p">2</div>
+        <div class="num-badge p">2</div>
         <div class="step-body">
-          <strong>أكمل ملف شركتك</strong>
-          <span>من "ملفي الشخصي" ← أدخل: اسم الشركة، البريد الإلكتروني، السجل التجاري، ملف الشركة (PDF)، رخصة فال. انتظر موافقة الإدارة.</span>
-          <div class="tip green"><strong>مطلوب للتفعيل</strong>جميع الحقول إلزامية. الحساب غير المكتمل لا يستطيع إرسال عروض.</div>
+          <strong>أكمل ملف الشركة وارفع الوثائق</strong>
+          <span>اسم الشركة، والبريد الإلكتروني للشركة، والمدينة، مع ثلاث وثائق: السجل التجاري، والملف التعريفي للشركة، ورخصة فال.</span>
+          <div class="tip g"><strong>البريد الإلكتروني إلزامي</strong><span>كل الإشعارات تصل بالبريد: طلب جديد، قبول عرضك، واعتماد حسابك. الحساب غير المكتمل لا يستطيع تقديم عروض.</span></div>
         </div>
       </div>
 
       <div class="step">
-        <div class="num p">3</div>
+        <div class="num-badge p">3</div>
         <div class="step-body">
-          <strong>تصفّح طلبات الخدمة</strong>
-          <span>بعد الموافقة، من "الطلبات المتاحة" تجد طلبات الملاك في الرياض مع تفاصيل العقار والخدمة المطلوبة.</span>
+          <strong>انتظر المراجعة اليدوية</strong>
+          <span>يراجع فريق عِمارة وثائق شركتك بنفسه قبل اعتمادها. قبل الاعتماد ترى ملخصاً مختصراً للطلبات فقط (المدينة ونوع المبنى) بلا تفاصيل كاملة.</span>
         </div>
       </div>
 
       <div class="step">
-        <div class="num p">4</div>
+        <div class="num-badge p">4</div>
         <div class="step-body">
-          <strong>قدّم عرضك</strong>
-          <span>اضغط على الطلب ← "تقديم عرض" ← أدخل السعر الإجمالي للعقد، ارفع ملف PDF بعرضك السعري، أضف ملاحظاتك، ووافق على مشاركة رقمك ← "إرسال".</span>
-          <div class="tip green"><strong>تلميح</strong>السعر الإجمالي يُقسَّم تلقائياً على عدد الوحدات ويُعرض للمالك سعر/وحدة.</div>
+          <strong>استقبل الطلبات وقدّم عرضك</strong>
+          <span>بعد الاعتماد تصلك طلبات الملاك في الرياض على بريد شركتك. من «الطلبات المتاحة» تفتح الطلب وتقدّم عرضك: السعر الإجمالي للعقد، وملاحظاتك، وملف عرضك، مع الموافقة على مشاركة رقمك عند القبول.</span>
+          <div class="tip g"><strong>السعر لكل وحدة يُحسب تلقائياً</strong><span>السعر الإجمالي يُقسَّم على عدد وحدات المبنى ويُعرض للمالك سعراً لكل وحدة، فتكون المقارنة على أساس واحد.</span></div>
         </div>
       </div>
 
       <div class="step">
-        <div class="num p">5</div>
+        <div class="num-badge p">5</div>
         <div class="step-body">
           <strong>تابع حالة عروضك</strong>
-          <span>من "عروضي المقدمة" ترى حالة كل عرض: قيد الانتظار / مقبول / مرفوض. عند القبول يتواصل معك المالك مباشرة عبر جوالك.</span>
+          <span>من «عروضي» ترى حالة كل عرض: قيد الانتظار، أو مقبول، أو مرفوض. عند القبول يصلك اسم المالك ورقمه في البريد وفي لوحتك، وتتواصل معه مباشرة. العرض المرفوض يمكن تقديمه من جديد ما دام الطلب مفتوحاً.</span>
         </div>
+      </div>
+
+      <div class="fee">
+        <strong>الرسوم</strong>
+        <span>التسجيل والانضمام مجاني بلا أي تكلفة مقدّمة. لا تُحتسب أي رسوم إلا بعد نجاح الربط وتوقيع عقدك الفعلي مع العميل، وبنسبة تمهيدية حصرية هي 1% فقط من قيمة العقد. لا تدفع ريالاً واحداً إلا بعد أن تربح أنت أولاً.</span>
       </div>
 
     </div>
   </div>
 
-  <div class="footer">
-    <strong>منصة عِمارة</strong> · دليل المستخدم · مايو 2026
+  <div class="cta">
+    <h2>جاهز تبدأ؟</h2>
+    <p>التسجيل يستغرق دقائق، ومجاني للطرفين.</p>
+    <div class="btns">
+      <a class="btn p" href="/auth?role=provider&amp;mode=register">سجّل شركتك</a>
+      <a class="btn o" href="/auth?role=owner&amp;mode=register">أضف عقارك مجاناً</a>
+      <a class="btn ghost" href="/">الصفحة الرئيسية</a>
+    </div>
   </div>
+
+  <footer>
+    <strong>منصة عِمارة</strong> · دليل المستخدم · سبتمبر 2026<br>
+    مؤسسة عبدالله حاتم الفرائضي · سجل تجاري 7055192426 · <a href="mailto:info@emaraa.app">info@emaraa.app</a>
+  </footer>
 
 </div>
 </body>

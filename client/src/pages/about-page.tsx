@@ -4,6 +4,7 @@ import { useSeo } from "@/hooks/use-seo";
 import { ShieldCheck, Building2, Users, Sparkles, FileText, Scale, Globe } from "lucide-react";
 import { Link } from "wouter";
 import AmbientBackground from "@/components/AmbientBackground";
+import Footer from "@/components/Footer";
 
 export default function AboutPage() {
   const { lang, setLang } = useLang();
@@ -266,6 +267,7 @@ export default function AboutPage() {
           className="h-9 object-contain opacity-70"
         />
       </div>
+      <Footer />
     </div>
   );
 }

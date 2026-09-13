@@ -16,6 +16,7 @@ import ContactPage from "../client/src/pages/contact-page";
 import TermsPage from "../client/src/pages/terms";
 import PrivacyPage from "../client/src/pages/privacy";
 import NotFound from "../client/src/pages/not-found";
+import AuthPage from "../client/src/pages/auth-page";
 
 const SITE_URL = "https://emaraa.app";
 
@@ -58,6 +59,17 @@ const routes: {
     title: "سياسة الخصوصية | عِمارة",
     description:
       "كيف تتعامل منصة عِمارة مع بياناتك وخصوصيتك — رقمك لا يظهر لأي جهة إلا بعد موافقتك.",
+  },
+  {
+    // Added 2026-09-13. This is the page every ad and expo visitor lands on after
+    // the homepage CTA, and it was the one public route with no prerendered HTML:
+    // crawlers saw an empty div, and the reassurance copy was invisible until the
+    // bundle executed. Renders in its default state (owner, register).
+    route: "/auth",
+    component: AuthPage,
+    title: "إنشاء حساب | عِمارة",
+    description:
+      "سجّل مجاناً في عِمارة. الملاك ينشرون احتياج عقارهم ويستقبلون عروضاً مكتوبة من شركات إدارة مرافق مرخّصة، ورقم الجوال لا يظهر إلا بعد قبول العرض.",
   },
 ];
 

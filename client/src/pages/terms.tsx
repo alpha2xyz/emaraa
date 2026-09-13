@@ -4,6 +4,7 @@ import { useLang } from "../hooks/use-lang";
 import { useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import AmbientBackground from "@/components/AmbientBackground";
+import Footer from "@/components/Footer";
 
 type Section = { title: string; body: string[] };
 
@@ -11,7 +12,7 @@ const arSections: Section[] = [
   {
     title: "التعريفات",
     body: [
-      '"المنصة / عِمارة / نحن / لنا": تعني منصة عِمارة الإلكترونية المملوكة والمُدارة من قِبل فريق عِمارة داخل المملكة العربية السعودية.',
+      '"المنصة / عِمارة / نحن / لنا": تعني منصة عِمارة الإلكترونية المملوكة والمُدارة من قِبل مؤسسة عبدالله حاتم الفرائضي، وهي مؤسسة فردية مسجّلة في المملكة العربية السعودية بسجل تجاري رقم 7055192426.',
       '"المستخدم / أنت / حسابك": يعني أي شخص طبيعي أو كيان يصل إلى المنصة أو يستخدمها سواء بصفة مالك عقار أو مزود خدمة.',
       '"مالك العقار": المستخدم المسجّل الذي ينشر طلبات الخدمة لعقاراته السكنية أو التجارية.',
       '"مزود الخدمة": الشركة أو المؤسسة المُعتمدة من الإدارة التي تقدّم عروضها للخدمات المطلوبة.',
@@ -156,7 +157,7 @@ const enSections: Section[] = [
   {
     title: "Definitions",
     body: [
-      '"Platform / EMARAA / We / Us": refers to the EMARAA digital platform owned and operated by the EMARAA team within the Kingdom of Saudi Arabia.',
+      '"Platform / EMARAA / We / Us": refers to the EMARAA digital platform, owned and operated by Abdullah Hatim Alfaraidi Establishment, a sole proprietorship registered in the Kingdom of Saudi Arabia under Commercial Register number 7055192426.',
       '"User / You / Your Account": means any natural person or entity accessing or using the platform, whether as a property owner or service provider.',
       '"Property Owner": the registered user who posts service requests for their residential or commercial properties.',
       '"Service Provider": a company or entity approved by administration that submits proposals for requested services.',
@@ -383,6 +384,7 @@ export default function TermsPage() {
         </div>
       </div>
       </div>
+      <Footer />
     </div>
   );
 }
