@@ -153,7 +153,11 @@
     --err: #F87171;   --err-soft: rgba(248, 113, 113, .14);
     /* default role accent (overridden by DashboardLayout for providers) */
     --role: var(--owner);
-    --font-sans: Inter, sans-serif;
+    /* --font-sans is deliberately NOT redefined here. This :root block comes after
+       the one at the top of the file, so declaring it again silently overrode the
+       Cairo stack and Cairo never rendered on any page from June to September 2026
+       even though it is the official brand font. Verify with
+       document.fonts.check('16px Cairo') on the deployed page, not a bundle hash. */
     --font-serif: Georgia, serif;
     --font-mono: Menlo, monospace;
     --radius: .5rem;

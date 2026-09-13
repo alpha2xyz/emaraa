@@ -47,6 +47,7 @@ import { useLang } from "@/hooks/use-lang";
 import { Navbar } from "@/components/Navbar";
 import RequireAuth from "@/components/RequireAuth";
 import AmbientBackground from "@/components/AmbientBackground";
+import CookieConsent from "@/components/CookieConsent";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 // ── Pages ──────────────────────────────────────────────────────────────────
@@ -201,6 +202,7 @@ export default function App() {
         <TooltipProvider>
           <Router />
           <Toaster />
+          <CookieConsent />
           <Analytics />
         </TooltipProvider>
       </QueryClientProvider>
