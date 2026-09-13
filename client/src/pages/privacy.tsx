@@ -4,6 +4,7 @@ import { useLang } from "../hooks/use-lang";
 import { useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import AmbientBackground from "@/components/AmbientBackground";
+import Footer from "@/components/Footer";
 
 type Section = { title: string; body: string[] };
 
@@ -309,6 +310,7 @@ export default function PrivacyPage() {
         </div>
       </div>
       </div>
+      <Footer />
     </div>
   );
 }

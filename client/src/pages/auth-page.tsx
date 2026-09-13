@@ -31,7 +31,13 @@ export default function AuthPage() {
   const [otpCode, setOtpCode] = useState("");
 
   // جلب role و mode من URL
-  const urlParams = new URLSearchParams(window.location.search);
+  // Guarded for the build-time prerender (script/prerender.tsx), where there is no
+  // window. Falls back to the defaults below, which is what /auth should show to a
+  // crawler anyway. The client mounts with createRoot, not hydrateRoot, so the real
+  // query string is applied on the first browser render with no mismatch.
+  const urlParams = new URLSearchParams(
+    typeof window === "undefined" ? "" : window.location.search
+  );
   const role = urlParams.get("role") || "owner";
 
   const isProvider = role === "provider";
@@ -423,6 +429,47 @@ export default function AuthPage() {
                       <AlertCircle className="w-4 h-4" />
                       {error}
                     </div>
+                  )}
+
+                  {/* Reassurance before the commit point. The page previously showed
+                      two fields and a button: no logo, no "free", no privacy promise,
+                      and no warning that an SMS was about to arrive. These lines live
+                      in the form column on purpose. The marketing bullets in the left
+                      panel are hidden below lg, and ~70% of traffic is mobile, so
+                      anything placed there is invisible to most visitors. */}
+                  {mode === "register" && (
+                    <ul className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-3">
+                      {(isProvider
+                        ? lang === "ar"
+                          ? [
+                              "التسجيل مجاني. تحتاج إلى رفع ثلاث وثائق: السجل التجاري، والملف التعريفي للشركة، ورخصة فال.",
+                              "يراجع فريقنا ملف شركتك يدوياً قبل اعتماده، ثم تصلك طلبات الملاك على بريد شركتك.",
+                            ]
+                          : [
+                              "Registration is free. You will need to upload three documents: commercial register, company profile, and FAL license.",
+                              "Our team reviews your company file manually before approval, then owner requests arrive at your company email.",
+                            ]
+                        : lang === "ar"
+                          ? [
+                              "التسجيل مجاني بالكامل، ولا توجد أي رسوم على الملاك.",
+                              "يصلك رمز تحقق عبر رسالة نصية على جوالك.",
+                              "لا يظهر رقمك لأي شركة إلا بعد قبولك لعرضها.",
+                            ]
+                          : [
+                              "Registration is completely free. Owners never pay a fee.",
+                              "We will text you a verification code.",
+                              "Your number stays hidden from every company until you accept its offer.",
+                            ]
+                      ).map((line) => (
+                        <li key={line} className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                          <CheckCircle2
+                            className="mt-0.5 h-4 w-4 flex-shrink-0"
+                            style={{ color: themeColor }}
+                          />
+                          <span>{line}</span>
+                        </li>
+                      ))}
+                    </ul>
                   )}
 
                   <Button

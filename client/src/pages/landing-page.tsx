@@ -4,6 +4,7 @@ import { useLang } from "@/hooks/use-lang";
 import { revealDelay, useReveal } from "@/hooks/use-reveal";
 import { useSeo } from "@/hooks/use-seo";
 import { Link } from "wouter";
+import Footer from "@/components/Footer";
 import {
   Globe,
   ClipboardList,
@@ -153,6 +154,11 @@ function HeroIllustration() {
 
 // ── Browser-framed product screenshot ───────────────────────────────────────
 function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
+  const { lang } = useLang();
+  // Every frame carries an explicit "illustrative example" badge. BRAND-VOICE §9
+  // forbids showing sample prices as if they were Emaraa pricing, and these
+  // mockups show figures and company names that are entirely made up.
+  const demoLabel = lang === "ar" ? "مثال توضيحي" : "Illustrative example";
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
       <div className="flex h-9 items-center gap-1.5 border-b border-border px-3" style={{ background: "var(--navy-3)" }}>
@@ -161,6 +167,12 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
         <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
         <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-border px-2 text-[11px] text-muted-foreground" style={{ background: "var(--navy-2)" }}>
           {url}
+        </span>
+        <span
+          className="ms-auto flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+          style={{ color: "var(--warn)", background: "var(--warn-soft)" }}
+        >
+          {demoLabel}
         </span>
       </div>
       <div className="p-4" style={{ background: "var(--navy-2)" }}>{children}</div>
@@ -224,10 +236,10 @@ export default function LandingPage() {
         unitsLabel: "عدد الوحدات",
         saveBtn: "حفظ ونشر الطلب",
         offersHead: "عروض المزوّدين على طلبك",
-        co1: "مرافق الرياض المتكاملة",
-        co1sub: "مرخّصة من الهيئة · وصل الآن",
-        co2: "الإتقان لإدارة المرافق",
-        co2sub: "مرخّصة من الهيئة · قبل ساعة",
+        co1: "شركة إدارة مرافق (أ)",
+        co1sub: "مرخّصة من الهيئة",
+        co2: "شركة إدارة مرافق (ب)",
+        co2sub: "مرخّصة من الهيئة",
         newBadge: "عرض جديد",
         compareHead: "قارن واختر العرض المناسب",
         totalLabel: "الإجمالي",
@@ -315,10 +327,10 @@ export default function LandingPage() {
         unitsLabel: "Units",
         saveBtn: "Save & post request",
         offersHead: "Provider offers on your request",
-        co1: "Riyadh Integrated Facilities",
-        co1sub: "REGA-licensed · just now",
-        co2: "Al-Itqan Facility Mgmt",
-        co2sub: "REGA-licensed · 1h ago",
+        co1: "FM Company (A)",
+        co1sub: "REGA-licensed",
+        co2: "FM Company (B)",
+        co2sub: "REGA-licensed",
         newBadge: "New offer",
         compareHead: "Compare & choose the right offer",
         totalLabel: "Total",
@@ -809,99 +821,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-card border-t border-border py-10 md:py-12 pb-safe">
-        <div className="container mx-auto px-4">
-          <div className="grid sm:grid-cols-2 gap-8 mb-8">
-            <div>
-              <p className="text-xl font-extrabold mb-2" style={{ color: "var(--owner)" }}>{t.siteName}</p>
-              <p className="text-sm text-muted-foreground mb-4">{t.footerTagline}</p>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3">{t.followUs}</h4>
-                <div className="flex gap-3">
-                  <a
-                    href="https://www.instagram.com/emaraa.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Instagram"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
-                  >
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/company/emaraafm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="LinkedIn"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
-                  >
-                    <Linkedin className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="https://x.com/Emaraa_app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="X (Twitter)"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-3">{t.quickLinks}</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    href="/contact"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.contactUs}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.aboutUs}
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="/emaraa-guide.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.viewDemo}
-                  </a>
-                </li>
-                <li>
-                  <Link
-                    href="/terms"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.termsOfUse}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.privacyPolicy}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border pt-6 text-center">
-            <p className="text-sm text-muted-foreground">{t.footerCopyright}</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* ── Floating WhatsApp button ─────────────────────────────────────── */}
       <a

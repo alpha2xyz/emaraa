@@ -6,6 +6,7 @@ import { revealDelay, useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import { Globe } from "lucide-react";
 import AmbientBackground from "@/components/AmbientBackground";
+import Footer from "@/components/Footer";
 
 export default function ContactPage() {
   const { lang, setLang } = useLang();
@@ -128,6 +129,7 @@ export default function ContactPage() {
         </div>
       </div>
       </div>
+      <Footer />
     </div>
   );
 }
