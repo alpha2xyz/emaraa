@@ -164,10 +164,18 @@ export const admins = pgTable("admins", {
 
 export type Admin = typeof admins.$inferSelect;
 
-// OTP rate limits (DB-backed, survives cold starts)
+// OTP rate limits (DB-backed, survives cold starts).
+// One row per attempt. `kind` separates the two counters: 'send' rows cap SMS
+// spend, 'verify' rows cap code-guessing. Before 2026-09-13 only 'send' rows were
+// ever written while /api/otp/verify counted the same rows, so the verify limit
+// could never trigger and a 4-digit code was brute-forceable.
+// `ip` backs the per-IP send cap; it is nullable because rows written before that
+// date have none.
 export const otpRateLimits = pgTable("otp_rate_limits", {
   id: uuid("id").primaryKey().defaultRandom(),
   phone: text("phone").notNull(),
+  ip: text("ip"),
+  kind: text("kind").default("send"),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 

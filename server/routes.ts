@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
 import {
   sendEmail,
   buildAdminReport,
@@ -589,6 +590,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "اسم الشركة مطلوب" });
       }
 
+      // Every supplied document path must sit under this caller's own folder.
+      // Without this, a provider could store another provider's path on their row
+      // and /api/files/signed-url would then authorize them for it.
+      const pathError = checkProviderDocumentPaths(userId, {
+        commercial_register_url,
+        company_profile_url,
+        fal_license_url,
+      });
+      if (pathError) {
+        console.warn("[provider/profile] rejected document path", { userId });
+        return res.status(403).json({ error: pathError });
+      }
+
       // Email is REQUIRED for providers — it's the only channel we have to send them
       // notifications (welcome, account approved, new requests, offer accepted).
       const emailTrimmed = (email ?? "").trim();
@@ -798,6 +812,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .maybeSingle();
       if (!provider) return res.status(403).json({ error: "provider_not_found" });
       if (!provider.approved) return res.status(403).json({ error: "not_approved" });
+
+      // The offer file must be one this provider could have uploaded. Without this,
+      // a provider could submit another provider's offer PDF path and then read it
+      // back through /api/files/signed-url, which trusts the stored value.
+      const offerPathError = checkOfferPath(provider.id, offer_file_url);
+      if (offerPathError) {
+        console.warn("[provider/offers] rejected offer path", { providerId: provider.id });
+        return res.status(403).json({ error: offerPathError });
+      }
 
       // The request must still be pending — a rejected/in_progress/closed request
       // may not receive a new or revived offer (the UI only lists pending requests,
@@ -1726,15 +1749,56 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.json({ success: true, bypass: true });
       }
 
-      // Rate limit: max 3 OTPs per phone per 10 minutes
-      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { count } = await supabaseAdmin
-        .from("otp_rate_limits")
-        .select("*", { count: "exact", head: true })
-        .eq("phone", phone)
-        .gte("created_at", tenMinAgo);
-      if ((count ?? 0) >= 3) {
+      // Three independent caps, all counting 'send' rows only.
+      //   per-phone  — stops one number being spammed
+      //   per-IP     — stops phone-number enumeration from a single attacker
+      //   global/day — hard ceiling on Authentica credit burn, whatever the source
+      // The per-IP limit is deliberately loose: at an expo (SFMA, Cityscape) a
+      // queue of providers registers from one venue NAT, and blocking that queue
+      // would cost more than the abuse it prevents. Enumeration needs thousands of
+      // sends, so 20/hour still stops it. All three are env-tunable so the numbers
+      // can be raised at an event without a deploy.
+      const clientIp = req.ip ?? "unknown";
+      const nowMs = Date.now();
+      const tenMinAgo = new Date(nowMs - 10 * 60 * 1000).toISOString();
+      const oneHourAgo = new Date(nowMs - 60 * 60 * 1000).toISOString();
+      const oneDayAgo = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
+
+      const MAX_PER_PHONE = Number(process.env.OTP_MAX_PER_PHONE_10MIN ?? 3);
+      const MAX_PER_IP = Number(process.env.OTP_MAX_PER_IP_HOUR ?? 20);
+      const MAX_GLOBAL_DAY = Number(process.env.OTP_MAX_GLOBAL_DAY ?? 300);
+
+      const [phoneRes, ipRes, globalRes] = await Promise.all([
+        supabaseAdmin
+          .from("otp_rate_limits")
+          .select("*", { count: "exact", head: true })
+          .eq("phone", phone)
+          .eq("kind", "send")
+          .gte("created_at", tenMinAgo),
+        supabaseAdmin
+          .from("otp_rate_limits")
+          .select("*", { count: "exact", head: true })
+          .eq("ip", clientIp)
+          .eq("kind", "send")
+          .gte("created_at", oneHourAgo),
+        supabaseAdmin
+          .from("otp_rate_limits")
+          .select("*", { count: "exact", head: true })
+          .eq("kind", "send")
+          .gte("created_at", oneDayAgo),
+      ]);
+
+      if ((phoneRes.count ?? 0) >= MAX_PER_PHONE) {
         return res.status(429).json({ error: "Too many OTP requests. Please wait 10 minutes." });
+      }
+      if (clientIp !== "unknown" && (ipRes.count ?? 0) >= MAX_PER_IP) {
+        console.warn("[otp/send] per-IP cap hit", { ip: clientIp });
+        return res.status(429).json({ error: "Too many OTP requests. Please wait and try again." });
+      }
+      if ((globalRes.count ?? 0) >= MAX_GLOBAL_DAY) {
+        // Not the user's fault — page the operator rather than silently failing.
+        console.error("[otp/send] GLOBAL daily OTP cap reached", { cap: MAX_GLOBAL_DAY });
+        return res.status(429).json({ error: "Service temporarily unavailable. Please try again later." });
       }
 
       const e164 = "+966" + phone.substring(1);
@@ -1751,7 +1815,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       // Record this OTP attempt
-      await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+      await supabaseAdmin.from("otp_rate_limits").insert([{ phone, ip: clientIp, kind: "send" }]);
       res.json({ success: true });
     } catch (err: any) {
       console.error("[otp/send] exception:", err?.message);
@@ -1767,12 +1831,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid phone number" });
       }
 
-      // Rate limit: max 5 OTP verify attempts per phone per 15 minutes (DB-backed, survives cold starts)
+      // Rate limit: max 5 OTP verify attempts per phone per 15 minutes (DB-backed,
+      // survives cold starts). Counts kind='verify' rows, which are written below on
+      // every attempt. Until 2026-09-13 this counted the same rows /api/otp/send
+      // wrote and nothing recorded a verify, so the ceiling was unreachable and a
+      // 4-digit code could be guessed without limit.
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { count: verifyCount } = await supabaseAdmin
         .from("otp_rate_limits")
-        .select("phone", { count: "exact", head: true })
+        .select("*", { count: "exact", head: true })
         .eq("phone", phone)
+        .eq("kind", "verify")
         .gte("created_at", fifteenMinAgo);
       if ((verifyCount ?? 0) >= 5) {
         return res.status(429).json({ error: "Too many attempts. Try again later." });
@@ -1786,12 +1855,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid role" });
       }
 
+      // Record the attempt before the code is checked, so a wrong guess still counts
+      // against the cap. Deliberately placed AFTER input validation: a malformed
+      // request must not burn a real user's attempt budget, since any per-phone
+      // verify cap can otherwise be used to lock someone out of their own login.
+      await supabaseAdmin
+        .from("otp_rate_limits")
+        .insert([{ phone, ip: req.ip ?? "unknown", kind: "verify" }]);
+
       // Env-gated test login (OTP_TEST_MODE, never set in production). A whitelisted fake
       // number logs in with the fixed OTP_TEST_CODE; a wrong code is rejected. Any other
       // number falls through to the real Authentica verification.
       if (isOtpTestNumber(phone)) {
         if (code !== OTP_TEST_CODE) {
-          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          // The attempt was already recorded above.
           return res.status(400).json({ error: "Invalid OTP" });
         }
       } else {
@@ -1803,8 +1880,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         });
 
         if (!r.ok) {
-          // Record failed verify attempt in DB so rate limit persists across cold starts
-          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          // The attempt was already recorded above (as kind='verify'). The old insert
+          // here wrote no kind, so it landed in the 'send' bucket and a failed login
+          // silently ate the SMS-send budget.
           return res.status(400).json({ error: "Invalid OTP" });
         }
       }

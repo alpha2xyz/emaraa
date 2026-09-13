@@ -3,20 +3,14 @@ import { initSentry, captureError } from "../server/sentry.js";
 // Initialize Sentry first — no-op unless SENTRY_DSN is set.
 initSentry();
 
-import express, { type Request, Response, NextFunction } from "express";
+import { type Request, type Response } from "express";
 import { createServer } from "http";
 import { registerRoutes, seedAdmin } from "../server/routes.js";
+import { createApp, mountErrorHandler } from "../server/app.js";
 
-const app = express();
-
-app.use(
-  express.json({
-    verify: (req: any, _res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
-app.use(express.urlencoded({ extended: false }));
+// Production entry (Vercel). The middleware stack comes from createApp() so it
+// cannot drift from dev again — see the comment in server/app.ts.
+const app = createApp();
 
 const server = createServer(app);
 
@@ -25,11 +19,9 @@ let initError: Error | null = null;
 const ready = (async () => {
   try {
     await registerRoutes(server, app);
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      captureError(err);
-      const status = err.status || err.statusCode || 500;
-      res.status(status).json({ message: err.message || "Internal Server Error" });
-    });
+    // Report to Sentry, but never rethrow: throwing after the response is sent
+    // takes the serverless function down with it.
+    mountErrorHandler(app, { onError: captureError });
     // Seed admin from env vars — fire-and-forget, never blocks startup
     seedAdmin().catch((e) => console.error("[seedAdmin] unexpected error:", e?.message));
   } catch (e: any) {
