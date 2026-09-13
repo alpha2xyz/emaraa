@@ -139,9 +139,9 @@ test.describe("Provider — My Offers", () => {
   test.skip("shows offer status badges", async ({ page }) => {
     await injectProviderAuth(page);
     await page.goto("/dashboard/provider/offers");
-    // Status labels exist (pending / accepted / rejected)
-    const statusCount = await page.locator("text=قيد المراجعة, text=مقبول, text=مرفوض").count();
-    // Just checking the page renders — offers may be empty
+    // Just checking the page renders — offers may be empty, so the status-label
+    // count was computed and then never asserted on. Dropped rather than kept as
+    // a value nothing reads.
     await expect(page.locator("body")).toBeVisible();
   });
 });

@@ -11,6 +11,7 @@ import {
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
+import { enqueueEmails, drainOutbox } from "./outbox.js";
 import {
   sendEmail,
   buildAdminReport,
@@ -85,6 +86,31 @@ function requireProvider(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Admin routes authenticate with a separate admin session token (not the user
+// `sessions` table), verified by the verify_admin_session RPC.
+//
+// Was a helper each route had to remember to call as
+// `if (!(await verifyAdminToken(req, res))) return;`. Two routes
+// (/api/admin/impersonate, /api/admin/approve-provider) had instead inlined their
+// own copy of the check, so the real guard count was 10 across two spellings and
+// nothing structurally stopped an 11th route from forgetting entirely. As
+// middleware it sits in the route signature where a missing guard is visible.
+//
+// Uses supabaseAdmin, not the anon client the old helper used: an admin-session
+// check should not depend on the anon role retaining EXECUTE on that function.
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
+  if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
+  const { data: isValid } = await supabaseAdmin.rpc("verify_admin_session", {
+    p_token: adminToken,
+  });
+  if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
+  // Exposed for routes that need to identify the acting admin (impersonation audit
+  // log), mirroring how requireSession attaches userId.
+  (req as any).adminToken = adminToken;
+  next();
+}
+
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // Session verification — used by RequireAuth.tsx (bypasses RLS via supabaseAdmin)
   app.get("/api/session/verify", async (req, res) => {
@@ -124,9 +150,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // Update current user's profile (name and/or email). Email is optional — owners use it to
   // opt in to email notifications about their requests; "" clears it.
+  const userProfileUpdateSchema = z.object({
+    name: z.string().trim().min(1).max(60).optional(),
+    email: z.string().trim().email().or(z.literal("")).nullable().optional(),
+  });
+
   app.put("/api/user/profile", requireSession, async (req, res) => {
     try {
-      const { name, email } = req.body;
+      const parsedProfile = userProfileUpdateSchema.safeParse(req.body ?? {});
+      if (!parsedProfile.success) {
+        return res.status(400).json({ error: "invalid_profile" });
+      }
+      const { name, email } = parsedProfile.data;
       const update: Record<string, any> = {};
       if (name !== undefined) {
         if (!String(name).trim()) return res.status(400).json({ error: "name_required" });
@@ -185,7 +220,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(500).json({ error: "Failed to create session" });
       }
       res.json({ id: admin.id, token });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Login failed" });
     }
   });
@@ -200,7 +235,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .order("created_at", { ascending: false });
       if (error) throw error;
       res.json(data || []);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch properties" });
     }
   });
@@ -216,7 +251,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (property.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
       res.json(property);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch property" });
     }
   });
@@ -348,7 +383,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { error } = await supabaseAdmin.from("properties").delete().eq("id", req.params.id);
       if (error) throw error;
       res.status(204).send();
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to delete property" });
     }
   });
@@ -496,7 +531,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const requesterUserId: string | null = sessionValid ? (session!.user_id as string) : null;
       let isAdmin = false;
       if (!sessionValid) {
-        const { data: adminOk } = await supabase.rpc("verify_admin_session", { p_token: token });
+        const { data: adminOk } = await supabaseAdmin.rpc("verify_admin_session", { p_token: token });
         isAdmin = !!adminOk;
       }
       if (!requesterUserId && !isAdmin) return res.status(401).json({ error: "Unauthorized" });
@@ -721,7 +756,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         availableRequests: availableRequests || [],
         myOffers: myOffers || [],
       });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch provider dashboard" });
     }
   });
@@ -776,7 +811,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         submittedRequestIds: (myOffers || []).map((o: any) => o.request_id),
         declinedRequestIds: (myDeclines || []).map((d: any) => d.request_id),
       });
-    } catch (err: any) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch provider requests" });
     }
   });
@@ -1145,7 +1180,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .order("created_at", { ascending: false });
       if (error) throw error;
       res.json(data || []);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch service requests" });
     }
   });
@@ -1161,7 +1196,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (request.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
       res.json(request);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch service request" });
     }
   });
@@ -1313,16 +1348,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             ctaLabel: "تقديم عرض الآن",
             ctaUrl: "https://emaraa.app",
           });
-          // Sequential awaits — fine at current provider counts (~tens). Revisit with a
-          // background worker if this list grows into the hundreds.
-          for (const p of recipients) {
-            await notify(
-              (p as any).email,
-              `طلب خدمة جديد في ${propCity ?? "الرياض"} — عِمارة`,
+          // Was a sequential await per provider directly on the request path, with
+          // no maxDuration: at eight to ten providers the request times out, the
+          // owner sees a failure for a request that WAS created, and the rest of
+          // the providers never hear about it. Now written to the outbox first so
+          // nothing can be lost, then sent in parallel. See server/outbox.ts.
+          const subject = `طلب خدمة جديد في ${propCity ?? "الرياض"} — عِمارة`;
+          const ids = await enqueueEmails(
+            supabaseAdmin,
+            recipients.map((p: any) => ({
+              to_email: p.email as string,
+              subject,
               html,
-              "new_request",
-            );
-          }
+              kind: "new_request",
+            })),
+          );
+          await drainOutbox(supabaseAdmin, { ids });
         }
       } catch {
         // The request itself is already created — broadcasting is best-effort.
@@ -1426,18 +1467,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { error } = await supabaseAdmin.from("requests").delete().eq("id", req.params.id);
       if (error) throw error;
       res.status(204).send();
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to delete service request" });
     }
   });
 
   // Offer status — accept or reject an offer (server-enforced ownership check)
+  const offerStatusSchema = z.object({ status: z.enum(["accepted", "rejected"]) });
+
   app.patch("/api/offers/:id/status", requireSession, requireOwner, async (req, res) => {
     try {
-      const { status } = req.body;
-      if (!["accepted", "rejected"].includes(status)) {
+      const parsedStatus = offerStatusSchema.safeParse(req.body ?? {});
+      if (!parsedStatus.success) {
         return res.status(400).json({ error: "Invalid status" });
       }
+      const { status } = parsedStatus.data;
 
       const { data: offer, error: offerError } = await supabaseAdmin
         .from("provider_offers")
@@ -1695,7 +1739,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       res.json({ success: true, offer_file_url: acceptedOfferFileUrl });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to update offer status" });
     }
   });
@@ -2113,13 +2157,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Admin impersonation — creates a real session for any user. Requires valid admin session token.
-  app.post("/api/admin/impersonate", async (req, res) => {
-    const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-    if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
-
-    const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-    if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
-
+  app.post("/api/admin/impersonate", requireAdmin, async (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
@@ -2144,7 +2182,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { data: actingAdmin } = await supabaseAdmin
       .from("admins")
       .select("id, username")
-      .eq("session_token", adminToken)
+      .eq("session_token", (req as any).adminToken)
       .maybeSingle();
     Promise.resolve(
       supabaseAdmin
@@ -2167,14 +2205,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Approve or reject a provider. Emails the provider on approval.
-  app.post("/api/admin/approve-provider", async (req, res) => {
+  app.post("/api/admin/approve-provider", requireAdmin, async (req, res) => {
     try {
-      const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-      if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
-
-      const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-      if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
-
       const { id, approved } = req.body;
       if (!id || typeof approved !== "boolean") {
         return res.status(400).json({ error: "id and approved required" });
@@ -2203,7 +2235,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       res.json({ success: true });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to update provider approval" });
     }
   });
@@ -2251,22 +2283,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Admin data endpoints (all use supabaseAdmin to bypass RLS) ──────────────
 
-  async function verifyAdminToken(req: Request, res: Response): Promise<boolean> {
-    const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-    if (!adminToken) {
-      res.status(401).json({ error: "Unauthorized" });
-      return false;
-    }
-    const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-    if (!isValid) {
-      res.status(401).json({ error: "Invalid admin session" });
-      return false;
-    }
-    return true;
-  }
 
-  app.get("/api/admin/stats", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     const [owners, properties, requests, providers] = await Promise.all([
       supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "owner"),
       supabaseAdmin.from("properties").select("id", { count: "exact", head: true }),
@@ -2284,8 +2302,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     });
   });
 
-  app.get("/api/admin/users", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("users")
       .select("id, name, phone, role, created_at")
@@ -2295,8 +2312,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data ?? []);
   });
 
-  app.get("/api/admin/providers", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/providers", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("users")
       .select(
@@ -2308,8 +2324,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data ?? []);
   });
 
-  app.get("/api/admin/properties", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/properties", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("properties")
       .select(
@@ -2320,8 +2335,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data ?? []);
   });
 
-  app.get("/api/admin/deals", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/deals", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("deals")
       .select(
@@ -2342,17 +2356,31 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ deals: data ?? [], gmv, closedCount: (closed ?? []).length });
   });
 
-  app.patch("/api/admin/deals/:id", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
-    const { contract_value, status, signed_at, notes } = req.body as {
-      contract_value?: string | number | null;
-      status?: string;
-      signed_at?: string | null;
-      notes?: string | null;
-    };
-    if (status && !["pending", "closed", "cancelled"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
+  // contract_value lands in a NUMERIC column and signed_at in a TIMESTAMPTZ, but
+  // both used to be forwarded essentially as received: a non-numeric string turned
+  // into a raw 500 from the database rather than a clean 400.
+  const adminDealUpdateSchema = z.object({
+    contract_value: z
+      .union([z.number(), z.string()])
+      .nullable()
+      .optional()
+      .refine((v) => v == null || v === "" || !Number.isNaN(Number(v)), {
+        message: "contract_value must be numeric",
+      }),
+    status: z.enum(["pending", "closed", "cancelled"]).optional(),
+    signed_at: z.string().datetime({ offset: true }).or(z.literal("")).nullable().optional(),
+    notes: z.string().max(2000).nullable().optional(),
+  });
+
+  app.patch("/api/admin/deals/:id", requireAdmin, async (req, res) => {
+    const parsedDeal = adminDealUpdateSchema.safeParse(req.body ?? {});
+    if (!parsedDeal.success) {
+      return res.status(400).json({
+        error: "invalid_deal_update",
+        details: parsedDeal.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+      });
     }
+    const { contract_value, status, signed_at, notes } = parsedDeal.data;
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (contract_value !== undefined)
       update.contract_value = contract_value === "" ? null : contract_value;
@@ -2369,8 +2397,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data);
   });
 
-  app.get("/api/admin/requests", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/requests", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("requests")
       .select(
@@ -2383,8 +2410,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Admin activity report → email to info@emaraa.app ──────────────────────
   // On-demand: triggered by the "أرسل التقرير الآن" button in the admin dashboard.
-  app.post("/api/admin/send-report", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.post("/api/admin/send-report", requireAdmin, async (req, res) => {
     try {
       const { subject, html } = await buildAdminReport(supabaseAdmin);
       const r = await sendEmail(supabaseAdmin, { subject, html, kind: "admin_report" });
@@ -2515,6 +2541,25 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   //     off-platform, so owner-dashboard inactivity doesn't mean the deal is dead.
   //   Pass B — stale-offer nudge: a `pending` offer sitting unreviewed 5+ days on a
   //     request that did NOT just expire in Pass A goes into the same admin digest.
+  // Retry pass for the email outbox. NOT the primary send path: enqueued mail is
+  // drained in parallel the moment it is written (see server/outbox.ts). This only
+  // picks up rows that failed then, which on a daily schedule is the right cadence
+  // for a retry but would have been far too slow as the main delivery mechanism.
+  app.get("/api/cron/outbox", async (req, res) => {
+    const secret = process.env.CRON_SECRET ?? "";
+    const auth = req.headers["authorization"] ?? "";
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    try {
+      const { sent, failed } = await drainOutbox(supabaseAdmin, { limit: 200 });
+      res.json({ ok: true, sent, failed });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[cron outbox]", e?.message);
+      res.status(500).json({ error: "outbox_drain_failed" });
+    }
+  });
+
   app.get("/api/cron/request-lifecycle", async (req, res) => {
     const secret = process.env.CRON_SECRET ?? "";
     const auth = req.headers["authorization"] ?? "";

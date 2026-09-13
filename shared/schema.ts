@@ -1,5 +1,4 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, uuid, boolean, numeric, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, uuid, boolean, numeric, jsonb, index } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Users model
@@ -29,7 +28,9 @@ export const properties = pgTable("properties", {
   national_address: text("national_address"),
   owner_id: uuid("owner_id").notNull(),
   created_at: timestamp("created_at").defaultNow(),
-});
+}, (t) => ({
+  ownerIdx: index("idx_properties_owner_id").on(t.owner_id),
+}));
 
 export const insertPropertySchema = z.object({
   name: z.string(),
@@ -55,7 +56,11 @@ export const requests = pgTable("requests", {
   status: text("status").notNull().default("pending"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
-});
+}, (t) => ({
+  ownerIdx: index("idx_requests_owner_id").on(t.owner_id),
+  statusIdx: index("idx_requests_status").on(t.status),
+  propertyIdx: index("idx_requests_property_id").on(t.property_id),
+}));
 
 export const insertRequestSchema = z.object({
   owner_id: z.string().uuid().optional(),
@@ -109,7 +114,10 @@ export const providerOffers = pgTable("provider_offers", {
   duration_months: integer("duration_months"),
   status: text("status").default("pending"),
   created_at: timestamp("created_at").defaultNow(),
-});
+}, (t) => ({
+  providerIdx: index("idx_provider_offers_provider_id").on(t.provider_id),
+  requestIdx: index("idx_provider_offers_request_id").on(t.request_id),
+}));
 
 export type OfferLineItem = { service: string; price_per_unit: number };
 
@@ -175,7 +183,11 @@ export const deals = pgTable("deals", {
   commission_reminder_sent_at: timestamp("commission_reminder_sent_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => ({
+  // The only index of the six in master plan v1006 that was genuinely absent
+  // from production; the other five already existed (verified 2026-09-13).
+  requestIdx: index("idx_deals_request_id").on(t.request_id),
+}));
 
 export type Deal = typeof deals.$inferSelect;
 
@@ -193,6 +205,28 @@ export const emailLog = pgTable("email_log", {
 });
 
 export type EmailLog = typeof emailLog.$inferSelect;
+
+// Durable queue for outbound email. See server/outbox.ts for why this exists:
+// the provider broadcast used to run as sequential awaits on the request path and
+// would time out once the approved-provider list grew, losing notifications.
+// Rows are written first, then sent in parallel immediately; the daily cron only
+// retries what did not go out.
+export const emailOutbox = pgTable("email_outbox", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  to_email: text("to_email").notNull(),
+  subject: text("subject").notNull(),
+  html: text("html").notNull(),
+  kind: text("kind"),
+  status: text("status").notNull().default("pending"), // pending | sent | failed
+  attempts: integer("attempts").notNull().default(0),
+  last_error: text("last_error"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  sent_at: timestamp("sent_at", { withTimezone: true }),
+}, (t) => ({
+  pendingIdx: index("idx_email_outbox_status_created").on(t.status, t.created_at),
+}));
+
+export type EmailOutbox = typeof emailOutbox.$inferSelect;
 
 // Sessions model (server-managed auth sessions)
 export const sessions = pgTable("sessions", {
