@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { openSignedPdf } from "@/lib/storage";
+import { formatContractDate } from "@/components/ContractStartDatePicker";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -945,6 +946,14 @@ export default function OwnerDashboard() {
                     >
                       {lang === "ar" ? statusConfig?.label : statusConfig?.labelEn}
                     </span>
+                    {request.contract_start_date && (
+                      <span className="text-xs text-muted-foreground">
+                        {lang === "ar" ? "بداية العقد: " : "Starts: "}
+                        <span className="text-foreground">
+                          {formatContractDate(request.contract_start_date, lang)}
+                        </span>
+                      </span>
+                    )}
                     {request.created_at && (
                       <span className="text-xs text-muted-foreground ms-auto">
                         {new Date(request.created_at).toLocaleDateString(

@@ -16,6 +16,10 @@ import {
   sendEmail,
   buildAdminReport,
   notificationEmail,
+  waNumber,
+  ownerActivationEmail,
+  ownerActivationWhatsappText,
+  providerNewsletterEmail,
   commissionEmail,
   commissionReminderEmail,
   commissionConfigReady,
@@ -2545,6 +2549,85 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // drained in parallel the moment it is written (see server/outbox.ts). This only
   // picks up rows that failed then, which on a daily schedule is the right cadence
   // for a retry but would have been far too slow as the main delivery mechanism.
+  // Monthly provider newsletter (master plan v1006 item #27): "X new requests in
+  // Riyadh this month, Y of them with no offer yet."
+  //
+  // Admin-triggered, not scheduled, matching the plan's «تبدأ يدوياً من قالب» —
+  // and deliberately so while the numbers are small: a month with two requests and
+  // no open ones is a newsletter that makes the platform look empty, and only a
+  // human should decide whether this month is worth sending.
+  //
+  // ?dry=1 returns the counts and recipient list without sending anything.
+  app.post("/api/admin/provider-newsletter", requireAdmin, async (req, res) => {
+    try {
+      const dry = req.query.dry === "1";
+      const since = new Date();
+      since.setDate(1);
+      since.setHours(0, 0, 0, 0);
+
+      const { data: monthRequests } = await supabaseAdmin
+        .from("requests")
+        .select("id")
+        .gte("created_at", since.toISOString());
+      const requestIds = (monthRequests ?? []).map((r: { id: string }) => r.id);
+
+      let withoutOffers = 0;
+      if (requestIds.length) {
+        const { data: offered } = await supabaseAdmin
+          .from("provider_offers")
+          .select("request_id")
+          .in("request_id", requestIds);
+        const hasOffer = new Set((offered ?? []).map((o: { request_id: string }) => o.request_id));
+        withoutOffers = requestIds.filter((id: string) => !hasOffer.has(id)).length;
+      }
+
+      const { data: providersList } = await supabaseAdmin
+        .from("providers")
+        .select("email")
+        .eq("approved", true);
+      // Type guard rather than filter(Boolean): the latter does not narrow the
+      // null away, so downstream code would silently accept a null recipient.
+      const recipients = (providersList ?? [])
+        .map((p: { email: string | null }) => p.email)
+        .filter((e): e is string => !!e);
+
+      const monthLabel = since.toLocaleDateString("ar-SA-u-nu-latn", {
+        month: "long",
+        year: "numeric",
+      });
+
+      if (dry) {
+        return res.json({
+          dry: true,
+          newRequests: requestIds.length,
+          withoutOffers,
+          recipients: recipients.length,
+          monthLabel,
+        });
+      }
+
+      const html = providerNewsletterEmail({
+        newRequests: requestIds.length,
+        withoutOffers,
+        monthLabel,
+      });
+      const ids = await enqueueEmails(
+        supabaseAdmin,
+        recipients.map((email: string) => ({
+          to_email: email,
+          subject: `طلبات ${monthLabel} في الرياض — عِمارة`,
+          html,
+          kind: "provider_newsletter",
+        })),
+      );
+      const { sent, failed } = await drainOutbox(supabaseAdmin, { ids });
+
+      res.json({ ok: true, newRequests: requestIds.length, withoutOffers, sent, failed });
+    } catch {
+      res.status(500).json({ error: "newsletter_failed" });
+    }
+  });
+
   app.get("/api/cron/outbox", async (req, res) => {
     const secret = process.env.CRON_SECRET ?? "";
     const auth = req.headers["authorization"] ?? "";
@@ -2632,6 +2715,71 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             }`,
         );
 
+      // ── Pass C: owners who verified their phone and never added a property ──
+      // 10 of 16 registered owners stopped exactly here. This is the funnel's real
+      // break, and nobody had ever reached out to them. Nudged once, not daily:
+      // users.activation_nudged_at is what makes it once.
+      const nudgeCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: staleOwners } = await supabaseAdmin
+        .from("users")
+        .select("id, name, phone, email")
+        .eq("role", "owner")
+        .is("activation_nudged_at", null)
+        .lte("created_at", nudgeCutoff);
+
+      const nudgeLines: string[] = [];
+      let nudgedCount = 0;
+      if (staleOwners?.length) {
+        const { data: withProps } = await supabaseAdmin
+          .from("properties")
+          .select("owner_id")
+          .in("owner_id", staleOwners.map((u: { id: string }) => u.id));
+        const hasProperty = new Set((withProps ?? []).map((p: { owner_id: string }) => p.owner_id));
+        const stalled = staleOwners.filter((u: { id: string }) => !hasProperty.has(u.id));
+
+        for (const owner of stalled) {
+          // Auto-email only those who left an address. Most owners did not, which
+          // is why the WhatsApp list below exists rather than this being enough.
+          if (owner.email) {
+            await notify(
+              owner.email,
+              "أضف عقارك في دقيقتين — عِمارة",
+              ownerActivationEmail({ ownerName: owner.name }),
+              "owner_activation_nudge",
+            );
+          }
+          const wa = waNumber(owner.phone);
+          nudgeLines.push(
+            `- ${owner.name ?? "مالك"} (${owner.phone ?? "—"})${
+              owner.email ? " · أُرسل بريد" : ""
+            }${wa ? `\n  واتساب: https://wa.me/${wa}?text=${encodeURIComponent(ownerActivationWhatsappText({ ownerName: owner.name }))}` : ""}`,
+          );
+          await supabaseAdmin
+            .from("users")
+            .update({ activation_nudged_at: new Date().toISOString() })
+            .eq("id", owner.id);
+          nudgedCount++;
+        }
+      }
+
+      if (nudgeLines.length > 0) {
+        await notify(
+          ADMIN_NOTIFY_EMAIL,
+          `${nudgeLines.length} مالك سجّل ولم يضف عقاراً`,
+          notificationEmail({
+            heading: "ملاك بحاجة إلى متابعة",
+            body: [
+              `هؤلاء الملاك أكملوا التحقق ولم يضيفوا عقاراً. مَن لديه بريد وصلته رسالة آلياً؛ البقية يحتاجون رسالة واتساب منك.`,
+              ``,
+              `اضغط الرابط لفتح المحادثة برسالة جاهزة، وراجعها قبل الإرسال.`,
+              ``,
+              nudgeLines.join("\n"),
+            ].join("\n"),
+          }),
+          "admin_activation_nudge",
+        );
+      }
+
       // ── One combined admin digest — only if there's something to report ──
       if (expiredRequests.length > 0 || staleSummaryLines.length > 0) {
         await notify(
@@ -2659,6 +2807,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json({
         ok: true,
         requestsExpired: expiredRequests.length,
+        ownersNudged: nudgedCount,
         staleOffersFlagged: staleSummaryLines.length,
       });
     } catch (e: any) {

@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
+import { formatContractDate } from "@/components/ContractStartDatePicker";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -484,6 +485,17 @@ export default function ProviderOfferForm() {
                         ? " م²"
                         : " m²"
                       : ""}
+                  </p>
+                </div>
+              )}
+
+              {request.contract_start_date && (
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {lang === "ar" ? "بداية العقد المطلوبة" : "Requested contract start"}:
+                  </p>
+                  <p className="font-medium">
+                    {formatContractDate(request.contract_start_date, lang)}
                   </p>
                 </div>
               )}

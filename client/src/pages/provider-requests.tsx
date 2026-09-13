@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLang } from "@/hooks/use-lang";
 import { useToast } from "@/hooks/use-toast";
+import { formatContractDate } from "@/components/ContractStartDatePicker";
 import { ProviderHeader } from "@/components/ProviderHeader";
 
 // ---------------------------------------------------------------------------
@@ -560,6 +561,18 @@ export default function ProviderRequests() {
                           <ExternalLink className="h-3 w-3 me-1" />
                           {t.viewMap}
                         </Button>
+                      )}
+
+                      {request.contract_start_date && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>
+                            {lang === "ar" ? "بداية العقد: " : "Starts: "}
+                            <span className="text-foreground">
+                              {formatContractDate(request.contract_start_date, lang)}
+                            </span>
+                          </span>
+                        </div>
                       )}
 
                       {/* ── Submit / submitted button ── */}

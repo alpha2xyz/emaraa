@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, uuid, boolean, numeric, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, uuid, boolean, numeric, jsonb, index, date } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Users model
@@ -12,6 +12,9 @@ export const users = pgTable("users", {
   // Written on every successful OTP verify (register + login) — powers the
   // 2-month owner-inactivity auto-drop in /api/cron/request-lifecycle.
   last_login_at: timestamp("last_login_at", { withTimezone: true }),
+  // Stamped when the post-verification activation nudge goes out, so the daily
+  // cron nudges a stalled owner once rather than every morning forever.
+  activation_nudged_at: timestamp("activation_nudged_at", { withTimezone: true }),
 });
 
 export type User = typeof users.$inferSelect;
@@ -53,6 +56,10 @@ export const requests = pgTable("requests", {
   property_id: uuid("property_id").notNull(),
   service_category: text("service_category").notNull().default("standard"),
   description: text("description"),
+  // When the owner wants the contract to start. Providers price differently for
+  // "next month" than for "in six months", and the offer's duration_months is
+  // measured from here, so together they define the actual contract period.
+  contract_start_date: date("contract_start_date"),
   status: text("status").notNull().default("pending"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
@@ -67,6 +74,12 @@ export const insertRequestSchema = z.object({
   property_id: z.string().uuid(),
   service_category: z.string().optional(),
   description: z.string().nullable().optional(),
+  // ISO date only (YYYY-MM-DD); the column is DATE, not a timestamp.
+  contract_start_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "contract_start_date must be YYYY-MM-DD")
+    .nullable()
+    .optional(),
   status: z.string().optional(),
 });
 
