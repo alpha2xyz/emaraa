@@ -2,7 +2,12 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import bcrypt from "bcryptjs";
-import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
+import {
+  insertPropertySchema,
+  insertRequestSchema,
+  insertProviderOfferSchema,
+  insertOfferDeclineSchema,
+} from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
@@ -734,13 +739,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         supabaseAdmin.from("providers").select("id, approved").eq("user_id", userId).maybeSingle(),
       ]);
       const providerId = provider?.id ?? null;
-      const { data: myOffers } = providerId
-        ? await supabaseAdmin
-            .from("provider_offers")
-            .select("request_id")
-            .eq("provider_id", providerId)
-            .neq("status", "rejected")
-        : { data: [] };
+      const [{ data: myOffers }, { data: myDeclines }] = providerId
+        ? await Promise.all([
+            supabaseAdmin
+              .from("provider_offers")
+              .select("request_id")
+              .eq("provider_id", providerId)
+              .neq("status", "rejected"),
+            // Requests this provider explicitly passed on, with a reason.
+            supabaseAdmin
+              .from("offer_declines")
+              .select("request_id")
+              .eq("provider_id", providerId),
+          ])
+        : [{ data: [] }, { data: [] }];
       // Unapproved providers get a redacted teaser: no property name, address,
       // map link, owner notes, or anything that identifies the owner/location.
       const isApproved = !!provider?.approved;
@@ -762,9 +774,94 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json({
         requests: safeRequests,
         submittedRequestIds: (myOffers || []).map((o: any) => o.request_id),
+        declinedRequestIds: (myDeclines || []).map((d: any) => d.request_id),
       });
     } catch (err: any) {
       res.status(500).json({ error: "Failed to fetch provider requests" });
+    }
+  });
+
+  // Provider: pass on a request, with a reason (master plan v1006 item #26).
+  //
+  // Three of four approved providers have never submitted a single offer, and the
+  // product gave them no way to say why — silence was indistinguishable from not
+  // having looked. This records the reason so "no offers" becomes a diagnosis
+  // instead of a guess. Re-declining updates the reason rather than duplicating.
+  app.post("/api/provider/requests/:id/decline", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const parsed = insertOfferDeclineSchema.safeParse({
+        request_id: req.params.id,
+        reason: req.body?.reason,
+        note: req.body?.note ?? null,
+      });
+      if (!parsed.success) {
+        return res.status(400).json({ error: "invalid_decline" });
+      }
+      const { request_id, reason, note } = parsed.data;
+
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id, approved")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.status(403).json({ error: "provider_not_found" });
+      if (!provider.approved) return res.status(403).json({ error: "not_approved" });
+
+      const { data: targetRequest } = await supabaseAdmin
+        .from("requests")
+        .select("id")
+        .eq("id", request_id)
+        .maybeSingle();
+      if (!targetRequest) return res.status(404).json({ error: "request_not_found" });
+
+      // A provider who already has a live offer on this request cannot also pass on
+      // it — that would be contradictory state.
+      const { data: existingOffer } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id, status")
+        .eq("request_id", request_id)
+        .eq("provider_id", provider.id)
+        .maybeSingle();
+      if (existingOffer && existingOffer.status !== "rejected") {
+        return res.status(409).json({ error: "already_submitted" });
+      }
+
+      const { error } = await supabaseAdmin
+        .from("offer_declines")
+        .upsert(
+          [{ request_id, provider_id: provider.id, reason, note: note || null }],
+          { onConflict: "request_id,provider_id" }
+        );
+      if (error) return res.status(500).json({ error: error.message });
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ error: "decline_failed" });
+    }
+  });
+
+  // Provider: undo a pass, putting the request back in their list.
+  app.delete("/api/provider/requests/:id/decline", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.status(403).json({ error: "provider_not_found" });
+
+      const { error } = await supabaseAdmin
+        .from("offer_declines")
+        .delete()
+        .eq("request_id", req.params.id)
+        .eq("provider_id", provider.id);
+      if (error) return res.status(500).json({ error: error.message });
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ error: "undo_decline_failed" });
     }
   });
 
@@ -796,14 +893,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/provider/offers", requireSession, requireProvider, async (req, res) => {
     try {
       const userId = (req as any).userId as string;
-      const { request_id, offer_file_url, notes, price_total } = req.body as {
-        request_id: string;
-        offer_file_url: string;
-        notes?: string | null;
-        price_total?: number | null;
-      };
-      if (!request_id || !offer_file_url)
-        return res.status(400).json({ error: "request_id and offer_file_url are required" });
+
+      // Structured offers (2026-09-13). offer_file_url is now optional: the
+      // breakdown the owner needs lives in line_items, and requiring a PDF on top
+      // of it only adds friction to the side of the market that is already silent.
+      const parsed = insertProviderOfferSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "invalid_offer",
+          details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+        });
+      }
+      const { request_id, offer_file_url, notes, price_total, line_items, duration_months } =
+        parsed.data;
 
       const { data: provider } = await supabaseAdmin
         .from("providers")
@@ -816,10 +918,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // The offer file must be one this provider could have uploaded. Without this,
       // a provider could submit another provider's offer PDF path and then read it
       // back through /api/files/signed-url, which trusts the stored value.
-      const offerPathError = checkOfferPath(provider.id, offer_file_url);
-      if (offerPathError) {
-        console.warn("[provider/offers] rejected offer path", { providerId: provider.id });
-        return res.status(403).json({ error: offerPathError });
+      // Only checked when a file is actually attached — the PDF is optional since
+      // structured line items landed.
+      if (offer_file_url) {
+        const offerPathError = checkOfferPath(provider.id, offer_file_url);
+        if (offerPathError) {
+          console.warn("[provider/offers] rejected offer path", { providerId: provider.id });
+          return res.status(403).json({ error: offerPathError });
+        }
       }
 
       // The request must still be pending — a rejected/in_progress/closed request
@@ -857,9 +963,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         const { data: revived, error } = await supabaseAdmin
           .from("provider_offers")
           .update({
-            offer_file_url,
+            offer_file_url: offer_file_url || null,
             notes: notes || null,
             price_total: price_total || null,
+            line_items,
+            duration_months,
             status: "pending",
             created_at: new Date().toISOString(),
           })
@@ -871,7 +979,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       } else {
         const { data: inserted, error } = await supabaseAdmin
           .from("provider_offers")
-          .insert([{ request_id, provider_id: provider.id, offer_file_url, notes: notes || null, price_total: price_total || null }])
+          .insert([{
+            request_id,
+            provider_id: provider.id,
+            offer_file_url: offer_file_url || null,
+            notes: notes || null,
+            price_total: price_total || null,
+            line_items,
+            duration_months,
+          }])
           .select()
           .single();
         if (error) return res.status(500).json({ error: error.message });
@@ -929,7 +1045,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
         )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
@@ -991,12 +1107,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
       // Lock the PDF proposal AND the provider phone until the owner accepts:
       // only an accepted offer exposes its file path and contact number.
+      //
+      // line_items and duration_months are deliberately NOT gated. The whole point
+      // of the structured offer is that the owner can see what is being quoted
+      // before committing — gating the breakdown too would recreate the exact
+      // "accept blind or walk away" choice that pushed the 2026-09-07 owner to
+      // contract outside the platform. The attachment stays behind the gate.
       const safe = (data ?? []).map((o: any) => ({
         ...o,
         offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
@@ -2252,7 +2374,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { data, error } = await supabaseAdmin
       .from("requests")
       .select(
-        "id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))"
+        "id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, line_items, duration_months, providers(company_name, city))"
       )
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch requests" });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLang } from "@/hooks/use-lang";
+import { useToast } from "@/hooks/use-toast";
 import { ProviderHeader } from "@/components/ProviderHeader";
 
 // ---------------------------------------------------------------------------
@@ -33,6 +34,8 @@ const UNIFIED_SCOPE_PART1 =
 
 export default function ProviderRequests() {
   const { lang } = useLang();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,6 +48,20 @@ export default function ProviderRequests() {
       search: "بحث عن طلب...",
       all: "الكل",
       units: "وحدة",
+      declineBtn: "لم أقدّم عرضاً",
+      declineTitle: "ليش ما قدّمت عرضاً على هذا الطلب؟",
+      declineHint: "جوابك يساعدنا نحسّن الطلبات القادمة، ولا يظهر لمالك العقار.",
+      reasonScopeUnclear: "نطاق الخدمة غير واضح",
+      reasonOutOfArea: "خارج نطاق تغطيتي",
+      reasonTooSmall: "حجم المبنى صغير على خدماتنا",
+      reasonOther: "سبب آخر",
+      declineNotePlaceholder: "اكتب السبب باختصار (اختياري)",
+      declineSubmit: "إرسال",
+      declineCancel: "إلغاء",
+      declineSaved: "شكراً، سجّلنا ملاحظتك",
+      declineFailed: "تعذّر حفظ السبب، حاول مرة أخرى",
+      declinedBadge: "تم تخطي هذا الطلب",
+      undoDecline: "تراجع",
       viewMap: "عرض الموقع على الخريطة",
       commercialBadge: "تجاري",
       residentialBadge: "سكني",
@@ -75,6 +92,20 @@ export default function ProviderRequests() {
       search: "Search for a request...",
       all: "All",
       units: "units",
+      declineBtn: "I did not bid",
+      declineTitle: "Why did you pass on this request?",
+      declineHint: "Your answer helps us improve future requests. The owner never sees it.",
+      reasonScopeUnclear: "Scope of work is unclear",
+      reasonOutOfArea: "Outside my coverage area",
+      reasonTooSmall: "Building is too small for our services",
+      reasonOther: "Another reason",
+      declineNotePlaceholder: "Briefly, what was it? (optional)",
+      declineSubmit: "Send",
+      declineCancel: "Cancel",
+      declineSaved: "Thanks, we logged that",
+      declineFailed: "Could not save the reason, please try again",
+      declinedBadge: "You passed on this request",
+      undoDecline: "Undo",
       viewMap: "View on Map",
       commercialBadge: "Commercial",
       residentialBadge: "Residential",
@@ -126,11 +157,11 @@ export default function ProviderRequests() {
     refetchOnMount: "always",
     queryFn: async () => {
       const token = localStorage.getItem("sessionToken");
-      if (!token) return { requests: [], submittedRequestIds: [] };
+      if (!token) return { requests: [], submittedRequestIds: [], declinedRequestIds: [] };
       const res = await fetch("/api/provider/requests", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return { requests: [], submittedRequestIds: [] };
+      if (!res.ok) return { requests: [], submittedRequestIds: [], declinedRequestIds: [] };
       return res.json();
     },
   });
@@ -139,6 +170,50 @@ export default function ProviderRequests() {
   const isProfileComplete = !!dashData?.provider?.company_name;
   const isApproved = !!dashData?.provider?.approved;
   const submittedRequestIds = new Set<string>(requestsData?.submittedRequestIds || []);
+  const declinedRequestIds = new Set<string>(requestsData?.declinedRequestIds || []);
+
+  // ── Decline capture (master plan v1006 item #26) ──────────────────────────
+  // Three of four approved providers have never submitted an offer. Until now the
+  // product had no way for them to say why, so "no offers" and "never looked" were
+  // the same signal. A pass with a reason separates them.
+  const [declineFor, setDeclineFor] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState<string>("scope_unclear");
+  const [declineNote, setDeclineNote] = useState("");
+
+  const declineMutation = useMutation({
+    mutationFn: async ({ requestId, reason, note }: { requestId: string; reason: string; note: string }) => {
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/provider/requests/${requestId}/decline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason, note: note || null }),
+      });
+      if (!res.ok) throw new Error("decline_failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: t.declineSaved });
+      setDeclineFor(null);
+      setDeclineNote("");
+      setDeclineReason("scope_unclear");
+      queryClient.invalidateQueries({ queryKey: ["/api/provider/requests"] });
+    },
+    onError: () => toast({ title: t.declineFailed, variant: "destructive" }),
+  });
+
+  const undoDeclineMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const token = localStorage.getItem("sessionToken");
+      const res = await fetch(`/api/provider/requests/${requestId}/decline`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("undo_failed");
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/provider/requests"] }),
+    onError: () => toast({ title: t.declineFailed, variant: "destructive" }),
+  });
 
   // ── Filtering ──────────────────────────────────────────────────────────────
 
@@ -220,14 +295,13 @@ export default function ProviderRequests() {
           <CardContent className="space-y-3">
             <div className="relative">
               <Search
-                className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                style={{ [lang === "ar" ? "right" : "left"]: "0.75rem" }}
+                className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
               />
               <Input
                 placeholder={t.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={lang === "ar" ? "pr-9" : "pl-9"}
+                className="ps-9"
               />
             </div>
 
@@ -503,20 +577,47 @@ export default function ProviderRequests() {
                           <CheckCircle2 className="h-4 w-4 me-2" style={{ color: "var(--provider)" }} />
                           {t.offerSubmitted}
                         </Button>
+                      ) : declinedRequestIds.has(request.id) ? (
+                        <div className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,0.03)" }}>
+                          <span className="text-xs text-muted-foreground">{t.declinedBadge}</span>
+                          <button
+                            type="button"
+                            onClick={() => undoDeclineMutation.mutate(request.id)}
+                            disabled={undoDeclineMutation.isPending}
+                            className="text-xs font-semibold hover:underline"
+                            style={{ color: "var(--provider)" }}
+                          >
+                            {t.undoDecline}
+                          </button>
+                        </div>
                       ) : (
-                        <Button
-                          className="w-full text-sm font-semibold text-white"
-                          style={{ background: "var(--provider)" }}
-                          onClick={() =>
-                            setLocation(
-                              `/dashboard/provider/requests/${request.id}/offer`
-                            )
-                          }
-                          disabled={!isProfileComplete || !isApproved}
-                        >
-                          <Send className="h-4 w-4 me-2" />
-                          {t.submitOffer}
-                        </Button>
+                        <div className="space-y-2">
+                          <Button
+                            className="w-full text-sm font-semibold text-white"
+                            style={{ background: "var(--provider)" }}
+                            onClick={() =>
+                              setLocation(
+                                `/dashboard/provider/requests/${request.id}/offer`
+                              )
+                            }
+                            disabled={!isProfileComplete || !isApproved}
+                          >
+                            <Send className="h-4 w-4 me-2" />
+                            {t.submitOffer}
+                          </Button>
+                          {/* The whole point of this button is that passing silently
+                              and passing for a reason look identical in the data
+                              otherwise. Kept quiet so it never competes with the
+                              primary action. */}
+                          <button
+                            type="button"
+                            onClick={() => setDeclineFor(request.id)}
+                            disabled={!isProfileComplete || !isApproved}
+                            className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {t.declineBtn}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </CardContent>
@@ -550,6 +651,88 @@ export default function ProviderRequests() {
           </div>
         )}
       </div>
+
+      {/* ── Decline reason dialog ── */}
+      {declineFor && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.declineTitle}
+          onClick={() => setDeclineFor(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl border bg-card p-5 sm:rounded-2xl"
+            style={{ borderColor: "var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-foreground">{t.declineTitle}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{t.declineHint}</p>
+
+            <div className="mt-4 space-y-2">
+              {[
+                { value: "scope_unclear", label: t.reasonScopeUnclear },
+                { value: "out_of_area", label: t.reasonOutOfArea },
+                { value: "too_small", label: t.reasonTooSmall },
+                { value: "other", label: t.reasonOther },
+              ].map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors"
+                  style={{
+                    borderColor: declineReason === opt.value ? "var(--provider)" : "var(--border)",
+                    background:
+                      declineReason === opt.value ? "var(--provider-soft)" : "transparent",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="declineReason"
+                    value={opt.value}
+                    checked={declineReason === opt.value}
+                    onChange={(e) => setDeclineReason(e.target.value)}
+                    className="h-4 w-4 flex-shrink-0 accent-[#1B7FDC]"
+                  />
+                  <span className="text-foreground">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <Input
+              value={declineNote}
+              onChange={(e) => setDeclineNote(e.target.value)}
+              placeholder={t.declineNotePlaceholder}
+              maxLength={500}
+              className="mt-3"
+            />
+
+            <div className="mt-4 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDeclineFor(null)}
+                disabled={declineMutation.isPending}
+              >
+                {t.declineCancel}
+              </Button>
+              <Button
+                className="flex-1 text-white"
+                style={{ background: "var(--provider)" }}
+                disabled={declineMutation.isPending}
+                onClick={() =>
+                  declineMutation.mutate({
+                    requestId: declineFor,
+                    reason: declineReason,
+                    note: declineNote,
+                  })
+                }
+              >
+                {t.declineSubmit}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, uuid, boolean, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, uuid, boolean, numeric, jsonb } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Users model
@@ -87,18 +87,71 @@ export const providers = pgTable("providers", {
 export type Provider = typeof providers.$inferSelect;
 
 // Provider offers model
+//
+// Structured fields added 2026-09-13 (master plan v1006 item #26). Before that an
+// offer was a PDF plus a single number, which is exactly what the owner in the
+// 2026-09-07 feedback refused to act on: he wanted to see what he was buying, not
+// a total. line_items carries the service breakdown; price_total stays the single
+// authoritative figure because terms.tsx pins the 1% commission to it, so it is
+// never derived from the line items.
+//
+// Deliberately NOT stored: price per unit. It is price_total / units_count and is
+// already computed at display time; storing a second copy only lets the two drift.
 export const providerOffers = pgTable("provider_offers", {
   id: uuid("id").primaryKey().defaultRandom(),
   request_id: uuid("request_id").notNull(),
   provider_id: uuid("provider_id").notNull(),
-  offer_file_url: text("offer_file_url"),
+  offer_file_url: text("offer_file_url"), // optional since 2026-09-13
   notes: text("notes"),
   price_total: numeric("price_total"),
+  // [{ service: string, price_per_unit: number }]
+  line_items: jsonb("line_items").$type<OfferLineItem[]>(),
+  duration_months: integer("duration_months"),
   status: text("status").default("pending"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
+export type OfferLineItem = { service: string; price_per_unit: number };
+
+export const offerLineItemSchema = z.object({
+  service: z.string().trim().min(2).max(120),
+  price_per_unit: z.number().nonnegative(),
+});
+
+export const insertProviderOfferSchema = z.object({
+  request_id: z.string().uuid(),
+  offer_file_url: z.string().max(400).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  price_total: z.number().positive(),
+  line_items: z.array(offerLineItemSchema).min(1).max(20),
+  duration_months: z.number().int().positive().max(120),
+});
+
+export type InsertProviderOffer = z.infer<typeof insertProviderOfferSchema>;
 export type ProviderOffer = typeof providerOffers.$inferSelect;
+
+// Why a provider passed on a request (master plan v1006 item #26).
+// Three of four approved providers have never submitted a single offer and nobody
+// knows why. A dismissal with a reason turns that silence into data.
+export const offerDeclines = pgTable("offer_declines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  request_id: uuid("request_id").notNull(),
+  provider_id: uuid("provider_id").notNull(),
+  reason: text("reason").notNull(), // scope_unclear | out_of_area | too_small | other
+  note: text("note"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const DECLINE_REASONS = ["scope_unclear", "out_of_area", "too_small", "other"] as const;
+export type DeclineReason = (typeof DECLINE_REASONS)[number];
+
+export const insertOfferDeclineSchema = z.object({
+  request_id: z.string().uuid(),
+  reason: z.enum(DECLINE_REASONS),
+  note: z.string().max(500).nullable().optional(),
+});
+
+export type OfferDecline = typeof offerDeclines.$inferSelect;
 
 // Deals model — captures a closed contract + its value (powers GMV / case studies / REGA file)
 // A deal is auto-created (status "pending") when an owner accepts an offer; admin confirms
