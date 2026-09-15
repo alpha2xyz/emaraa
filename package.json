@@ -9,6 +9,8 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push",
+    "demo:seed": "tsx --env-file=.env.demo script/seed-demo.ts",
+    "demo:reset": "tsx --env-file=.env.demo script/seed-demo.ts",
     "test": "playwright test",
     "test:local": "PLAYWRIGHT_BASE_URL=http://localhost:5000 playwright test",
     "test:prod": "PLAYWRIGHT_BASE_URL=https://emaraa.app playwright test",

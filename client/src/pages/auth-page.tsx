@@ -8,6 +8,7 @@ import { Building2, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2 } from "luc
 import { useLocation } from "wouter";
 import AmbientBackground from "@/components/AmbientBackground";
 import { trackConversion } from "@/lib/gtag";
+import DemoAccountSwitcher from "@/components/DemoAccountSwitcher";
 
 export default function AuthPage() {
   const { lang } = useLang();
@@ -374,6 +375,10 @@ export default function AuthPage() {
             <div className="px-6 pb-6">
               {step === "phone" ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <DemoAccountSwitcher
+                    role={role}
+                    onPick={(phone) => setFormData((f) => ({ ...f, phone }))}
+                  />
                   {/* Name Field - only for register */}
                   {mode === "register" && (
                     <div className="space-y-2">

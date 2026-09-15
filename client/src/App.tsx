@@ -48,6 +48,7 @@ import { Navbar } from "@/components/Navbar";
 import RequireAuth from "@/components/RequireAuth";
 import AmbientBackground from "@/components/AmbientBackground";
 import CookieConsent from "@/components/CookieConsent";
+import DemoBanner from "@/components/DemoBanner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 // ── Pages ──────────────────────────────────────────────────────────────────
@@ -200,6 +201,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <DemoBanner />
           <Router />
           <Toaster />
           <CookieConsent />
