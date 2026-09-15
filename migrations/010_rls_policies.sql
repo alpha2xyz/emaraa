@@ -17,6 +17,111 @@
 -- (deals, email_log, email_outbox, offer_declines, admin_impersonation_log) are closed to
 -- every role except service_role, deliberately.
 
+-- ── Functions the policies below depend on ────────────────────────────────────
+--
+-- Added 2026-09-15. These existed only inside the live database, like the policies
+-- themselves. current_provider_id(), owns_request() and provider_offered_to_me()
+-- are called directly by the RLS policies, so the policies cannot be created
+-- without them; the update_*/prevent_* ones back triggers. Captured verbatim from
+-- production with pg_get_functiondef.
+--
+-- CREATE OR REPLACE, so re-running against a database that already has them is a
+-- no-op.
+
+CREATE OR REPLACE FUNCTION public.create_admin_session(p_admin_id uuid)
+ RETURNS text
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_token TEXT;
+BEGIN
+  v_token := gen_random_uuid()::TEXT;
+  UPDATE admins
+  SET session_token = v_token,
+      session_expires_at = NOW() + INTERVAL '24 hours'
+  WHERE id = p_admin_id;
+  RETURN v_token;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.current_provider_id()
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select id from public.providers where user_id = auth.uid() limit 1;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.owns_request(p_request_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select exists (
+    select 1 from public.requests
+    where id = p_request_id and owner_id = auth.uid()
+  );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.prevent_self_approval()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$                               
+  BEGIN                                                     
+    IF NEW.approved IS DISTINCT FROM OLD.approved                                       
+       AND current_user = 'anon' THEN
+      RAISE EXCEPTION 'Cannot modify approved status';                                  
+    END IF;                                                 
+    RETURN NEW;                                                                         
+  END;                                                                                  
+  $function$
+;
+
+CREATE OR REPLACE FUNCTION public.provider_offered_to_me(p_provider_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select exists (
+    select 1
+    from public.provider_offers po
+    join public.requests r on r.id = po.request_id
+    where po.provider_id = p_provider_id
+      and r.owner_id = auth.uid()
+  );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.update_provider_offers_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$function$
+;
+
 -- Enable RLS on every table (idempotent, matches production).
 ALTER TABLE public.admin_impersonation_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_login_attempts ENABLE ROW LEVEL SECURITY;
