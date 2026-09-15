@@ -474,8 +474,17 @@ async function insertAll() {
   if (error) throw new Error(`requests: ${error.message}`);
   console.log(`  ${requests.length} requests`);
 
+  // E-signature (2026-09-15): plausible but clearly fictitious signatory fields, so the
+  // contract-generation route (POST /api/deals/:id/contract) has real values to render instead
+  // of blank placeholders — cycled by index rather than adding a field to SeedProvider and its
+  // seven literal entries for what's cosmetic per-provider variation, not real seed data.
+  const DEMO_SIGNATORY_NAMES = [
+    "محمد العتيبي", "سارة القحطاني", "فيصل الدوسري", "نورة الشهري",
+    "عبدالعزيز الحربي", "ريم المطيري", "خالد الزهراني",
+  ];
+
   // Providers -- document URLs point nowhere real; the demo never opens them
-  const providers = PROVIDERS.map((p) => ({
+  const providers = PROVIDERS.map((p, i) => ({
     id: p.providerId,
     user_id: p.userId,
     company_name: p.company,
@@ -488,6 +497,9 @@ async function insertAll() {
     approved: p.approved,
     created_at: daysAgo(45),
     updated_at: daysAgo(45),
+    cr_number: `10101${String(20000 + i).padStart(5, "0")}`,
+    fal_license_number: `FAL-2026-${String(100 + i).padStart(5, "0")}`,
+    signatory_name: DEMO_SIGNATORY_NAMES[i % DEMO_SIGNATORY_NAMES.length],
   }));
   ({ error } = await db.from("providers").insert(providers));
   if (error) throw new Error(`providers: ${error.message}`);
