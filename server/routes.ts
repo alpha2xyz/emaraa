@@ -1893,7 +1893,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Anchor page is a layout fact about this template's rendered output, not a business
       // fact — see the comment on Signatory.anchorPage. Re-check whenever contract-template.ts
       // changes materially (more sections, a longer Annex A table, etc.).
-      const ANCHOR_PAGE = Number(process.env.ESIGN_SIGNATURE_ANCHOR_PAGE ?? "2");
+      // Verified empirically 2026-09-15 against this exact template (10 sections + Annex A):
+      // the signature table lands on page 3. Re-check whenever contract-template.ts's content
+      // grows or shrinks materially — see the comment on Signatory.anchorPage.
+      const ANCHOR_PAGE = Number(process.env.ESIGN_SIGNATURE_ANCHOR_PAGE ?? "3");
 
       const { requestId, signatoryIds } = await signitAdapter.createSignatureRequest({
         dealId: deal.id,

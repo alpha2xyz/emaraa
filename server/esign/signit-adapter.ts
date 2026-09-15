@@ -97,7 +97,8 @@ export const signitAdapter: SignatureAdapter = {
           properties: { required: true },
           placeholder: s.role === "owner" ? "توقيع المالك" : "توقيع مقدم الخدمة",
           kind: "signature" as const,
-          appearance: { text_direction: "rtl" as const },
+          // No `appearance` here: Signit rejects it on anything but text_field kind
+          // ("apperance should only associated with text_fields"), confirmed 2026-09-15.
         },
       ],
     }));
@@ -120,15 +121,23 @@ export const signitAdapter: SignatureAdapter = {
         },
       }),
     });
-    const json = (await res.json()) as { id: string; signatories: { id: string; order: number }[] };
+    // The create response is only { id, created_date } (confirmed against the OpenAPI spec —
+    // no signatories array, unlike GET /signature-requests/{id}). A follow-up GET is required
+    // to learn each signatory's vendor-assigned id, matching the pilot's own two-call sequence
+    // (create, then status).
+    const created = (await res.json()) as { id: string };
+    const statusRes = await signitFetch(`/signature-requests/${created.id}`);
+    const statusJson = (await statusRes.json()) as {
+      signatories: { id: string; order: number }[];
+    };
 
     const signatoryIds = {} as Record<SignatoryRole, string>;
     for (const s of input.signatories) {
       const order = s.role === "owner" ? 0 : 1;
-      const match = json.signatories.find((r) => r.order === order);
+      const match = statusJson.signatories.find((r) => r.order === order);
       if (match) signatoryIds[s.role] = match.id;
     }
-    return { requestId: json.id, signatoryIds };
+    return { requestId: created.id, signatoryIds };
   },
 
   async getSigningLink(requestId: string, signatoryId: string): Promise<SigningLinkResult> {

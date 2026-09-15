@@ -29,8 +29,15 @@ export type ContractFields = {
   signitRequestId: string | null; // null before the signature request exists
 };
 
-const OWNER_ANCHOR_TAG = "توقيع المالك";
-const PROVIDER_ANCHOR_TAG = "توقيع مقدم الخدمة";
+// Latin, not Arabic, deliberately. Verified empirically 2026-09-15: Signit's anchor-tag search
+// returned "not found" for "توقيع المالك" even on the page it's actually printed on (confirmed
+// by downloading and reading the uploaded PDF directly) — consistent with the anchor search
+// reading the PDF's text layer in visual/bidi-reordered order rather than logical Unicode order,
+// which is a known failure mode for RTL text extraction. A plain Latin marker on the same page
+// resolved on the first try. The visible cell text stays Arabic (see the signature table below);
+// only this invisible-to-anchor-purpose marker string is Latin.
+const OWNER_ANCHOR_TAG = "OWNER_SIGNATURE_ANCHOR";
+const PROVIDER_ANCHOR_TAG = "PROVIDER_SIGNATURE_ANCHOR";
 
 export { OWNER_ANCHOR_TAG, PROVIDER_ANCHOR_TAG };
 
@@ -114,7 +121,11 @@ export function renderContractHtml(f: ContractFields): string {
   }
   table.line-items thead { background: #eef5f8; }
   table.line-items td.num { direction: ltr; }
-  .signature-cell { font-weight: 600; }
+  .signature-cell { min-height: 24px; }
+  /* Small and muted, not hidden — a genuine technical reference, not concealed text. Signit's
+     anchor search needs Latin text at this exact spot (Arabic anchor search is unreliable, see
+     the constant declarations above); the visible signing instruction stays Arabic. */
+  .signature-marker { display: block; font-size: 7px; color: #c3ced1; line-height: 1.4; }
   .demo-banner {
     position: fixed;
     top: 40%;
@@ -262,8 +273,8 @@ export function renderContractHtml(f: ContractFields): string {
     </tr>
     <tr>
       <td>التوقيع — Signature</td>
-      <td class="signature-cell">${OWNER_ANCHOR_TAG}</td>
-      <td class="signature-cell">${PROVIDER_ANCHOR_TAG}</td>
+      <td class="signature-cell">التوقيع هنا<span class="signature-marker">${OWNER_ANCHOR_TAG}</span></td>
+      <td class="signature-cell">التوقيع هنا<span class="signature-marker">${PROVIDER_ANCHOR_TAG}</span></td>
     </tr>
     <tr>
       <td>التاريخ — Date</td>
