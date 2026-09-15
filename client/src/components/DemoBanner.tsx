@@ -15,6 +15,15 @@ import { useLang } from "@/hooks/use-lang";
 // crawler should see anyway.
 export const IS_DEMO = import.meta.env?.VITE_DEMO_MODE === "true";
 
+/**
+ * The fixed code the demo accounts log in with. Must match OTP_TEST_CODE on the
+ * demo deployment. Shown in the UI on purpose: on the demo no SMS is sent, so the
+ * code has to come from somewhere, and it guards nothing -- it only works for the
+ * seeded fake numbers listed in OTP_TEST_NUMBERS, and only where OTP_TEST_MODE is
+ * on, which is never production.
+ */
+export const DEMO_OTP_CODE = import.meta.env?.VITE_DEMO_OTP_CODE ?? "1234";
+
 export default function DemoBanner() {
   const { lang } = useLang();
   if (!IS_DEMO) return null;

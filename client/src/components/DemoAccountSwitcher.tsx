@@ -1,5 +1,5 @@
 import { useLang } from "@/hooks/use-lang";
-import { IS_DEMO } from "@/components/DemoBanner";
+import { IS_DEMO, DEMO_OTP_CODE } from "@/components/DemoBanner";
 
 /**
  * One-click account picker for the investor demo. Shown only when
@@ -39,7 +39,7 @@ export default function DemoAccountSwitcher({
   if (!IS_DEMO) return null;
 
   const accounts = role === "provider" ? PROVIDERS : OWNERS;
-  const code = import.meta.env?.VITE_DEMO_OTP_HINT ?? "";
+  const code = DEMO_OTP_CODE;
 
   return (
     <div
