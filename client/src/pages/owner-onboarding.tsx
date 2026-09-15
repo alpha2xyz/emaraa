@@ -699,7 +699,11 @@ export default function OwnerOnboarding() {
             </Card>
           </div>
 
-          {/* ── SECTION 3 — Notes for providers (optional) ── */}
+          {/* ── SECTION 3 — Contract start date (optional) ──
+              Its own section since 2026-09-15. It had been nested inside the notes
+              card's flex row, sharing a line with the notes icon and label, which
+              read as though the date were part of the note. It is not: it sets the
+              contract period and providers price against it. */}
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
@@ -711,18 +715,36 @@ export default function OwnerOnboarding() {
               >
                 3
               </span>
+              {lang === "ar" ? "بداية العقد (اختياري)" : "Contract Start (optional)"}
+            </p>
+            <Card className="rounded-xl shadow-sm">
+              <CardContent className="pt-6">
+                <ContractStartDatePicker
+                  value={contractStartDate}
+                  onChange={setContractStartDate}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ── SECTION 4 — Notes for providers (optional) ── */}
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
+              style={{ color: "var(--owner)" }}
+            >
+              <span
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold"
+                style={{ width: "1.5rem", height: "1.5rem", background: "var(--owner)", color: "#04222c", flexShrink: 0 }}
+              >
+                4
+              </span>
               {lang === "ar" ? "ملاحظات للمزودين (اختياري)" : "Notes for Providers (optional)"}
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <div className="mb-5">
-                    <ContractStartDatePicker
-                      value={contractStartDate}
-                      onChange={setContractStartDate}
-                    />
-                  </div>
                   <Label htmlFor="notes" className="text-sm text-muted-foreground">
                     {lang === "ar" ? "تفاصيل أو ملاحظات إضافية للمزودين" : "Additional details or notes for providers"}
                   </Label>
