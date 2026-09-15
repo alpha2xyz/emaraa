@@ -542,7 +542,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const bucket = String(req.query.bucket || "");
       const path = String(req.query.path || "");
-      const ALLOWED_BUCKETS = new Set(["provider-offers", "provider-documents"]);
+      const ALLOWED_BUCKETS = new Set(["provider-offers", "provider-documents", "contracts"]);
       if (!ALLOWED_BUCKETS.has(bucket) || !path) {
         return res.status(400).json({ error: "Invalid bucket or path" });
       }
@@ -599,6 +599,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             allowed = true; // the provider who submitted the offer
           } else if (requesterUserId && requesterUserId === ownerId && offer.status === "accepted") {
             allowed = true; // the request owner — only after accepting (mirrors the PDF-lock rule)
+          }
+        }
+      }
+
+      if (!allowed && bucket === "contracts") {
+        // Contract PDFs (unsigned draft or sealed). Exactly three parties ever read one: the
+        // deal's owner, the deal's provider, or admin — derived from the deals row, not the path.
+        const { data: deal } = await supabaseAdmin
+          .from("deals")
+          .select("owner_id, providers!deals_provider_fk(user_id)")
+          .or(`contract_pdf_path.eq.${path},signed_pdf_path.eq.${path}`)
+          .maybeSingle();
+        if (deal) {
+          const providerUserId = (deal.providers as any)?.user_id;
+          if (requesterUserId && requesterUserId === deal.owner_id) {
+            allowed = true; // deals.owner_id is a users.id directly — no separate owner profile table
+          } else if (requesterUserId && requesterUserId === providerUserId) {
+            allowed = true;
           }
         }
       }
