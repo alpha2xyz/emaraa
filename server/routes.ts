@@ -1409,6 +1409,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         description: z.string().nullable().optional(),
         property_id: z.string().optional(),
         service_category: z.string().optional(),
+        // Editable for the same window as everything else above: until the first
+        // non-rejected offer arrives, which the edit_locked check ahead of this
+        // already enforces. A provider prices against this date, so it must not
+        // move under an offer that was built on it. Same YYYY-MM-DD shape the
+        // create path validates (insertRequestSchema); the column is DATE, so a
+        // timestamp must never reach it.
+        contract_start_date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "contract_start_date must be YYYY-MM-DD")
+          .nullable()
+          .optional(),
       });
       const data = updateSchema.parse(req.body);
 

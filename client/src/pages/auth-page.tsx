@@ -16,7 +16,7 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   useSeo({
     title: "تسجيل الدخول | عِمارة",
-    description: "سجّل دخولك إلى منصة عِمارة — لملاك العقارات وشركات إدارة المرافق المرخّصة.",
+    description: "سجّل دخولك إلى منصة عِمارة، لملاك العقارات وشركات إدارة المرافق المرخّصة.",
     path: "/auth",
   });
   const [formData, setFormData] = useState({

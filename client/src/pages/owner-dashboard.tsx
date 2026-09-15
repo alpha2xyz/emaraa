@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { openSignedPdf } from "@/lib/storage";
-import { formatContractDate } from "@/components/ContractStartDatePicker";
+import ContractStartDatePicker, { formatContractDate } from "@/components/ContractStartDatePicker";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -191,6 +191,7 @@ export default function OwnerDashboard() {
   const [editMapUrl, setEditMapUrl] = useState("");
   const [editNationalAddress, setEditNationalAddress] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editContractStartDate, setEditContractStartDate] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
 
   // Offer accept dialog
@@ -302,6 +303,7 @@ export default function OwnerDashboard() {
     setEditMapUrl(property.map_url ?? "");
     setEditNationalAddress(property.national_address ?? "");
     setEditNotes(request?.description ?? "");
+    setEditContractStartDate(request?.contract_start_date ?? null);
     setEditEmail(userProfile?.email ?? "");
     setIsEditing(true);
     setShowEditLocked(false);
@@ -360,7 +362,10 @@ export default function OwnerDashboard() {
         const reqRes = await fetch(`/api/requests/${request.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ description: editNotes.trim() || null }),
+          body: JSON.stringify({
+            description: editNotes.trim() || null,
+            contract_start_date: editContractStartDate,
+          }),
         });
         if (!reqRes.ok) {
           const j = await reqRes.json().catch(() => ({}));
@@ -527,7 +532,7 @@ export default function OwnerDashboard() {
                   <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
                     {lang === "ar"
-                      ? "التعديل محجوب — وصلتك عروض على طلبك. ارفض جميع العروض لتتمكن من تعديل الطلب من جديد."
+                      ? "التعديل محجوب: وصلتك عروض على طلبك. ارفض جميع العروض لتتمكن من تعديل الطلب من جديد."
                       : "Editing locked — you've received offers on your request. Reject all offers to edit the request again."}
                   </span>
                 </div>
@@ -542,7 +547,7 @@ export default function OwnerDashboard() {
                   <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
                     {lang === "ar"
-                      ? "يمكنك تعديل طلبك الآن. بمجرد وصول أول عرض سيُقفل التعديل حتى ترفض جميع العروض — فتأكد أن جميع تفاصيلك وملاحظاتك مكتملة."
+                      ? "يمكنك تعديل طلبك الآن. بمجرد وصول أول عرض سيُقفل التعديل حتى ترفض جميع العروض، فتأكد أن جميع تفاصيلك وملاحظاتك مكتملة."
                       : "You can edit your request now. Once the first offer arrives, editing locks until you reject all offers — so make sure all your details and notes are complete."}
                   </span>
                 </div>
@@ -806,7 +811,7 @@ export default function OwnerDashboard() {
                     {editMapUrl.trim() && !isValidMapUrl(editMapUrl.trim()) && (
                       <p className="text-red-500 text-xs">
                         {lang === "ar"
-                          ? "الرابط غير صحيح — استخدم رابطاً من Google Maps"
+                          ? "الرابط غير صحيح، استخدم رابطاً من Google Maps"
                           : "Invalid URL — use a Google Maps link"}
                       </p>
                     )}
@@ -841,10 +846,22 @@ export default function OwnerDashboard() {
                       !/^[A-Z]{4}\d{4}$/.test(editNationalAddress.trim()) && (
                         <p className="text-red-500 text-xs">
                           {lang === "ar"
-                            ? "العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام — مثال: RUYF1234"
+                            ? "العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام، مثال: RUYF1234"
                             : "Short national address: 4 letters then 4 digits — e.g. RUYF1234"}
                         </p>
                       )}
+                  </div>
+
+                  {/* Contract start date — editable for the same window as
+                      everything else here: until the first offer arrives. Before
+                      2026-09-15 it could only be set once, on the onboarding form,
+                      while its own hint told the owner "you can set it later". */}
+                  <div className="space-y-1.5">
+                    <ContractStartDatePicker
+                      id="editContractStartDate"
+                      value={editContractStartDate}
+                      onChange={setEditContractStartDate}
+                    />
                   </div>
 
                   {/* Notes for providers */}
@@ -1036,7 +1053,7 @@ export default function OwnerDashboard() {
                 </p>
                 <p className="text-xs text-muted-foreground max-w-xs mx-auto">
                   {lang === "ar"
-                    ? "تم إخطار المزودين بطلبك — ستظهر العروض هنا عند استلامها"
+                    ? "تم إخطار المزودين بطلبك، وستظهر العروض هنا عند استلامها"
                     : "Providers have been notified of your request — offers will appear here when received"}
                 </p>
               </CardContent>
@@ -1270,7 +1287,7 @@ export default function OwnerDashboard() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {lang === "ar"
-                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF) فوراً، ويتم تبادل رقم الجوال بينك وبين هذا المزود للتواصل المباشر — ولا يظهر رقمك لأي مزود آخر. كما سيؤدي القبول تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
+                ? "قبول هذا العرض يفتح لك ملف العرض الكامل (PDF) فوراً، ويتم تبادل رقم الجوال بينك وبين هذا المزود للتواصل المباشر، ولا يظهر رقمك لأي مزود آخر. كما سيؤدي القبول تلقائياً إلى رفض جميع العروض الأخرى. هل أنت متأكد؟"
                 : "Accepting this offer opens the provider's full proposal (PDF) immediately, and exchanges phone numbers between you and this provider for direct contact — your number stays hidden from every other provider. It also automatically rejects all other offers. Are you sure?"}
             </AlertDialogDescription>
           </AlertDialogHeader>

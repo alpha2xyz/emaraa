@@ -17,15 +17,15 @@ import { IS_DEMO, DEMO_OTP_CODE } from "@/components/DemoBanner";
 type DemoAccount = { phone: string; label: string; labelEn: string };
 
 const OWNERS: DemoAccount[] = [
-  { phone: "0500000001", label: "نورة — عمارة الياسمين (3 عروض)", labelEn: "Noura — Al Yasmin building (3 offers)" },
-  { phone: "0500000002", label: "سعد — برج قرطبة (عرضان، جاهز للقبول)", labelEn: "Saad — Qurtuba tower (2 offers, ready to accept)" },
-  { phone: "0500000004", label: "فيصل — عمارة الملقا (عرض واحد)", labelEn: "Faisal — Al Malqa building (one offer)" },
+  { phone: "0500000001", label: "نورة · عمارة الياسمين (3 عروض)", labelEn: "Noura · Al Yasmin building (3 offers)" },
+  { phone: "0500000002", label: "سعد · برج قرطبة (عرضان، جاهز للقبول)", labelEn: "Saad · Qurtuba tower (2 offers, ready to accept)" },
+  { phone: "0500000004", label: "فيصل · عمارة الملقا (عرض واحد)", labelEn: "Faisal · Al Malqa building (one offer)" },
 ];
 
 const PROVIDERS: DemoAccount[] = [
   { phone: "0500000011", label: "أفق الشمال لإدارة المرافق", labelEn: "Ofuq Al Shamal FM" },
   { phone: "0500000013", label: "واحة المرافق المتكاملة (قدّم عرضًا على برج قرطبة)", labelEn: "Wahat Al Marafiq (bid on Qurtuba tower)" },
-  { phone: "0500000017", label: "نماء المرافق — تحت المراجعة", labelEn: "Namaa FM — pending review" },
+  { phone: "0500000017", label: "نماء المرافق · تحت المراجعة", labelEn: "Namaa FM · pending review" },
 ];
 
 export default function DemoAccountSwitcher({
@@ -50,7 +50,7 @@ export default function DemoAccountSwitcher({
       }}
     >
       <p className="text-xs mb-2" style={{ color: "var(--warn)" }}>
-        {lang === "ar" ? "حسابات تجريبية — اختر واحدًا" : "Demo accounts — pick one"}
+        {lang === "ar" ? "حسابات تجريبية، اختر واحدًا" : "Demo accounts, pick one"}
         {code ? (lang === "ar" ? ` · الرمز ${code}` : ` · code ${code}`) : ""}
       </p>
       <div className="flex flex-col gap-1.5">
