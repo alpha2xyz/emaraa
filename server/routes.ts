@@ -1649,7 +1649,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             )
             .select("id")
             .single();
-          acceptedDealId = dealRow?.id ?? null;
+          // Gated the same as the upsert payload above: with the flag off (production today),
+          // the response must stay byte-for-byte what it was before this build — no client
+          // should learn a deal_id it can't do anything with (POST .../contract 404s when off).
+          if (process.env.ESIGN_ENABLED === "true") acceptedDealId = dealRow?.id ?? null;
           // deals.created_at (set on first insert) is the scheduling anchor the
           // commission-reminder cron uses for the day-7 check-in and day-21
           // commission-request emails — see /api/cron/commission-reminder.
