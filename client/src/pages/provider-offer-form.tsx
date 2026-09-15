@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
+import { scopePart1, scopePart2 } from "@shared/scope-of-work";
 import { formatContractDate } from "@/components/ContractStartDatePicker";
 
 import { useToast } from "@/hooks/use-toast";
@@ -86,8 +87,6 @@ export default function ProviderOfferForm() {
       errorFileSize: "حجم الملف كبير جداً (الحد الأقصى 10MB)",
       errorFileType: "يجب أن يكون الملف بصيغة PDF",
       loading: "جاري التحميل...",
-      scopePart1: "نظافة دورية للمناطق المشتركة والمداخل والأسطح والخزانات وإدارة النفايات، صيانة شاملة للإنارة والمضخات والتكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.",
-      scopePart2: "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، لمدة سنة قابلة للتجديد.",
       alreadySubmitted: "لقد قدمت عرضاً لهذا الطلب مسبقاً ولا يمكن تقديم أكثر من عرض واحد",
       buildingType: "نوع المبنى",
       commercial: "تجاري",
@@ -140,8 +139,6 @@ export default function ProviderOfferForm() {
       errorFileSize: "File size is too large (max 10MB)",
       errorFileType: "File must be in PDF format",
       loading: "Loading...",
-      scopePart1: "Periodic cleaning of common areas, entrances, rooftops, tanks, and waste management; comprehensive maintenance of lighting, pumps, central HVAC, elevators, escalators, cameras, and fire suppression systems; pest control and landscaping as needed; 24/7 emergency response; utility bill payments; with clarification of holiday and national occasion work procedures.",
-      scopePart2: "Proposal requirements: detailed services and per-unit pricing plus total contract amount including VAT and payment terms, for a one-year renewable term.",
       alreadySubmitted:
         "You have already submitted an offer for this request. Only one offer per request is allowed.",
       buildingType: "Building Type",
@@ -432,8 +429,8 @@ export default function ProviderOfferForm() {
           className="mb-6 rounded-xl border p-4 text-sm bg-white/5"
           style={{ borderColor: "var(--border)" }}
         >
-          <p className="text-foreground leading-relaxed mb-3">{t.scopePart1}</p>
-          <p className="text-muted-foreground leading-relaxed font-medium">{t.scopePart2}</p>
+          <p className="text-foreground leading-relaxed mb-3">{scopePart1(buildingType, lang)}</p>
+          <p className="text-muted-foreground leading-relaxed font-medium">{scopePart2(lang)}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -22,16 +22,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLang } from "@/hooks/use-lang";
+import { scopePart1 } from "@shared/scope-of-work";
 import { useToast } from "@/hooks/use-toast";
 import { formatContractDate } from "@/components/ContractStartDatePicker";
 import { ProviderHeader } from "@/components/ProviderHeader";
 
 // ---------------------------------------------------------------------------
-// Unified SOW — same text for both building types (LOCKED — do not change)
-// ---------------------------------------------------------------------------
+// Scope of work lives in shared/scope-of-work.ts and varies by building type.
 
-const UNIFIED_SCOPE_PART1 =
-  "نظافة دورية للمناطق المشتركة والمداخل والأسطح والخزانات وإدارة النفايات، صيانة شاملة للإنارة والمضخات والتكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.";
 
 export default function ProviderRequests() {
   const { lang } = useLang();
@@ -531,7 +529,7 @@ export default function ProviderRequests() {
                       {/* ── Unified SOW excerpt (same for both types) ── */}
                       <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
                         {lang === "ar"
-                          ? UNIFIED_SCOPE_PART1
+                          ? scopePart1(request.properties?.building_type, lang)
                           : t.scopeShort}
                       </p>
 

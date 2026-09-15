@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ContractStartDatePicker from "@/components/ContractStartDatePicker";
+import { scopePart1, scopePart2 } from "@shared/scope-of-work";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -105,14 +106,8 @@ const MAP_URL_PREFIXES: string[] = [
   "https://goo.gl/maps",
 ];
 
-// Unified SOW — single text for both residential and commercial (LOCKED — do not change)
-const UNIFIED_SCOPE = {
-  part1:
-    "نظافة دورية للمناطق المشتركة والمداخل والأسطح والخزانات وإدارة النفايات، صيانة شاملة للإنارة والمضخات والتكييف المركزي (HVAC) والمصاعد والسلالم المتحركة والكاميرات ومنظومة الإطفاء، رش مبيدات وبستنة عند الحاجة، طوارئ على مدار الساعة، تسديد فواتير المرافق، مع توضيح آلية العمل في الإجازات والمناسبات الوطنية.",
-  part2:
-    "متطلبات العرض: تفصيل الخدمات والسعر لكل وحدة وإجمالي العقد شاملاً الضريبة وشروط الدفع، لمدة سنة قابلة للتجديد.",
-};
-
+// Scope of work now lives in shared/scope-of-work.ts, which varies it by
+// building type (residential buildings have no escalators).
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -687,12 +682,12 @@ export default function OwnerOnboarding() {
                   </p>
                 </div>
                 <div className="space-y-3 text-sm text-foreground leading-relaxed">
-                  <p>{UNIFIED_SCOPE.part1}</p>
+                  <p>{scopePart1(buildingType, lang)}</p>
                   <p
                     className="text-xs leading-relaxed pt-2 border-t"
                     style={{ color: "#9FC2D3", borderColor: "var(--border)" }}
                   >
-                    {UNIFIED_SCOPE.part2}
+                    {scopePart2(lang)}
                   </p>
                 </div>
               </CardContent>
