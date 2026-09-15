@@ -1102,7 +1102,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, " +
+            "requests(id, owner_id, status, service_category, properties(name, city, building_type)), " +
+            "deals!deals_offer_fk(id, signature_status, contract_pdf_path, signed_pdf_path, signature_sent_at, signature_rejected_reason)"
         )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
@@ -1138,6 +1140,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           ...o,
           requests: o.requests ? request : null,
           owner: o.status === "accepted" ? ownersById.get(owner_id) ?? null : null,
+          deal: Array.isArray(o.deals) ? (o.deals[0] ?? null) : (o.deals ?? null),
         };
       });
       res.json(safe);
@@ -1164,7 +1167,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, " +
+            "providers(id, company_name, city, company_profile_url, users(phone)), " +
+            "deals!deals_offer_fk(id, signature_status, contract_pdf_path, signed_pdf_path, signature_sent_at, signature_rejected_reason)"
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
@@ -1182,6 +1187,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         providers: o.providers
           ? { ...o.providers, users: o.status === "accepted" ? o.providers.users : null }
           : null,
+        // A deal only ever exists for an accepted offer (auto-created on accept), and
+        // deals!deals_offer_fk comes back as an array from a to-many embed even though
+        // offer_id is UNIQUE — flatten to the single row ContractSigningCard expects.
+        deal: Array.isArray(o.deals) ? (o.deals[0] ?? null) : (o.deals ?? null),
       }));
       res.json(safe);
     } catch {

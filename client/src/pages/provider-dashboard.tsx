@@ -21,6 +21,7 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { openSignedPdf } from "../lib/storage";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProviderHeader } from "@/components/ProviderHeader";
+import { ContractSigningCard } from "@/components/ContractSigningCard";
 
 
 // ---------------------------------------------------------------------------
@@ -424,6 +425,10 @@ export default function ProviderDashboard() {
                             </a>
                           </div>
                         </div>
+                      )}
+
+                      {offer.status === "accepted" && offer.deal?.id && (
+                        <ContractSigningCard dealId={offer.deal.id} role="provider" />
                       )}
 
                       {/* View PDF */}

@@ -37,6 +37,7 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { openSignedPdf } from "@/lib/storage";
 import ContractStartDatePicker, { formatContractDate } from "@/components/ContractStartDatePicker";
+import { ContractSigningCard } from "@/components/ContractSigningCard";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -430,7 +431,7 @@ export default function OwnerDashboard() {
       if (!res.ok) {
         throw new Error((body as any).error || "Failed");
       }
-      return body as { offer_file_url?: string | null };
+      return body as { offer_file_url?: string | null; deal_id?: string | null };
     },
     onSuccess: (body, { status }) => {
       toast({
@@ -448,6 +449,16 @@ export default function OwnerDashboard() {
       // Quotation" to get here, accepting was a side effect of that, not a separate step.
       if (status === "accepted" && body?.offer_file_url) {
         openSignedPdf("provider-offers", body.offer_file_url);
+      }
+      // Present only when ESIGN_ENABLED (server omits deal_id otherwise). Fire-and-forget:
+      // ContractSigningCard's own poll picks up the preparing -> sent transition once this
+      // finishes — the accept click shouldn't block on Chromium + a vendor round-trip.
+      if (status === "accepted" && body?.deal_id) {
+        const token = localStorage.getItem("sessionToken");
+        fetch(`/api/deals/${body.deal_id}/contract`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }).catch(() => {});
       }
     },
     onError: () => {
@@ -1194,6 +1205,10 @@ export default function OwnerDashboard() {
                           </a>
                         </div>
                       </div>
+                    )}
+
+                    {offer.status === "accepted" && offer.deal?.id && (
+                      <ContractSigningCard dealId={offer.deal.id} role="owner" />
                     )}
 
                     {/* Actions */}
