@@ -69,7 +69,7 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 **Flow:**
 1. Owner registers → OTP → `auth-page.tsx` redirects to `/dashboard/owner/onboarding` (login still goes to `/dashboard/owner`)
 2. Single form creates **property + service request in one submit**
-3. After success → redirect to `/dashboard/owner` + SMS fire-and-forget to approved providers
+3. After success → redirect to `/dashboard/owner`. The new-request broadcast to approved Riyadh providers is an **email sent server-side inside `POST /api/requests`** (since 2026-08-03; the old client-triggered `/api/sms/new-request` call is gone and must never come back, see `_work/decisions-log.md` 2026-08-03)
 
 **Form fields:**
 - Property name, building type (residential/commercial clickable cards), neighborhood (shadcn Select — 44 Riyadh neighborhoods hardcoded), units count (shadcn Select: 2/4/6…26 + "Other" with free input), Google Maps URL (validated against allowed prefixes), national address (optional)
@@ -79,9 +79,8 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 **API sequence on submit:**
 1. `POST /api/properties` → if `limit_reached` error → toast + redirect to dashboard
 2. Extract `property_id` from response
-3. `POST /api/requests` with `service_category: "standard"` — soft failure (property already created)
-4. `POST /api/sms/new-request` — fire-and-forget
-5. `queryClient.invalidateQueries(["owner-stats", "/api/properties", "owner-property"])` → redirect to `/dashboard/owner`
+3. `POST /api/requests` with `service_category: "standard"` — soft failure (property already created); this route also emails every approved Riyadh provider and the admin before responding (open reliability item: the sends are sequential and on the request path, see master plan v1006 code section)
+4. `queryClient.invalidateQueries(["owner-stats", "/api/properties", "owner-property"])` → redirect to `/dashboard/owner`
    - **All 3 cache keys must be invalidated** — the dashboard uses `["owner-property"]`, not `["/api/properties"]`. Missing this causes a redirect loop back to onboarding.
 
 **Building type card colors (dark theme, rebrand 2026-06-11):**
@@ -95,12 +94,7 @@ New owners are routed to a **unified onboarding page** (`/dashboard/owner/onboar
 
 **Decision:** All separate owner pages consolidated into one unified `owner-dashboard.tsx`.
 
-**Files RETIRED (still in codebase, cleanup deferred to Stage 2):**
-- `client/src/pages/properties.tsx`
-- `client/src/pages/property-form.tsx`
-- `client/src/pages/requests.tsx`
-- `client/src/pages/request-form.tsx`
-- `client/src/pages/owner-offers-page.tsx`
+**Retired page files** (`properties.tsx`, `property-form.tsx`, `requests.tsx`, `request-form.tsx`, `owner-offers-page.tsx`, the `sandbox-*` pages, `BottomNav.tsx`) were all **deleted on 2026-06-12**. `client/src/pages/` holds exactly 17 live, routed pages (verified 2026-09-13).
 
 **`owner-dashboard.tsx` structure (single scrollable page):**
 1. **Greeting / header** — dark-theme tokens (`text-foreground`, role accent `var(--owner)`); chips for city + building type. (The old light-theme `text-gray-900` greeting is retired — Arctic Depths rebrand 2026-06-11. Never reintroduce light-theme hex here.)
@@ -153,11 +147,9 @@ The app is a **dark theme**. All colors are centralized in `client/src/index.css
 
 ---
 
-### Communication Rules (permanent until explicitly changed)
+### Communication Rules
 
-- **Replies:** Always respond in **English only** — never reply in Arabic
-- **Markdown files:** Write all `.md` files in **English only** — no Arabic content in any `.md` file
-- **UI copy:** User-facing strings in the app still require both Arabic and English (Arabic is primary) — this rule applies to code, not to Claude's replies or docs
+Language rules live in `~/.claude/CLAUDE.md` §2 (English by default; Arabic when Abdallah writes Arabic; brand-canon `.md` files keep their Arabic). This file no longer overrides them (the old "never reply in Arabic / no Arabic in any .md" lines were removed 2026-09-13 because they contradicted the master guide and would have licensed translating BRAND-VOICE/TERMINOLOGY). **UI copy:** every user-facing string needs both Arabic and English, Arabic primary.
 
 ### Bilingual / RTL
 
@@ -167,14 +159,20 @@ Language state is managed by `client/src/hooks/use-lang.ts` using a module-level
 
 | Table | Key fields |
 |---|---|
-| `users` | id (uuid), phone, name, role (owner\|provider) |
-| `properties` | id, name, building_type, address, city, units_count, map_url, owner_id |
-| `requests` | id, owner_id, property_id, service_category, description, status |
-| `providers` | id, user_id, company_name, email, city, commercial_register_url, company_profile_url, approved |
-| `provider_offers` | id, request_id, provider_id, offer_file_url, notes, status |
-| `admins` | id, username, password_hash, session_token, session_expires_at |
+| `users` | id (uuid), phone, name, email (optional, owners), role (owner\|provider), last_login_at |
+| `properties` | id, name, building_type, address, city, units_count, map_url, national_address, owner_id |
+| `requests` | id, owner_id, property_id, service_category, description, status (pending\|in_progress\|expired\|…) |
+| `providers` | id, user_id, company_name, email, city, commercial_register_url, company_profile_url, fal_license_url, approved |
+| `provider_offers` | id, request_id, provider_id, offer_file_url, price_total, notes, status (pending\|accepted\|rejected\|expired); UNIQUE(request_id, provider_id) |
+| `deals` | id, request_id, offer_id (UNIQUE), provider_id, owner_id, contract_value, status (pending\|closed\|cancelled), signed_at, commission_email_sent_at, commission_reminder_sent_at — **the revenue/GMV table** |
+| `sessions` | token (PK), user_id, role, expires_at |
+| `email_log` | every Zoho send: template, to, status (sent\|failed\|suppressed_test), error |
+| `otp_rate_limits` | phone, created_at (send + verify share the counter) |
+| `admins` | id, username, password (bcrypt hash, column is `password` not `password_hash`), session_token, session_expires_at |
+| `admin_login_attempts` | ip, created_at |
+| `admin_impersonation_log` | admin id, target user, created_at |
 
-Drizzle-zod generates `insertXSchema` and types from each table definition.
+12 tables total (table list synced with `shared/schema.ts` on 2026-09-13; `sms_log`/`sms_rate_limits` were dropped 2026-09-06). Drizzle-zod generates `insertXSchema` and types from each table definition. **Drift status (corrected 2026-09-15):** `migrations/` now runs to `010_rls_policies.sql`. `007_reflect_production.sql` added `deals`, `email_log`, `users.last_login_at` and the admin RPC bodies; `010` captures the 23 RLS policies that previously existed only inside the live database. A fresh project can now be rebuilt from the repo — the remaining manual step is creating the `provider-offers` and `provider-documents` storage buckets, which no migration can do.
 
 ### File Storage
 
@@ -186,7 +184,7 @@ PDF proposals and company documents are stored in Supabase Storage. `client/src/
 
 - All pages in `client/src/pages/` have a `.page-enter` CSS animation (defined in `index.css`).
 - shadcn/ui components live in `client/src/components/ui/` — don't edit these directly; extend them from page/feature components.
-- `env.ts` at the root exports `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `AUTHENTICA_API_KEY` — imported by both server and client.
+- There is **no root `env.ts`** (corrected 2026-09-13). The server reads `process.env.*` directly; the client reads only `import.meta.env.VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SENTRY_DSN`. Nothing secret reaches the client bundle; `.env.example` is the authoritative variable list.
 - `server/storage.ts` (the old `MemStorage`/`IStorage` scaffold) was **deleted 2026-06-12** — it was imported by nothing. All data lives in Supabase, accessed server-side via `supabaseAdmin`. Do not recreate a MemStorage layer.
 - `console.error` is guarded by `import.meta.env.DEV` throughout client code.
 
@@ -233,7 +231,7 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 
 - Live URL: https://emaraa.app (also: https://emaraa.vercel.app)
 - GitHub repo: `git@github.com:alpha2xyz/emaraa.git` — Vercel auto-deploys on push to `main`
-- Env vars set in Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AUTHENTICA_API_KEY`, `SUPABASE_JWT_SECRET`, `FRONTEND_URL`
+- Env vars: see `.env.example` (26 variables, authoritative). Production-only additions: `CRON_SECRET`, `COMMISSION_*`, `EMARAA_CR_NUMBER` (set 2026-09-12). `SUPABASE_JWT_SECRET` was removed 2026-06-01 (ES256 migration) and must not be re-added.
 
 ---
 
@@ -252,14 +250,7 @@ SMS OTP is live via **Authentica** (portal.authentica.sa), a Saudi-native SMS pr
 
 ### Pre-Work Archive
 
-**Before starting any new feature or large code change, create a dated ZIP backup of the project.**
-
-```bash
-cd "/Users/abdallahalfaraidi/Documents/Emaraa with claude" && zip -r "backups/Emaraa_$(date +%Y-%m-%d).zip" Emaraa --exclude "Emaraa/node_modules/*" --exclude "Emaraa/.git/*" --exclude "Emaraa/dist/*" --exclude "Emaraa/.next/*"
-```
-
-Archives go to `~/Documents/Emaraa with claude/backups/` — format `Emaraa_YYYY-MM-DD.zip`.
-Do this **once per session** before the first code edit, not before every file change.
+The daily ZIP backup (`backups/Emaraa_YYYY-MM-DD.zip`, node_modules/.git/dist excluded, ~1 MB) is created **automatically** by the `SessionStart` hook in `Emaraa/.claude/settings.json`, once per calendar day. Do not zip by hand; if the day's file is missing, run the hook's command from that settings file.
 
 ### Reports Folder
 
@@ -317,15 +308,7 @@ If it's not `client/`, `server/`, `shared/`, `migrations/`, or a config file —
 
 ### Model routing
 
-**Main seat (Abdallah switches with `/model`):** match the model to the size of the job.
-
-> **Fable 5 has limited/rotating availability — it comes and goes.** Keep the *saved default* model on **Opus 4.8** (always available); switch to Fable with `/model` only for the session you want it, so a disappearance never leaves a new session with no valid default. Do NOT save Fable as the default and leave it there when it rotates out.
-
-| Model | Use for |
-|---|---|
-| **Fable 5** (when available) | Monthly deep audits, architecture decisions, multi-layer debugging, plans handed to subagents. If unavailable, use Opus 4.8. |
-| **Opus 4.8** | Feature implementation, bug fixes, UI work, reports, orchestrating subagent swarms |
-| **Sonnet 5** | Quick questions, docs, single-file tweaks, research |
+**Main seat (Abdallah switches with `/model`):** match the model to the size of the job. Keep the saved default on the always-available Opus generation (`~/.claude/settings.json` governs; the model names below are roles, not pinned versions, updated 2026-09-13). Fable has rotating availability: switch to it per session for deep audits, architecture, or multi-layer debugging, and never save it as the default. Sonnet for quick questions, docs, single-file tweaks, research.
 
 **Delegation layer (the enforcement mechanism):** the main seat stays on judgment work. Anything **mechanical or multi-place** is delegated to a named subagent in `.claude/agents/`, each pinned to a cheap model so the premium seat isn't spent on it. This is how the "cheap model for easy tasks" rule is actually enforced — a subagent's `model:` field is fixed, unlike the main seat.
 
@@ -360,11 +343,10 @@ Default to subagents for any check/edit/gather spanning **more than one file or 
 
 > Full backlog lives in `~/Documents/Emaraa with claude/_work/TODO.md`. This section is a quick reference for items with specific code locations.
 
-**Emaraa is LIVE (launched June 2026).** Current phase: marketing and user acquisition. Open items tracked in TODO.md by stage:
-- **Stage 2** — Rate limiting, audit log, DDL migrations, role enforcement, MemStorage cleanup, .env.example vars
-- **Stage 3** — Contract signing (Signit API), subscription payments (Moyasar)
+**Emaraa is LIVE (launched June 2026).** Current phase: marketing and user acquisition, with **signed contracts** as the one metric for Q4-2026. Open items tracked in TODO.md.
 
-> Security audit (2026-05-20) verified 2026-05-27 — 7/11 issues fixed. Open items in Stage 2 above. Full report in `_work/sessions/2026-05-27.md`.
+> **Open engineering items from the 2026-09-13 360 review** (full detail: `Reports/master-plan/master-plan-v1006.html`, code tab): (1) storage paths on `POST /api/provider/profile` and `POST /api/provider/offers` are accepted from the client without a `${userId}/` prefix check; (2) `/api/otp/send` has no per-IP or global SMS cap; (3) no `app.set("trust proxy")`, so admin-login limiting keys on one IP; (4) `api/index.ts` (production) mounts no Helmet/CORS while `server/index.ts` (dev) does; (5) provider broadcast runs sequentially on the request path with no `maxDuration`; (6) `migrations/` missing `deals`, `email_log`, `last_login_at`; (7) CSP blocks Google Ads conversion beacons while `privacy.tsx` §7 says no ad tracking is used; (8) `index.css:156` overrides the Cairo font stack so Cairo never renders. Items 1 to 3 are one afternoon and come first.
+> Stage 3 (needs CR, now issued 2026-09-11): e-signature (SADQ/Signit sandbox pending), Moyasar.
 
 ---
 
