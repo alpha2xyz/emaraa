@@ -1793,6 +1793,200 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // ── E-signature (2026-09-15) ────────────────────────────────────────────────
+  // Scope note: owner-on-that-deal or provider-on-that-deal only, no admin path here — the
+  // existing GET /api/admin/deals list already gives admin visibility into signature_status
+  // without a second auth scheme in these three routes. Add one if a real admin need shows up.
+  const ARABIC_MONTHS = [
+    "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+  ];
+  function formatContractDate(d: Date): string {
+    return `${d.getDate()} ${ARABIC_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  async function loadDealForEsign(dealId: string, requesterUserId: string) {
+    const { data: deal } = await supabaseAdmin
+      .from("deals")
+      .select(
+        "id, request_id, offer_id, owner_id, contract_value, signature_status, signature_request_id, " +
+          "signature_signatory_ids, signature_sent_at, signature_rejected_reason, contract_pdf_path, signed_pdf_path, " +
+          "providers!deals_provider_fk(id, user_id, email, company_name, cr_number, fal_license_number, signatory_name), " +
+          "owner:users!deals_owner_fk(id, name, email)",
+      )
+      .eq("id", dealId)
+      .maybeSingle();
+    if (!deal) return null;
+    const provider = (deal as any).providers;
+    const isOwner = requesterUserId === (deal as any).owner_id;
+    const isProvider = requesterUserId === provider?.user_id;
+    if (!isOwner && !isProvider) return null;
+    return { deal: deal as any, role: (isOwner ? "owner" : "provider") as "owner" | "provider" };
+  }
+
+  // Generates the contract PDF and creates the Signit signature request. Deliberately a
+  // separate call from the accept-offer PATCH above, made by the client right after that
+  // response returns — see server/app.ts / the deals upsert comment for why this can't live
+  // inline in the accept handler (Chromium + a vendor round-trip on a path that already runs
+  // several sequential email sends).
+  app.post("/api/deals/:id/contract", requireSession, async (req, res) => {
+    if (process.env.ESIGN_ENABLED !== "true") return res.status(404).json({ error: "not_found" });
+    try {
+      const requesterUserId = (req as any).userId as string;
+      const access = await loadDealForEsign(req.params.id as string, requesterUserId);
+      if (!access) return res.status(403).json({ error: "Forbidden" });
+      const { deal } = access;
+
+      if (deal.signature_status && deal.signature_status !== "preparing" && deal.signature_status !== "failed") {
+        return res.status(409).json({ error: "already_started", signature_status: deal.signature_status });
+      }
+
+      const { data: request } = await supabaseAdmin
+        .from("requests")
+        .select("property_id, contract_start_date, properties(name, address, city, building_type, units_count)")
+        .eq("id", deal.request_id)
+        .maybeSingle();
+      const property = (request as any)?.properties;
+
+      const { data: offer } = await supabaseAdmin
+        .from("provider_offers")
+        .select("line_items, price_total")
+        .eq("id", deal.offer_id)
+        .maybeSingle();
+
+      const provider = deal.providers;
+      const owner = deal.owner;
+
+      const contractDate = (request as any)?.contract_start_date
+        ? formatContractDate(new Date((request as any).contract_start_date))
+        : formatContractDate(new Date());
+
+      const { renderContractHtml } = await import("./esign/contract-template.js");
+      const { renderHtmlToPdf } = await import("./esign/pdf.js");
+      const { signitAdapter } = await import("./esign/signit-adapter.js");
+      const { OWNER_ANCHOR_TAG, PROVIDER_ANCHOR_TAG } = await import("./esign/contract-template.js");
+
+      const html = renderContractHtml({
+        contractDate,
+        ownerName: owner?.name ?? "—",
+        propertyName: property?.name ?? "—",
+        propertyAddress: property?.address ?? "—",
+        propertyCity: property?.city ?? "—",
+        buildingType: property?.building_type === "commercial" ? "commercial" : "residential",
+        unitsCount: property?.units_count ?? null,
+        providerCompanyName: provider?.company_name ?? "—",
+        providerCrNumber: provider?.cr_number ?? null,
+        providerFalLicenseNumber: provider?.fal_license_number ?? null,
+        providerRepresentativeName: provider?.signatory_name ?? null,
+        contractValue: deal.contract_value ?? (offer as any)?.price_total ?? null,
+        lineItems: (offer as any)?.line_items ?? [],
+        signitRequestId: null,
+      });
+
+      const pdfBuffer = await renderHtmlToPdf(html);
+      const unsignedPath = `${deal.id}/unsigned-${Date.now()}.pdf`;
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("contracts")
+        .upload(unsignedPath, pdfBuffer, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+
+      // Anchor page is a layout fact about this template's rendered output, not a business
+      // fact — see the comment on Signatory.anchorPage. Re-check whenever contract-template.ts
+      // changes materially (more sections, a longer Annex A table, etc.).
+      const ANCHOR_PAGE = Number(process.env.ESIGN_SIGNATURE_ANCHOR_PAGE ?? "2");
+
+      const { requestId, signatoryIds } = await signitAdapter.createSignatureRequest({
+        dealId: deal.id,
+        title: `عقد عِمارة — ${property?.name ?? deal.id}`,
+        pdfBuffer,
+        signatories: [
+          {
+            role: "owner",
+            fullName: owner?.name ?? "المالك",
+            contactEmail: owner?.email || "info@emaraa.app",
+            anchorTag: OWNER_ANCHOR_TAG,
+            anchorPage: ANCHOR_PAGE,
+          },
+          {
+            role: "provider",
+            fullName: provider?.signatory_name || provider?.company_name || "مقدم الخدمة",
+            contactEmail: provider?.email || "info@emaraa.app",
+            anchorTag: PROVIDER_ANCHOR_TAG,
+            anchorPage: ANCHOR_PAGE,
+          },
+        ],
+      });
+
+      await supabaseAdmin
+        .from("deals")
+        .update({
+          signature_status: "sent",
+          signature_request_id: requestId,
+          signature_provider: "signit",
+          signature_signatory_ids: signatoryIds,
+          contract_pdf_path: unsignedPath,
+          signature_sent_at: new Date().toISOString(),
+          signature_rejected_reason: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", deal.id);
+
+      await supabaseAdmin.from("signature_events").insert({
+        deal_id: deal.id,
+        provider: "signit",
+        event_type: "created",
+        payload: { requestId, signatoryIds },
+      });
+
+      res.json({ success: true, signature_status: "sent" });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[deals/contract]", e?.message);
+      // Record the failure against the deal so the UI can show «تعذّر إنشاء العقد» rather than
+      // spinning forever on «جاري تجهيز العقد» — see the design spec's failure-path table.
+      await supabaseAdmin
+        .from("deals")
+        .update({ signature_status: "failed", updated_at: new Date().toISOString() })
+        .eq("id", req.params.id)
+        .then(() => {});
+      res.status(500).json({ error: "contract_generation_failed" });
+    }
+  });
+
+  app.get("/api/deals/:id/signature-status", requireSession, async (req, res) => {
+    if (process.env.ESIGN_ENABLED !== "true") return res.status(404).json({ error: "not_found" });
+    try {
+      const requesterUserId = (req as any).userId as string;
+      const access = await loadDealForEsign(req.params.id as string, requesterUserId);
+      if (!access) return res.status(403).json({ error: "Forbidden" });
+      const { reconcilePendingSignature } = await import("./esign/reconcile.js");
+      const result = await reconcilePendingSignature(supabaseAdmin, req.params.id as string);
+      res.json(result);
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[deals/signature-status]", e?.message);
+      res.status(500).json({ error: "signature_status_failed" });
+    }
+  });
+
+  app.get("/api/deals/:id/signing-link", requireSession, async (req, res) => {
+    if (process.env.ESIGN_ENABLED !== "true") return res.status(404).json({ error: "not_found" });
+    try {
+      const requesterUserId = (req as any).userId as string;
+      const access = await loadDealForEsign(req.params.id as string, requesterUserId);
+      if (!access) return res.status(403).json({ error: "Forbidden" });
+      const { deal, role } = access;
+      const signatoryId = (deal.signature_signatory_ids as any)?.[role];
+      if (!deal.signature_request_id || !signatoryId) {
+        return res.status(409).json({ error: "signing_not_ready" });
+      }
+      const { signitAdapter } = await import("./esign/signit-adapter.js");
+      const link = await signitAdapter.getSigningLink(deal.signature_request_id, signatoryId);
+      res.json(link);
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[deals/signing-link]", e?.message);
+      res.status(500).json({ error: "signing_link_failed" });
+    }
+  });
+
   // Admin real-time notifications (new registration / new request) go to this inbox.
   const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_REPORT_TO ?? "info@emaraa.app";
 
