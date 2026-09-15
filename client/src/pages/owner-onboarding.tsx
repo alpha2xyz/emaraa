@@ -329,7 +329,7 @@ export default function OwnerOnboarding() {
           : "Your request was submitted! Providers will be in touch soon.",
       description:
         lang === "ar"
-          ? "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض — بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض."
+          ? "يمكنك تعديل طلبك من لوحة التحكم قبل وصول أول عرض. بعد أول عرض يُقفل التعديل حتى ترفض جميع العروض."
           : "You can edit your request from the dashboard before the first offer arrives — editing locks after the first offer until you reject all offers.",
       variant: "default",
     });
@@ -477,7 +477,7 @@ export default function OwnerOnboarding() {
                     className="opacity-50 cursor-not-allowed"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {lang === "ar" ? "الإصدار الأول — الرياض فقط" : "V1 — Riyadh only"}
+                    {lang === "ar" ? "الإصدار الأول: الرياض فقط" : "V1: Riyadh only"}
                   </p>
                 </div>
 
@@ -617,7 +617,7 @@ export default function OwnerOnboarding() {
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
                       {lang === "ar"
-                        ? "الرابط غير صحيح — استخدم رابطاً من Google Maps"
+                        ? "الرابط غير صحيح، استخدم رابطاً من Google Maps"
                         : "Invalid link — use a Google Maps link"}
                     </p>
                   )}
@@ -652,7 +652,7 @@ export default function OwnerOnboarding() {
                     <p className="text-red-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
                       {lang === "ar"
-                        ? "العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام — مثال: RUYF1234"
+                        ? "العنوان الوطني المختصر: 4 أحرف ثم 4 أرقام، مثال: RUYF1234"
                         : "Short national address: 4 letters then 4 digits — e.g. RUYF1234"}
                     </p>
                   )}
@@ -699,7 +699,11 @@ export default function OwnerOnboarding() {
             </Card>
           </div>
 
-          {/* ── SECTION 3 — Notes for providers (optional) ── */}
+          {/* ── SECTION 3 — Contract start date (optional) ──
+              Its own section since 2026-09-15. It had been nested inside the notes
+              card's flex row, sharing a line with the notes icon and label, which
+              read as though the date were part of the note. It is not: it sets the
+              contract period and providers price against it. */}
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
@@ -711,18 +715,36 @@ export default function OwnerOnboarding() {
               >
                 3
               </span>
+              {lang === "ar" ? "بداية العقد (اختياري)" : "Contract Start (optional)"}
+            </p>
+            <Card className="rounded-xl shadow-sm">
+              <CardContent className="pt-6">
+                <ContractStartDatePicker
+                  value={contractStartDate}
+                  onChange={setContractStartDate}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ── SECTION 4 — Notes for providers (optional) ── */}
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest mb-3 flex items-center gap-2"
+              style={{ color: "var(--owner)" }}
+            >
+              <span
+                className="inline-flex items-center justify-center rounded-full text-xs font-bold"
+                style={{ width: "1.5rem", height: "1.5rem", background: "var(--owner)", color: "#04222c", flexShrink: 0 }}
+              >
+                4
+              </span>
               {lang === "ar" ? "ملاحظات للمزودين (اختياري)" : "Notes for Providers (optional)"}
             </p>
             <Card className="rounded-xl shadow-sm">
               <CardContent className="pt-6 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <div className="mb-5">
-                    <ContractStartDatePicker
-                      value={contractStartDate}
-                      onChange={setContractStartDate}
-                    />
-                  </div>
                   <Label htmlFor="notes" className="text-sm text-muted-foreground">
                     {lang === "ar" ? "تفاصيل أو ملاحظات إضافية للمزودين" : "Additional details or notes for providers"}
                   </Label>
@@ -769,7 +791,7 @@ export default function OwnerOnboarding() {
                 />
                 <p className="text-xs text-muted-foreground text-start">
                   {lang === "ar"
-                    ? "سنُرسل لك بريداً عند استلام طلبك، ووصول عرض جديد، وقبول العرض — بدون الحاجة لتسجيل الدخول للتحقق."
+                    ? "سنُرسل لك بريداً عند استلام طلبك، ووصول عرض جديد، وقبول العرض، بدون الحاجة لتسجيل الدخول للتحقق."
                     : "We'll email you when your request is received, when a new offer arrives, and when you accept an offer — no need to log in to check."}
                 </p>
               </CardContent>
@@ -793,7 +815,7 @@ export default function OwnerOnboarding() {
                 <span className="flex items-center gap-2">
                   <Building2 className="w-5 h-5" />
                   {lang === "ar"
-                    ? "أرسل طلبي — ينشئ عقاراً وطلباً في خطوة واحدة"
+                    ? "أرسل طلبي: ينشئ عقاراً وطلباً في خطوة واحدة"
                     : "Send My Request — creates a property and a request in one step"}
                 </span>
               )}

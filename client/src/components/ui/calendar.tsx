@@ -30,8 +30,15 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100"
         ),
-        nav_button_previous: "absolute start-1",
-        nav_button_next: "absolute end-1",
+        // `!absolute` is deliberate. react-day-picker ships `.rdp-button_reset`
+        // with `position: relative`, which wins over a plain `absolute` here, and
+        // then `start-1`/`end-1` stop being edge insets and become small relative
+        // nudges that push the two arrows *into* each other -- measured at 20px
+        // apart for 28px-wide buttons, i.e. an 8px overlap, which is what showed
+        // up in RTL as one arrow sitting on top of the other. Forcing the position
+        // restores them to opposite edges of the caption.
+        nav_button_previous: "!absolute start-1",
+        nav_button_next: "!absolute end-1",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",

@@ -8,13 +8,15 @@ import { Building2, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2 } from "luc
 import { useLocation } from "wouter";
 import AmbientBackground from "@/components/AmbientBackground";
 import { trackConversion } from "@/lib/gtag";
+import DemoAccountSwitcher from "@/components/DemoAccountSwitcher";
+import { IS_DEMO, DEMO_OTP_CODE } from "@/components/DemoBanner";
 
 export default function AuthPage() {
   const { lang } = useLang();
   const [, setLocation] = useLocation();
   useSeo({
     title: "تسجيل الدخول | عِمارة",
-    description: "سجّل دخولك إلى منصة عِمارة — لملاك العقارات وشركات إدارة المرافق المرخّصة.",
+    description: "سجّل دخولك إلى منصة عِمارة، لملاك العقارات وشركات إدارة المرافق المرخّصة.",
     path: "/auth",
   });
   const [formData, setFormData] = useState({
@@ -374,6 +376,10 @@ export default function AuthPage() {
             <div className="px-6 pb-6">
               {step === "phone" ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <DemoAccountSwitcher
+                    role={role}
+                    onPick={(phone) => setFormData((f) => ({ ...f, phone }))}
+                  />
                   {/* Name Field - only for register */}
                   {mode === "register" && (
                     <div className="space-y-2">
@@ -526,8 +532,15 @@ export default function AuthPage() {
                 </form>
               ) : (
                 <form onSubmit={handleOtpVerify} className="space-y-4">
+                  {/* On the demo deployment no SMS is sent at all -- the OTP test
+                      bypass accepts a fixed code -- so claiming one was sent is a
+                      visible untruth in front of whoever is being walked through it. */}
                   <div className="text-center p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                    {t.otpDesc}
+                    {IS_DEMO
+                      ? lang === "ar"
+                        ? `نسخة تجريبية: لا تُرسل رسائل. استخدم الرمز ${DEMO_OTP_CODE}`
+                        : `Demo: no SMS is sent. Use code ${DEMO_OTP_CODE}`
+                      : t.otpDesc}
                     <span className="block font-bold mt-1 dir-ltr">{formData.phone}</span>
                   </div>
 

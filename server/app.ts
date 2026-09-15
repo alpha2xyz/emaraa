@@ -79,7 +79,31 @@ function allowedOrigins(): string[] {
  * to whichever file the author happened to open. Anything that must hold in
  * production belongs in here, not in either entry file.
  */
+/**
+ * The OTP test bypass (server/routes.ts) lets whitelisted fake numbers log in with
+ * a fixed code and no SMS. That is exactly what the investor demo deployment needs,
+ * and exactly what must never be reachable on production.
+ *
+ * The env flag alone is one dashboard typo away from an auth bypass on the live
+ * site, so it is not the only guard: the bypass is only allowed when the database
+ * behind it is NOT production. If both are true the process refuses to start —
+ * loudly, at boot, rather than silently serving a bypass to real users.
+ */
+const PRODUCTION_PROJECT_REF = "txzbzpnrclkdodosbndy";
+
+function assertTestModeIsNotOnProduction(): void {
+  if (process.env.OTP_TEST_MODE !== "true") return;
+  if (!(process.env.SUPABASE_URL ?? "").includes(PRODUCTION_PROJECT_REF)) return;
+  throw new Error(
+    "OTP_TEST_MODE=true with SUPABASE_URL pointing at the production Supabase project. " +
+      "This would expose the OTP bypass to real users. Refusing to start. " +
+      "Unset OTP_TEST_MODE, or point this deployment at the demo project.",
+  );
+}
+
 export function createApp(): Express {
+  assertTestModeIsNotOnProduction();
+
   const app = express();
 
   // Trust exactly one proxy hop (Vercel's edge), expressed as a hop count rather
