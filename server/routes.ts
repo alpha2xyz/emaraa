@@ -1570,6 +1570,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Returned to the client on accept so it can open the now-unlocked PDF
       // immediately, without a second round-trip to re-fetch the offer.
       let acceptedOfferFileUrl: string | null = null;
+      // Set only when ESIGN_ENABLED — lets the client kick off contract generation
+      // (POST /api/deals/:id/contract) right after this response, without a re-fetch.
+      let acceptedDealId: string | null = null;
 
       if (status === "accepted") {
         await supabaseAdmin
@@ -1613,7 +1616,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           .single();
         if (acceptedOffer) {
           acceptedOfferFileUrl = acceptedOffer.offer_file_url ?? null;
-          await supabaseAdmin
+          const { data: dealRow } = await supabaseAdmin
             .from("deals")
             .upsert(
               {
@@ -1624,11 +1627,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
                 contract_value: acceptedOffer.price_total ?? null,
                 status: "pending",
                 updated_at: new Date().toISOString(),
+                // E-signature (2026-09-15): cheap, synchronous flag only — the actual PDF
+                // render + Signit call happen in POST /api/deals/:id/contract, called by the
+                // client right after this response. Doing that work inline here would add
+                // Chromium cold-start + a vendor round-trip to a path that already runs several
+                // sequentially-awaited email sends; that is exactly the timeout failure mode
+                // server/outbox.ts exists to prevent. Left unset entirely (not "false") when
+                // ESIGN_ENABLED is off, matching how OTP_TEST_MODE is handled.
+                ...(process.env.ESIGN_ENABLED === "true" ? { signature_status: "preparing" } : {}),
               },
               { onConflict: "offer_id" }
             )
             .select("id")
             .single();
+          acceptedDealId = dealRow?.id ?? null;
           // deals.created_at (set on first insert) is the scheduling anchor the
           // commission-reminder cron uses for the day-7 check-in and day-21
           // commission-request emails — see /api/cron/commission-reminder.
@@ -1771,7 +1783,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         );
       }
 
-      res.json({ success: true, offer_file_url: acceptedOfferFileUrl });
+      res.json({
+        success: true,
+        offer_file_url: acceptedOfferFileUrl,
+        ...(acceptedDealId ? { deal_id: acceptedDealId } : {}),
+      });
     } catch {
       res.status(500).json({ error: "Failed to update offer status" });
     }
@@ -2488,19 +2504,33 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return res.status(401).json({ error: "unauthorized" });
     }
     try {
-      const day7Cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const day21Cutoff = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+      const day7Cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const day21Cutoff = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000);
+
+      // E-signature (2026-09-15): once a deal starts signing, acceptance and signature become
+      // different moments, and this cron must not fire off the acceptance moment alone — a
+      // reminder already went out for an experience that hadn't started on 2026-08-05. A deal
+      // with signature_status set anchors on signed_at (null until actually signed, which
+      // naturally excludes it from every pass below until it is); signature_status IS NULL rows
+      // (every deal today, since ESIGN_ENABLED is off in production) anchor on created_at exactly
+      // as before. See _work/esign-workflow-spec-v1.md §8.
+      const anchorDate = (d: { signature_status: string | null; signed_at: string | null; created_at: string }) =>
+        d.signature_status ? d.signed_at : d.created_at;
 
       // Pass A — day 7 check-in.
-      const { data: dueCheckins } = await supabaseAdmin
+      const { data: checkinCandidates } = await supabaseAdmin
         .from("deals")
-        .select("id, providers!deals_provider_fk(email)")
+        .select("id, signature_status, signed_at, created_at, providers!deals_provider_fk(email)")
         .is("commission_reminder_sent_at", null)
-        .neq("status", "cancelled")
-        .lte("created_at", day7Cutoff);
+        .neq("status", "cancelled");
+
+      const dueCheckins = (checkinCandidates ?? []).filter((d) => {
+        const anchor = anchorDate(d);
+        return anchor && new Date(anchor) <= day7Cutoff;
+      });
 
       let checkinsSent = 0;
-      for (const deal of dueCheckins ?? []) {
+      for (const deal of dueCheckins) {
         const email = (deal.providers as any)?.email;
         // Stamp first so a retry never double-sends, even if the send below fails.
         await supabaseAdmin
@@ -2522,16 +2552,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Pass B — day 21 commission-transfer ask. No config, no send: same fallback as before.
       let commissionSent = 0;
       if (commissionConfigReady()) {
-        const { data: dueCommission } = await supabaseAdmin
+        const { data: commissionCandidates } = await supabaseAdmin
           .from("deals")
           .select(
-            "id, providers!deals_provider_fk(email), owner:users!deals_owner_fk(name, phone), provider_offers!deals_offer_fk(price_total)"
+            "id, signature_status, signed_at, created_at, providers!deals_provider_fk(email), owner:users!deals_owner_fk(name, phone), provider_offers!deals_offer_fk(price_total)"
           )
           .is("commission_email_sent_at", null)
-          .neq("status", "cancelled")
-          .lte("created_at", day21Cutoff);
+          .neq("status", "cancelled");
 
-        for (const deal of dueCommission ?? []) {
+        const dueCommission = (commissionCandidates ?? []).filter((d) => {
+          const anchor = anchorDate(d);
+          return anchor && new Date(anchor) <= day21Cutoff;
+        });
+
+        for (const deal of dueCommission) {
           const email = (deal.providers as any)?.email;
           const owner = deal.owner as any;
           const priceTotal = (deal.provider_offers as any)?.price_total ?? null;

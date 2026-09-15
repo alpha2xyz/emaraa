@@ -101,8 +101,25 @@ function assertTestModeIsNotOnProduction(): void {
   );
 }
 
+/**
+ * Same shape as the OTP guard above, for the same reason: one dashboard typo must not reach
+ * real users. The contract template's §9 (governing law) is an explicit, unreviewed legal
+ * placeholder — see _work/owner-provider-service-contract-v1.md. Until a lawyer has signed off
+ * and a final vendor contract is in place, ESIGN_ENABLED must never be true against production.
+ */
+function assertEsignIsNotOnProduction(): void {
+  if (process.env.ESIGN_ENABLED !== "true") return;
+  if (!(process.env.SUPABASE_URL ?? "").includes(PRODUCTION_PROJECT_REF)) return;
+  throw new Error(
+    "ESIGN_ENABLED=true with SUPABASE_URL pointing at the production Supabase project. " +
+      "The contract template's §9 governing-law clause is an unreviewed legal placeholder. " +
+      "Refusing to start. Unset ESIGN_ENABLED, or point this deployment at demo-env.",
+  );
+}
+
 export function createApp(): Express {
   assertTestModeIsNotOnProduction();
+  assertEsignIsNotOnProduction();
 
   const app = express();
 
