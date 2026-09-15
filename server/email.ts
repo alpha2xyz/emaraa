@@ -175,6 +175,76 @@ export function ownerOfferWhatsappText(opts: {
   ].join("\n");
 }
 
+// ── Post-verification activation nudge (master plan v1006 item #28) ─────────
+//
+// 10 of 16 registered owners verified their phone and then never added a
+// property. The funnel breaks here, not at acquisition.
+//
+// COPY STATUS: drafted, pending confirmation. The plan gates the final wording on
+// the 20 customer interviews (item #22), which have not happened yet, because
+// nobody actually knows WHY those 10 stopped: a form that felt long, uncertainty
+// about cost, or waiting to gather co-owners are very different problems with
+// very different sentences. Written to BRAND-VOICE owner voice (plain benefit,
+// control, reassurance, no fee language) and kept deliberately short so the ask
+// is obvious. Revise once the interviews land.
+
+export function ownerActivationWhatsappText(opts: { ownerName?: string | null }): string {
+  const firstName = String(opts.ownerName ?? "").trim().split(/\s+/)[0];
+  const greet = firstName ? `السلام عليكم ${firstName}` : "السلام عليكم";
+  return [
+    `${greet}، معك عبدالله الفرائضي من منصة عِمارة.`,
+    "",
+    "شفت إنك سجّلت معنا وما أضفت عقارك بعد.",
+    "إضافة العقار تاخذ دقيقتين، وبعدها تبدأ تستقبل عروض مكتوبة من شركات إدارة مرافق مرخّصة.",
+    "",
+    "https://emaraa.app/dashboard/owner/onboarding",
+    "",
+    "وإذا واجهتك أي صعوبة في الاستمارة، قل لي وأساعدك فيها مباشرة.",
+  ].join("\n");
+}
+
+export function ownerActivationEmail(opts: { ownerName?: string | null }): string {
+  const firstName = String(opts.ownerName ?? "").trim().split(/\s+/)[0];
+  return notificationEmail({
+    heading: firstName ? `${firstName}، عقارك ينتظرك` : "عقارك ينتظرك",
+    body: [
+      "سجّلت في عِمارة ولم تضف عقارك بعد.",
+      "",
+      "إضافة العقار تستغرق دقيقتين: اسم المبنى، نوعه، الحي، وعدد الوحدات. وبعدها يصل طلبك إلى شركات إدارة المرافق المرخّصة في الرياض، وتستقبل عروضاً مكتوبة بأسعار واضحة تقارنها وتختار منها.",
+      "",
+      "المنصة مجانية بالكامل للملاك، ورقم جوالك لا يظهر لأي شركة إلا بعد قبولك لعرضها.",
+    ].join("\n"),
+    ctaLabel: "أضف عقارك الآن",
+    ctaUrl: "https://emaraa.app/dashboard/owner/onboarding",
+  });
+}
+
+// ── Monthly provider newsletter (master plan v1006 item #27) ────────────────
+// "X new requests in Riyadh this month, Y of them with no offer yet." The
+// cheapest retention tool available, and it speaks directly to the quarter's
+// metric by pointing providers at requests nobody has bid on.
+// Admin-triggered rather than scheduled, matching the plan's «تبدأ يدوياً من قالب».
+export function providerNewsletterEmail(opts: {
+  newRequests: number;
+  withoutOffers: number;
+  monthLabel: string;
+}): string {
+  return notificationEmail({
+    heading: `طلبات ${opts.monthLabel} في الرياض`,
+    body: [
+      `خلال ${opts.monthLabel} نُشر ${opts.newRequests} طلب خدمة جديد في الرياض على منصة عِمارة.`,
+      "",
+      opts.withoutOffers > 0
+        ? `${opts.withoutOffers} منها لم يصله أي عرض حتى الآن، وهي مفتوحة أمام شركتك.`
+        : "كل الطلبات المفتوحة وصلتها عروض، وننتظر الطلبات الجديدة هذا الشهر.",
+      "",
+      "سجّل دخولك لتصفّح الطلبات المتاحة وتقديم عرضك.",
+    ].join("\n"),
+    ctaLabel: "تصفّح الطلبات المتاحة",
+    ctaUrl: "https://emaraa.app/dashboard/provider/requests",
+  });
+}
+
 export function adminOfferEmail(opts: {
   companyName?: string | null;
   priceTotal?: number | null;

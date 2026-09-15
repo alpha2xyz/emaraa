@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ContractStartDatePicker from "@/components/ContractStartDatePicker";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -140,6 +141,7 @@ export default function OwnerOnboarding() {
   const [mapUrl, setMapUrl] = useState("");
   const [nationalAddress, setNationalAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [contractStartDate, setContractStartDate] = useState<string | null>(null);
   const [ownerEmail, setOwnerEmail] = useState("");
 
   // UI state
@@ -282,6 +284,7 @@ export default function OwnerOnboarding() {
           property_id: propertyId,
           service_category: "standard",
           description: notes.trim() || null,
+          contract_start_date: contractStartDate,
         }),
       });
 
@@ -714,6 +717,12 @@ export default function OwnerOnboarding() {
               <CardContent className="pt-6 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <FileText className="w-4 h-4 text-muted-foreground" />
+                  <div className="mb-5">
+                    <ContractStartDatePicker
+                      value={contractStartDate}
+                      onChange={setContractStartDate}
+                    />
+                  </div>
                   <Label htmlFor="notes" className="text-sm text-muted-foreground">
                     {lang === "ar" ? "تفاصيل أو ملاحظات إضافية للمزودين" : "Additional details or notes for providers"}
                   </Label>

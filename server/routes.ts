@@ -2,13 +2,24 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import bcrypt from "bcryptjs";
-import { insertPropertySchema, insertRequestSchema } from "../shared/schema.js";
+import {
+  insertPropertySchema,
+  insertRequestSchema,
+  insertProviderOfferSchema,
+  insertOfferDeclineSchema,
+} from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
+import { enqueueEmails, drainOutbox } from "./outbox.js";
 import {
   sendEmail,
   buildAdminReport,
   notificationEmail,
+  waNumber,
+  ownerActivationEmail,
+  ownerActivationWhatsappText,
+  providerNewsletterEmail,
   commissionEmail,
   commissionReminderEmail,
   commissionConfigReady,
@@ -79,6 +90,31 @@ function requireProvider(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Admin routes authenticate with a separate admin session token (not the user
+// `sessions` table), verified by the verify_admin_session RPC.
+//
+// Was a helper each route had to remember to call as
+// `if (!(await verifyAdminToken(req, res))) return;`. Two routes
+// (/api/admin/impersonate, /api/admin/approve-provider) had instead inlined their
+// own copy of the check, so the real guard count was 10 across two spellings and
+// nothing structurally stopped an 11th route from forgetting entirely. As
+// middleware it sits in the route signature where a missing guard is visible.
+//
+// Uses supabaseAdmin, not the anon client the old helper used: an admin-session
+// check should not depend on the anon role retaining EXECUTE on that function.
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
+  if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
+  const { data: isValid } = await supabaseAdmin.rpc("verify_admin_session", {
+    p_token: adminToken,
+  });
+  if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
+  // Exposed for routes that need to identify the acting admin (impersonation audit
+  // log), mirroring how requireSession attaches userId.
+  (req as any).adminToken = adminToken;
+  next();
+}
+
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // Session verification — used by RequireAuth.tsx (bypasses RLS via supabaseAdmin)
   app.get("/api/session/verify", async (req, res) => {
@@ -118,9 +154,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // Update current user's profile (name and/or email). Email is optional — owners use it to
   // opt in to email notifications about their requests; "" clears it.
+  const userProfileUpdateSchema = z.object({
+    name: z.string().trim().min(1).max(60).optional(),
+    email: z.string().trim().email().or(z.literal("")).nullable().optional(),
+  });
+
   app.put("/api/user/profile", requireSession, async (req, res) => {
     try {
-      const { name, email } = req.body;
+      const parsedProfile = userProfileUpdateSchema.safeParse(req.body ?? {});
+      if (!parsedProfile.success) {
+        return res.status(400).json({ error: "invalid_profile" });
+      }
+      const { name, email } = parsedProfile.data;
       const update: Record<string, any> = {};
       if (name !== undefined) {
         if (!String(name).trim()) return res.status(400).json({ error: "name_required" });
@@ -179,7 +224,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(500).json({ error: "Failed to create session" });
       }
       res.json({ id: admin.id, token });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Login failed" });
     }
   });
@@ -194,7 +239,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .order("created_at", { ascending: false });
       if (error) throw error;
       res.json(data || []);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch properties" });
     }
   });
@@ -210,7 +255,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (property.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
       res.json(property);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch property" });
     }
   });
@@ -342,7 +387,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { error } = await supabaseAdmin.from("properties").delete().eq("id", req.params.id);
       if (error) throw error;
       res.status(204).send();
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to delete property" });
     }
   });
@@ -490,7 +535,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const requesterUserId: string | null = sessionValid ? (session!.user_id as string) : null;
       let isAdmin = false;
       if (!sessionValid) {
-        const { data: adminOk } = await supabase.rpc("verify_admin_session", { p_token: token });
+        const { data: adminOk } = await supabaseAdmin.rpc("verify_admin_session", { p_token: token });
         isAdmin = !!adminOk;
       }
       if (!requesterUserId && !isAdmin) return res.status(401).json({ error: "Unauthorized" });
@@ -587,6 +632,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       if (!company_name?.trim()) {
         return res.status(400).json({ error: "اسم الشركة مطلوب" });
+      }
+
+      // Every supplied document path must sit under this caller's own folder.
+      // Without this, a provider could store another provider's path on their row
+      // and /api/files/signed-url would then authorize them for it.
+      const pathError = checkProviderDocumentPaths(userId, {
+        commercial_register_url,
+        company_profile_url,
+        fal_license_url,
+      });
+      if (pathError) {
+        console.warn("[provider/profile] rejected document path", { userId });
+        return res.status(403).json({ error: pathError });
       }
 
       // Email is REQUIRED for providers — it's the only channel we have to send them
@@ -702,7 +760,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         availableRequests: availableRequests || [],
         myOffers: myOffers || [],
       });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch provider dashboard" });
     }
   });
@@ -720,13 +778,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         supabaseAdmin.from("providers").select("id, approved").eq("user_id", userId).maybeSingle(),
       ]);
       const providerId = provider?.id ?? null;
-      const { data: myOffers } = providerId
-        ? await supabaseAdmin
-            .from("provider_offers")
-            .select("request_id")
-            .eq("provider_id", providerId)
-            .neq("status", "rejected")
-        : { data: [] };
+      const [{ data: myOffers }, { data: myDeclines }] = providerId
+        ? await Promise.all([
+            supabaseAdmin
+              .from("provider_offers")
+              .select("request_id")
+              .eq("provider_id", providerId)
+              .neq("status", "rejected"),
+            // Requests this provider explicitly passed on, with a reason.
+            supabaseAdmin
+              .from("offer_declines")
+              .select("request_id")
+              .eq("provider_id", providerId),
+          ])
+        : [{ data: [] }, { data: [] }];
       // Unapproved providers get a redacted teaser: no property name, address,
       // map link, owner notes, or anything that identifies the owner/location.
       const isApproved = !!provider?.approved;
@@ -748,9 +813,94 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json({
         requests: safeRequests,
         submittedRequestIds: (myOffers || []).map((o: any) => o.request_id),
+        declinedRequestIds: (myDeclines || []).map((d: any) => d.request_id),
       });
-    } catch (err: any) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch provider requests" });
+    }
+  });
+
+  // Provider: pass on a request, with a reason (master plan v1006 item #26).
+  //
+  // Three of four approved providers have never submitted a single offer, and the
+  // product gave them no way to say why — silence was indistinguishable from not
+  // having looked. This records the reason so "no offers" becomes a diagnosis
+  // instead of a guess. Re-declining updates the reason rather than duplicating.
+  app.post("/api/provider/requests/:id/decline", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const parsed = insertOfferDeclineSchema.safeParse({
+        request_id: req.params.id,
+        reason: req.body?.reason,
+        note: req.body?.note ?? null,
+      });
+      if (!parsed.success) {
+        return res.status(400).json({ error: "invalid_decline" });
+      }
+      const { request_id, reason, note } = parsed.data;
+
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id, approved")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.status(403).json({ error: "provider_not_found" });
+      if (!provider.approved) return res.status(403).json({ error: "not_approved" });
+
+      const { data: targetRequest } = await supabaseAdmin
+        .from("requests")
+        .select("id")
+        .eq("id", request_id)
+        .maybeSingle();
+      if (!targetRequest) return res.status(404).json({ error: "request_not_found" });
+
+      // A provider who already has a live offer on this request cannot also pass on
+      // it — that would be contradictory state.
+      const { data: existingOffer } = await supabaseAdmin
+        .from("provider_offers")
+        .select("id, status")
+        .eq("request_id", request_id)
+        .eq("provider_id", provider.id)
+        .maybeSingle();
+      if (existingOffer && existingOffer.status !== "rejected") {
+        return res.status(409).json({ error: "already_submitted" });
+      }
+
+      const { error } = await supabaseAdmin
+        .from("offer_declines")
+        .upsert(
+          [{ request_id, provider_id: provider.id, reason, note: note || null }],
+          { onConflict: "request_id,provider_id" }
+        );
+      if (error) return res.status(500).json({ error: error.message });
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ error: "decline_failed" });
+    }
+  });
+
+  // Provider: undo a pass, putting the request back in their list.
+  app.delete("/api/provider/requests/:id/decline", requireSession, requireProvider, async (req, res) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { data: provider } = await supabaseAdmin
+        .from("providers")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!provider) return res.status(403).json({ error: "provider_not_found" });
+
+      const { error } = await supabaseAdmin
+        .from("offer_declines")
+        .delete()
+        .eq("request_id", req.params.id)
+        .eq("provider_id", provider.id);
+      if (error) return res.status(500).json({ error: error.message });
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ error: "undo_decline_failed" });
     }
   });
 
@@ -782,14 +932,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/provider/offers", requireSession, requireProvider, async (req, res) => {
     try {
       const userId = (req as any).userId as string;
-      const { request_id, offer_file_url, notes, price_total } = req.body as {
-        request_id: string;
-        offer_file_url: string;
-        notes?: string | null;
-        price_total?: number | null;
-      };
-      if (!request_id || !offer_file_url)
-        return res.status(400).json({ error: "request_id and offer_file_url are required" });
+
+      // Structured offers (2026-09-13). offer_file_url is now optional: the
+      // breakdown the owner needs lives in line_items, and requiring a PDF on top
+      // of it only adds friction to the side of the market that is already silent.
+      const parsed = insertProviderOfferSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "invalid_offer",
+          details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+        });
+      }
+      const { request_id, offer_file_url, notes, price_total, line_items, duration_months } =
+        parsed.data;
 
       const { data: provider } = await supabaseAdmin
         .from("providers")
@@ -798,6 +953,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .maybeSingle();
       if (!provider) return res.status(403).json({ error: "provider_not_found" });
       if (!provider.approved) return res.status(403).json({ error: "not_approved" });
+
+      // The offer file must be one this provider could have uploaded. Without this,
+      // a provider could submit another provider's offer PDF path and then read it
+      // back through /api/files/signed-url, which trusts the stored value.
+      // Only checked when a file is actually attached — the PDF is optional since
+      // structured line items landed.
+      if (offer_file_url) {
+        const offerPathError = checkOfferPath(provider.id, offer_file_url);
+        if (offerPathError) {
+          console.warn("[provider/offers] rejected offer path", { providerId: provider.id });
+          return res.status(403).json({ error: offerPathError });
+        }
+      }
 
       // The request must still be pending — a rejected/in_progress/closed request
       // may not receive a new or revived offer (the UI only lists pending requests,
@@ -834,9 +1002,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         const { data: revived, error } = await supabaseAdmin
           .from("provider_offers")
           .update({
-            offer_file_url,
+            offer_file_url: offer_file_url || null,
             notes: notes || null,
             price_total: price_total || null,
+            line_items,
+            duration_months,
             status: "pending",
             created_at: new Date().toISOString(),
           })
@@ -848,7 +1018,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       } else {
         const { data: inserted, error } = await supabaseAdmin
           .from("provider_offers")
-          .insert([{ request_id, provider_id: provider.id, offer_file_url, notes: notes || null, price_total: price_total || null }])
+          .insert([{
+            request_id,
+            provider_id: provider.id,
+            offer_file_url: offer_file_url || null,
+            notes: notes || null,
+            price_total: price_total || null,
+            line_items,
+            duration_months,
+          }])
           .select()
           .single();
         if (error) return res.status(500).json({ error: error.message });
@@ -906,7 +1084,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
         )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
@@ -968,12 +1146,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
       // Lock the PDF proposal AND the provider phone until the owner accepts:
       // only an accepted offer exposes its file path and contact number.
+      //
+      // line_items and duration_months are deliberately NOT gated. The whole point
+      // of the structured offer is that the owner can see what is being quoted
+      // before committing — gating the breakdown too would recreate the exact
+      // "accept blind or walk away" choice that pushed the 2026-09-07 owner to
+      // contract outside the platform. The attachment stays behind the gate.
       const safe = (data ?? []).map((o: any) => ({
         ...o,
         offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
@@ -1000,7 +1184,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .order("created_at", { ascending: false });
       if (error) throw error;
       res.json(data || []);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch service requests" });
     }
   });
@@ -1016,7 +1200,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (request.owner_id !== (req as any).userId)
         return res.status(403).json({ error: "Forbidden" });
       res.json(request);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to fetch service request" });
     }
   });
@@ -1168,16 +1352,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             ctaLabel: "تقديم عرض الآن",
             ctaUrl: "https://emaraa.app",
           });
-          // Sequential awaits — fine at current provider counts (~tens). Revisit with a
-          // background worker if this list grows into the hundreds.
-          for (const p of recipients) {
-            await notify(
-              (p as any).email,
-              `طلب خدمة جديد في ${propCity ?? "الرياض"} — عِمارة`,
+          // Was a sequential await per provider directly on the request path, with
+          // no maxDuration: at eight to ten providers the request times out, the
+          // owner sees a failure for a request that WAS created, and the rest of
+          // the providers never hear about it. Now written to the outbox first so
+          // nothing can be lost, then sent in parallel. See server/outbox.ts.
+          const subject = `طلب خدمة جديد في ${propCity ?? "الرياض"} — عِمارة`;
+          const ids = await enqueueEmails(
+            supabaseAdmin,
+            recipients.map((p: any) => ({
+              to_email: p.email as string,
+              subject,
               html,
-              "new_request",
-            );
-          }
+              kind: "new_request",
+            })),
+          );
+          await drainOutbox(supabaseAdmin, { ids });
         }
       } catch {
         // The request itself is already created — broadcasting is best-effort.
@@ -1281,18 +1471,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { error } = await supabaseAdmin.from("requests").delete().eq("id", req.params.id);
       if (error) throw error;
       res.status(204).send();
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to delete service request" });
     }
   });
 
   // Offer status — accept or reject an offer (server-enforced ownership check)
+  const offerStatusSchema = z.object({ status: z.enum(["accepted", "rejected"]) });
+
   app.patch("/api/offers/:id/status", requireSession, requireOwner, async (req, res) => {
     try {
-      const { status } = req.body;
-      if (!["accepted", "rejected"].includes(status)) {
+      const parsedStatus = offerStatusSchema.safeParse(req.body ?? {});
+      if (!parsedStatus.success) {
         return res.status(400).json({ error: "Invalid status" });
       }
+      const { status } = parsedStatus.data;
 
       const { data: offer, error: offerError } = await supabaseAdmin
         .from("provider_offers")
@@ -1550,7 +1743,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       res.json({ success: true, offer_file_url: acceptedOfferFileUrl });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to update offer status" });
     }
   });
@@ -1726,15 +1919,56 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.json({ success: true, bypass: true });
       }
 
-      // Rate limit: max 3 OTPs per phone per 10 minutes
-      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { count } = await supabaseAdmin
-        .from("otp_rate_limits")
-        .select("*", { count: "exact", head: true })
-        .eq("phone", phone)
-        .gte("created_at", tenMinAgo);
-      if ((count ?? 0) >= 3) {
+      // Three independent caps, all counting 'send' rows only.
+      //   per-phone  — stops one number being spammed
+      //   per-IP     — stops phone-number enumeration from a single attacker
+      //   global/day — hard ceiling on Authentica credit burn, whatever the source
+      // The per-IP limit is deliberately loose: at an expo (SFMA, Cityscape) a
+      // queue of providers registers from one venue NAT, and blocking that queue
+      // would cost more than the abuse it prevents. Enumeration needs thousands of
+      // sends, so 20/hour still stops it. All three are env-tunable so the numbers
+      // can be raised at an event without a deploy.
+      const clientIp = req.ip ?? "unknown";
+      const nowMs = Date.now();
+      const tenMinAgo = new Date(nowMs - 10 * 60 * 1000).toISOString();
+      const oneHourAgo = new Date(nowMs - 60 * 60 * 1000).toISOString();
+      const oneDayAgo = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
+
+      const MAX_PER_PHONE = Number(process.env.OTP_MAX_PER_PHONE_10MIN ?? 3);
+      const MAX_PER_IP = Number(process.env.OTP_MAX_PER_IP_HOUR ?? 20);
+      const MAX_GLOBAL_DAY = Number(process.env.OTP_MAX_GLOBAL_DAY ?? 300);
+
+      const [phoneRes, ipRes, globalRes] = await Promise.all([
+        supabaseAdmin
+          .from("otp_rate_limits")
+          .select("*", { count: "exact", head: true })
+          .eq("phone", phone)
+          .eq("kind", "send")
+          .gte("created_at", tenMinAgo),
+        supabaseAdmin
+          .from("otp_rate_limits")
+          .select("*", { count: "exact", head: true })
+          .eq("ip", clientIp)
+          .eq("kind", "send")
+          .gte("created_at", oneHourAgo),
+        supabaseAdmin
+          .from("otp_rate_limits")
+          .select("*", { count: "exact", head: true })
+          .eq("kind", "send")
+          .gte("created_at", oneDayAgo),
+      ]);
+
+      if ((phoneRes.count ?? 0) >= MAX_PER_PHONE) {
         return res.status(429).json({ error: "Too many OTP requests. Please wait 10 minutes." });
+      }
+      if (clientIp !== "unknown" && (ipRes.count ?? 0) >= MAX_PER_IP) {
+        console.warn("[otp/send] per-IP cap hit", { ip: clientIp });
+        return res.status(429).json({ error: "Too many OTP requests. Please wait and try again." });
+      }
+      if ((globalRes.count ?? 0) >= MAX_GLOBAL_DAY) {
+        // Not the user's fault — page the operator rather than silently failing.
+        console.error("[otp/send] GLOBAL daily OTP cap reached", { cap: MAX_GLOBAL_DAY });
+        return res.status(429).json({ error: "Service temporarily unavailable. Please try again later." });
       }
 
       const e164 = "+966" + phone.substring(1);
@@ -1751,7 +1985,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       // Record this OTP attempt
-      await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+      await supabaseAdmin.from("otp_rate_limits").insert([{ phone, ip: clientIp, kind: "send" }]);
       res.json({ success: true });
     } catch (err: any) {
       console.error("[otp/send] exception:", err?.message);
@@ -1767,12 +2001,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid phone number" });
       }
 
-      // Rate limit: max 5 OTP verify attempts per phone per 15 minutes (DB-backed, survives cold starts)
+      // Rate limit: max 5 OTP verify attempts per phone per 15 minutes (DB-backed,
+      // survives cold starts). Counts kind='verify' rows, which are written below on
+      // every attempt. Until 2026-09-13 this counted the same rows /api/otp/send
+      // wrote and nothing recorded a verify, so the ceiling was unreachable and a
+      // 4-digit code could be guessed without limit.
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { count: verifyCount } = await supabaseAdmin
         .from("otp_rate_limits")
-        .select("phone", { count: "exact", head: true })
+        .select("*", { count: "exact", head: true })
         .eq("phone", phone)
+        .eq("kind", "verify")
         .gte("created_at", fifteenMinAgo);
       if ((verifyCount ?? 0) >= 5) {
         return res.status(429).json({ error: "Too many attempts. Try again later." });
@@ -1786,12 +2025,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Invalid role" });
       }
 
+      // Record the attempt before the code is checked, so a wrong guess still counts
+      // against the cap. Deliberately placed AFTER input validation: a malformed
+      // request must not burn a real user's attempt budget, since any per-phone
+      // verify cap can otherwise be used to lock someone out of their own login.
+      await supabaseAdmin
+        .from("otp_rate_limits")
+        .insert([{ phone, ip: req.ip ?? "unknown", kind: "verify" }]);
+
       // Env-gated test login (OTP_TEST_MODE, never set in production). A whitelisted fake
       // number logs in with the fixed OTP_TEST_CODE; a wrong code is rejected. Any other
       // number falls through to the real Authentica verification.
       if (isOtpTestNumber(phone)) {
         if (code !== OTP_TEST_CODE) {
-          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          // The attempt was already recorded above.
           return res.status(400).json({ error: "Invalid OTP" });
         }
       } else {
@@ -1803,8 +2050,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         });
 
         if (!r.ok) {
-          // Record failed verify attempt in DB so rate limit persists across cold starts
-          await supabaseAdmin.from("otp_rate_limits").insert([{ phone }]);
+          // The attempt was already recorded above (as kind='verify'). The old insert
+          // here wrote no kind, so it landed in the 'send' bucket and a failed login
+          // silently ate the SMS-send budget.
           return res.status(400).json({ error: "Invalid OTP" });
         }
       }
@@ -1913,13 +2161,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Admin impersonation — creates a real session for any user. Requires valid admin session token.
-  app.post("/api/admin/impersonate", async (req, res) => {
-    const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-    if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
-
-    const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-    if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
-
+  app.post("/api/admin/impersonate", requireAdmin, async (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
@@ -1944,7 +2186,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { data: actingAdmin } = await supabaseAdmin
       .from("admins")
       .select("id, username")
-      .eq("session_token", adminToken)
+      .eq("session_token", (req as any).adminToken)
       .maybeSingle();
     Promise.resolve(
       supabaseAdmin
@@ -1967,14 +2209,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Approve or reject a provider. Emails the provider on approval.
-  app.post("/api/admin/approve-provider", async (req, res) => {
+  app.post("/api/admin/approve-provider", requireAdmin, async (req, res) => {
     try {
-      const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-      if (!adminToken) return res.status(401).json({ error: "Unauthorized" });
-
-      const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-      if (!isValid) return res.status(401).json({ error: "Invalid admin session" });
-
       const { id, approved } = req.body;
       if (!id || typeof approved !== "boolean") {
         return res.status(400).json({ error: "id and approved required" });
@@ -2003,7 +2239,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       res.json({ success: true });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to update provider approval" });
     }
   });
@@ -2051,22 +2287,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Admin data endpoints (all use supabaseAdmin to bypass RLS) ──────────────
 
-  async function verifyAdminToken(req: Request, res: Response): Promise<boolean> {
-    const adminToken = req.headers.authorization?.replace("Bearer ", "").trim();
-    if (!adminToken) {
-      res.status(401).json({ error: "Unauthorized" });
-      return false;
-    }
-    const { data: isValid } = await supabase.rpc("verify_admin_session", { p_token: adminToken });
-    if (!isValid) {
-      res.status(401).json({ error: "Invalid admin session" });
-      return false;
-    }
-    return true;
-  }
 
-  app.get("/api/admin/stats", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     const [owners, properties, requests, providers] = await Promise.all([
       supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "owner"),
       supabaseAdmin.from("properties").select("id", { count: "exact", head: true }),
@@ -2084,8 +2306,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     });
   });
 
-  app.get("/api/admin/users", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("users")
       .select("id, name, phone, role, created_at")
@@ -2095,8 +2316,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data ?? []);
   });
 
-  app.get("/api/admin/providers", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/providers", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("users")
       .select(
@@ -2108,8 +2328,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data ?? []);
   });
 
-  app.get("/api/admin/properties", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/properties", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("properties")
       .select(
@@ -2120,8 +2339,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data ?? []);
   });
 
-  app.get("/api/admin/deals", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/deals", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("deals")
       .select(
@@ -2142,17 +2360,31 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json({ deals: data ?? [], gmv, closedCount: (closed ?? []).length });
   });
 
-  app.patch("/api/admin/deals/:id", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
-    const { contract_value, status, signed_at, notes } = req.body as {
-      contract_value?: string | number | null;
-      status?: string;
-      signed_at?: string | null;
-      notes?: string | null;
-    };
-    if (status && !["pending", "closed", "cancelled"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
+  // contract_value lands in a NUMERIC column and signed_at in a TIMESTAMPTZ, but
+  // both used to be forwarded essentially as received: a non-numeric string turned
+  // into a raw 500 from the database rather than a clean 400.
+  const adminDealUpdateSchema = z.object({
+    contract_value: z
+      .union([z.number(), z.string()])
+      .nullable()
+      .optional()
+      .refine((v) => v == null || v === "" || !Number.isNaN(Number(v)), {
+        message: "contract_value must be numeric",
+      }),
+    status: z.enum(["pending", "closed", "cancelled"]).optional(),
+    signed_at: z.string().datetime({ offset: true }).or(z.literal("")).nullable().optional(),
+    notes: z.string().max(2000).nullable().optional(),
+  });
+
+  app.patch("/api/admin/deals/:id", requireAdmin, async (req, res) => {
+    const parsedDeal = adminDealUpdateSchema.safeParse(req.body ?? {});
+    if (!parsedDeal.success) {
+      return res.status(400).json({
+        error: "invalid_deal_update",
+        details: parsedDeal.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+      });
     }
+    const { contract_value, status, signed_at, notes } = parsedDeal.data;
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (contract_value !== undefined)
       update.contract_value = contract_value === "" ? null : contract_value;
@@ -2169,12 +2401,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(data);
   });
 
-  app.get("/api/admin/requests", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.get("/api/admin/requests", requireAdmin, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("requests")
       .select(
-        "id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, providers(company_name, city))"
+        "id, service_category, status, created_at, description, properties(name, city, users(name, phone)), provider_offers(id, status, offer_file_url, notes, price_total, line_items, duration_months, providers(company_name, city))"
       )
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch requests" });
@@ -2183,8 +2414,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Admin activity report → email to info@emaraa.app ──────────────────────
   // On-demand: triggered by the "أرسل التقرير الآن" button in the admin dashboard.
-  app.post("/api/admin/send-report", async (req, res) => {
-    if (!(await verifyAdminToken(req, res))) return;
+  app.post("/api/admin/send-report", requireAdmin, async (req, res) => {
     try {
       const { subject, html } = await buildAdminReport(supabaseAdmin);
       const r = await sendEmail(supabaseAdmin, { subject, html, kind: "admin_report" });
@@ -2315,6 +2545,104 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   //     off-platform, so owner-dashboard inactivity doesn't mean the deal is dead.
   //   Pass B — stale-offer nudge: a `pending` offer sitting unreviewed 5+ days on a
   //     request that did NOT just expire in Pass A goes into the same admin digest.
+  // Retry pass for the email outbox. NOT the primary send path: enqueued mail is
+  // drained in parallel the moment it is written (see server/outbox.ts). This only
+  // picks up rows that failed then, which on a daily schedule is the right cadence
+  // for a retry but would have been far too slow as the main delivery mechanism.
+  // Monthly provider newsletter (master plan v1006 item #27): "X new requests in
+  // Riyadh this month, Y of them with no offer yet."
+  //
+  // Admin-triggered, not scheduled, matching the plan's «تبدأ يدوياً من قالب» —
+  // and deliberately so while the numbers are small: a month with two requests and
+  // no open ones is a newsletter that makes the platform look empty, and only a
+  // human should decide whether this month is worth sending.
+  //
+  // ?dry=1 returns the counts and recipient list without sending anything.
+  app.post("/api/admin/provider-newsletter", requireAdmin, async (req, res) => {
+    try {
+      const dry = req.query.dry === "1";
+      const since = new Date();
+      since.setDate(1);
+      since.setHours(0, 0, 0, 0);
+
+      const { data: monthRequests } = await supabaseAdmin
+        .from("requests")
+        .select("id")
+        .gte("created_at", since.toISOString());
+      const requestIds = (monthRequests ?? []).map((r: { id: string }) => r.id);
+
+      let withoutOffers = 0;
+      if (requestIds.length) {
+        const { data: offered } = await supabaseAdmin
+          .from("provider_offers")
+          .select("request_id")
+          .in("request_id", requestIds);
+        const hasOffer = new Set((offered ?? []).map((o: { request_id: string }) => o.request_id));
+        withoutOffers = requestIds.filter((id: string) => !hasOffer.has(id)).length;
+      }
+
+      const { data: providersList } = await supabaseAdmin
+        .from("providers")
+        .select("email")
+        .eq("approved", true);
+      // Type guard rather than filter(Boolean): the latter does not narrow the
+      // null away, so downstream code would silently accept a null recipient.
+      const recipients = (providersList ?? [])
+        .map((p: { email: string | null }) => p.email)
+        .filter((e): e is string => !!e);
+
+      const monthLabel = since.toLocaleDateString("ar-SA-u-nu-latn", {
+        month: "long",
+        year: "numeric",
+      });
+
+      if (dry) {
+        return res.json({
+          dry: true,
+          newRequests: requestIds.length,
+          withoutOffers,
+          recipients: recipients.length,
+          monthLabel,
+        });
+      }
+
+      const html = providerNewsletterEmail({
+        newRequests: requestIds.length,
+        withoutOffers,
+        monthLabel,
+      });
+      const ids = await enqueueEmails(
+        supabaseAdmin,
+        recipients.map((email: string) => ({
+          to_email: email,
+          subject: `طلبات ${monthLabel} في الرياض — عِمارة`,
+          html,
+          kind: "provider_newsletter",
+        })),
+      );
+      const { sent, failed } = await drainOutbox(supabaseAdmin, { ids });
+
+      res.json({ ok: true, newRequests: requestIds.length, withoutOffers, sent, failed });
+    } catch {
+      res.status(500).json({ error: "newsletter_failed" });
+    }
+  });
+
+  app.get("/api/cron/outbox", async (req, res) => {
+    const secret = process.env.CRON_SECRET ?? "";
+    const auth = req.headers["authorization"] ?? "";
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    try {
+      const { sent, failed } = await drainOutbox(supabaseAdmin, { limit: 200 });
+      res.json({ ok: true, sent, failed });
+    } catch (e: any) {
+      if (process.env.NODE_ENV !== "production") console.error("[cron outbox]", e?.message);
+      res.status(500).json({ error: "outbox_drain_failed" });
+    }
+  });
+
   app.get("/api/cron/request-lifecycle", async (req, res) => {
     const secret = process.env.CRON_SECRET ?? "";
     const auth = req.headers["authorization"] ?? "";
@@ -2387,6 +2715,71 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             }`,
         );
 
+      // ── Pass C: owners who verified their phone and never added a property ──
+      // 10 of 16 registered owners stopped exactly here. This is the funnel's real
+      // break, and nobody had ever reached out to them. Nudged once, not daily:
+      // users.activation_nudged_at is what makes it once.
+      const nudgeCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: staleOwners } = await supabaseAdmin
+        .from("users")
+        .select("id, name, phone, email")
+        .eq("role", "owner")
+        .is("activation_nudged_at", null)
+        .lte("created_at", nudgeCutoff);
+
+      const nudgeLines: string[] = [];
+      let nudgedCount = 0;
+      if (staleOwners?.length) {
+        const { data: withProps } = await supabaseAdmin
+          .from("properties")
+          .select("owner_id")
+          .in("owner_id", staleOwners.map((u: { id: string }) => u.id));
+        const hasProperty = new Set((withProps ?? []).map((p: { owner_id: string }) => p.owner_id));
+        const stalled = staleOwners.filter((u: { id: string }) => !hasProperty.has(u.id));
+
+        for (const owner of stalled) {
+          // Auto-email only those who left an address. Most owners did not, which
+          // is why the WhatsApp list below exists rather than this being enough.
+          if (owner.email) {
+            await notify(
+              owner.email,
+              "أضف عقارك في دقيقتين — عِمارة",
+              ownerActivationEmail({ ownerName: owner.name }),
+              "owner_activation_nudge",
+            );
+          }
+          const wa = waNumber(owner.phone);
+          nudgeLines.push(
+            `- ${owner.name ?? "مالك"} (${owner.phone ?? "—"})${
+              owner.email ? " · أُرسل بريد" : ""
+            }${wa ? `\n  واتساب: https://wa.me/${wa}?text=${encodeURIComponent(ownerActivationWhatsappText({ ownerName: owner.name }))}` : ""}`,
+          );
+          await supabaseAdmin
+            .from("users")
+            .update({ activation_nudged_at: new Date().toISOString() })
+            .eq("id", owner.id);
+          nudgedCount++;
+        }
+      }
+
+      if (nudgeLines.length > 0) {
+        await notify(
+          ADMIN_NOTIFY_EMAIL,
+          `${nudgeLines.length} مالك سجّل ولم يضف عقاراً`,
+          notificationEmail({
+            heading: "ملاك بحاجة إلى متابعة",
+            body: [
+              `هؤلاء الملاك أكملوا التحقق ولم يضيفوا عقاراً. مَن لديه بريد وصلته رسالة آلياً؛ البقية يحتاجون رسالة واتساب منك.`,
+              ``,
+              `اضغط الرابط لفتح المحادثة برسالة جاهزة، وراجعها قبل الإرسال.`,
+              ``,
+              nudgeLines.join("\n"),
+            ].join("\n"),
+          }),
+          "admin_activation_nudge",
+        );
+      }
+
       // ── One combined admin digest — only if there's something to report ──
       if (expiredRequests.length > 0 || staleSummaryLines.length > 0) {
         await notify(
@@ -2414,6 +2807,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json({
         ok: true,
         requestsExpired: expiredRequests.length,
+        ownersNudged: nudgedCount,
         staleOffersFlagged: staleSummaryLines.length,
       });
     } catch (e: any) {

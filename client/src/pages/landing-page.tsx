@@ -4,6 +4,7 @@ import { useLang } from "@/hooks/use-lang";
 import { revealDelay, useReveal } from "@/hooks/use-reveal";
 import { useSeo } from "@/hooks/use-seo";
 import { Link } from "wouter";
+import Footer from "@/components/Footer";
 import {
   Globe,
   ClipboardList,
@@ -17,6 +18,9 @@ import {
   Bell,
   MapPin,
   ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  FileText,
   ChevronDown,
   Instagram,
   Linkedin,
@@ -150,6 +154,11 @@ function HeroIllustration() {
 
 // ── Browser-framed product screenshot ───────────────────────────────────────
 function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
+  const { lang } = useLang();
+  // Every frame carries an explicit "illustrative example" badge. BRAND-VOICE §9
+  // forbids showing sample prices as if they were Emaraa pricing, and these
+  // mockups show figures and company names that are entirely made up.
+  const demoLabel = lang === "ar" ? "مثال توضيحي" : "Illustrative example";
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
       <div className="flex h-9 items-center gap-1.5 border-b border-border px-3" style={{ background: "var(--navy-3)" }}>
@@ -158,6 +167,12 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
         <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
         <span className="ms-3 flex h-5 max-w-[230px] flex-1 items-center truncate rounded-md border border-border px-2 text-[11px] text-muted-foreground" style={{ background: "var(--navy-2)" }}>
           {url}
+        </span>
+        <span
+          className="ms-auto flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+          style={{ color: "var(--warn)", background: "var(--warn-soft)" }}
+        >
+          {demoLabel}
         </span>
       </div>
       <div className="p-4" style={{ background: "var(--navy-2)" }}>{children}</div>
@@ -173,13 +188,14 @@ export default function LandingPage() {
   const content = {
     ar: {
       siteName: "عِمــارة",
-      login: "تسجيل الدخول",
+      login: "دخول / تسجيل",
       chip: "منصة سعودية · سكني وتجاري",
       heroTitle: "عِمــارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
         "ابحث، قارن، وتعاقد سنوياً مع شركات مرافق مرخّصة من الهيئة العامة للعقار، في أول منصة متخصصة لعقود إدارة المرافق العقارية.",
-      getStarted: "ابدأ مجاناً",
+      addProperty: "أضف عقارك مجاناً",
+      heroFreeNote: "مجاني بالكامل للملاك. لا رسوم، ولا التزام.",
       learnMore: "اعرف المزيد",
       whoTitle: "من يستفيد من عِمــارة؟",
       whoSubtitle: "سواء كنت مالك عقار سكني أو تجاري، أو تدير اتحاد ملاك.. هذه اللحظات تعرفها جيداً، وعِمــارة بُنيت لأجلها",
@@ -220,10 +236,10 @@ export default function LandingPage() {
         unitsLabel: "عدد الوحدات",
         saveBtn: "حفظ ونشر الطلب",
         offersHead: "عروض المزوّدين على طلبك",
-        co1: "مرافق الرياض المتكاملة",
-        co1sub: "مرخّصة من الهيئة · وصل الآن",
-        co2: "الإتقان لإدارة المرافق",
-        co2sub: "مرخّصة من الهيئة · قبل ساعة",
+        co1: "شركة إدارة مرافق (أ)",
+        co1sub: "مرخّصة من الهيئة",
+        co2: "شركة إدارة مرافق (ب)",
+        co2sub: "مرخّصة من الهيئة",
         newBadge: "عرض جديد",
         compareHead: "قارن واختر العرض المناسب",
         totalLabel: "الإجمالي",
@@ -240,7 +256,7 @@ export default function LandingPage() {
       faqs: [
         { q: "كيف أتأكد أن شركة إدارة المرافق موثوقة ومرخّصة؟", a: "كل عرض يصلك يأتي من شركة إدارة مرافق مرخّصة من الهيئة العامة للعقار (رخصة فال) ولديها سجل تجاري ساري، راجعها واعتمدها فريقنا قبل أن يصل عرضها إليك. أنت تستلم عروضاً من جهات موثوقة فقط." },
         { q: "هل أقدر أجد شركة إدارة مرافق معتمدة في الرياض؟", a: "نعم، نبدأ بمدينة الرياض في المرحلة الأولى بشركات إدارة مرافق مرخّصة ومعتمدة، ونتوسّع تدريجياً إلى مدن أخرى." },
-        { q: "متى تصلني عروض الأسعار بعد نشر طلبي؟", a: "بمجرد نشر طلبك يصل إشعار فوري للشركات المعتمدة، وتبدأ عروض الأسعار بالوصول عادةً خلال وقت قصير." },
+        { q: "متى تصلني عروض الأسعار بعد نشر طلبي؟", a: "بمجرد نشر طلبك يصل إشعار إلى شركات إدارة المرافق المعتمدة في الرياض، وتظهر العروض في حسابك فور تقديمها. عدد العروض وسرعة وصولها يختلفان حسب نطاق طلبك وجدول كل شركة." },
         { q: "هل رقمي وبياناتي تبقى خاصة؟", a: "نعم. لا يظهر رقمك لأي شركة إلا بعد قبولك لعرضها، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
         { q: "كيف أقارن بين عروض شركات إدارة المرافق؟", a: "تقارن العروض جنباً إلى جنب: السعر الإجمالي والسعر لكل وحدة وملاحظات كل شركة، وتختار الأنسب لعقارك. القرار بيدك." },
         { q: "هل أقدر أتعاقد سنوياً لإدارة وصيانة عمارتي عبر المنصة؟", a: "نعم، المنصة متخصصة في عقود إدارة المرافق السنوية للعقارات السكنية والتجارية. تنشر احتياج عمارتك مرة واحدة، تستقبل عروضاً كاملة بنطاق الخدمة، وتتعاقد مع الشركة التي تختارها." },
@@ -261,13 +277,14 @@ export default function LandingPage() {
     },
     en: {
       siteName: "EMARAA",
-      login: "Login",
+      login: "Log in / Sign up",
       chip: "Saudi Platform · Residential & Commercial",
       heroTitle: "EMARAA,",
       heroHighlight: "Your Building, Perfectly Managed",
       heroDesc:
         "Search, compare, and contract annually with REGA-licensed facility management companies, on the first platform specialized in property facility management contracts.",
-      getStarted: "Get Started Free",
+      addProperty: "Add Your Property Free",
+      heroFreeNote: "Completely free for owners. No fees, no commitment.",
       learnMore: "Learn More",
       whoTitle: "Who is EMARAA for?",
       whoSubtitle:
@@ -310,10 +327,10 @@ export default function LandingPage() {
         unitsLabel: "Units",
         saveBtn: "Save & post request",
         offersHead: "Provider offers on your request",
-        co1: "Riyadh Integrated Facilities",
-        co1sub: "REGA-licensed · just now",
-        co2: "Al-Itqan Facility Mgmt",
-        co2sub: "REGA-licensed · 1h ago",
+        co1: "FM Company (A)",
+        co1sub: "REGA-licensed",
+        co2: "FM Company (B)",
+        co2sub: "REGA-licensed",
         newBadge: "New offer",
         compareHead: "Compare & choose the right offer",
         totalLabel: "Total",
@@ -330,7 +347,7 @@ export default function LandingPage() {
       faqs: [
         { q: "How can I be sure a facility management company is licensed and trustworthy?", a: "Every offer you receive comes from a facility management company holding a valid REGA (FAL) license and an active commercial registration, reviewed and approved by our team before it reaches you. You only get offers from trusted, vetted companies." },
         { q: "Can I find an accredited facility management company in Riyadh?", a: "Yes, we're launching in Riyadh first with licensed, accredited facility management companies, and expanding to other cities gradually." },
-        { q: "When will I receive price offers after posting my request?", a: "As soon as you post your request, approved companies get an instant notification, and offers usually start arriving shortly after." },
+        { q: "When will I receive price offers after posting my request?", a: "As soon as you post your request, approved facility management companies in Riyadh are notified, and offers show up in your account the moment they're submitted. How many you get, and how fast, depends on your request's scope and each company's schedule." },
         { q: "Do my phone number and data stay private?", a: "Yes. Your number is never shown to a company until you accept their offer, and the full proposal file only opens after you accept." },
         { q: "How do I compare offers from facility management companies?", a: "You compare them side by side: total price, per-unit price, and each company's notes, and choose what suits your property. The decision is yours." },
         { q: "Can I sign an annual facility management contract for my building through the platform?", a: "Yes, the platform specializes in annual facility management contracts for residential and commercial properties. Post your building's needs once, receive complete scoped offers, and contract with the company you choose." },
@@ -443,19 +460,37 @@ export default function LandingPage() {
               <p className="rise-in text-base md:text-lg leading-relaxed max-w-lg" style={{ ...revealDelay(180), color: "rgba(255,255,255,0.7)" }}>
                 {t.heroDesc}
               </p>
-              <div className="flex rise-in" style={revealDelay(260)}>
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto px-8 gap-2 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
-                  style={{ background: "var(--owner)", color: "#04222c" }}
-                  onClick={() => {
-                    const el = document.getElementById("who-for");
-                    if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" });
-                  }}
-                >
-                  {t.learnMore}
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
+              <div className="flex flex-col gap-3 rise-in" style={revealDelay(260)}>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Primary action. Until 2026-09-13 the only button above the fold
+                      scrolled the page, so a visitor arriving from an ad or the expo
+                      was never actually asked to sign up. */}
+                  <Link href="/auth?role=owner&mode=register">
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto px-8 gap-2 active:scale-95 transition-transform shadow-[0_10px_30px_-8px_rgba(13,184,211,0.45)] hover:opacity-90"
+                      style={{ background: "var(--owner)", color: "#04222c" }}
+                    >
+                      {t.addProperty}
+                      {isRTL ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                    </Button>
+                  </Link>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto px-8 gap-2 active:scale-95 transition-transform border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                    onClick={() => {
+                      const el = document.getElementById("who-for");
+                      if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" });
+                    }}
+                  >
+                    {t.learnMore}
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.62)" }}>
+                  {t.heroFreeNote}
+                </p>
               </div>
             </div>
 
@@ -482,8 +517,12 @@ export default function LandingPage() {
               <span>{lang === "ar" ? "مرافق سكنية وتجارية" : "Residential & Commercial"}</span>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(140)}>
-              <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--owner)" }} />
-              <span>{lang === "ar" ? "إشعارات فورية" : "Instant Notifications"}</span>
+              {/* Was "إشعارات فورية" / "Instant Notifications" until 2026-09-13. Owner
+                  notifications are email-only and opt-in, and most owners have no email
+                  on file, so the badge promised something the product does not deliver.
+                  Written offers with clear prices is the benefit that is actually real. */}
+              <FileText className="w-5 h-5 flex-shrink-0" style={{ color: "var(--owner)" }} />
+              <span>{lang === "ar" ? "عروض مكتوبة بأسعار واضحة" : "Written offers, clear prices"}</span>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(210)}>
               <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#F0A87F" }} />
@@ -782,99 +821,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-card border-t border-border py-10 md:py-12 pb-safe">
-        <div className="container mx-auto px-4">
-          <div className="grid sm:grid-cols-2 gap-8 mb-8">
-            <div>
-              <p className="text-xl font-extrabold mb-2" style={{ color: "var(--owner)" }}>{t.siteName}</p>
-              <p className="text-sm text-muted-foreground mb-4">{t.footerTagline}</p>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3">{t.followUs}</h4>
-                <div className="flex gap-3">
-                  <a
-                    href="https://www.instagram.com/emaraa.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Instagram"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
-                  >
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/company/emaraafm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="LinkedIn"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
-                  >
-                    <Linkedin className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="https://x.com/Emaraa_app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="X (Twitter)"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-[#0DB8D3] hover:border-[#0DB8D3] active:text-[#0DB8D3] active:border-[#0DB8D3]"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-3">{t.quickLinks}</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    href="/contact"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.contactUs}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.aboutUs}
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="/emaraa-guide.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.viewDemo}
-                  </a>
-                </li>
-                <li>
-                  <Link
-                    href="/terms"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.termsOfUse}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="text-muted-foreground hover:text-[#0DB8D3] active:text-[#0DB8D3] transition-colors no-underline"
-                  >
-                    {t.privacyPolicy}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border pt-6 text-center">
-            <p className="text-sm text-muted-foreground">{t.footerCopyright}</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* ── Floating WhatsApp button ─────────────────────────────────────── */}
       <a

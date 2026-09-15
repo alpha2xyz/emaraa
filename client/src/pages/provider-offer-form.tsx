@@ -16,8 +16,11 @@ import {
   Send,
   MapPin,
   ExternalLink,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useLang } from "@/hooks/use-lang";
+import { formatContractDate } from "@/components/ContractStartDatePicker";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,11 +36,17 @@ export default function ProviderOfferForm() {
   const [notes, setNotes] = useState("");
   const [phoneConsent, setPhoneConsent] = useState(false);
   const [priceTotal, setPriceTotal] = useState("");
+  // Structured breakdown (master plan v1006 item #26). Starts with one empty row so
+  // the field reads as fillable rather than as an empty list needing discovery.
+  const [lineItems, setLineItems] = useState<{ service: string; price_per_unit: string }[]>([
+    { service: "", price_per_unit: "" },
+  ]);
+  const [durationMonths, setDurationMonths] = useState("12");
 
   const content = {
     ar: {
       title: "تقديم عرض",
-      subtitle: "ارفع ملف العرض بصيغة PDF",
+      subtitle: "فصّل بنود خدمتك وسعرها، وأرفق ملف العرض إن رغبت",
       requestDetails: "تفاصيل الطلب",
       property: "العقار",
       city: "المدينة",
@@ -46,6 +55,19 @@ export default function ProviderOfferForm() {
       viewMap: "عرض الموقع",
       description: "الوصف",
       offerFile: "ملف العرض (PDF)",
+      offerFileOptional: "ملف العرض (اختياري)",
+      offerFileHint: "إن كان لديك عرض جاهز بصيغة PDF أرفقه هنا. البنود أعلاه كافية بدونه.",
+      lineItems: "بنود الخدمة",
+      lineItemsHint: "فصّل ما يشمله عرضك. المالك يرى هذه البنود قبل القبول.",
+      lineItemService: "بند الخدمة",
+      lineItemServicePlaceholder: "مثال: نظافة دورية للمناطق المشتركة",
+      lineItemPrice: "السعر للوحدة (ريال)",
+      addLineItem: "أضف بنداً",
+      removeLineItem: "حذف البند",
+      lineItemsSum: "مجموع البنود لكل وحدة",
+      duration: "مدة العقد",
+      durationMonths: "شهراً",
+      errorLineItems: "أضف بنداً واحداً على الأقل باسم وسعر",
       chooseFile: "اختر ملف PDF",
       fileSelected: "تم اختيار الملف",
       priceTotal: "السعر الإجمالي السنوي (ريال سعودي)",
@@ -78,7 +100,7 @@ export default function ProviderOfferForm() {
     },
     en: {
       title: "Submit Offer",
-      subtitle: "Upload your offer file in PDF format",
+      subtitle: "Break down your services and pricing, and attach an offer file if you want to",
       requestDetails: "Request Details",
       property: "Property",
       city: "City",
@@ -87,6 +109,19 @@ export default function ProviderOfferForm() {
       viewMap: "View Location",
       description: "Description",
       offerFile: "Offer File (PDF)",
+      offerFileOptional: "Offer file (optional)",
+      offerFileHint: "If you already have a PDF proposal, attach it. The line items above are enough on their own.",
+      lineItems: "Service line items",
+      lineItemsHint: "Break down what your offer covers. The owner sees these before accepting.",
+      lineItemService: "Service",
+      lineItemServicePlaceholder: "e.g. Periodic cleaning of common areas",
+      lineItemPrice: "Price per unit (SAR)",
+      addLineItem: "Add item",
+      removeLineItem: "Remove item",
+      lineItemsSum: "Line items total per unit",
+      duration: "Contract duration",
+      durationMonths: "months",
+      errorLineItems: "Add at least one line item with a name and a price",
       chooseFile: "Choose PDF File",
       fileSelected: "File selected",
       priceTotal: "Total Annual Price (SAR)",
@@ -172,34 +207,41 @@ export default function ProviderOfferForm() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!offerFile) throw new Error("no_file");
       if (!providerData?.provider?.id) throw new Error("provider_not_found");
       if (!providerData.provider.approved) throw new Error("not_approved");
 
-      if (
-        !["application/pdf"].includes(offerFile.type) &&
-        !offerFile.name.toLowerCase().endsWith(".pdf")
-      ) {
-        throw new Error("invalid_file_type");
-      }
-      if (offerFile.size > 10 * 1024 * 1024) {
-        throw new Error("file_too_large");
-      }
+      const cleanItems = lineItems
+        .map((li) => ({ service: li.service.trim(), price_per_unit: parseFloat(li.price_per_unit) }))
+        .filter((li) => li.service.length >= 2 && Number.isFinite(li.price_per_unit));
+      if (cleanItems.length === 0) throw new Error("no_line_items");
 
       const token = localStorage.getItem("sessionToken");
-      const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
 
-      const uploadRes = await fetch(
-        `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
-          body: offerFile,
+      // The PDF is optional now: the structured breakdown is what the owner reads.
+      let fileName: string | null = null;
+      if (offerFile) {
+        if (
+          !["application/pdf"].includes(offerFile.type) &&
+          !offerFile.name.toLowerCase().endsWith(".pdf")
+        ) {
+          throw new Error("invalid_file_type");
         }
-      );
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({}));
-        throw new Error(err.error || "upload_failed");
+        if (offerFile.size > 10 * 1024 * 1024) {
+          throw new Error("file_too_large");
+        }
+        fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
+        const uploadRes = await fetch(
+          `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
+            body: offerFile,
+          }
+        );
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json().catch(() => ({}));
+          throw new Error(err.error || "upload_failed");
+        }
       }
 
       const submitRes = await fetch("/api/provider/offers", {
@@ -210,6 +252,8 @@ export default function ProviderOfferForm() {
           offer_file_url: fileName,
           notes: notes || null,
           price_total: priceTotal ? parseFloat(priceTotal) : null,
+          line_items: cleanItems,
+          duration_months: parseInt(durationMonths, 10),
         }),
       });
       if (!submitRes.ok) {
@@ -230,6 +274,7 @@ export default function ProviderOfferForm() {
       if (import.meta.env.DEV) console.error("Offer submission error:", error);
       let errorMessage = t.error;
       if (error.message === "no_file") errorMessage = t.errorFile;
+      else if (error.message === "no_line_items") errorMessage = t.errorLineItems;
       else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
       else if (error.message === "file_too_large") errorMessage = t.fileTooLarge;
       else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
@@ -281,6 +326,14 @@ export default function ProviderOfferForm() {
       </div>
     );
   }
+
+  // Sum of the per-unit line prices. Shown as a sanity check only: price_total stays
+  // the figure the provider enters, because terms.tsx pins the 1% commission to it.
+  // Some offers carry fixed costs that are not per-unit, so the two need not match.
+  const lineItemsPerUnitSum = lineItems.reduce((acc, li) => {
+    const n = parseFloat(li.price_per_unit);
+    return Number.isFinite(n) ? acc + n : acc;
+  }, 0);
 
   const buildingType = request?.properties?.building_type;
   const buildingChipStyle =
@@ -436,6 +489,17 @@ export default function ProviderOfferForm() {
                 </div>
               )}
 
+              {request.contract_start_date && (
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {lang === "ar" ? "بداية العقد المطلوبة" : "Requested contract start"}:
+                  </p>
+                  <p className="font-medium">
+                    {formatContractDate(request.contract_start_date, lang)}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <p className="text-sm text-muted-foreground">{t.buildingType}:</p>
                 <p className="font-medium">
@@ -470,12 +534,13 @@ export default function ProviderOfferForm() {
           {/* Offer form card */}
           <Card>
             <CardHeader>
-              <CardTitle>{t.offerFile}</CardTitle>
+              <CardTitle>{t.title}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="offer-file">{t.offerFile}</Label>
+                  <Label htmlFor="offer-file">{t.offerFileOptional}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t.offerFileHint}</p>
                   <div className="mt-2">
                     <input
                       type="file"
@@ -505,10 +570,105 @@ export default function ProviderOfferForm() {
                       </div>
                     </label>
                   </div>
-                  <div className="flex items-start gap-2 mt-2 text-xs text-muted-foreground">
-                    <AlertCircle className="h-3 w-3 mt-0.5" />
-                    <p>{t.errorFileType}</p>
+
+                </div>
+
+                {/* Structured line items. This is what the owner actually reads
+                    before deciding, and what turns "a PDF and one number" into a
+                    comparable offer. */}
+                <div>
+                  <Label>
+                    {t.lineItems} <span className="text-red-500">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t.lineItemsHint}</p>
+                  <div className="mt-3 space-y-3">
+                    {lineItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-xl border p-3 space-y-2"
+                        style={{ borderColor: "var(--border)", background: "rgba(255,255,255,0.02)" }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            aria-label={`${t.lineItemService} ${idx + 1}`}
+                            placeholder={t.lineItemServicePlaceholder}
+                            value={item.service}
+                            onChange={(e) => {
+                              const next = [...lineItems];
+                              next[idx] = { ...next[idx], service: e.target.value };
+                              setLineItems(next);
+                            }}
+                            maxLength={120}
+                            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          />
+                          {lineItems.length > 1 && (
+                            <button
+                              type="button"
+                              aria-label={t.removeLineItem}
+                              title={t.removeLineItem}
+                              onClick={() => setLineItems(lineItems.filter((_, i) => i !== idx))}
+                              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:text-red-400 hover:border-red-400/50"
+                              style={{ borderColor: "var(--border)" }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            aria-label={`${t.lineItemPrice} ${idx + 1}`}
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder={t.lineItemPrice}
+                            value={item.price_per_unit}
+                            onChange={(e) => {
+                              const next = [...lineItems];
+                              next[idx] = { ...next[idx], price_per_unit: e.target.value };
+                              setLineItems(next);
+                            }}
+                            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLineItems([...lineItems, { service: "", price_per_unit: "" }])}
+                      disabled={lineItems.length >= 20}
+                    >
+                      <Plus className="h-4 w-4 me-1" />
+                      {t.addLineItem}
+                    </Button>
+                    {lineItemsPerUnitSum > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {t.lineItemsSum}: {lineItemsPerUnitSum.toLocaleString("en-US")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="duration-months">
+                    {t.duration} <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="duration-months"
+                    value={durationMonths}
+                    onChange={(e) => setDurationMonths(e.target.value)}
+                    className="mt-2 flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {[3, 6, 12, 18, 24, 36].map((m) => (
+                      <option key={m} value={String(m)}>
+                        {m} {t.durationMonths}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -563,10 +723,13 @@ export default function ProviderOfferForm() {
                     style={{ background: "var(--provider)" }}
                     disabled={
                       mutation.isPending ||
-                      !offerFile ||
                       !!isNotApproved ||
                       !phoneConsent ||
-                      !priceTotal
+                      !priceTotal ||
+                      !durationMonths ||
+                      !lineItems.some(
+                        (li) => li.service.trim().length >= 2 && li.price_per_unit !== ""
+                      )
                     }
                   >
                     {mutation.isPending ? (

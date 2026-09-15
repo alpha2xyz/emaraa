@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { openSignedPdf } from "@/lib/storage";
+import { formatContractDate } from "@/components/ContractStartDatePicker";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -945,8 +946,16 @@ export default function OwnerDashboard() {
                     >
                       {lang === "ar" ? statusConfig?.label : statusConfig?.labelEn}
                     </span>
+                    {request.contract_start_date && (
+                      <span className="text-xs text-muted-foreground">
+                        {lang === "ar" ? "بداية العقد: " : "Starts: "}
+                        <span className="text-foreground">
+                          {formatContractDate(request.contract_start_date, lang)}
+                        </span>
+                      </span>
+                    )}
                     {request.created_at && (
-                      <span className="text-xs text-muted-foreground mr-auto">
+                      <span className="text-xs text-muted-foreground ms-auto">
                         {new Date(request.created_at).toLocaleDateString(
                           lang === "ar" ? "ar-SA-u-nu-latn" : "en-US",
                           { year: "numeric", month: "short", day: "numeric" }
@@ -1096,6 +1105,51 @@ export default function OwnerDashboard() {
                               {lang === "ar" ? "ريال" : "SAR"}
                             </p>
                           </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Service breakdown. Deliberately visible BEFORE accepting: the
+                        owner in the 2026-09-07 feedback went outside the platform
+                        precisely because he could only see a number, not what it
+                        bought. Only the optional PDF stays behind the accept gate. */}
+                    {Array.isArray(offer.line_items) && offer.line_items.length > 0 && (
+                      <div
+                        className="rounded-lg px-3 py-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
+                      >
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {lang === "ar" ? "بنود الخدمة" : "What this covers"}
+                        </p>
+                        <ul className="space-y-1.5">
+                          {offer.line_items.map(
+                            (li: { service: string; price_per_unit: number }, i: number) => (
+                              <li key={i} className="flex items-baseline justify-between gap-3 text-sm">
+                                <span className="text-foreground">{li.service}</span>
+                                <span className="flex-shrink-0 text-xs text-muted-foreground">
+                                  {Number(li.price_per_unit).toLocaleString("en-US")}{" "}
+                                  {lang === "ar" ? "ريال" : "SAR"}
+                                  {property?.units_count
+                                    ? property?.building_type === "commercial"
+                                      ? lang === "ar"
+                                        ? " / م²"
+                                        : " / m²"
+                                      : lang === "ar"
+                                        ? " / وحدة"
+                                        : " / unit"
+                                    : ""}
+                                </span>
+                              </li>
+                            )
+                          )}
+                        </ul>
+                        {offer.duration_months && (
+                          <p className="mt-2.5 border-t border-border pt-2 text-xs text-muted-foreground">
+                            {lang === "ar" ? "مدة العقد: " : "Contract duration: "}
+                            <span className="font-semibold text-foreground">
+                              {offer.duration_months} {lang === "ar" ? "شهراً" : "months"}
+                            </span>
+                          </p>
                         )}
                       </div>
                     )}

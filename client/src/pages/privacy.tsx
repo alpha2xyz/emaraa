@@ -4,6 +4,7 @@ import { useLang } from "../hooks/use-lang";
 import { useReveal } from "../hooks/use-reveal";
 import { useSeo } from "../hooks/use-seo";
 import AmbientBackground from "@/components/AmbientBackground";
+import Footer from "@/components/Footer";
 
 type Section = { title: string; body: string[] };
 
@@ -35,7 +36,8 @@ const arSections: Section[] = [
       "إرسال رمز التحقق (OTP) عبر الرسائل النصية لتأكيد هوية المستخدم عند التسجيل والدخول.",
       "مراجعة طلبات تسجيل مزودي الخدمة من قِبل الإدارة والتحقق من صحة مستنداتهم.",
       "تحسين تجربة الاستخدام وتطوير ميزات المنصة استناداً إلى أنماط الاستخدام.",
-      "لا تُستخدم بياناتك الشخصية لأغراض إعلانية أو تجارية من قِبل أطراف ثالثة.",
+      "قياس أثر حملاتنا الإعلانية عبر أدوات Google، بعد موافقتك، وذلك ببيانات تصفّح مجمّعة لا تتضمن اسمك ولا رقم جوالك (التفاصيل في بند ملفات تعريف الارتباط).",
+      "لا نبيع بياناتك الشخصية، ولا نشاركها مع أطراف ثالثة لأغراضها التسويقية الخاصة.",
     ],
   },
   {
@@ -53,7 +55,7 @@ const arSections: Section[] = [
   {
     title: "تخزين البيانات والاحتفاظ بها",
     body: [
-      "تُخزَّن البيانات في قواعد بيانات Supabase (خوادم سحابية، منطقة الشرق الأوسط أو أوروبا حسب إعدادات المشروع).",
+      "تُخزَّن البيانات في قواعد بيانات Supabase على خوادم سحابية في منطقة سيول بكوريا الجنوبية (ap-northeast-2)، وتُنقل بين جهازك وهذه الخوادم عبر اتصال مشفّر.",
       "ملفات PDF تُخزَّن في Supabase Storage وتُتاح عبر روابط موقتة (مدة صلاحيتها ساعة واحدة).",
       "رموز OTP مؤقتة وتنتهي صلاحيتها خلال 5 دقائق.",
       "جلسات تسجيل الدخول تنتهي تلقائياً بعد 30 يوماً.",
@@ -71,9 +73,11 @@ const arSections: Section[] = [
   {
     title: "ملفات تعريف الارتباط (Cookies)",
     body: [
-      "تستخدم المنصة ملفات تعريف الارتباط الأساسية فقط لضمان عمل الجلسات وتوفير تجربة استخدام سلسة.",
-      "لا تُستخدم ملفات تتبع تسويقية أو إعلانية في الوقت الراهن.",
-      "يمكنك ضبط إعدادات المتصفح لرفض ملفات تعريف الارتباط، مع الأخذ بعين الاعتبار أن ذلك قد يؤثر على بعض وظائف المنصة.",
+      "تستخدم المنصة ملفات تعريف ارتباط أساسية لضمان عمل الجلسات وتوفير تجربة استخدام سلسة، وهذه الملفات لازمة لتشغيل المنصة ولا تحتاج موافقتك.",
+      "تستخدم المنصة أيضاً أدوات من Google (Google Ads وGoogle Analytics عبر Google Tag Manager) لقياس أثر حملاتنا الإعلانية ومعرفة كيف يصل الزوار إلينا. قد تضع هذه الأدوات ملفات تعريف ارتباط تحليلية وإعلانية، بما فيها ملفات إعادة الاستهداف.",
+      "لا تعمل هذه الأدوات إلا بعد موافقتك الصريحة من شريط الموافقة الذي يظهر عند أول زيارة. إن اخترت «الأساسية فقط» فلن تُخزَّن أي ملفات تحليلية أو إعلانية.",
+      "لا نبيع بياناتك الشخصية، ولا نشارك اسمك أو رقم جوالك مع أي معلن.",
+      "يمكنك تغيير اختيارك في أي وقت بمسح بيانات الموقع من متصفحك، كما يمكنك ضبط إعدادات المتصفح لرفض ملفات تعريف الارتباط، مع الأخذ بعين الاعتبار أن ذلك قد يؤثر على بعض وظائف المنصة.",
     ],
   },
   {
@@ -140,7 +144,8 @@ const enSections: Section[] = [
       "To send OTP verification codes via SMS to confirm user identity at registration and login.",
       "To allow administration to review service provider registration requests and verify their documents.",
       "To improve user experience and develop platform features based on usage patterns.",
-      "Your personal data is not used for advertising or commercial purposes by third parties.",
+      "Measuring how our advertising campaigns perform, using Google tools and only with your consent, based on aggregated browsing data that does not include your name or phone number (see the Cookies section for details).",
+      "We do not sell your personal data, and we do not share it with third parties for their own marketing purposes.",
     ],
   },
   {
@@ -158,7 +163,7 @@ const enSections: Section[] = [
   {
     title: "Data Storage & Retention",
     body: [
-      "Data is stored in Supabase databases (cloud servers, Middle East or Europe region depending on project settings).",
+      "Data is stored in Supabase databases on cloud servers in the Seoul, South Korea region (ap-northeast-2), and travels between your device and those servers over an encrypted connection.",
       "PDF files are stored in Supabase Storage and accessed via temporary signed URLs (1-hour validity).",
       "OTP codes are temporary and expire within 5 minutes.",
       "Login sessions expire automatically after 30 days.",
@@ -176,9 +181,11 @@ const enSections: Section[] = [
   {
     title: "Cookies",
     body: [
-      "The platform uses essential cookies only to maintain sessions and provide a smooth user experience.",
-      "No marketing or advertising tracking cookies are used at this time.",
-      "You can configure your browser to reject cookies, though doing so may affect some platform functionality.",
+      "The platform uses essential cookies to maintain sessions and provide a smooth user experience. These are required to run the platform and do not need your consent.",
+      "The platform also uses Google tools (Google Ads and Google Analytics, via Google Tag Manager) to measure how our advertising campaigns perform and how visitors reach us. These tools may set analytics and advertising cookies, including remarketing cookies.",
+      "None of these tools run until you give explicit consent through the banner shown on your first visit. If you choose \"Essential only\", no analytics or advertising cookies are stored.",
+      "We do not sell your personal data, and we never share your name or phone number with any advertiser.",
+      "You can change your choice at any time by clearing this site's data in your browser. You can also configure your browser to reject cookies, though doing so may affect some platform functionality.",
     ],
   },
   {
@@ -303,6 +310,7 @@ export default function PrivacyPage() {
         </div>
       </div>
       </div>
+      <Footer />
     </div>
   );
 }

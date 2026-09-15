@@ -36,6 +36,17 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      // Consent Mode v2. Everything is denied until the visitor decides in the
+      // banner (client/src/components/CookieConsent.tsx), which calls
+      // gtag('consent','update',...). The tag still loads, but stores nothing
+      // while denied. Must run BEFORE the config call below.
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+        wait_for_update: 500
+      });
       gtag('js', new Date());
       gtag('config', 'AW-18391925803');
     </script>

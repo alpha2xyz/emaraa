@@ -22,7 +22,14 @@ jobs:
       - name: Type check
         run: npm run check
       - name: Lint
-        run: npx eslint .
+        # Ratchet, not a clean bill of health. Before 2026-09-13 this ran with no
+        # cap at all, and every rule in eslint.config.js is set to "warn", so lint
+        # could not fail the build no matter what was added. The cap is today's
+        # count: new warnings now break CI, while the existing backlog (137, almost
+        # all no-explicit-any in server/routes.ts around Supabase result handling)
+        # is tracked in TODO.md rather than fixed in a single risky sweep. Lower
+        # this number as that backlog comes down; never raise it.
+        run: npx eslint . --max-warnings=133
 
   e2e-public:
     name: Playwright (public pages)

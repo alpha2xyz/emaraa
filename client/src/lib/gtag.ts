@@ -22,6 +22,44 @@ const CONVERSION_LABELS: Partial<Record<string, string>> = {
   // owner_signup: "",
 };
 
+// ── Consent (Google Consent Mode v2) ────────────────────────────────────────
+// index.html sets every ad/analytics signal to "denied" before the tag config
+// runs, so nothing is stored until the visitor chooses. These helpers flip that.
+// Using Consent Mode rather than conditionally injecting the script is what
+// Google itself prescribes: the tag still loads, but stores nothing while denied.
+
+export const CONSENT_STORAGE_KEY = "emaraa_cookie_consent";
+export type ConsentDecision = "granted" | "denied";
+
+export function readConsent(): ConsentDecision | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+    return v === "granted" || v === "denied" ? v : null;
+  } catch {
+    // Private mode or blocked storage — treat as "not yet decided".
+    return null;
+  }
+}
+
+export function applyConsent(decision: ConsentDecision, persist = true) {
+  if (typeof window === "undefined") return;
+  if (persist) {
+    try {
+      window.localStorage.setItem(CONSENT_STORAGE_KEY, decision);
+    } catch {
+      // Storage unavailable — the choice still applies for this page view.
+    }
+  }
+  if (typeof window.gtag !== "function") return;
+  window.gtag("consent", "update", {
+    ad_storage: decision,
+    ad_user_data: decision,
+    ad_personalization: decision,
+    analytics_storage: decision,
+  });
+}
+
 export function trackConversion(eventName: string, params?: Record<string, string | number | boolean>) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
   const label = CONVERSION_LABELS[eventName];
