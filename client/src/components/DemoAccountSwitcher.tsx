@@ -22,9 +22,15 @@ const OWNERS: DemoAccount[] = [
   { phone: "0500000004", label: "فيصل · عمارة الملقا (عرض واحد)", labelEn: "Faisal · Al Malqa building (one offer)" },
 ];
 
+// Both bidders on برج قرطبة are listed, because either offer can be the one accepted
+// during a walkthrough and the signing half of that flow needs the winning provider to
+// be one click away. Listing only one of them dead-ends the demo the moment the other
+// is picked: the provider exists and the deal links to it, but there is no way to sign
+// as it.
 const PROVIDERS: DemoAccount[] = [
+  { phone: "0500000013", label: "واحة المرافق المتكاملة · قدّمت عرضًا على برج قرطبة", labelEn: "Wahat Al Marafiq · bid on Qurtuba tower" },
+  { phone: "0500000016", label: "درع المنشآت للتشغيل · قدّمت عرضًا على برج قرطبة", labelEn: "Dir' Al Munsha'at · bid on Qurtuba tower" },
   { phone: "0500000011", label: "أفق الشمال لإدارة المرافق", labelEn: "Ofuq Al Shamal FM" },
-  { phone: "0500000013", label: "واحة المرافق المتكاملة (قدّم عرضًا على برج قرطبة)", labelEn: "Wahat Al Marafiq (bid on Qurtuba tower)" },
   { phone: "0500000017", label: "نماء المرافق · تحت المراجعة", labelEn: "Namaa FM · pending review" },
 ];
 
