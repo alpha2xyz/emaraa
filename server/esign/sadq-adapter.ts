@@ -61,7 +61,11 @@ type SadqSignatory = {
   signOrder: number | null;
   lastActionDate: string | null;
   signingUrl: string | null;
+  // Never observed populated: the status payload omits the key entirely on a pending or signed
+  // signatory, and no rejection has been run through the sandbox. The webhook payload documents it
+  // PascalCase as RejectReason, so both spellings are read rather than one being guessed at.
   rejectReason?: string | null;
+  RejectReason?: string | null;
 };
 
 let cachedToken: { accessToken: string; expiresAt: number } | null = null;
@@ -114,7 +118,7 @@ type SadqEnvelopeResponse<T> = {
  * and a validation failure comes back as 200 + errorCode 8 with the offending fields in
  * `stateValidationErrors` (pilot finding #2). Checking res.ok alone would treat those as success.
  */
-async function sadqJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function sadqCall<T>(path: string, init: RequestInit = {}): Promise<T | null> {
   const token = await getAccessToken();
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${token}`);
@@ -131,11 +135,21 @@ async function sadqJson<T>(path: string, init: RequestInit = {}): Promise<T> {
       : (json.message ?? "");
     throw new Error(`Sadq ${init.method ?? "GET"} ${path} returned errorCode ${json.errorCode}: ${detail}`);
   }
-  if (json.data == null) {
-    // Also a 200 with errorCode 0 — what an unknown envelope id returns (pilot finding #3).
+  return json.data ?? null;
+}
+
+/**
+ * For the endpoints that return a payload. A 200 + errorCode 0 + `data: null` is what an id the
+ * account does not own comes back as (pilot finding #3) — success-shaped nothing, which has to be
+ * treated as an error. The action endpoints (cancel, complete) legitimately answer without a `data`
+ * key at all, so they use sadqCall directly.
+ */
+async function sadqJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const data = await sadqCall<T>(path, init);
+  if (data == null) {
     throw new Error(`Sadq ${init.method ?? "GET"} ${path} returned no data`);
   }
-  return json.data;
+  return data;
 }
 
 async function getEnvelope(requestId: string): Promise<SadqEnvelope> {
@@ -291,7 +305,7 @@ export const sadqAdapter: SignatureAdapter = {
         role,
         signatoryId: id,
         status: mapSignatoryStatus(s?.status ?? null),
-        rejectedReason: s?.rejectReason ?? null,
+        rejectedReason: s?.rejectReason ?? s?.RejectReason ?? null,
       };
     });
 
@@ -336,7 +350,8 @@ export const sadqAdapter: SignatureAdapter = {
   async voidRequest(requestId: string): Promise<void> {
     // The envelope id goes in the URL and again in the body, spelled `envelopId` — SADQ's own
     // spelling, not a typo here. No reason field exists; ours is recorded in signature_events.
-    await sadqJson<unknown>(`/api/v1/envelopes/${encodeURIComponent(requestId)}/cancel`, {
+    // sadqCall, not sadqJson: a successful cancel answers with no `data` key at all.
+    await sadqCall<unknown>(`/api/v1/envelopes/${encodeURIComponent(requestId)}/cancel`, {
       method: "POST",
       body: JSON.stringify({ envelopId: requestId }),
     });
