@@ -29,13 +29,25 @@ const SADQ_ACCOUNT_SECRET = process.env.SADQ_ACCOUNT_SECRET ?? "";
 const SADQ_USERNAME = process.env.SADQ_USERNAME ?? "";
 const SADQ_PASSWORD = process.env.SADQ_PASSWORD ?? "";
 
-// SADQ's authenticationType decides the identity gate in front of the signing surface. Verified
-// 2026-09-16: 0 = no gate (the signer opens the contract straight away) and 1 = Nafath, despite
-// the published docs listing 1 as OTP and 7 as Nafath. 0 for the demo build, for the same reason
-// ESIGN_VERIFICATION_METHOD defaults to email on Signit — seeded demo identities cannot
-// Nafath-verify as themselves, and the sandbox account carries nafathBalance 0 anyway. Nafath is
-// the production value, once legal review clears the template's §9 and ESIGN_ENABLED is allowed
-// on production. See server/app.ts's boot guard.
+// SADQ's authenticationType decides the identity gate in front of the signing surface. The
+// authoritative list is https://docs.sadq.sa/docs/enums (NOT the per-endpoint pages, which give a
+// different and wrong mapping):
+//
+//   0  None         no gate, the signer opens the contract straight away
+//   1  Nafath KYC   Nafath once, then Sadq credentials on later documents
+//   2  SMS          OTP by SMS
+//   3  Email        OTP by email
+//   5  DigitalSign  digital-certificate signing, documents only
+//   7  Nafath App   full Nafath every single time
+//   9  Absher OTP
+//   10 WhatsApp     OTP by WhatsApp
+//
+// 0 for the demo build, for the same reason ESIGN_VERIFICATION_METHOD defaults to email on
+// Signit — seeded demo identities cannot Nafath-verify as themselves, and the sandbox account
+// carries nafathBalance 0. A real identity gate that costs nothing extra is 3 (Email OTP), which
+// is the closest match to the Signit build's demo behaviour. Nafath (1 or 7) is the production
+// value, once legal review clears the template's §9 and ESIGN_ENABLED is allowed on production.
+// See server/app.ts's boot guard. Only 0 and 1 have been exercised against the sandbox.
 const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
 
 // Shared secret SADQ echoes back on webhook deliveries (configured on the webhook itself via
@@ -48,9 +60,12 @@ const SADQ_WEBHOOK_HEADER = (process.env.SADQ_WEBHOOK_HEADER ?? "authorization")
 const FIELD_WIDTH_PT = 150;
 const FIELD_HEIGHT_PT = 42;
 
-// Arabic. SADQ's invitationLanguage is 0 = Arabic, 1 = English — the inverse of the ?lang= query
-// parameter on its own signing links, which is not a typo here.
-const INVITATION_LANGUAGE_AR = 0;
+// Arabic. Per https://docs.sadq.sa/docs/enums, invitationLanguage is 1 = Arabic, 2 = English.
+// The /api/v3/invitations/send page says 0 = Arabic, 1 = English; that page is wrong, and the 0
+// this code sent until 2026-09-16 is not a member of the enum at all — SADQ echoed it back
+// unchanged and served the signing page in English. Corrected from the enum reference; not yet
+// re-confirmed against the sandbox (see _work/sadq-api-integration-brief-v1.md §5).
+const INVITATION_LANGUAGE_AR = 1;
 
 type SadqEnvelope = { status: string; envelopeId: string; signatories: SadqSignatory[]; documentId: string | null };
 type SadqSignatory = {
