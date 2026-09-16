@@ -155,15 +155,18 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
       </Card>
 
       <Dialog open={signDialogOpen} onOpenChange={setSignDialogOpen}>
-        <DialogContent className="max-w-3xl h-[85vh] p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0">
+        <DialogContent className="max-w-3xl h-[85vh] p-0 overflow-hidden flex flex-col gap-0">
+          <DialogHeader className="p-4 pb-3 shrink-0">
             <DialogTitle>{lang === "ar" ? "توقيع العقد" : "Sign the contract"}</DialogTitle>
           </DialogHeader>
           {signingUrl && (
+            // flex-1, not h-full: DialogContent is a grid by default, where h-full resolves
+            // against a content-sized row and leaves the signing surface short with dead space
+            // above it.
             <iframe
               src={signingUrl}
               title="Signit"
-              className="w-full h-full border-0"
+              className="w-full flex-1 border-0 bg-white"
               // Signit's own signing surface handles Nafath/email verification and file access
               // inside its own origin; this only grants what that flow needs.
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
