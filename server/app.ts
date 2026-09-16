@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { PRODUCTION_PROJECT_REF } from "./production-ref.js";
 
 declare module "http" {
   interface IncomingMessage {
@@ -89,8 +90,6 @@ function allowedOrigins(): string[] {
  * behind it is NOT production. If both are true the process refuses to start —
  * loudly, at boot, rather than silently serving a bypass to real users.
  */
-const PRODUCTION_PROJECT_REF = "txzbzpnrclkdodosbndy";
-
 function assertTestModeIsNotOnProduction(): void {
   if (process.env.OTP_TEST_MODE !== "true") return;
   if (!(process.env.SUPABASE_URL ?? "").includes(PRODUCTION_PROJECT_REF)) return;
