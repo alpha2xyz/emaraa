@@ -12,6 +12,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
 import { enqueueEmails, drainOutbox } from "./outbox.js";
+import { demoGateCookie } from "./demo-gate.js";
 import {
   sendEmail,
   buildAdminReport,
@@ -223,6 +224,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (tokenError || !token) {
         return res.status(500).json({ error: "Failed to create session" });
       }
+      // On the demo deployment this same login also opens the site-wide gate for an hour
+      // (middleware.ts). Returns null everywhere else, production included.
+      const gateCookie = demoGateCookie();
+      if (gateCookie) res.setHeader("Set-Cookie", gateCookie);
       res.json({ id: admin.id, token });
     } catch {
       res.status(500).json({ error: "Login failed" });
