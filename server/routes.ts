@@ -1833,7 +1833,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       .from("deals")
       .select(
         "id, request_id, offer_id, owner_id, contract_value, signature_status, signature_request_id, " +
-          "signature_signatory_ids, signature_sent_at, signature_rejected_reason, contract_pdf_path, signed_pdf_path, " +
+          "signature_provider, signature_signatory_ids, signature_sent_at, signature_rejected_reason, " +
+          "contract_pdf_path, signed_pdf_path, " +
           "providers!deals_provider_fk(id, user_id, email, company_name, cr_number, fal_license_number, signatory_name), " +
           "owner:users!deals_owner_fk(id, name, email)",
       )
@@ -1888,8 +1889,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { renderContractHtml } = await import("./esign/contract-template.js");
       const { renderHtmlToPdf } = await import("./esign/pdf.js");
-      const { signitAdapter } = await import("./esign/signit-adapter.js");
+      const { newRequestAdapter } = await import("./esign/adapter.js");
       const { OWNER_ANCHOR_TAG, PROVIDER_ANCHOR_TAG } = await import("./esign/contract-template.js");
+
+      const { vendor, adapter } = await newRequestAdapter();
 
       const html = renderContractHtml({
         contractDate,
@@ -1922,9 +1925,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Verified empirically 2026-09-15 against this exact template (10 sections + Annex A):
       // the signature table lands on page 3. Re-check whenever contract-template.ts's content
       // grows or shrinks materially — see the comment on Signatory.anchorPage.
+      // Signit only: the SADQ adapter reads the real page out of the rendered PDF instead
+      // (server/esign/anchor-locator.ts) and ignores this value.
       const ANCHOR_PAGE = Number(process.env.ESIGN_SIGNATURE_ANCHOR_PAGE ?? "3");
 
-      const { requestId, signatoryIds } = await signitAdapter.createSignatureRequest({
+      const { requestId, signatoryIds } = await adapter.createSignatureRequest({
         dealId: deal.id,
         title: `عقد عِمارة — ${property?.name ?? deal.id}`,
         pdfBuffer,
@@ -1951,7 +1956,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .update({
           signature_status: "sent",
           signature_request_id: requestId,
-          signature_provider: "signit",
+          // The vendor that actually created this request, not whatever ESIGN_VENDOR says later —
+          // every follow-up call for this deal is routed by this column. See server/esign/adapter.ts.
+          signature_provider: vendor,
           signature_signatory_ids: signatoryIds,
           contract_pdf_path: unsignedPath,
           signature_sent_at: new Date().toISOString(),
@@ -1962,7 +1969,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       await supabaseAdmin.from("signature_events").insert({
         deal_id: deal.id,
-        provider: "signit",
+        provider: vendor,
         event_type: "created",
         payload: { requestId, signatoryIds },
       });
@@ -2007,8 +2014,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!deal.signature_request_id || !signatoryId) {
         return res.status(409).json({ error: "signing_not_ready" });
       }
-      const { signitAdapter } = await import("./esign/signit-adapter.js");
-      const link = await signitAdapter.getSigningLink(deal.signature_request_id, signatoryId);
+      // Routed by the vendor stored on the deal, so a request raised on one vendor keeps resolving
+      // against that vendor after ESIGN_VENDOR changes.
+      const { adapterFor } = await import("./esign/adapter.js");
+      const adapter = await adapterFor(deal.signature_provider);
+      const link = await adapter.getSigningLink(deal.signature_request_id, signatoryId);
       res.json(link);
     } catch (e: any) {
       if (process.env.NODE_ENV !== "production") console.error("[deals/signing-link]", e?.message);

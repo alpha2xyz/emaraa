@@ -65,7 +65,16 @@ export type WebhookVerification = {
 export interface SignatureAdapter {
   createSignatureRequest(input: CreateSignatureRequestInput): Promise<CreateSignatureRequestResult>;
   getSigningLink(requestId: string, signatoryId: string): Promise<SigningLinkResult>;
-  getStatus(requestId: string): Promise<SignatureRequestStatus>;
+  // signatoryIds is the role -> vendor-id map stored on the deal at creation time. Signit ignores
+  // it: its status payload carries a signing order that identifies each party on its own. SADQ
+  // needs it, because SADQ silently adds the API account itself as a third signatory, already
+  // SIGNED and sharing signing order 0 with the owner — without the map, that row is
+  // indistinguishable from a real signature and would close a deal nobody signed. See
+  // _work/sadq-api-integration-brief-v1.md finding #6.
+  getStatus(
+    requestId: string,
+    signatoryIds?: Partial<Record<SignatoryRole, string>>,
+  ): Promise<SignatureRequestStatus>;
   downloadSealed(requestId: string): Promise<DownloadedFile>;
   voidRequest(requestId: string, reason: string): Promise<void>;
   // Not called anywhere yet — Signit's sandbox events:read scope is broken, so webhooks are

@@ -1,10 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { signitAdapter } from "./signit-adapter.js";
+import { adapterFor } from "./adapter.js";
 import { enqueueEmails, drainOutbox } from "../outbox.js";
 import { notificationEmail } from "../email.js";
 
-// No webhook receiver yet (Signit's sandbox events:read scope is broken — see
-// signit-adapter.ts). This is the state-writing mechanism instead: called from
+// No webhook receiver yet, on either vendor: Signit's sandbox events:read scope is broken (see
+// signit-adapter.ts), and SADQ's webhooks are registerable but nothing receives them yet — only
+// the signature check is implemented, in sadqAdapter.verifyWebhook.
+// This is the state-writing mechanism instead: called from
 // GET /api/deals/:id/signature-status, which the client polls while a signature is in flight.
 // _work/esign-workflow-spec-v1.md §5 is explicit that this is an acceptable substitute, not a
 // shortcut: "if webhooks are unavailable at launch, poll getStatus on a schedule instead."
@@ -24,7 +26,8 @@ export async function reconcilePendingSignature(
   const { data: dealRow, error } = await supabaseAdmin
     .from("deals")
     .select(
-      "id, signature_status, signature_request_id, signed_pdf_path, signature_rejected_reason, " +
+      "id, signature_status, signature_request_id, signature_provider, signature_signatory_ids, " +
+        "signed_pdf_path, signature_rejected_reason, " +
         "providers!deals_provider_fk(email), owner:users!deals_owner_fk(name, email)",
     )
     .eq("id", dealId)
@@ -47,11 +50,21 @@ export async function reconcilePendingSignature(
     };
   }
 
-  const vendorStatus = await signitAdapter.getStatus(deal.signature_request_id);
+  // The vendor that created this request, not the currently-selected one — a deal raised on
+  // Signit must keep polling Signit after ESIGN_VENDOR flips. See server/esign/adapter.ts.
+  const vendorName = (deal.signature_provider as string | null) ?? "signit";
+  const adapter = await adapterFor(vendorName);
+
+  // The stored role -> vendor-id map. Signit ignores it; SADQ cannot read its own status payload
+  // safely without it (see the comment on SignatureAdapter.getStatus).
+  const vendorStatus = await adapter.getStatus(
+    deal.signature_request_id,
+    (deal.signature_signatory_ids as Record<string, string> | null) ?? undefined,
+  );
 
   await supabaseAdmin.from("signature_events").insert({
     deal_id: dealId,
-    provider: "signit",
+    provider: vendorName,
     event_type: "status_poll",
     payload: vendorStatus as unknown as Record<string, unknown>,
   });
@@ -68,7 +81,7 @@ export async function reconcilePendingSignature(
   const rejectedSignatory = vendorStatus.perSignatory.find((s) => s.status === "rejected");
 
   if (vendorStatus.state === "signed") {
-    const sealed = await signitAdapter.downloadSealed(deal.signature_request_id);
+    const sealed = await adapter.downloadSealed(deal.signature_request_id);
     const sealedPath = `${dealId}/sealed-${Date.now()}.pdf`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from("contracts")
@@ -77,7 +90,7 @@ export async function reconcilePendingSignature(
     if (uploadError) {
       await supabaseAdmin.from("signature_events").insert({
         deal_id: dealId,
-        provider: "signit",
+        provider: vendorName,
         event_type: "failed",
         payload: { reason: "sealed_pdf_upload_failed", message: uploadError.message },
       });
@@ -126,7 +139,11 @@ export async function reconcilePendingSignature(
 
   // Every other transition (sent -> partially_signed, or -> rejected/expired/voided/failed) is a
   // plain status write — no file, no notification, per the design spec's failure-path table.
-  const reason = rejectedSignatory ? "رفض أحد الطرفين التوقيع" : null;
+  // SADQ's status payload carries the rejecting party's own words in rejectReason; Signit's does
+  // not, so that path still falls back to the generic sentence.
+  const reason = rejectedSignatory
+    ? (rejectedSignatory.rejectedReason?.trim() || "رفض أحد الطرفين التوقيع")
+    : null;
   await supabaseAdmin
     .from("deals")
     .update({
