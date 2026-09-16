@@ -42,6 +42,13 @@ export async function locateAnchors(
 ): Promise<Record<string, AnchorBox>> {
   // Legacy build: the modern one assumes a browser-ish environment. Dynamic import keeps pdfjs
   // out of the module graph of every request that never renders a contract.
+  //
+  // pdfjs has no Worker in Node, so it falls back to a "fake worker" that imports
+  // pdf.worker.mjs at RUNTIME, by a path it builds itself. Vercel's file tracing cannot see
+  // that import and left the worker out of the bundle — the route failed on the demo with
+  // `Setting up fake worker failed: Cannot find module .../pdf.worker.mjs` while working fine
+  // locally, where node_modules is complete. vercel.json's functions.includeFiles ships the
+  // whole legacy/build directory for that reason; do not narrow it to pdf.mjs alone.
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
   const doc = await pdfjs.getDocument({
