@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { FileSignature, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLang } from "@/hooks/use-lang";
 import { openSignedPdf } from "@/lib/storage";
 
@@ -17,12 +16,13 @@ type SignatureStatus =
   | "failed"
   | null;
 
-// Demo build (2026-09-15): plain iframe pointed at Signit's own signing-link URL, not the
-// @signitsa/signitsa-embedded npm package. The package adds live in-page events and
-// white-labeling on top of the same iframe — real polish, not required for "the signer never
-// leaves emaraa.app", which a plain iframe already satisfies. This card's own polling covers
-// the state transitions the package's events would otherwise drive. Fast-follow, not a gap in
-// this build: swap the iframe body for the package once there's time to verify its API.
+// The signing surface opens in a new tab on Signit's own domain. An embedded iframe was tried
+// first and does not work: see openSigningSurface below. The card's polling is what brings the
+// state back, so the signer returning to this tab sees the result without doing anything.
+//
+// Fast-follow worth revisiting once there is time to verify its API: @signitsa/signitsa-embedded,
+// the vendor's own embed package, which may handle in-page embedding correctly where a raw
+// iframe does not.
 export type ContractSigningCardProps = {
   dealId: string | null;
   role: "owner" | "provider";
@@ -31,6 +31,8 @@ export type ContractSigningCardProps = {
 const LABELS: Record<Exclude<SignatureStatus, null>, { ar: string; en: string }> = {
   preparing: { ar: "جاري تجهيز العقد", en: "Preparing the contract" },
   sent: { ar: "قيد التوقيع", en: "Awaiting signatures" },
+  // Overridden per role below: partially_signed always means the owner has signed and the
+  // provider has not, because the two signatories are created in that order.
   partially_signed: { ar: "بانتظار توقيع الطرف الآخر", en: "Waiting on the other party" },
   signed: { ar: "موقّع", en: "Signed" },
   rejected: { ar: "رُفض التوقيع", en: "Signing declined" },
@@ -49,8 +51,6 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
   const [status, setStatus] = useState<SignatureStatus>(null);
   const [signedPdfPath, setSignedPdfPath] = useState<string | null>(null);
   const [rejectedReason, setRejectedReason] = useState<string | null>(null);
-  const [signingUrl, setSigningUrl] = useState<string | null>(null);
-  const [signDialogOpen, setSignDialogOpen] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -93,17 +93,26 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
 
   if (!dealId || !status) return null;
 
-  const label = LABELS[status] ?? LABELS.sent;
+  const label =
+    status === "partially_signed"
+      ? role === "provider"
+        ? { ar: "دورك للتوقيع", en: "Your turn to sign" }
+        : { ar: "بانتظار توقيع مزود الخدمة", en: "Waiting on the provider" }
+      : (LABELS[status] ?? LABELS.sent);
   const canSign = status === "sent" || status === "partially_signed";
 
-  const openSigningDialog = async () => {
+  const openSigningSurface = async () => {
     if (!dealId) return;
     try {
       const res = await fetch(`/api/deals/${dealId}/signing-link`, { headers: authHeaders() });
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body?.url) return;
-      setSigningUrl(body.url as string);
-      setSignDialogOpen(true);
+      // A new tab, not an embedded iframe. Verified 2026-09-16 against the sandbox: inside an
+      // iframe the signing surface renders the contract and then accepts no input at all —
+      // "بدء التوقيع" does nothing and the document will not scroll — so the contract could be
+      // read and never signed. The same link works immediately at top level. Keeping the signer
+      // on emaraa.app was the nicer design; a signature that cannot be completed is not a design.
+      window.open(body.url as string, "_blank", "noopener,noreferrer");
     } catch {
       // Nothing to do — the button stays clickable and the user can try again.
     }
@@ -134,7 +143,7 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
 
           <div className="flex gap-2">
             {canSign && (
-              <Button size="sm" onClick={openSigningDialog} className="gap-1.5">
+              <Button size="sm" onClick={openSigningSurface} className="gap-1.5">
                 <FileSignature className="w-3.5 h-3.5" />
                 {lang === "ar" ? "التوقيع الآن" : "Sign now"}
               </Button>
@@ -153,27 +162,6 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={signDialogOpen} onOpenChange={setSignDialogOpen}>
-        <DialogContent className="max-w-3xl h-[85vh] p-0 overflow-hidden flex flex-col gap-0">
-          <DialogHeader className="p-4 pb-3 shrink-0">
-            <DialogTitle>{lang === "ar" ? "توقيع العقد" : "Sign the contract"}</DialogTitle>
-          </DialogHeader>
-          {signingUrl && (
-            // flex-1, not h-full: DialogContent is a grid by default, where h-full resolves
-            // against a content-sized row and leaves the signing surface short with dead space
-            // above it.
-            <iframe
-              src={signingUrl}
-              title="Signit"
-              className="w-full flex-1 border-0 bg-white"
-              // Signit's own signing surface handles Nafath/email verification and file access
-              // inside its own origin; this only grants what that flow needs.
-              sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

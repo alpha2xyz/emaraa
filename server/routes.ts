@@ -1822,6 +1822,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return `${d.getDate()} ${ARABIC_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
   }
 
+  // The contract is bilingual and its English half was printing the Arabic date, so it read
+  // "This Agreement is made on نوفمبر 1 2026".
+  function formatContractDateEn(d: Date): string {
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  }
+
   async function loadDealForEsign(dealId: string, requesterUserId: string) {
     const { data: deal } = await supabaseAdmin
       .from("deals")
@@ -1874,9 +1880,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const provider = deal.providers;
       const owner = deal.owner;
 
-      const contractDate = (request as any)?.contract_start_date
-        ? formatContractDate(new Date((request as any).contract_start_date))
-        : formatContractDate(new Date());
+      const contractStart = (request as any)?.contract_start_date
+        ? new Date((request as any).contract_start_date)
+        : new Date();
+      const contractDate = formatContractDate(contractStart);
+      const contractDateEn = formatContractDateEn(contractStart);
 
       const { renderContractHtml } = await import("./esign/contract-template.js");
       const { renderHtmlToPdf } = await import("./esign/pdf.js");
@@ -1885,6 +1893,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const html = renderContractHtml({
         contractDate,
+        contractDateEn,
         ownerName: owner?.name ?? "—",
         propertyName: property?.name ?? "—",
         propertyAddress: property?.address ?? "—",

@@ -14,6 +14,7 @@ export type LineItem = { service: string; price_per_unit: number };
 
 export type ContractFields = {
   contractDate: string; // already formatted for display, e.g. "15 سبتمبر 2026"
+  contractDateEn: string; // the same date for the English half, e.g. "15 September 2026"
   ownerName: string;
   propertyName: string;
   propertyAddress: string;
@@ -164,7 +165,7 @@ export function renderContractHtml(f: ContractFields): string {
     ${providerCr}، رخصة فال (الهيئة العامة للعقار) رقم ${providerFal}، ويمثلها في هذا العقد ${providerRep}.</p>
   <p class="ar">ويشار إليهما فيما يلي مجتمعين بـ"الطرفين" ومنفردين بـ"الطرف".</p>
 
-  <p class="en">This Agreement is made on <strong>${f.contractDate}</strong> between:</p>
+  <p class="en">This Agreement is made on <strong>${f.contractDateEn}</strong> between:</p>
   <p class="en"><strong>First Party (Owner):</strong> ${f.ownerName}, owner of the property known as
     "${f.propertyName}" located at ${f.propertyAddress}, ${f.propertyCity} (${btype.en} — ${units.en}).</p>
   <p class="en"><strong>Second Party (Provider):</strong> ${f.providerCompanyName}, Commercial Registration
@@ -188,7 +189,7 @@ export function renderContractHtml(f: ContractFields): string {
   <p class="ar">مدة هذا العقد سنة ميلادية واحدة تبدأ من ${f.contractDate}، وتتجدد تلقائياً لمدد مماثلة ما لم
     يُخطر أحد الطرفين الآخر كتابياً برغبته في عدم التجديد قبل 30 يوماً على الأقل من تاريخ انتهاء المدة
     الأصلية أو أي مدة تجديد.</p>
-  <p class="en">This Agreement has an initial term of one (1) year from ${f.contractDate}, automatically
+  <p class="en">This Agreement has an initial term of one (1) year from ${f.contractDateEn}, automatically
     renewing for successive equal terms unless either Party gives the other written notice of non-renewal
     at least 30 days before the end of the then-current term.</p>
 
