@@ -153,14 +153,6 @@ const GATE_PAGE = `<!doctype html>
 
 export default async function middleware(request: Request) {
   try {
-    // TEMPORARY: proves middleware actually runs on this project (Vite SPA + a vercel.json that
-    // already declares its own rewrites). Remove once the gate is confirmed working.
-    if (new URL(request.url).pathname === "/__mw-check") {
-      return new Response(`middleware alive, gate=${gateIsOn()}`, {
-        headers: { "content-type": "text/plain" },
-      });
-    }
-
     if (!gateIsOn()) return next();
 
     const secret = process.env.DEMO_GATE_SECRET;
