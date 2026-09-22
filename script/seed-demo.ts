@@ -95,10 +95,14 @@ const OWNERS: SeedOwner[] = [
     phone: "0500000002",
     name: "سعد القحطاني",
     email: null,
-    property: { id: "22222222-0000-4000-8000-000000000002", name: "برج قرطبة التجاري", type: "commercial", district: "قرطبة", units: 18 },
+    // Commercial properties store an area in m² in units_count, not a unit count — the
+    // owner dashboard reads and labels it that way. Seeded as 18 it rendered as an 18 m²
+    // office tower priced at 8,611 SAR per m², which is the kind of number someone notices
+    // on stage.
+    property: { id: "22222222-0000-4000-8000-000000000002", name: "برج قرطبة التجاري", type: "commercial", district: "قرطبة", units: 4800 },
     request: {
       id: "33333333-0000-4000-8000-000000000002",
-      description: "برج مكاتب من 18 وحدة. المطلوب عقد تشغيل وصيانة يشمل التكييف المركزي وأنظمة الإطفاء والنظافة اليومية للمداخل.",
+      description: "برج مكاتب بمساحة 4,800 م². المطلوب عقد تشغيل وصيانة يشمل التكييف المركزي وأنظمة الإطفاء والنظافة اليومية للمداخل.",
       startDate: "2026-11-01",
       status: "pending",
     },
@@ -305,10 +309,11 @@ const OFFERS: SeedOffer[] = [
     priceTotal: 142000,
     durationMonths: 12,
     notes: "تشغيل كامل للبرج يشمل التكييف المركزي وأنظمة الإطفاء والنظافة اليومية، مع مشرف موقع دوام كامل.",
+    // Per m² on a commercial property, so these have to sum to priceTotal / 4,800.
     lineItems: [
-      { service: "تشغيل التكييف المركزي", price_per_unit: 3800 },
-      { service: "أنظمة الإطفاء والسلامة", price_per_unit: 2100 },
-      { service: "النظافة اليومية", price_per_unit: 1990 },
+      { service: "تشغيل التكييف المركزي", price_per_unit: 14 },
+      { service: "أنظمة الإطفاء والسلامة", price_per_unit: 8 },
+      { service: "النظافة اليومية", price_per_unit: 7.58 },
     ],
     status: "pending",
   },
@@ -320,9 +325,9 @@ const OFFERS: SeedOffer[] = [
     durationMonths: 12,
     notes: "عرض يركز على أنظمة السلامة والإطفاء مع تدقيق ربع سنوي معتمد.",
     lineItems: [
-      { service: "أنظمة الإطفاء والسلامة", price_per_unit: 3400 },
-      { service: "تشغيل التكييف المركزي", price_per_unit: 3600 },
-      { service: "الحراسة الأمنية", price_per_unit: 1610 },
+      { service: "أنظمة الإطفاء والسلامة", price_per_unit: 12.75 },
+      { service: "تشغيل التكييف المركزي", price_per_unit: 13.5 },
+      { service: "الحراسة الأمنية", price_per_unit: 6.04 },
     ],
     status: "pending",
   },

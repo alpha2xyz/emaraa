@@ -100,6 +100,16 @@ export const providers = pgTable("providers", {
   approved: boolean("approved").default(false),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+  // E-signature (added 2026-09-15, migrations/012_esign.sql) — the contract template needs the
+  // CR number and FAL license number as text, not just the uploaded document scans, plus who is
+  // actually authorised to bind the company. The authority check runs once at provider onboarding,
+  // not per contract — see _work/esign-workflow-spec-v1.md §4.
+  cr_number: text("cr_number"),
+  fal_license_number: text("fal_license_number"),
+  signatory_name: text("signatory_name"),
+  signatory_contact: text("signatory_contact"),
+  signatory_verified_at: timestamp("signatory_verified_at", { withTimezone: true }),
+  signatory_verification_result: jsonb("signatory_verification_result"), // outcome only — never a national ID
 });
 
 export type Provider = typeof providers.$inferSelect;
@@ -196,6 +206,22 @@ export const deals = pgTable("deals", {
   commission_reminder_sent_at: timestamp("commission_reminder_sent_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  // E-signature (added 2026-09-15, migrations/012_esign.sql) — a separate column rather than a
+  // fourth value on `status`, since `status` is read in ~9 places that all mean "is this deal
+  // commercially alive". Only signature_status = 'signed' ever promotes status to 'closed'; every
+  // other signing state leaves the deal commercially 'pending'. null for every historical row.
+  // See _work/esign-workflow-spec-v1.md §2.
+  signature_status: text("signature_status"),
+  signature_request_id: text("signature_request_id"),
+  signature_provider: text("signature_provider"), // 'signit'
+  contract_pdf_path: text("contract_pdf_path"),
+  signed_pdf_path: text("signed_pdf_path"),
+  signature_sent_at: timestamp("signature_sent_at", { withTimezone: true }),
+  signature_rejected_reason: text("signature_rejected_reason"),
+  // {"owner": "<signit signatory id>", "provider": "..."} — Signit's getSigningLink needs the
+  // per-role signatory id and custom_fields are confirmed broken in their sandbox, so this is the
+  // only place to keep it.
+  signature_signatory_ids: jsonb("signature_signatory_ids"),
 }, (t) => ({
   // The only index of the six in master plan v1006 that was genuinely absent
   // from production; the other five already existed (verified 2026-09-13).
@@ -203,6 +229,20 @@ export const deals = pgTable("deals", {
 }));
 
 export type Deal = typeof deals.$inferSelect;
+
+// The signature_status state machine (_work/esign-workflow-spec-v1.md §2). null means signing
+// never started (every historical row). Shared by server checks and client label-mapping.
+export const SIGNATURE_STATUS_VALUES = [
+  "preparing",
+  "sent",
+  "partially_signed",
+  "signed",
+  "rejected",
+  "expired",
+  "voided",
+  "failed",
+] as const;
+export type SignatureStatus = (typeof SIGNATURE_STATUS_VALUES)[number];
 
 // Email delivery log — one row per outbound email attempt.
 // Written by server/email.ts (sendEmail + suppressed_test path) and read by buildAdminReport
@@ -301,3 +341,19 @@ export const adminImpersonationLog = pgTable("admin_impersonation_log", {
 });
 
 export type AdminImpersonationLog = typeof adminImpersonationLog.$inferSelect;
+
+// E-signature audit trail — every webhook/poll and state change, append-only. This is the audit
+// trail on our side and the dedup key for reconciliation. RLS enabled with no policies
+// (migrations/012_esign.sql), matching deals/email_log/email_outbox/offer_declines/
+// admin_impersonation_log: closed to every role but service_role, nothing reads it through the
+// anon/authenticated client.
+export const signatureEvents = pgTable("signature_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  deal_id: uuid("deal_id").notNull(),
+  provider: text("provider").notNull(), // 'signit'
+  event_type: text("event_type").notNull(), // created | status_poll | signed | rejected | voided | failed | ...
+  payload: jsonb("payload"),
+  received_at: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SignatureEvent = typeof signatureEvents.$inferSelect;

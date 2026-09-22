@@ -12,6 +12,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
 import { enqueueEmails, drainOutbox } from "./outbox.js";
+import { demoGateCookie } from "./demo-gate.js";
 import {
   sendEmail,
   buildAdminReport,
@@ -223,6 +224,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (tokenError || !token) {
         return res.status(500).json({ error: "Failed to create session" });
       }
+      // On the demo deployment this same login also opens the site-wide gate for an hour
+      // (middleware.ts). Returns null everywhere else, production included.
+      const gateCookie = demoGateCookie();
+      if (gateCookie) res.setHeader("Set-Cookie", gateCookie);
       res.json({ id: admin.id, token });
     } catch {
       res.status(500).json({ error: "Login failed" });
@@ -2863,6 +2868,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 }
 
 // Seed admin from env vars on startup. Upserts by username, only re-hashes if password changed.
+/**
+ * Login is verified in the database by check_admin_login, which calls pgcrypto's
+ * crypt(). pgcrypto only understands the `$2a$` bcrypt version tag, while bcryptjs
+ * writes `$2b$` — so an admin seeded from env vars could never log in, no matter how
+ * correct the password was. Found 2026-09-16 on the demo project, where seedAdmin
+ * created the first admin this code path had ever made; production's row predates it
+ * and was written by pgcrypto itself.
+ *
+ * The two tags describe the same hash for any password under 72 bytes, so rewriting the
+ * tag is sound and keeps bcrypt.compare above working on both.
+ */
+async function hashForPgcrypto(password: string): Promise<string> {
+  const hash = await bcrypt.hash(password, 12);
+  return hash.replace(/^\$2b\$/, "$2a$");
+}
+
 export async function seedAdmin(): Promise<void> {
   const username = process.env.ADMIN_USERNAME?.trim();
   const password = process.env.ADMIN_PASSWORD?.trim();
@@ -2878,12 +2899,12 @@ export async function seedAdmin(): Promise<void> {
     if (existing) {
       const matches = await bcrypt.compare(password, existing.password);
       if (!matches) {
-        const newHash = await bcrypt.hash(password, 12);
+        const newHash = await hashForPgcrypto(password);
         await supabaseAdmin.from("admins").update({ password: newHash }).eq("id", existing.id);
         console.log("[seedAdmin] password updated for", username);
       }
     } else {
-      const hash = await bcrypt.hash(password, 12);
+      const hash = await hashForPgcrypto(password);
       const { error } = await supabaseAdmin
         .from("admins")
         .insert([{ username, password: hash }]);
