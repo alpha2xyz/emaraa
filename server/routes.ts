@@ -2791,29 +2791,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         );
       }
 
-      // ── One combined admin digest — only if there's something to report ──
-      if (expiredRequests.length > 0 || staleSummaryLines.length > 0) {
-        await notify(
-          ADMIN_NOTIFY_EMAIL,
-          `دورة الطلبات: ${expiredRequests.length} طلب منتهٍ، ${staleSummaryLines.length} عرض معلّق`,
-          notificationEmail({
-            heading: "دورة نشاط الطلبات اليومية",
-            body: [
-              expiredRequests.length > 0
-                ? `طلبات أُغلقت لعدم نشاط المالك (${expiredRequests.length}):\n${expiredSummaryLines.join("\n")}`
-                : null,
-              staleSummaryLines.length > 0
-                ? `عروض معلّقة أكثر من 5 أيام (${staleSummaryLines.length}):\n${staleSummaryLines.join("\n")}`
-                : null,
-            ]
-              .filter(Boolean)
-              .join("\n\n"),
-            ctaLabel: "فتح لوحة الإدارة",
-            ctaUrl: "https://emaraa.app/admin",
-          }),
-          "admin_request_lifecycle",
-        );
-      }
+      // Combined admin digest email disabled 2026-09-22 (Abdallah: not needed for
+      // now) — Pass A (auto-drop) and Pass B (stale-offer flagging) above still run
+      // and update the DB, this just stops the daily "دورة الطلبات" email about it.
 
       res.json({
         ok: true,
