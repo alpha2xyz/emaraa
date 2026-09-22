@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -206,6 +207,7 @@ export default function App() {
           <Toaster />
           <CookieConsent />
           <Analytics />
+          <SpeedInsights />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
