@@ -206,7 +206,7 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
           if (!open) setSigningUrl(null);
         }}
       >
-        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col gap-0 p-0">
+        <DialogContent className="max-w-2xl w-[85vw] h-[75vh] flex flex-col gap-0 p-0">
           <div className="p-4 border-b">
             <DialogTitle className="text-sm">
               {lang === "ar" ? "التوقيع الإلكتروني" : "Electronic Signature"}
