@@ -47,8 +47,22 @@ const SADQ_PASSWORD = process.env.SADQ_PASSWORD ?? "";
 // carries nafathBalance 0. A real identity gate that costs nothing extra is 3 (Email OTP), which
 // is the closest match to the Signit build's demo behaviour. Nafath (1 or 7) is the production
 // value, once legal review clears the template's §9 and ESIGN_ENABLED is allowed on production.
-// See server/app.ts's boot guard. Only 0 and 1 have been exercised against the sandbox.
+// See server/app.ts's boot guard. Exercised against the sandbox through the real app so far: 0.
+// 1/2/3/5/7 remain blocked or unexercised — 2 needs a paid SMS provider configured on SADQ's
+// side, 3's OTP never arrives (vendor-side), 1/7 need a real Nafath-verified identity the sandbox
+// account doesn't have, and 5 was never investigated. Full results in the report under
+// Reports/technical/.
 const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
+
+// Absher OTP (authenticationType 9) rejects the invitation outright without a nationalId per
+// destination — confirmed against the sandbox 2026-09-23: errorCode 147, "NationalId is required
+// for AbsherOtp authentication". This build has no field anywhere to collect a real signer's
+// national ID (no Nafath/Absher identity-collection step exists yet), so for now every type-9
+// destination gets SADQ's own published Absher sandbox test identity, the same one already used
+// in _work/sadq-ux-envelope-test.mjs. Confirmed safe for both destinations to share it: SADQ
+// raised both invitations and returned two distinct signing links. Demo-only — production use of
+// type 9 needs a real per-signer national ID before this constant can go away.
+const SADQ_ABSHER_TEST_NATIONAL_ID = "1083595049";
 
 // Shared secret SADQ echoes back on webhook deliveries (configured on the webhook itself via
 // POST /api/v1/webhooks/bulk). Only used by verifyWebhook; no receiver route is wired up yet.
@@ -233,12 +247,17 @@ export const sadqAdapter: SignatureAdapter = {
       return {
         destinationName: s.fullName,
         destinationEmail: s.contactEmail,
-        // owner signs first — matches the contract's own signature table order, and Signit's
-        // order 0 / order 1 convention, which the rest of this build already assumes.
+        // Intent only, not enforcement — confirmed live 2026-09-23 that SADQ lets either party
+        // sign first regardless of signeOrder (the provider signed before the owner in testing).
+        // Matches the contract's own signature table order and Signit's order 0 / order 1
+        // convention, but nothing here gates who can open their link first.
         signeOrder: s.role === "owner" ? 0 : 1,
         destinationType: 1,
         authenticationType: AUTHENTICATION_TYPE,
         invitationLanguage: INVITATION_LANGUAGE_AR,
+        // See SADQ_ABSHER_TEST_NATIONAL_ID above — required by SADQ for every destination once
+        // authenticationType is 9, or the whole invitation call is rejected.
+        ...(AUTHENTICATION_TYPE === 9 ? { nationalId: SADQ_ABSHER_TEST_NATIONAL_ID } : {}),
         signatories: [
           {
             type: "Signature",
