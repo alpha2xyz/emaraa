@@ -127,7 +127,10 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
         ? { ar: "دورك للتوقيع", en: "Your turn to sign" }
         : { ar: "بانتظار توقيع مزود الخدمة", en: "Waiting on the provider" }
       : (LABELS[status] ?? LABELS.sent);
-  const canSign = status === "sent" || status === "partially_signed";
+  // partially_signed always means the owner has already signed (see the comment on
+  // shouldAutoCloseSigningModal above) — so once status reaches it, the owner is done and
+  // "Sign now" would just reopen their own already-completed signing link.
+  const canSign = role === "owner" ? status === "sent" : status === "sent" || status === "partially_signed";
 
   const openSigningSurface = async () => {
     if (!dealId) return;
