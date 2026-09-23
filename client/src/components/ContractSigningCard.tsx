@@ -31,20 +31,23 @@ export type ContractSigningCardProps = {
   role: "owner" | "provider";
 };
 
-// partially_signed always means the owner has signed and the provider hasn't (signatories are
-// created in that order), so "this signer is done" is role-dependent, not just "past sent".
-function shouldAutoCloseSigningModal(status: SignatureStatus, role: "owner" | "provider"): boolean {
+// Signing order is not guaranteed — owner and provider can each sign whenever they open their
+// own link, SADQ does not enforce who goes first. So "is this signer done" can never be inferred
+// from role + the aggregate signature_status; it has to come from that signatory's own status
+// (server/esign/reconcile.ts's per_role, surfaced here as my_signatory_status).
+function shouldAutoCloseSigningModal(status: SignatureStatus, mySignatoryStatus: string | null): boolean {
   if (status === "signed" || status === "rejected" || status === "expired" || status === "voided" || status === "failed") {
     return true;
   }
-  return role === "owner" && status === "partially_signed";
+  return mySignatoryStatus === "signed";
 }
 
 const LABELS: Record<Exclude<SignatureStatus, null>, { ar: string; en: string }> = {
   preparing: { ar: "جاري تجهيز العقد", en: "Preparing the contract" },
   sent: { ar: "قيد التوقيع", en: "Awaiting signatures" },
-  // Overridden per role below: partially_signed always means the owner has signed and the
-  // provider has not, because the two signatories are created in that order.
+  // Overridden below when it's specifically this signer's own turn (my_signatory_status still
+  // pending while status is partially_signed) — otherwise this neutral text already covers both
+  // "waiting on the other party" and "I'm not up yet" correctly regardless of who signs first.
   partially_signed: { ar: "بانتظار توقيع الطرف الآخر", en: "Waiting on the other party" },
   signed: { ar: "موقّع", en: "Signed" },
   rejected: { ar: "رُفض التوقيع", en: "Signing declined" },
@@ -58,15 +61,16 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) {
+export function ContractSigningCard({ dealId }: ContractSigningCardProps) {
   const { lang } = useLang();
   const [status, setStatus] = useState<SignatureStatus>(null);
   const [signedPdfPath, setSignedPdfPath] = useState<string | null>(null);
   const [rejectedReason, setRejectedReason] = useState<string | null>(null);
   const [signingUrl, setSigningUrl] = useState<string | null>(null);
   const [signingModalOpen, setSigningModalOpen] = useState(false);
+  const [mySignatoryStatus, setMySignatoryStatus] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevStatusRef = useRef<SignatureStatus>(null);
+  const prevCloseKeyRef = useRef<string>("");
 
   useEffect(() => {
     if (!dealId) return;
@@ -82,24 +86,27 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
           signature_status: SignatureStatus;
           signed_pdf_path: string | null;
           signature_rejected_reason: string | null;
+          my_signatory_status: string | null;
         };
         if (cancelled) return;
         setStatus(body.signature_status);
         setSignedPdfPath(body.signed_pdf_path);
         setRejectedReason(body.signature_rejected_reason);
+        setMySignatoryStatus(body.my_signatory_status);
 
-        // Only close on a genuine transition into a closing status, not on every tick that
-        // happens to already be at one — otherwise reopening the modal from a status that
-        // already qualifies (e.g. the owner clicking "Sign now" again while still
-        // partially_signed) gets slammed shut by the very next poll.
+        // Only close on a genuine transition into a closing condition, not on every tick that
+        // happens to already be at one — otherwise reopening the modal from a state that already
+        // qualifies (e.g. clicking "Sign now" again after already being done) gets slammed shut
+        // by the very next poll.
+        const closeKey = `${body.signature_status}|${body.my_signatory_status}`;
         if (
-          prevStatusRef.current !== body.signature_status &&
-          shouldAutoCloseSigningModal(body.signature_status, role)
+          closeKey !== prevCloseKeyRef.current &&
+          shouldAutoCloseSigningModal(body.signature_status, body.my_signatory_status)
         ) {
           setSigningModalOpen(false);
           setSigningUrl(null);
         }
-        prevStatusRef.current = body.signature_status;
+        prevCloseKeyRef.current = closeKey;
 
         const terminal = new Set(["signed", "rejected", "expired", "voided", "failed", null]);
         if (terminal.has(body.signature_status) && pollRef.current) {
@@ -117,20 +124,18 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
       cancelled = true;
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [dealId, role]);
+  }, [dealId]);
 
   if (!dealId || !status) return null;
 
+  const iAmDone = mySignatoryStatus === "signed";
   const label =
-    status === "partially_signed"
-      ? role === "provider"
-        ? { ar: "دورك للتوقيع", en: "Your turn to sign" }
-        : { ar: "بانتظار توقيع مزود الخدمة", en: "Waiting on the provider" }
+    status === "partially_signed" && !iAmDone
+      ? { ar: "دورك للتوقيع", en: "Your turn to sign" }
       : (LABELS[status] ?? LABELS.sent);
-  // partially_signed always means the owner has already signed (see the comment on
-  // shouldAutoCloseSigningModal above) — so once status reaches it, the owner is done and
-  // "Sign now" would just reopen their own already-completed signing link.
-  const canSign = role === "owner" ? status === "sent" : status === "sent" || status === "partially_signed";
+  // Once my own signatory status is "signed", "Sign now" would just reopen my own
+  // already-completed signing link — regardless of who signed first.
+  const canSign = (status === "sent" || status === "partially_signed") && !iAmDone;
 
   const openSigningSurface = async () => {
     if (!dealId) return;

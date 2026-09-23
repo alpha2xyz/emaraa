@@ -1995,9 +1995,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const requesterUserId = (req as any).userId as string;
       const access = await loadDealForEsign(req.params.id as string, requesterUserId);
       if (!access) return res.status(403).json({ error: "Forbidden" });
+      const { role } = access;
       const { reconcilePendingSignature } = await import("./esign/reconcile.js");
       const result = await reconcilePendingSignature(supabaseAdmin, req.params.id as string);
-      res.json(result);
+      res.json({
+        signature_status: result.signature_status,
+        signed_pdf_path: result.signed_pdf_path,
+        signature_rejected_reason: result.signature_rejected_reason,
+        // This signatory's own status, not inferred from role + aggregate status — signing
+        // order isn't guaranteed, either party can sign whenever they open their link.
+        my_signatory_status: result.per_role?.[role] ?? null,
+      });
     } catch (e: any) {
       if (process.env.NODE_ENV !== "production") console.error("[deals/signature-status]", e?.message);
       res.status(500).json({ error: "signature_status_failed" });

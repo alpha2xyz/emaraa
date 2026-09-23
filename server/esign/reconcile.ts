@@ -15,6 +15,12 @@ export type ReconcileResult = {
   signature_status: string | null;
   signed_pdf_path: string | null;
   signature_rejected_reason: string | null;
+  // role -> that signatory's own status, from the vendor's per-signatory breakdown. Signing
+  // order is not guaranteed (owner and provider can each sign whenever they open their link),
+  // so "who still needs to sign" must come from this, never inferred from signature_status +
+  // role alone. null when we didn't call the vendor this poll (signing not started yet, or
+  // already at a terminal state where per-signatory detail no longer matters).
+  per_role: Partial<Record<"owner" | "provider", string>> | null;
 };
 
 const TERMINAL_STATES = new Set(["signed", "rejected", "expired", "voided", "failed"]);
@@ -38,7 +44,7 @@ export async function reconcilePendingSignature(
   const deal = dealRow as any;
 
   if (error || !deal) {
-    return { signature_status: null, signed_pdf_path: null, signature_rejected_reason: null };
+    return { signature_status: null, signed_pdf_path: null, signature_rejected_reason: null, per_role: null };
   }
 
   // Nothing to poll: signing never started, or already reached a terminal state.
@@ -47,6 +53,7 @@ export async function reconcilePendingSignature(
       signature_status: deal.signature_status,
       signed_pdf_path: deal.signed_pdf_path,
       signature_rejected_reason: deal.signature_rejected_reason,
+      per_role: null,
     };
   }
 
@@ -69,12 +76,16 @@ export async function reconcilePendingSignature(
     payload: vendorStatus as unknown as Record<string, unknown>,
   });
 
+  const perRole: Partial<Record<"owner" | "provider", string>> = {};
+  for (const s of vendorStatus.perSignatory) perRole[s.role] = s.status;
+
   if (vendorStatus.state === deal.signature_status) {
     // No transition — nothing else to do.
     return {
       signature_status: deal.signature_status,
       signed_pdf_path: deal.signed_pdf_path,
       signature_rejected_reason: deal.signature_rejected_reason,
+      per_role: perRole,
     };
   }
 
@@ -98,6 +109,7 @@ export async function reconcilePendingSignature(
         signature_status: deal.signature_status,
         signed_pdf_path: deal.signed_pdf_path,
         signature_rejected_reason: deal.signature_rejected_reason,
+        per_role: perRole,
       };
     }
 
@@ -134,7 +146,7 @@ export async function reconcilePendingSignature(
       await drainOutbox(supabaseAdmin, { ids });
     }
 
-    return { signature_status: "signed", signed_pdf_path: sealedPath, signature_rejected_reason: null };
+    return { signature_status: "signed", signed_pdf_path: sealedPath, signature_rejected_reason: null, per_role: perRole };
   }
 
   // Every other transition (sent -> partially_signed, or -> rejected/expired/voided/failed) is a
@@ -153,5 +165,10 @@ export async function reconcilePendingSignature(
     })
     .eq("id", dealId);
 
-  return { signature_status: vendorStatus.state, signed_pdf_path: deal.signed_pdf_path, signature_rejected_reason: reason };
+  return {
+    signature_status: vendorStatus.state,
+    signed_pdf_path: deal.signed_pdf_path,
+    signature_rejected_reason: reason,
+    per_role: perRole,
+  };
 }
