@@ -47,11 +47,11 @@ const SADQ_PASSWORD = process.env.SADQ_PASSWORD ?? "";
 // carries nafathBalance 0. A real identity gate that costs nothing extra is 3 (Email OTP), which
 // is the closest match to the Signit build's demo behaviour. Nafath (1 or 7) is the production
 // value, once legal review clears the template's §9 and ESIGN_ENABLED is allowed on production.
-// See server/app.ts's boot guard. Exercised against the sandbox through the real app so far: 0.
-// 1/2/3/5/7 remain blocked or unexercised — 2 needs a paid SMS provider configured on SADQ's
-// side, 3's OTP never arrives (vendor-side), 1/7 need a real Nafath-verified identity the sandbox
-// account doesn't have, and 5 was never investigated. Full results in the report under
-// Reports/technical/.
+// See server/app.ts's boot guard. Exercised against the sandbox through the real app so far: 0
+// and 9 (full two-party cycle, 2026-09-23). 1/2/3/5/7 remain blocked or unexercised — 2 needs a
+// paid SMS provider configured on SADQ's side, 3's OTP never arrives (vendor-side), 1/7 need a
+// real Nafath-verified identity the sandbox account doesn't have, and 5 was never investigated.
+// Full results in the report under Reports/technical/.
 const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
 
 // Absher OTP (authenticationType 9) rejects the invitation outright without a nationalId per
@@ -62,7 +62,28 @@ const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
 // in _work/sadq-ux-envelope-test.mjs. Confirmed safe for both destinations to share it: SADQ
 // raised both invitations and returned two distinct signing links. Demo-only — production use of
 // type 9 needs a real per-signer national ID before this constant can go away.
+//
+// The OTP value itself is never seen by this code — SADQ's hosted page owns that whole exchange.
+// Worth recording anyway since it cost real debugging time: the correct sandbox code for this
+// national ID is `1234` ("default non-commercial" on SADQ's published Mock Data page), not the
+// `2748` documented in this project's own 2026-09-23 report — that value is scoped to a specific
+// commercial-number pairing on a different endpoint and does not apply to a plain signing
+// destination. `1234` was confirmed live, completing a real two-party signature.
 const SADQ_ABSHER_TEST_NATIONAL_ID = "1083595049";
+
+// WhatsApp OTP (authenticationType 10) has no test fixture at all — confirmed against SADQ's own
+// Mock Data page — and needs a real `destinationPhoneNumber` per destination or the OTP has
+// nowhere to go (silently: the invitation still succeeds, but the signing page never shows a
+// bound number and no message is ever sent). Note the field name split: the *request* body wants
+// `destinationPhoneNumber` (only documented in the OpenAPI example payload, not the enums or
+// per-endpoint docs), while the *response* and `/status` echo it back as `destinationPhone` /
+// `phoneNumber` — sending the response's field name on a request is accepted but silently
+// ignored. No fixture exists, so these are real numbers Abdallah approved for testing
+// (2026-09-24) — demo-only, and real WhatsApp messages do go out to them.
+const SADQ_WHATSAPP_TEST_PHONES: Record<SignatoryRole, string> = {
+  owner: "+966543977679",
+  provider: "+966501315725",
+};
 
 // Shared secret SADQ echoes back on webhook deliveries (configured on the webhook itself via
 // POST /api/v1/webhooks/bulk). Only used by verifyWebhook; no receiver route is wired up yet.
@@ -266,6 +287,9 @@ export const sadqAdapter: SignatureAdapter = {
         // See SADQ_ABSHER_TEST_NATIONAL_ID above — required by SADQ for every destination once
         // authenticationType is 9, or the whole invitation call is rejected.
         ...(AUTHENTICATION_TYPE === 9 ? { nationalId: SADQ_ABSHER_TEST_NATIONAL_ID } : {}),
+        // See SADQ_WHATSAPP_TEST_PHONES above — required once authenticationType is 10, or the
+        // OTP has no number to send to.
+        ...(AUTHENTICATION_TYPE === 10 ? { destinationPhoneNumber: SADQ_WHATSAPP_TEST_PHONES[s.role] } : {}),
         signatories: [
           {
             type: "Signature",
