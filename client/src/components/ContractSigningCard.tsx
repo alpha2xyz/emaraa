@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FileSignature, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useLang } from "@/hooks/use-lang";
 import { openSignedPdf } from "@/lib/storage";
 
@@ -16,9 +17,11 @@ type SignatureStatus =
   | "failed"
   | null;
 
-// The signing surface opens in a new tab on Signit's own domain. An embedded iframe was tried
-// first and does not work: see openSigningSurface below. The card's polling is what brings the
-// state back, so the signer returning to this tab sees the result without doing anything.
+// Signit's signing surface opens in a new tab; SADQ's opens embedded in-page — see
+// openSigningSurface below for both. Signit was tried embedded first and doesn't work. SADQ was
+// verified live 2026-09-23 to work fully embedded (contract render, signature draw/type, submit),
+// so only SADQ gets the in-page modal for now. The card's polling is what brings the state back
+// either way, so a signer who leaves the tab (Signit) still sees the result on return.
 //
 // Fast-follow worth revisiting once there is time to verify its API: @signitsa/signitsa-embedded,
 // the vendor's own embed package, which may handle in-page embedding correctly where a raw
@@ -27,6 +30,15 @@ export type ContractSigningCardProps = {
   dealId: string | null;
   role: "owner" | "provider";
 };
+
+// partially_signed always means the owner has signed and the provider hasn't (signatories are
+// created in that order), so "this signer is done" is role-dependent, not just "past sent".
+function shouldAutoCloseSigningModal(status: SignatureStatus, role: "owner" | "provider"): boolean {
+  if (status === "signed" || status === "rejected" || status === "expired" || status === "voided" || status === "failed") {
+    return true;
+  }
+  return role === "owner" && status === "partially_signed";
+}
 
 const LABELS: Record<Exclude<SignatureStatus, null>, { ar: string; en: string }> = {
   preparing: { ar: "جاري تجهيز العقد", en: "Preparing the contract" },
@@ -51,7 +63,10 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
   const [status, setStatus] = useState<SignatureStatus>(null);
   const [signedPdfPath, setSignedPdfPath] = useState<string | null>(null);
   const [rejectedReason, setRejectedReason] = useState<string | null>(null);
+  const [signingUrl, setSigningUrl] = useState<string | null>(null);
+  const [signingModalOpen, setSigningModalOpen] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevStatusRef = useRef<SignatureStatus>(null);
 
   useEffect(() => {
     if (!dealId) return;
@@ -73,6 +88,19 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
         setSignedPdfPath(body.signed_pdf_path);
         setRejectedReason(body.signature_rejected_reason);
 
+        // Only close on a genuine transition into a closing status, not on every tick that
+        // happens to already be at one — otherwise reopening the modal from a status that
+        // already qualifies (e.g. the owner clicking "Sign now" again while still
+        // partially_signed) gets slammed shut by the very next poll.
+        if (
+          prevStatusRef.current !== body.signature_status &&
+          shouldAutoCloseSigningModal(body.signature_status, role)
+        ) {
+          setSigningModalOpen(false);
+          setSigningUrl(null);
+        }
+        prevStatusRef.current = body.signature_status;
+
         const terminal = new Set(["signed", "rejected", "expired", "voided", "failed", null]);
         if (terminal.has(body.signature_status) && pollRef.current) {
           clearInterval(pollRef.current);
@@ -89,7 +117,7 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
       cancelled = true;
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [dealId]);
+  }, [dealId, role]);
 
   if (!dealId || !status) return null;
 
@@ -107,6 +135,11 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
       const res = await fetch(`/api/deals/${dealId}/signing-link`, { headers: authHeaders() });
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body?.url) return;
+      if (body.vendor === "sadq") {
+        setSigningUrl(body.url as string);
+        setSigningModalOpen(true);
+        return;
+      }
       // A new tab, not an embedded iframe. Verified 2026-09-16 against the sandbox: inside an
       // iframe the signing surface renders the contract and then accepts no input at all —
       // "بدء التوقيع" does nothing and the document will not scroll — so the contract could be
@@ -162,6 +195,29 @@ export function ContractSigningCard({ dealId, role }: ContractSigningCardProps) 
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={signingModalOpen}
+        onOpenChange={(open) => {
+          setSigningModalOpen(open);
+          if (!open) setSigningUrl(null);
+        }}
+      >
+        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col gap-0 p-0">
+          <div className="p-4 border-b">
+            <DialogTitle className="text-sm">
+              {lang === "ar" ? "التوقيع الإلكتروني" : "Electronic Signature"}
+            </DialogTitle>
+          </div>
+          {signingUrl && (
+            <iframe
+              src={signingUrl}
+              className="w-full flex-1 border-0"
+              title={lang === "ar" ? "التوقيع الإلكتروني" : "Electronic Signature"}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

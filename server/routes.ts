@@ -1909,7 +1909,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         providerRepresentativeName: provider?.signatory_name ?? null,
         contractValue: deal.contract_value ?? (offer as any)?.price_total ?? null,
         lineItems: (offer as any)?.line_items ?? [],
-        signitRequestId: null,
+        signatureVendor: vendor,
+        signatureRequestId: null,
       });
 
       const pdfBuffer = await renderHtmlToPdf(html);
@@ -2019,7 +2020,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { adapterFor } = await import("./esign/adapter.js");
       const adapter = await adapterFor(deal.signature_provider);
       const link = await adapter.getSigningLink(deal.signature_request_id, signatoryId);
-      res.json(link);
+      res.json({ ...link, vendor: deal.signature_provider });
     } catch (e: any) {
       if (process.env.NODE_ENV !== "production") console.error("[deals/signing-link]", e?.message);
       res.status(500).json({ error: "signing_link_failed" });

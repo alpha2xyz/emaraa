@@ -27,7 +27,8 @@ export type ContractFields = {
   providerRepresentativeName: string | null;
   contractValue: number | null;
   lineItems: LineItem[];
-  signitRequestId: string | null; // null before the signature request exists
+  signatureVendor: "sadq" | "signit";
+  signatureRequestId: string | null; // null before the signature request exists
 };
 
 // Latin, not Arabic, deliberately. Verified empirically 2026-09-15: Signit's anchor-tag search
@@ -88,7 +89,8 @@ export function renderContractHtml(f: ContractFields): string {
   const btype = buildingTypeLabel(f.buildingType);
   const scopeAr = scopePart1(f.buildingType, "ar");
   const scopeEn = scopePart1(f.buildingType, "en");
-  const requestIdLine = f.signitRequestId ?? "—";
+  const requestIdLine = f.signatureRequestId ?? "—";
+  const vendorLabel = f.signatureVendor === "sadq" ? "SADQ®" : "Signit";
   const providerCr = f.providerCrNumber ?? "—";
   const providerFal = f.providerFalLicenseNumber ?? "—";
   const providerRep = f.providerRepresentativeName ?? "—";
@@ -251,12 +253,12 @@ export function renderContractHtml(f: ContractFields): string {
     competent authority in the Kingdom.</p>
 
   <h2 class="ar">10. التوقيع الإلكتروني — Electronic Signature</h2>
-  <p class="ar">يقرّ الطرفان بأن التوقيع على هذا العقد يتم إلكترونياً عبر منصة "Signit" المرخصة من هيئة
+  <p class="ar">يقرّ الطرفان بأن التوقيع على هذا العقد يتم إلكترونياً عبر منصة "${vendorLabel}" المرخصة من هيئة
     الحكومة الرقمية، بعد التحقق من هوية كل طرف، وأن هذا التوقيع معتبر شرعاً ونظاماً بمثابة توقيع خطي ملزم
-    للطرفين. رقم المعاملة المرجعي لدى Signit: ${requestIdLine}.</p>
-  <p class="en">The Parties acknowledge that this Agreement is signed electronically via the "Signit"
+    للطرفين. رقم المعاملة المرجعي لدى ${vendorLabel}: ${requestIdLine}.</p>
+  <p class="en">The Parties acknowledge that this Agreement is signed electronically via the "${vendorLabel}"
     platform (licensed by the Digital Government Authority), following identity verification of each
-    Party, and that this signature is legally binding as a written signature. Signit reference number:
+    Party, and that this signature is legally binding as a written signature. ${vendorLabel} reference number:
     ${requestIdLine}.</p>
 
   <hr />
