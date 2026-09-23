@@ -224,13 +224,21 @@ export const sadqAdapter: SignatureAdapter = {
     // referenceNumber is our own id stamped onto the envelope. Signit had no working equivalent
     // (its custom_fields are broken), so this is a genuine gain here: the webhook payload and
     // GET /api/v1/envelopes/reference/{referenceNumber}/status both carry it, which means a
-    // signature can always be traced back to its deal without a local lookup.
+    // signature can always be traced back to its deal without a local lookup — neither is actually
+    // called anywhere in this codebase today, so nothing depends on it being exactly `dealId`.
+    // It does need to be unique per *envelope*, not per deal: SADQ rejects a reused referenceNumber
+    // outright (errorCode 227, "duplicated"), confirmed live 2026-09-23 trying to regenerate a
+    // contract for a deal that already had one envelope. A deal can legitimately need more than
+    // one envelope over its life (a rejected signature restarts the flow, `signature_status` resets
+    // to `failed`/null and this whole method runs again) — a bare `input.dealId` would permanently
+    // brick every such deal after its first attempt. The dealId prefix is kept for anyone reading
+    // SADQ's dashboard by hand; the suffix is what actually guarantees uniqueness.
     const envelope = await sadqJson<{ documentId: string; envelopeId: string; referenceNumber: string }>(
       "/api/v1/envelopes/initiate-base64",
       {
         method: "POST",
         body: JSON.stringify({
-          referenceNumber: input.dealId,
+          referenceNumber: `${input.dealId}-${Date.now()}`,
           // `File`, singular, with no fileId. The published example shows `files` and an empty
           // `fileId`; both are wrong — `files` fails "File is required field" and an empty fileId
           // fails GUID binding (pilot finding #2).
