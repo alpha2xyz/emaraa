@@ -1985,7 +1985,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .update({ signature_status: "failed", updated_at: new Date().toISOString() })
         .eq("id", req.params.id)
         .then(() => {});
-      res.status(500).json({ error: "contract_generation_failed", detail: e?.message ?? String(e) });
+      res.status(500).json({ error: "contract_generation_failed" });
     }
   });
 
