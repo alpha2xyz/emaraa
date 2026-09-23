@@ -419,6 +419,9 @@ export default function OwnerDashboard() {
     }: {
       offerId: string;
       status: "accepted" | "rejected";
+      // Opened synchronously in the triggering click, before this mutation's own await —
+      // see the comment on openSignedPdf's targetWindow param for why that matters.
+      pdfWindow?: Window | null;
     }) => {
       const token = localStorage.getItem("sessionToken");
       if (!token) throw new Error("Unauthorized");
@@ -433,7 +436,7 @@ export default function OwnerDashboard() {
       }
       return body as { offer_file_url?: string | null; deal_id?: string | null };
     },
-    onSuccess: (body, { status }) => {
+    onSuccess: (body, { status, pdfWindow }) => {
       toast({
         title:
           status === "accepted"
@@ -448,7 +451,10 @@ export default function OwnerDashboard() {
       // Open the now-unlocked quotation immediately — the owner clicked "View Full
       // Quotation" to get here, accepting was a side effect of that, not a separate step.
       if (status === "accepted" && body?.offer_file_url) {
-        openSignedPdf("provider-offers", body.offer_file_url);
+        openSignedPdf("provider-offers", body.offer_file_url, { targetWindow: pdfWindow });
+      } else if (pdfWindow && !pdfWindow.closed) {
+        // Accepted with no file, or a reject — nothing to show in the tab we pre-opened.
+        pdfWindow.close();
       }
       // Present only when ESIGN_ENABLED (server omits deal_id otherwise). Fire-and-forget:
       // ContractSigningCard's own poll picks up the preparing -> sent transition once this
@@ -1314,7 +1320,11 @@ export default function OwnerDashboard() {
               className="bg-green-600 hover:bg-green-700"
               onClick={() => {
                 if (acceptingOfferId) {
-                  offerStatusMutation.mutate({ offerId: acceptingOfferId, status: "accepted" });
+                  // Opened synchronously, inside this click, so the browser still treats it
+                  // as gesture-triggered once the mutation resolves and navigates it to the
+                  // real PDF — see openSignedPdf's targetWindow comment.
+                  const pdfWindow = window.open("about:blank", "_blank");
+                  offerStatusMutation.mutate({ offerId: acceptingOfferId, status: "accepted", pdfWindow });
                   setAcceptingOfferId(null);
                 }
               }}

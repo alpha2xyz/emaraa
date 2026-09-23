@@ -72,6 +72,18 @@ export function ContractSigningCard({ dealId }: ContractSigningCardProps) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevCloseKeyRef = useRef<string>("");
 
+  // The signing surface runs inside a cross-origin iframe, so drawing a signature, scrolling
+  // the contract, or clicking its own buttons never bubbles up to this window — none of it
+  // resets use-idle-logout's 30-minute timer, which only listens on `window`. A real signature
+  // can easily take longer than whatever was left on that countdown, and the result is getting
+  // logged out mid-signature or right after. Feed it a synthetic activity event on the same
+  // listener it already uses, for as long as the modal is open.
+  useEffect(() => {
+    if (!signingModalOpen) return;
+    const id = setInterval(() => window.dispatchEvent(new Event("mousemove")), 60_000);
+    return () => clearInterval(id);
+  }, [signingModalOpen]);
+
   useEffect(() => {
     if (!dealId) return;
 
