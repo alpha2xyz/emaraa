@@ -1505,7 +1505,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: offer, error: offerError } = await supabaseAdmin
         .from("provider_offers")
-        .select("id, request_id")
+        .select("id, request_id, status")
         .eq("id", req.params.id as string)
         .single();
       if (offerError || !offer) {
@@ -1514,7 +1514,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: request, error: reqError } = await supabaseAdmin
         .from("requests")
-        .select("owner_id")
+        .select("owner_id, status")
         .eq("id", offer.request_id)
         .single();
       if (reqError || !request) {
@@ -1525,44 +1525,70 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      // Capture who is still in the running BEFORE any status change. After the
-      // mass-reject below, a provider whose offer was already rejected earlier is
-      // indistinguishable from one who just lost this round — and mailing "you lost"
-      // to someone who lost days ago is worse than saying nothing.
-      const { data: contenders } =
-        status === "accepted"
-          ? await supabaseAdmin
-              .from("provider_offers")
-              .select("id, providers(email)")
-              .eq("request_id", offer.request_id)
-              .eq("status", "pending")
-          : { data: null as any };
-      // Only mail losers on a first accept. If this offer was NOT itself pending, the
-      // owner is re-accepting an already-accepted offer, and everyone else was told
-      // the first time round — mailing again would repeat bad news.
-      const isFirstAccept = (contenders ?? []).some((o: any) => o.id === (req.params.id as string));
-      const losingEmails: string[] = isFirstAccept
-        ? (contenders ?? [])
-            .filter((o: any) => o.id !== (req.params.id as string))
-            .map((o: any) => o.providers?.email)
-            .filter((e: any): e is string => !!e)
-        : [];
-
-      const { error: updateError } = await supabaseAdmin
-        .from("provider_offers")
-        .update({ status })
-        .eq("id", req.params.id as string);
-      if (updateError) throw updateError;
+      // Only a pending offer can be decided. Without this, a stale second tab (offer
+      // lists are cached 5 min) could accept offer B after offer A was accepted: A
+      // flips to rejected but its deals row stays pending, so the commission cron
+      // chases the losing provider, and two providers hold the owner's phone.
+      // Every write below is compare-and-set on the expected status for the same
+      // reason — a check-then-write alone still loses a race between two requests.
+      if (offer.status !== "pending") {
+        return res.status(409).json({ error: "offer_not_pending" });
+      }
+      if (status === "accepted" && request.status !== "pending") {
+        return res.status(409).json({ error: "request_already_decided" });
+      }
 
       // Returned to the client on accept so it can open the now-unlocked PDF
       // immediately, without a second round-trip to re-fetch the offer.
       let acceptedOfferFileUrl: string | null = null;
+      let losingEmails: string[] = [];
 
       if (status === "accepted") {
-        await supabaseAdmin
+        // Claim the request first: pending → in_progress succeeds for exactly one
+        // accept. This is the lock that makes two concurrent accepts safe.
+        const { data: claimed, error: claimError } = await supabaseAdmin
           .from("requests")
           .update({ status: "in_progress" })
-          .eq("id", offer.request_id);
+          .eq("id", offer.request_id)
+          .eq("status", "pending")
+          .select("id");
+        if (claimError) throw claimError;
+        if (!claimed || claimed.length === 0) {
+          return res.status(409).json({ error: "request_already_decided" });
+        }
+
+        // Capture who is still in the running BEFORE the mass-reject below. After it,
+        // a provider whose offer was already rejected earlier is indistinguishable
+        // from one who just lost this round — and mailing "you lost" to someone who
+        // lost days ago is worse than saying nothing.
+        const { data: contenders } = await supabaseAdmin
+          .from("provider_offers")
+          .select("id, providers(email)")
+          .eq("request_id", offer.request_id)
+          .eq("status", "pending");
+        losingEmails = (contenders ?? [])
+          .filter((o: any) => o.id !== (req.params.id as string))
+          .map((o: any) => o.providers?.email)
+          .filter((e: any): e is string => !!e);
+
+        const { data: acceptedRows, error: acceptError } = await supabaseAdmin
+          .from("provider_offers")
+          .update({ status: "accepted" })
+          .eq("id", req.params.id as string)
+          .eq("status", "pending")
+          .select("id");
+        if (acceptError || !acceptedRows || acceptedRows.length === 0) {
+          // The offer changed between the check above and now. Release the request
+          // so the owner can still choose, then report the conflict.
+          await supabaseAdmin
+            .from("requests")
+            .update({ status: "pending" })
+            .eq("id", offer.request_id)
+            .eq("status", "in_progress");
+          if (acceptError) throw acceptError;
+          return res.status(409).json({ error: "offer_not_pending" });
+        }
+
         await supabaseAdmin
           .from("provider_offers")
           .update({ status: "rejected" })
@@ -1592,7 +1618,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
         // Auto-create a pending deal capturing the accepted offer's value.
         // Admin later confirms the final contract value and marks it closed.
-        // UNIQUE(offer_id) makes this idempotent if the owner re-accepts.
+        // UNIQUE(offer_id) keeps it to one deal per offer; the compare-and-set guard
+        // above means an offer can only reach this point once.
         const { data: acceptedOffer } = await supabaseAdmin
           .from("provider_offers")
           .select("id, provider_id, price_total, offer_file_url, providers(email, company_name, users(phone))")
@@ -1636,43 +1663,39 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           // this moment (owners take 1-2 weeks to consult co-owners before a contract even
           // exists) — it's sent by the day-21 pass of /api/cron/commission-reminder instead.
           const providerEmail = (acceptedOffer.providers as any)?.email;
-          if (isFirstAccept) {
-            await notify(
-              providerEmail,
-              "تم قبول عرضك — عِمارة",
-              notificationEmail({
-                heading: "مبروك! تم قبول عرضك",
-                body: "قام المالك بقبول عرضك على طلب الخدمة. بيانات التواصل معه موضحة أدناه للتنسيق المباشر وتوقيع العقد.",
-                contact: {
-                  title: "بيانات التواصل مع المالك",
-                  name: ownerU?.name ?? null,
-                  phone: ownerU?.phone ?? null,
-                },
-                ctaLabel: "عرض الصفقة",
-                ctaUrl: "https://emaraa.app",
-              }),
-              "offer_accepted",
-            );
-          }
+          await notify(
+            providerEmail,
+            "تم قبول عرضك — عِمارة",
+            notificationEmail({
+              heading: "مبروك! تم قبول عرضك",
+              body: "قام المالك بقبول عرضك على طلب الخدمة. بيانات التواصل معه موضحة أدناه للتنسيق المباشر وتوقيع العقد.",
+              contact: {
+                title: "بيانات التواصل مع المالك",
+                name: ownerU?.name ?? null,
+                phone: ownerU?.phone ?? null,
+              },
+              ctaLabel: "عرض الصفقة",
+              ctaUrl: "https://emaraa.app",
+            }),
+            "offer_accepted",
+          );
           // Notify the owner — confirmation of their acceptance (opt-in email).
-          if (isFirstAccept) {
-            await notify(
-              ownerU?.email,
-              "تم قبول العرض — عِمارة",
-              notificationEmail({
-                heading: "تم قبول العرض بنجاح",
-                body: "لقد قبلت عرض المزود على طلبك، وأصبح ملف العرض الكامل متاحاً في لوحة التحكم. بيانات التواصل مع المزود موضحة أدناه.",
-                contact: {
-                  title: `بيانات التواصل مع المزود${providerCompany ? ` — ${providerCompany}` : ""}`,
-                  name: providerCompany,
-                  phone: providerPhone,
-                },
-                ctaLabel: "عرض التفاصيل",
-                ctaUrl: "https://emaraa.app",
-              }),
-              "owner_offer_accepted",
-            );
-          }
+          await notify(
+            ownerU?.email,
+            "تم قبول العرض — عِمارة",
+            notificationEmail({
+              heading: "تم قبول العرض بنجاح",
+              body: "لقد قبلت عرض المزود على طلبك، وأصبح ملف العرض الكامل متاحاً في لوحة التحكم. بيانات التواصل مع المزود موضحة أدناه.",
+              contact: {
+                title: `بيانات التواصل مع المزود${providerCompany ? ` — ${providerCompany}` : ""}`,
+                name: providerCompany,
+                phone: providerPhone,
+              },
+              ctaLabel: "عرض التفاصيل",
+              ctaUrl: "https://emaraa.app",
+            }),
+            "owner_offer_accepted",
+          );
 
           // Real-time admin notification: a deal was struck — the 1% commission event.
           // Provider and owner rows were both read above; no second lookup needed.
@@ -1708,6 +1731,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         // it, so there's nothing to "reopen". If it's still pending (no one else has been
         // accepted), this provider can resubmit right away — no need to wait for every
         // other offer on the request to also be rejected.
+        const { data: rejectedRows, error: rejectError } = await supabaseAdmin
+          .from("provider_offers")
+          .update({ status: "rejected" })
+          .eq("id", req.params.id as string)
+          .eq("status", "pending")
+          .select("id");
+        if (rejectError) throw rejectError;
+        if (!rejectedRows || rejectedRows.length === 0) {
+          return res.status(409).json({ error: "offer_not_pending" });
+        }
+
         const { data: rejected } = await supabaseAdmin
           .from("provider_offers")
           .select("providers(company_name, email)")

@@ -213,6 +213,10 @@ Vercel/production deployment leaves HOST unset → falls back to `0.0.0.0` (corr
 `vercel.json` had `{ "source": "/api/:path*", "destination": "/api/index" }`. A **named** capture (`:path*`) makes Vercel inject a query param with that name (here `path`, e.g. `files/signed-url`) into the proxied request, which **silently overrides** the real `?path=` the client sends. `/api/files/signed-url` then signed a bogus path → Supabase "Object not found" → broken downloads. It only failed in **production** (Vercel rewrites don't run in local `npm run dev`), so it masqueraded as a Supabase/key/storage problem.
 **Fix:** the catch-all capture is named `:proxy*` (a name no endpoint reads). **Rule:** never name a rewrite capture after any query param an `/api` route reads (`path`, `id`, `bucket`, `token`, …). Symptom signature: works locally, wrong-arg/404 only in prod, on routes that read `req.query.<that-name>`.
 
+### 5. Read-then-write status changes — BANNED (fixed 2026-09-24)
+`PATCH /api/offers/:id/status` never checked the offer's current status, so a stale second tab (offer lists cache 5 min) could accept offer B after offer A: A flipped to `rejected` but its `deals` row stayed `pending`, the commission cron chased the losing provider for 1%, and two providers held the owner's phone.
+**Fix:** every status transition is a compare-and-set: `.update({status: next}).eq("id", id).eq("status", expected).select("id")`, and 0 rows back = `409`. Accept claims the request first (`pending → in_progress`), which is the lock that makes two concurrent accepts safe. **Rule:** never check a status in one query and write it in another without `.eq("status", expected)` on the write. Symptom signature: duplicate `deals` rows, or a `pending` deal whose offer is `rejected`.
+
 ---
 
 ## OTP System (Production-ready as of 2026-05-07)

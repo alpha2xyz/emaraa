@@ -450,9 +450,20 @@ export default function OwnerDashboard() {
         openSignedPdf("provider-offers", body.offer_file_url);
       }
     },
-    onError: () => {
+    onError: (err: Error) => {
+      // Always refetch: a failure here is most often a stale list (another tab or
+      // device already decided this request), and the fresh list shows why.
+      queryClient.invalidateQueries({ queryKey: ["owner", "offers", requestId] });
+      const alreadyDecided =
+        err.message === "offer_not_pending" || err.message === "request_already_decided";
       toast({
-        title: lang === "ar" ? "حدث خطأ" : "An error occurred",
+        title: alreadyDecided
+          ? lang === "ar"
+            ? "تم اتخاذ قرار بشأن هذا الطلب مسبقاً. حدّثنا القائمة لك."
+            : "This request was already decided. The list has been refreshed."
+          : lang === "ar"
+            ? "حدث خطأ"
+            : "An error occurred",
         variant: "destructive",
       });
     },
