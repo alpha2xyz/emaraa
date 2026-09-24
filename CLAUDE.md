@@ -216,6 +216,7 @@ Vercel/production deployment leaves HOST unset → falls back to `0.0.0.0` (corr
 ### 5. Read-then-write status changes — BANNED (fixed 2026-09-24)
 `PATCH /api/offers/:id/status` never checked the offer's current status, so a stale second tab (offer lists cache 5 min) could accept offer B after offer A: A flipped to `rejected` but its `deals` row stayed `pending`, the commission cron chased the losing provider for 1%, and two providers held the owner's phone.
 **Fix:** every status transition is a compare-and-set: `.update({status: next}).eq("id", id).eq("status", expected).select("id")`, and 0 rows back = `409`. Accept claims the request first (`pending → in_progress`), which is the lock that makes two concurrent accepts safe. **Rule:** never check a status in one query and write it in another without `.eq("status", expected)` on the write. Symptom signature: duplicate `deals` rows, or a `pending` deal whose offer is `rejected`.
+**Follow-up (2026-09-24, same day):** the accept must also be *resumable*. The deal row is written straight after the accept (before any email), an accept that died half-way is finished by the owner's retry (offer `accepted` + request `in_progress` + no deal or offers still pending → resume), and the lifecycle cron releases a claim with no accepted offer after 15 minutes (claims stamp `requests.updated_at`; no trigger does it). Crons that write status follow the same compare-and-set rule.
 
 ---
 

@@ -1531,69 +1531,123 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // chases the losing provider, and two providers hold the owner's phone.
       // Every write below is compare-and-set on the expected status for the same
       // reason — a check-then-write alone still loses a race between two requests.
+      //
+      // One exception: an accept that died half-way (offer accepted, request
+      // in_progress, but no deals row yet or other offers still pending — e.g. a
+      // serverless timeout) must be retryable, or the deal never exists and the
+      // commission cron never fires. The owner's retry resumes it below.
+      let resuming = false;
       if (offer.status !== "pending") {
-        return res.status(409).json({ error: "offer_not_pending" });
-      }
-      if (status === "accepted" && request.status !== "pending") {
+        if (status === "accepted" && offer.status === "accepted" && request.status === "in_progress") {
+          const [{ data: existingDeal }, { count: stillPending }] = await Promise.all([
+            supabaseAdmin.from("deals").select("id").eq("offer_id", offer.id).maybeSingle(),
+            supabaseAdmin
+              .from("provider_offers")
+              .select("id", { count: "exact", head: true })
+              .eq("request_id", offer.request_id)
+              .eq("status", "pending"),
+          ]);
+          resuming = !existingDeal || (stillPending ?? 0) > 0;
+        }
+        if (!resuming) return res.status(409).json({ error: "offer_not_pending" });
+      } else if (status === "accepted" && request.status !== "pending") {
         return res.status(409).json({ error: "request_already_decided" });
       }
 
       // Returned to the client on accept so it can open the now-unlocked PDF
       // immediately, without a second round-trip to re-fetch the offer.
       let acceptedOfferFileUrl: string | null = null;
-      let losingEmails: string[] = [];
 
       if (status === "accepted") {
-        // Claim the request first: pending → in_progress succeeds for exactly one
-        // accept. This is the lock that makes two concurrent accepts safe.
-        const { data: claimed, error: claimError } = await supabaseAdmin
-          .from("requests")
-          .update({ status: "in_progress" })
-          .eq("id", offer.request_id)
-          .eq("status", "pending")
-          .select("id");
-        if (claimError) throw claimError;
-        if (!claimed || claimed.length === 0) {
-          return res.status(409).json({ error: "request_already_decided" });
-        }
-
-        // Capture who is still in the running BEFORE the mass-reject below. After it,
-        // a provider whose offer was already rejected earlier is indistinguishable
-        // from one who just lost this round — and mailing "you lost" to someone who
-        // lost days ago is worse than saying nothing.
-        const { data: contenders } = await supabaseAdmin
-          .from("provider_offers")
-          .select("id, providers(email)")
-          .eq("request_id", offer.request_id)
-          .eq("status", "pending");
-        losingEmails = (contenders ?? [])
-          .filter((o: any) => o.id !== (req.params.id as string))
-          .map((o: any) => o.providers?.email)
-          .filter((e: any): e is string => !!e);
-
-        const { data: acceptedRows, error: acceptError } = await supabaseAdmin
-          .from("provider_offers")
-          .update({ status: "accepted" })
-          .eq("id", req.params.id as string)
-          .eq("status", "pending")
-          .select("id");
-        if (acceptError || !acceptedRows || acceptedRows.length === 0) {
-          // The offer changed between the check above and now. Release the request
-          // so the owner can still choose, then report the conflict.
-          await supabaseAdmin
+        if (!resuming) {
+          // Claim the request first: pending → in_progress succeeds for exactly one
+          // accept. This is the lock that makes two concurrent accepts safe.
+          // updated_at is set by hand (no trigger is attached to requests) so the
+          // lifecycle cron can tell a claim that died from one still in flight.
+          const { data: claimed, error: claimError } = await supabaseAdmin
             .from("requests")
-            .update({ status: "pending" })
+            .update({ status: "in_progress", updated_at: new Date().toISOString() })
             .eq("id", offer.request_id)
-            .eq("status", "in_progress");
-          if (acceptError) throw acceptError;
-          return res.status(409).json({ error: "offer_not_pending" });
+            .eq("status", "pending")
+            .select("id");
+          if (claimError) throw claimError;
+          if (!claimed || claimed.length === 0) {
+            return res.status(409).json({ error: "request_already_decided" });
+          }
+
+          // Nothing runs between the claim and this accept, so the window in which
+          // a crash leaves a claimed request with no accepted offer is one query.
+          const { data: acceptedRows, error: acceptError } = await supabaseAdmin
+            .from("provider_offers")
+            .update({ status: "accepted" })
+            .eq("id", offer.id)
+            .eq("status", "pending")
+            .select("id");
+          if (acceptError || !acceptedRows || acceptedRows.length === 0) {
+            // The offer changed between the check above and now. Release the request
+            // so the owner can still choose, then report the conflict.
+            await supabaseAdmin
+              .from("requests")
+              .update({ status: "pending", updated_at: new Date().toISOString() })
+              .eq("id", offer.request_id)
+              .eq("status", "in_progress");
+            if (acceptError) throw acceptError;
+            return res.status(409).json({ error: "offer_not_pending" });
+          }
         }
 
-        await supabaseAdmin
+        const { data: acceptedOffer, error: acceptedOfferError } = await supabaseAdmin
+          .from("provider_offers")
+          .select("id, provider_id, price_total, offer_file_url, providers(email, company_name, users(phone))")
+          .eq("id", offer.id)
+          .single();
+        if (acceptedOfferError || !acceptedOffer) {
+          throw acceptedOfferError ?? new Error("Accepted offer not found");
+        }
+        acceptedOfferFileUrl = acceptedOffer.offer_file_url ?? null;
+
+        // The deal row is written straight after the accept, before any email: it is
+        // what the commission cron keys on, so it must not wait behind slow sends.
+        // Admin later confirms the final contract value and marks it closed.
+        // ignoreDuplicates: a resumed accept never overwrites a deal that exists
+        // (it may already be closed or cancelled by admin).
+        const { data: priorDeal } = await supabaseAdmin
+          .from("deals")
+          .select("id")
+          .eq("offer_id", acceptedOffer.id)
+          .maybeSingle();
+        const { error: dealError } = await supabaseAdmin.from("deals").upsert(
+          {
+            request_id: offer.request_id,
+            offer_id: acceptedOffer.id,
+            provider_id: acceptedOffer.provider_id,
+            owner_id: request.owner_id,
+            contract_value: acceptedOffer.price_total ?? null,
+            status: "pending",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "offer_id", ignoreDuplicates: true },
+        );
+        // Offer stays accepted and the request claimed; the owner's retry resumes here.
+        if (dealError) throw dealError;
+        const dealIsNew = !priorDeal;
+        // deals.created_at (set on first insert) is the scheduling anchor the
+        // commission-reminder cron uses for the day-7 check-in and day-21
+        // commission-request emails — see /api/cron/commission-reminder.
+
+        // Reject everyone still pending and mail exactly the rows THIS call rejected:
+        // never a provider who lost days ago, and never twice on a resumed accept.
+        const { data: justRejected, error: rejectAllError } = await supabaseAdmin
           .from("provider_offers")
           .update({ status: "rejected" })
           .eq("request_id", offer.request_id)
-          .neq("id", req.params.id as string);
+          .eq("status", "pending")
+          .neq("id", offer.id)
+          .select("id, providers(email)");
+        if (rejectAllError) throw rejectAllError;
+        const losingEmails: string[] = (justRejected ?? [])
+          .map((o: any) => o.providers?.email)
+          .filter((e: any): e is string => !!e);
 
         // Tell the providers who lost. Nothing told them before — they simply never
         // heard back. Copy is deliberately accurate: accepting moves the request to
@@ -1616,37 +1670,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           );
         }
 
-        // Auto-create a pending deal capturing the accepted offer's value.
-        // Admin later confirms the final contract value and marks it closed.
-        // UNIQUE(offer_id) keeps it to one deal per offer; the compare-and-set guard
-        // above means an offer can only reach this point once.
-        const { data: acceptedOffer } = await supabaseAdmin
-          .from("provider_offers")
-          .select("id, provider_id, price_total, offer_file_url, providers(email, company_name, users(phone))")
-          .eq("id", req.params.id as string)
-          .single();
-        if (acceptedOffer) {
-          acceptedOfferFileUrl = acceptedOffer.offer_file_url ?? null;
-          await supabaseAdmin
-            .from("deals")
-            .upsert(
-              {
-                request_id: offer.request_id,
-                offer_id: acceptedOffer.id,
-                provider_id: acceptedOffer.provider_id,
-                owner_id: request.owner_id,
-                contract_value: acceptedOffer.price_total ?? null,
-                status: "pending",
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "offer_id" }
-            )
-            .select("id")
-            .single();
-          // deals.created_at (set on first insert) is the scheduling anchor the
-          // commission-reminder cron uses for the day-7 check-in and day-21
-          // commission-request emails — see /api/cron/commission-reminder.
-
+        // Congratulations + contact exchange go out once, with the deal's creation.
+        // A resumed accept whose deal already existed has sent them before.
+        if (dealIsNew) {
           // Acceptance is the moment both sides get each other's number, so the owner's
           // contact is read once here and reused by the provider email, the owner email
           // and the admin alert below.
@@ -2728,18 +2754,30 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return !!lastLogin && lastLogin < inactivityCutoff;
       });
 
+      // Compare-and-set, like PATCH /api/offers/:id/status: the list above is a
+      // snapshot, and an owner who accepts an offer between that read and this write
+      // must not have the request expired underneath them. Offers are expired only
+      // for requests THIS run actually expired, and only offers still pending.
       const expiredSummaryLines: string[] = [];
+      const expiredRequestIds = new Set<string>();
       for (const r of expiredRequests) {
-        await supabaseAdmin.from("requests").update({ status: "expired" }).eq("id", r.id);
+        const { data: expiredNow } = await supabaseAdmin
+          .from("requests")
+          .update({ status: "expired", updated_at: new Date().toISOString() })
+          .eq("id", r.id)
+          .eq("status", "pending")
+          .select("id");
+        if (!expiredNow || expiredNow.length === 0) continue; // owner acted meanwhile
+        expiredRequestIds.add(r.id);
         expiredSummaryLines.push(`- ${(r as any).properties?.name ?? r.id}`);
 
-        const { data: pendingOffers } = await supabaseAdmin
+        const { data: expiredOffers } = await supabaseAdmin
           .from("provider_offers")
-          .select("id, providers(email)")
+          .update({ status: "expired" })
           .eq("request_id", r.id)
-          .eq("status", "pending");
-        for (const o of pendingOffers ?? []) {
-          await supabaseAdmin.from("provider_offers").update({ status: "expired" }).eq("id", o.id);
+          .eq("status", "pending")
+          .select("id, providers(email)");
+        for (const o of expiredOffers ?? []) {
           const email = (o.providers as any)?.email;
           if (email) {
             await notify(email, "الطلب أُغلق لعدم نشاط المالك", requestExpiredEmail(), "request_expired");
@@ -2747,9 +2785,41 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         }
       }
 
+      // ── Pass A2: release requests stuck by an accept that died half-way ──
+      // PATCH /api/offers/:id/status claims the request (pending → in_progress)
+      // and accepts the offer in the next query. If the function dies between the
+      // two, the request is in_progress with no accepted offer: the owner can't
+      // accept (409) and providers can't re-bid. A claim is stamped with updated_at,
+      // so anything older than 15 minutes with no accepted offer is a dead claim,
+      // never one still in flight. The reset is compare-and-set on that exact
+      // updated_at, so a fresh claim made after this read is never touched.
+      // Only claims from the last 48 hours (two daily runs) are considered: older
+      // in_progress rows predate this pass and may have been edited by hand in
+      // production, so they are left for a human to judge.
+      const stuckCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const stuckFloor = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      let stuckReleased = 0;
+      const { data: inProgress } = await supabaseAdmin
+        .from("requests")
+        .select("id, updated_at, provider_offers(status)")
+        .eq("status", "in_progress")
+        .lte("updated_at", stuckCutoff)
+        .gte("updated_at", stuckFloor);
+      for (const r of inProgress ?? []) {
+        const offers = ((r as any).provider_offers ?? []) as { status: string }[];
+        if (offers.some((o) => o.status === "accepted")) continue;
+        const { data: released } = await supabaseAdmin
+          .from("requests")
+          .update({ status: "pending", updated_at: new Date().toISOString() })
+          .eq("id", r.id)
+          .eq("status", "in_progress")
+          .eq("updated_at", (r as any).updated_at)
+          .select("id");
+        if (released && released.length > 0) stuckReleased++;
+      }
+
       // ── Pass B: nudge — offers pending review 5+ days on a request that's still
       //    alive (didn't just get swept into Pass A above) ──
-      const expiredRequestIds = new Set(expiredRequests.map((r: any) => r.id));
       const { data: staleOffers } = await supabaseAdmin
         .from("provider_offers")
         .select("id, request_id, providers(company_name), requests(properties(name))")
@@ -2836,7 +2906,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       res.json({
         ok: true,
-        requestsExpired: expiredRequests.length,
+        requestsExpired: expiredRequestIds.size,
+        stuckRequestsReleased: stuckReleased,
         ownersNudged: nudgedCount,
         staleOffersFlagged: staleSummaryLines.length,
       });

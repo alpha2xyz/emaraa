@@ -444,6 +444,8 @@ export default function OwnerDashboard() {
               : "Offer rejected",
       });
       queryClient.invalidateQueries({ queryKey: ["owner", "offers", requestId] });
+      // The request status badge reads ["/api/requests"]; accepting moves it to in_progress.
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
       // Open the now-unlocked quotation immediately — the owner clicked "View Full
       // Quotation" to get here, accepting was a side effect of that, not a separate step.
       if (status === "accepted" && body?.offer_file_url) {
@@ -454,6 +456,7 @@ export default function OwnerDashboard() {
       // Always refetch: a failure here is most often a stale list (another tab or
       // device already decided this request), and the fresh list shows why.
       queryClient.invalidateQueries({ queryKey: ["owner", "offers", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
       const alreadyDecided =
         err.message === "offer_not_pending" || err.message === "request_already_decided";
       toast({
