@@ -44,12 +44,15 @@ const SADQ_PASSWORD = process.env.SADQ_PASSWORD ?? "";
 //
 // 0 for the demo build, for the same reason ESIGN_VERIFICATION_METHOD defaults to email on
 // Signit — seeded demo identities cannot Nafath-verify as themselves, and the sandbox account
-// carries nafathBalance 0. A real identity gate that costs nothing extra is 3 (Email OTP), which
+// has no Nafath-verified identity. (The token response's nafathBalance field is undocumented and
+// SADQ said in writing 2026-09-25 not to rely on it; balances come only from
+// GET /api/v1/reports/consumption.) A real identity gate that costs nothing extra is 3 (Email OTP), which
 // is the closest match to the Signit build's demo behaviour. Nafath (1 or 7) is the production
 // value, once legal review clears the template's §9 and ESIGN_ENABLED is allowed on production.
 // See server/app.ts's boot guard. Exercised against the sandbox through the real app so far: 0,
 // 9, and 10 (each a full two-party cycle, 2026-09-24). 1/2/3/5/7 remain blocked or unexercised —
-// 2 needs a paid SMS provider configured on SADQ's side, 3's OTP never arrives (vendor-side), 1/7
+// 2 needs a paid SMS provider configured on SADQ's side, 3 sends no email in the sandbox by design
+// (SADQ 2026-09-22: its sandbox OTP is always 1234, not yet exercised through the app), 1/7
 // need a real Nafath-verified identity the sandbox account doesn't have, and 5 was never
 // investigated. Full results in the report under Reports/technical/.
 const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
@@ -66,9 +69,10 @@ const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
 // The OTP value itself is never seen by this code — SADQ's hosted page owns that whole exchange.
 // Worth recording anyway since it cost real debugging time: the correct sandbox code for this
 // national ID is `1234` ("default non-commercial" on SADQ's published Mock Data page), not the
-// `2748` documented in this project's own 2026-09-23 report — that value is scoped to a specific
-// commercial-number pairing on a different endpoint and does not apply to a plain signing
-// destination. `1234` was confirmed live, completing a real two-party signature.
+// `2748` documented in this project's own 2026-09-23 report. SADQ confirmed in writing
+// (2026-09-25) that `2748` only tests the KYB Absher OTP API itself (/api/v1/kyb/absher-otp/...)
+// and is unrelated to signing; for an invitation with authenticationType 9 in the sandbox the OTP
+// is always `1234`. `1234` was also confirmed live, completing a real two-party signature.
 const SADQ_ABSHER_TEST_NATIONAL_ID = "1083595049";
 
 // WhatsApp OTP (authenticationType 10) has no test fixture at all — confirmed against SADQ's own
