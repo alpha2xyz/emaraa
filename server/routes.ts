@@ -10,7 +10,7 @@ import {
 } from "../shared/schema.js";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { checkProviderDocumentPaths, checkOfferPath } from "./storage-paths.js";
+import { checkProviderDocumentPaths, checkOfferPath, checkSignedUrlPath } from "./storage-paths.js";
 import { enqueueEmails, drainOutbox } from "./outbox.js";
 import { demoGateCookie } from "./demo-gate.js";
 import {
@@ -551,6 +551,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!ALLOWED_BUCKETS.has(bucket) || !path) {
         return res.status(400).json({ error: "Invalid bucket or path" });
       }
+      // Before every access rule below, and before the admin shortcut: admin skips the
+      // per-bucket rules, so a guard placed inside them would never run for admin.
+      if (checkSignedUrlPath(bucket, path)) {
+        return res.status(400).json({ error: "Invalid bucket or path" });
+      }
 
       // ── Object-level authorization ──────────────────────────────────────────
       // Being logged in is NOT enough: only hand out files the requester may actually see.
@@ -611,11 +616,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!allowed && bucket === "contracts") {
         // Contract PDFs (unsigned draft or sealed). Exactly three parties ever read one: the
         // deal's owner, the deal's provider, or admin — derived from the deals row, not the path.
-        const { data: deal } = await supabaseAdmin
-          .from("deals")
-          .select("owner_id, providers!deals_provider_fk(user_id)")
-          .or(`contract_pdf_path.eq.${path},signed_pdf_path.eq.${path}`)
-          .maybeSingle();
+        // Two exact-match lookups, never `.or()` with the path spliced in: PostgREST splits an
+        // `or` filter on commas, so a path carrying `,owner_id.eq.<me>` would add its own clause.
+        let deal: { owner_id: string; providers: unknown } | null = null;
+        for (const col of ["contract_pdf_path", "signed_pdf_path"]) {
+          const { data: hit, error: dealError } = await supabaseAdmin
+            .from("deals")
+            .select("owner_id, providers!deals_provider_fk(user_id)")
+            .eq(col, path)
+            .maybeSingle();
+          // A failed lookup is a server error, not "no such deal": otherwise a transient failure
+          // would show a permitted party a 403.
+          if (dealError) throw dealError;
+          if (hit) { deal = hit as any; break; }
+        }
         if (deal) {
           const providerUserId = (deal.providers as any)?.user_id;
           if (requesterUserId && requesterUserId === deal.owner_id) {

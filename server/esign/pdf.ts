@@ -21,6 +21,9 @@ export async function renderHtmlToPdf(html: string): Promise<Buffer> {
 
   try {
     const page = await browser.newPage();
+    // The contract is built from owner/provider-entered text. It is escaped before it gets here,
+    // and scripting is switched off as a second wall so nothing in it can ever execute in Chrome.
+    await page.setJavaScriptEnabled(false);
     await page.setContent(html, { waitUntil: "load" });
     // "load" fires once the CSS resource itself resolves, but @font-face files download
     // asynchronously after that — without this, Arabic text can print in a fallback font.

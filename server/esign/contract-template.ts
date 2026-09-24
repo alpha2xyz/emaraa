@@ -59,20 +59,42 @@ function buildingTypeLabel(buildingType: "residential" | "commercial"): { ar: st
     : { ar: "سكني", en: "residential" };
 }
 
-function money(n: number | null): string {
-  return n == null ? "—" : n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+// line_items is provider-controlled jsonb, so a price can arrive as a string. Only a number, or a
+// plain decimal string like "1500", is formatted; anything else ("1e3", "0x10", markup) prints "—"
+// rather than reaching a legal document or the HTML as-is.
+function money(n: unknown): string {
+  const v = typeof n === "number" ? n : typeof n === "string" && /^\s*\d+(\.\d+)?\s*$/.test(n) ? Number(n) : NaN;
+  return Number.isFinite(v) ? v.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "—";
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// Everything that reaches this template comes from owner/provider-entered text or jsonb, and the
+// result is rendered by Chrome, so it is escaped and never trusted.
+function escapeHtml(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Escapes every string field once, up front, so the template body below cannot forget one — a
+// field added to ContractFields later is covered without touching the template.
+function escapeStringFields(fields: ContractFields): ContractFields {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    out[key] = typeof value === "string" ? escapeHtml(value) : value;
+  }
+  return out as ContractFields;
 }
 
 function renderLineItemsTable(lineItems: LineItem[]): string {
-  if (lineItems.length === 0) return "";
-  const rows = lineItems
+  const items = Array.isArray(lineItems) ? lineItems : [];
+  if (items.length === 0) return "";
+  const rows = items
     .map(
       (item) =>
-        `<tr><td>${escapeHtml(item.service)}</td><td class="num">${money(item.price_per_unit)}</td></tr>`,
+        `<tr><td>${escapeHtml(item?.service)}</td><td class="num">${money(item?.price_per_unit)}</td></tr>`,
     )
     .join("");
   return `
@@ -84,7 +106,8 @@ function renderLineItemsTable(lineItems: LineItem[]): string {
     </table>`;
 }
 
-export function renderContractHtml(f: ContractFields): string {
+export function renderContractHtml(fields: ContractFields): string {
+  const f = escapeStringFields(fields);
   const units = unitsOrArea(f.buildingType, f.unitsCount);
   const btype = buildingTypeLabel(f.buildingType);
   const scopeAr = scopePart1(f.buildingType, "ar");
