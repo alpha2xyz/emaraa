@@ -676,7 +676,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             ...(city !== undefined && { city }),
             ...(commercial_register_url !== undefined && { commercial_register_url }),
             ...(company_profile_url !== undefined && { company_profile_url }),
-            ...(fal_license_url !== undefined && { fal_license_url }),
+            // FAL is optional (Abdallah's decision 2026-09-25): only overwrite the stored
+            // path when a real, non-empty path is supplied. An explicit `null`/"" (e.g. a
+            // provider editing their profile without re-uploading a FAL they never had)
+            // must never wipe out a FAL path uploaded in an earlier save.
+            ...(typeof fal_license_url === "string" && fal_license_url.length > 0 && { fal_license_url }),
           })
           .eq("id", existing.id);
         if (error) return res.status(500).json({ error: error.message });
@@ -685,9 +689,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (!emailValid) {
           return res.status(400).json({ error: "البريد الإلكتروني مطلوب" });
         }
-        // Both documents are NOT NULL in the DB and required at first registration (mirrors the
-        // client's 3-doc requirement). Validate here so a missing doc returns a clean 400 instead
-        // of a raw 500 from the DB's NOT NULL constraint.
+        // Commercial register + company profile are NOT NULL in the DB and required at
+        // first registration (mirrors the client's 2-doc requirement — FAL is optional,
+        // Abdallah's decision 2026-09-25). Validate here so a missing doc returns a clean
+        // 400 instead of a raw 500 from the DB's NOT NULL constraint.
         if (!commercial_register_url || !company_profile_url) {
           return res.status(400).json({ error: "السجل التجاري والملف التعريفي للشركة مطلوبان" });
         }
