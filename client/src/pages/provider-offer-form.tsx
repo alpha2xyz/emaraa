@@ -34,6 +34,9 @@ export default function ProviderOfferForm() {
   const queryClient = useQueryClient();
 
   const [offerFile, setOfferFile] = useState<File | null>(null);
+  // Required again since 2026-09-25 — surfaces a bilingual inline error under the
+  // upload widget on top of the disabled-submit-button gate (defense in depth).
+  const [fileMissingError, setFileMissingError] = useState(false);
   const [notes, setNotes] = useState("");
   const [phoneConsent, setPhoneConsent] = useState(false);
   const [priceTotal, setPriceTotal] = useState("");
@@ -47,7 +50,7 @@ export default function ProviderOfferForm() {
   const content = {
     ar: {
       title: "تقديم عرض",
-      subtitle: "فصّل بنود خدمتك وسعرها، وأرفق ملف العرض إن رغبت",
+      subtitle: "فصّل بنود خدمتك وسعرها، وأرفق عرضك بصيغة PDF",
       requestDetails: "تفاصيل الطلب",
       property: "العقار",
       city: "المدينة",
@@ -55,9 +58,8 @@ export default function ProviderOfferForm() {
       units: "الوحدات",
       viewMap: "عرض الموقع",
       description: "الوصف",
-      offerFile: "ملف العرض (PDF)",
-      offerFileOptional: "ملف العرض (اختياري)",
-      offerFileHint: "إن كان لديك عرض جاهز بصيغة PDF أرفقه هنا. البنود أعلاه كافية بدونه.",
+      offerFile: "ملف العرض (PDF) مطلوب",
+      offerFileHint: "أرفق عرضك الفني والمالي بصيغة PDF. يطّلع عليه المالك كاملاً عند قبول عرضك، ويُعدّ جزءاً من عرضك الرسمي.",
       lineItems: "بنود الخدمة",
       lineItemsHint: "فصّل ما يشمله عرضك. المالك يرى هذه البنود قبل القبول.",
       lineItemService: "بند الخدمة",
@@ -99,7 +101,7 @@ export default function ProviderOfferForm() {
     },
     en: {
       title: "Submit Offer",
-      subtitle: "Break down your services and pricing, and attach an offer file if you want to",
+      subtitle: "Break down your services and pricing, and attach your PDF proposal",
       requestDetails: "Request Details",
       property: "Property",
       city: "City",
@@ -107,9 +109,8 @@ export default function ProviderOfferForm() {
       units: "Units",
       viewMap: "View Location",
       description: "Description",
-      offerFile: "Offer File (PDF)",
-      offerFileOptional: "Offer file (optional)",
-      offerFileHint: "If you already have a PDF proposal, attach it. The line items above are enough on their own.",
+      offerFile: "Proposal PDF (required)",
+      offerFileHint: "Attach your technical and financial proposal as a PDF. The owner sees it in full when they accept your offer, and it forms part of your formal offer.",
       lineItems: "Service line items",
       lineItemsHint: "Break down what your offer covers. The owner sees these before accepting.",
       lineItemService: "Service",
@@ -198,6 +199,7 @@ export default function ProviderOfferForm() {
       return;
     }
     setOfferFile(file);
+    setFileMissingError(false);
   };
 
   const isNotApproved = providerData && !providerData.provider?.approved;
@@ -214,31 +216,30 @@ export default function ProviderOfferForm() {
 
       const token = localStorage.getItem("sessionToken");
 
-      // The PDF is optional now: the structured breakdown is what the owner reads.
-      let fileName: string | null = null;
-      if (offerFile) {
-        if (
-          !["application/pdf"].includes(offerFile.type) &&
-          !offerFile.name.toLowerCase().endsWith(".pdf")
-        ) {
-          throw new Error("invalid_file_type");
+      // The PDF is required again since 2026-09-25 — it becomes Appendix B of the
+      // e-signed contract, so an offer with no file must never reach the server.
+      if (!offerFile) throw new Error("no_file");
+      if (
+        !["application/pdf"].includes(offerFile.type) &&
+        !offerFile.name.toLowerCase().endsWith(".pdf")
+      ) {
+        throw new Error("invalid_file_type");
+      }
+      if (offerFile.size > 10 * 1024 * 1024) {
+        throw new Error("file_too_large");
+      }
+      const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
+      const uploadRes = await fetch(
+        `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
+          body: offerFile,
         }
-        if (offerFile.size > 10 * 1024 * 1024) {
-          throw new Error("file_too_large");
-        }
-        fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
-        const uploadRes = await fetch(
-          `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
-            body: offerFile,
-          }
-        );
-        if (!uploadRes.ok) {
-          const err = await uploadRes.json().catch(() => ({}));
-          throw new Error(err.error || "upload_failed");
-        }
+      );
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || "upload_failed");
       }
 
       const submitRes = await fetch("/api/provider/offers", {
@@ -270,8 +271,10 @@ export default function ProviderOfferForm() {
     onError: (error: any) => {
       if (import.meta.env.DEV) console.error("Offer submission error:", error);
       let errorMessage = t.error;
-      if (error.message === "no_file") errorMessage = t.errorFile;
-      else if (error.message === "no_line_items") errorMessage = t.errorLineItems;
+      if (error.message === "no_file" || error.message === "offer_file_required") {
+        errorMessage = t.errorFile;
+        setFileMissingError(true);
+      } else if (error.message === "no_line_items") errorMessage = t.errorLineItems;
       else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
       else if (error.message === "file_too_large") errorMessage = t.fileTooLarge;
       else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
@@ -297,6 +300,14 @@ export default function ProviderOfferForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Block submit until a PDF is attached — the disabled submit button already
+    // prevents this in the normal flow; this guard covers form-level submit
+    // (e.g. Enter key) too.
+    if (!offerFile) {
+      setFileMissingError(true);
+      toast({ title: t.errorFile, variant: "destructive" });
+      return;
+    }
     mutation.mutate();
   };
 
@@ -536,7 +547,9 @@ export default function ProviderOfferForm() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="offer-file">{t.offerFileOptional}</Label>
+                  <Label htmlFor="offer-file">
+                    {t.offerFile} <span className="text-red-500">*</span>
+                  </Label>
                   <p className="text-xs text-muted-foreground mt-1">{t.offerFileHint}</p>
                   <div className="mt-2">
                     <input
@@ -567,7 +580,11 @@ export default function ProviderOfferForm() {
                       </div>
                     </label>
                   </div>
-
+                  {fileMissingError && !offerFile && (
+                    <p className="text-xs mt-2" style={{ color: "var(--err)" }} role="alert">
+                      {t.errorFile}
+                    </p>
+                  )}
                 </div>
 
                 {/* Structured line items. This is what the owner actually reads
@@ -721,6 +738,7 @@ export default function ProviderOfferForm() {
                     disabled={
                       mutation.isPending ||
                       !!isNotApproved ||
+                      !offerFile ||
                       !phoneConsent ||
                       !priceTotal ||
                       !durationMonths ||

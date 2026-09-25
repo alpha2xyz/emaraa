@@ -938,9 +938,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const userId = (req as any).userId as string;
 
-      // Structured offers (2026-09-13). offer_file_url is now optional: the
-      // breakdown the owner needs lives in line_items, and requiring a PDF on top
-      // of it only adds friction to the side of the market that is already silent.
+      // Structured offers (2026-09-13) made offer_file_url optional: the breakdown
+      // the owner needed lived in line_items. Reversed 2026-09-25 (Abdallah): the
+      // provider's PDF becomes Appendix B of the e-signed contract, so every offer
+      // must carry one again. Line items, total price, duration and notes are
+      // unchanged — this only restores the file requirement.
       const parsed = insertProviderOfferSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({
@@ -950,6 +952,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
       const { request_id, offer_file_url, notes, price_total, line_items, duration_months } =
         parsed.data;
+
+      // Required again since 2026-09-25 — reject before any DB read or write, for
+      // both a fresh offer and a revived rejected offer.
+      if (!offer_file_url) {
+        return res.status(400).json({ error: "offer_file_required" });
+      }
 
       const { data: provider } = await supabaseAdmin
         .from("providers")
@@ -962,14 +970,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // The offer file must be one this provider could have uploaded. Without this,
       // a provider could submit another provider's offer PDF path and then read it
       // back through /api/files/signed-url, which trusts the stored value.
-      // Only checked when a file is actually attached — the PDF is optional since
-      // structured line items landed.
-      if (offer_file_url) {
-        const offerPathError = checkOfferPath(provider.id, offer_file_url);
-        if (offerPathError) {
-          console.warn("[provider/offers] rejected offer path", { providerId: provider.id });
-          return res.status(403).json({ error: offerPathError });
-        }
+      const offerPathError = checkOfferPath(provider.id, offer_file_url);
+      if (offerPathError) {
+        console.warn("[provider/offers] rejected offer path", { providerId: provider.id });
+        return res.status(403).json({ error: offerPathError });
       }
 
       // The request must still be pending — a rejected/in_progress/closed request
