@@ -950,8 +950,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
         });
       }
-      const { request_id, offer_file_url, notes, price_total, line_items, duration_months } =
-        parsed.data;
+      const {
+        request_id,
+        offer_file_url,
+        notes,
+        price_total,
+        line_items,
+        duration_months,
+        payment_schedule,
+      } = parsed.data;
 
       // Required again since 2026-09-25 — reject before any DB read or write, for
       // both a fresh offer and a revived rejected offer.
@@ -1016,6 +1023,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             price_total: price_total || null,
             line_items,
             duration_months,
+            payment_schedule,
             status: "pending",
             created_at: new Date().toISOString(),
           })
@@ -1035,6 +1043,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             price_total: price_total || null,
             line_items,
             duration_months,
+            payment_schedule,
           }])
           .select()
           .single();
@@ -1093,7 +1102,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, payment_schedule, created_at, requests(id, owner_id, status, service_category, properties(name, city, building_type))"
         )
         .eq("provider_id", provider.id)
         .order("created_at", { ascending: false });
@@ -1155,7 +1164,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, line_items, duration_months, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, payment_schedule, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });

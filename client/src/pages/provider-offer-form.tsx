@@ -22,8 +22,19 @@ import {
 import { useLang } from "@/hooks/use-lang";
 import { scopePart1, scopePart2 } from "@shared/scope-of-work";
 import { formatContractDate } from "@/components/ContractStartDatePicker";
-
 import { useToast } from "@/hooks/use-toast";
+
+// Mirrors shared/schema.ts PAYMENT_SCHEDULES / PAYMENT_SCHEDULE_LABELS. Kept as a
+// small local copy rather than importing shared/schema.ts here — that file pulls
+// in drizzle-orm/pg-core, which has no reason to ship in the client bundle for
+// three constants (added ~21KB gzip to this bundle in testing).
+const PAYMENT_SCHEDULES = ["quarterly", "semiannual", "annual"] as const;
+type PaymentSchedule = (typeof PAYMENT_SCHEDULES)[number];
+const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, { ar: string; en: string }> = {
+  quarterly: { ar: "كل 3 أشهر", en: "Every 3 months" },
+  semiannual: { ar: "كل 6 أشهر", en: "Every 6 months" },
+  annual: { ar: "دفعة واحدة سنوياً", en: "Once a year" },
+};
 
 export default function ProviderOfferForm() {
   const { lang } = useLang();
@@ -46,6 +57,10 @@ export default function ProviderOfferForm() {
     { service: "", price_per_unit: "" },
   ]);
   const [durationMonths, setDurationMonths] = useState("12");
+  // Mandatory, no default (Abdallah's decision 2026-09-26) — the owner must see
+  // how the provider expects to be paid before accepting the offer.
+  const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule | "">("");
+  const [paymentScheduleMissingError, setPaymentScheduleMissingError] = useState(false);
 
   const content = {
     ar: {
@@ -70,6 +85,9 @@ export default function ProviderOfferForm() {
       lineItemsSum: "مجموع البنود لكل وحدة",
       duration: "مدة العقد",
       durationMonths: "شهراً",
+      paymentSchedule: "طريقة الدفع",
+      paymentScheduleHint: "تظهر طريقة الدفع للمالك مع عرضك.",
+      errorPaymentSchedule: "اختر طريقة الدفع",
       errorLineItems: "أضف بنداً واحداً على الأقل باسم وسعر",
       chooseFile: "اختر ملف PDF",
       fileSelected: "تم اختيار الملف",
@@ -121,6 +139,9 @@ export default function ProviderOfferForm() {
       lineItemsSum: "Line items total per unit",
       duration: "Contract duration",
       durationMonths: "months",
+      paymentSchedule: "Payment schedule",
+      paymentScheduleHint: "The owner sees your payment schedule with your offer.",
+      errorPaymentSchedule: "Choose a payment schedule",
       errorLineItems: "Add at least one line item with a name and a price",
       chooseFile: "Choose PDF File",
       fileSelected: "File selected",
@@ -214,6 +235,10 @@ export default function ProviderOfferForm() {
         .filter((li) => li.service.length >= 2 && Number.isFinite(li.price_per_unit));
       if (cleanItems.length === 0) throw new Error("no_line_items");
 
+      // Mandatory, checked before the file upload so a rejected offer never leaves
+      // an uploaded PDF with no offer attached.
+      if (!paymentSchedule) throw new Error("no_payment_schedule");
+
       const token = localStorage.getItem("sessionToken");
 
       // The PDF is required again since 2026-09-25 — it becomes Appendix B of the
@@ -252,10 +277,21 @@ export default function ProviderOfferForm() {
           price_total: priceTotal ? parseFloat(priceTotal) : null,
           line_items: cleanItems,
           duration_months: parseInt(durationMonths, 10),
+          payment_schedule: paymentSchedule,
         }),
       });
       if (!submitRes.ok) {
         const err = await submitRes.json().catch(() => ({}));
+        // A missing payment_schedule fails Zod validation server-side and comes
+        // back as invalid_offer with a details array, not its own error code —
+        // map it to the same message the client-side check throws.
+        if (
+          err.error === "invalid_offer" &&
+          Array.isArray(err.details) &&
+          err.details.some((d: string) => d.startsWith("payment_schedule"))
+        ) {
+          throw new Error("no_payment_schedule");
+        }
         throw new Error(err.error || "submit_failed");
       }
       return submitRes.json();
@@ -275,7 +311,10 @@ export default function ProviderOfferForm() {
         errorMessage = t.errorFile;
         setFileMissingError(true);
       } else if (error.message === "no_line_items") errorMessage = t.errorLineItems;
-      else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
+      else if (error.message === "no_payment_schedule") {
+        errorMessage = t.errorPaymentSchedule;
+        setPaymentScheduleMissingError(true);
+      } else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
       else if (error.message === "file_too_large") errorMessage = t.fileTooLarge;
       else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
       else if (error.message === "provider_not_found" || error.message === "profile_incomplete")
@@ -306,6 +345,11 @@ export default function ProviderOfferForm() {
     if (!offerFile) {
       setFileMissingError(true);
       toast({ title: t.errorFile, variant: "destructive" });
+      return;
+    }
+    if (!paymentSchedule) {
+      setPaymentScheduleMissingError(true);
+      toast({ title: t.errorPaymentSchedule, variant: "destructive" });
       return;
     }
     mutation.mutate();
@@ -686,6 +730,44 @@ export default function ProviderOfferForm() {
                 </div>
 
                 <div>
+                  <Label>
+                    {t.paymentSchedule} <span className="text-red-500">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t.paymentScheduleHint}</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {PAYMENT_SCHEDULES.map((option) => {
+                      const selected = paymentSchedule === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            setPaymentSchedule(option);
+                            setPaymentScheduleMissingError(false);
+                          }}
+                          className={
+                            "rounded-xl py-3 px-2 text-center text-sm font-medium cursor-pointer transition-colors" +
+                            (selected ? "" : " text-muted-foreground")
+                          }
+                          style={
+                            selected
+                              ? { border: "2px solid var(--provider)", background: "var(--provider-soft)", color: "var(--provider)" }
+                              : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
+                          }
+                        >
+                          {PAYMENT_SCHEDULE_LABELS[option][lang]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {paymentScheduleMissingError && !paymentSchedule && (
+                    <p className="text-xs mt-2" style={{ color: "var(--err)" }} role="alert">
+                      {t.errorPaymentSchedule}
+                    </p>
+                  )}
+                </div>
+
+                <div>
                   <Label htmlFor="price-total">
                     {t.priceTotal} <span className="text-red-500">*</span>
                   </Label>
@@ -742,6 +824,7 @@ export default function ProviderOfferForm() {
                       !phoneConsent ||
                       !priceTotal ||
                       !durationMonths ||
+                      !paymentSchedule ||
                       !lineItems.some(
                         (li) => li.service.trim().length >= 2 && li.price_per_unit !== ""
                       )
