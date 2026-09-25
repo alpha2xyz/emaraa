@@ -36,6 +36,7 @@ export type ContractFields = {
   providerPhone: string | null;
   providerEmail: string | null;
   contractValue: number | null;
+  paymentSchedule: PaymentSchedule | null; // chosen by the provider from the three options only
   lineItems: LineItem[];
   signatureVendor: "sadq" | "signit";
   signatureRequestId: string | null; // null before the signature request exists
@@ -52,6 +53,11 @@ const OWNER_ANCHOR_TAG = "OWNER_SIGNATURE_ANCHOR";
 const PROVIDER_ANCHOR_TAG = "PROVIDER_SIGNATURE_ANCHOR";
 
 export { OWNER_ANCHOR_TAG, PROVIDER_ANCHOR_TAG };
+
+/** Printed in the footer of every page. Bump whenever the contract text or layout changes. */
+export const CONTRACT_TEMPLATE_VERSION = "0.03";
+
+export type PaymentSchedule = "quarterly" | "semiannual" | "annual";
 
 export const NOT_SPECIFIED_AR = "غير محدد";
 export const NOT_SPECIFIED_EN = "not specified";
@@ -124,12 +130,12 @@ function ltr(s: string): string {
   return `<span dir="ltr">${s}</span>`;
 }
 
-// The Arch mark, redrawn as a black monoline outline for print (the brand gradient does not
-// survive black-and-white printing or scanning). Same geometry as the approved Arch logo.
+// The Arch mark as a single-colour monoline outline in the brand deep blue (#065B98), since the
+// brand gradient prints poorly. Same geometry as the approved Arch logo.
 const ARCH_LOGO_BW = `<svg class="logo" width="46" height="46" viewBox="0 0 160 160" fill="none" aria-label="Emaraa">
-  <path d="M22 142 V78 a58 58 0 0 1 116 0 V142" stroke="#111" stroke-width="11" stroke-linecap="round"/>
-  <path d="M52 142 V82 a28 28 0 0 1 56 0 V142" stroke="#111" stroke-width="9" stroke-linecap="round"/>
-  <circle cx="80" cy="84" r="8" fill="#111"/>
+  <path d="M22 142 V78 a58 58 0 0 1 116 0 V142" stroke="#065B98" stroke-width="11" stroke-linecap="round"/>
+  <path d="M52 142 V82 a28 28 0 0 1 56 0 V142" stroke="#065B98" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="80" cy="84" r="8" fill="#065B98"/>
 </svg>`;
 
 function renderLineItemsTable(lineItems: LineItem[]): string {
@@ -186,6 +192,12 @@ export function renderContractHtml(fields: ContractFields): string {
     : "";
   const falEn = f.providerFalLicenseNumber ? `, REGA FAL License No. (${f.providerFalLicenseNumber})` : "";
   const latinOr = (v: string | null, fallback: string) => (v ? ltr(v) : fallback);
+  const VAT_RATE = "15%"; // the rate in force today; printed so the contract records it
+  const box = (on: boolean) => `<span class="box">${on ? "&#10003;" : ""}</span>`;
+  const schedule = (labels: Record<PaymentSchedule, string>) =>
+    `<div class="checks">${(["quarterly", "semiannual", "annual"] as PaymentSchedule[])
+      .map((k) => `<span class="check">${box(f.paymentSchedule === k)}${labels[k]}</span>`)
+      .join("")}</div>`;
   // Many registered names already start with "شركة"; only add the word when it is missing.
   const companyAr = /^\s*شركة/.test(f.providerCompanyName) ? f.providerCompanyName : `شركة ${f.providerCompanyName}`;
 
@@ -204,7 +216,7 @@ export function renderContractHtml(fields: ContractFields): string {
     font-size: 11px;
     line-height: 1.75;
   }
-  .row { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; direction: rtl; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 22px; direction: rtl; }
   .row > .ar { direction: rtl; text-align: right; }
   .row > .en { direction: ltr; text-align: left; color: #2f3e45; font-size: 10.5px; }
   .clause { break-inside: avoid; page-break-inside: avoid; margin-top: 12px; }
@@ -216,7 +228,7 @@ export function renderContractHtml(fields: ContractFields): string {
   ol { margin: 2px 0; padding-inline-start: 18px; }
   li { margin: 2px 0; }
   .masthead {
-    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 16px;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 16px;
     direction: rtl; border-bottom: 2px solid #065B98; padding-bottom: 10px;
   }
   .masthead .ar { text-align: right; }
@@ -239,11 +251,14 @@ export function renderContractHtml(fields: ContractFields): string {
      anchor search needs Latin text at this exact spot (Arabic anchor search is unreliable, see
      the constant declarations above); the visible signing instruction stays Arabic. */
   .signature-marker { display: block; font-size: 7px; color: #c3ced1; line-height: 1.4; }
+  /* The rotated banner sits inside a page-sized clip box: a banner wider than the page made
+     Chrome widen the layout and cut the right (Arabic) edge off in print. */
+  .demo-clip { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 1000; }
   .demo-banner {
-    position: fixed;
+    position: absolute;
     top: 40%;
-    left: -20%;
-    width: 140%;
+    left: 0;
+    width: 100%;
     text-align: center;
     transform: rotate(-28deg);
     font-size: 46px;
@@ -252,6 +267,18 @@ export function renderContractHtml(fields: ContractFields): string {
     letter-spacing: 4px;
     z-index: 1000;
     pointer-events: none;
+  }
+  .page-footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; direction: ltr;
+    font-size: 8.5px; color: #6b7c84; border-top: 1px solid #d7e2e6; padding-top: 3px;
+  }
+  body { padding-bottom: 18px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 4px; }
+  .check { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .box {
+    display: inline-block; width: 11px; height: 11px; border: 1.3px solid #065B98; border-radius: 2px;
+    text-align: center; line-height: 9px; font-size: 10px; color: #065B98; font-weight: 700;
   }
   .demo-banner-sub {
     display: block;
@@ -262,10 +289,11 @@ export function renderContractHtml(fields: ContractFields): string {
 </style>
 </head>
 <body>
-  <div class="demo-banner">
+  <div class="demo-clip"><div class="demo-banner">
     DEMO: NOT LEGALLY BINDING
     <span class="demo-banner-sub">عرض تجريبي، غير ملزم نظاماً</span>
-  </div>
+  </div></div>
+  <div class="page-footer"><span>emaraa.app</span><span>${f.contractNumber} · v${CONTRACT_TEMPLATE_VERSION}</span></div>
 
   <header class="masthead">
     <div class="ar"><h1>عقد خدمات تشغيل وصيانة مرافق</h1></div>
@@ -312,14 +340,14 @@ export function renderContractHtml(fields: ContractFields): string {
     `<p>حيث إن الطرف الأول يملك العقار الموصوف أعلاه، ويرغب في التعاقد مع منشأة متخصصة لتشغيله وصيانته؛ وحيث إن
       الطرف الثاني منشأة متخصصة في إدارة المرافق، يشمل سجلها التجاري نشاط إدارة المرافق في المملكة العربية السعودية؛ وحيث إن
       الطرف الثاني تقدّم بعرض سعر قَبِله الطرف الأول عبر منصة عِمارة الإلكترونية (${ltr("emaraa.app")})، التي اقتصر
-      دورها على تيسير التعارف والتواصل بين الطرفين دون أن تكون طرفاً في هذا العقد (البند 9)؛</p>
+      دورها على تيسير التعارف والتواصل بين الطرفين دون أن تكون طرفاً في هذا العقد (البند 9: دور منصة عِمارة)؛</p>
     <p>فقد اتفق الطرفان، وهما بكامل الأهلية المعتبرة شرعاً ونظاماً، على ما يلي، ويُعدّ هذا التمهيد جزءاً لا يتجزأ
       من العقد، ومكمّلاً لأحكامه ومفسّراً لها.</p>`,
     `<p>Whereas the Owner owns the property described above and wishes to engage a specialized entity to operate
       and maintain it; whereas the Provider is a facility-management company whose commercial registration includes facility
       management as an activity in the Kingdom of Saudi Arabia; and whereas the Provider submitted a price quotation which the Owner accepted
       through the Emaraa online platform (emaraa.app), whose role was limited to facilitating the introduction and
-      communication between the Parties and which is not a party to this Agreement (Section 9);</p>
+      communication between the Parties and which is not a party to this Agreement (Section 9: Role of the Emaraa Platform);</p>
     <p>The Parties, having full legal capacity, have agreed as follows. This Preamble forms an integral part of
       this Agreement and shall be read together with it.</p>`,
   )}
@@ -347,60 +375,66 @@ export function renderContractHtml(fields: ContractFields): string {
     "البند 3: قيمة العقد وطريقة السداد",
     "3. Contract Value and Payment",
     list([
-      `القيمة الإجمالية لهذا العقد (${valueAr}) ريال سعودي سنوياً، شاملة ضريبة القيمة المضافة${perUnitAr}، وفق
-        تفصيل الأسعار الوارد في الملحق (أ).`,
+      `القيمة الإجمالية لهذا العقد (${valueAr}) ريال سعودي سنوياً، شاملة ضريبة القيمة المضافة بنسبتها السارية وقت
+        التوقيع (${ltr(VAT_RATE)})${perUnitAr}، وفق الملحق (أ): تفصيل الأسعار.`,
       `يُعدّ عرض السعر الفني والمالي المقدَّم من الطرف الثاني، والمقبول من الطرف الأول عبر منصة عِمارة، الملحقَ (ب)
         لهذا العقد، ويُرفق به كما هو دون تعديل.`,
       `يُعدّ الملحقان (أ) و(ب) جزءاً لا يتجزأ من هذا العقد، وفي حال التعارض بين أحكام العقد وأيٍّ من الملحقين تُقدَّم
         أحكام العقد.`,
-      `تُسدَّد القيمة وفق جدول الدفعات المبيَّن في الملحق (ب)، مقابل فاتورة ضريبية نظامية يُصدرها الطرف الثاني عن كل
-        دفعة.`,
+      `تُسدَّد القيمة على دفعات متساوية وفق الخيار المحدد أدناه، مقابل فاتورة ضريبية نظامية يُصدرها الطرف الثاني عن كل
+        دفعة:${schedule({ quarterly: "كل 3 أشهر", semiannual: "كل 6 أشهر", annual: "دفعة واحدة سنوياً" })}`,
     ]),
     list([
-      `The total value of this Agreement is (${valueEn}) SAR per year, inclusive of VAT${perUnitEn}, as itemized in
-        Annex A.`,
+      `The total value of this Agreement is (${valueEn}) SAR per year, inclusive of VAT at the rate in force at signing
+        (${VAT_RATE})${perUnitEn}, as itemized in Annex A: Price Breakdown.`,
       `The Provider's technical and financial proposal, as accepted by the Owner through the Emaraa platform, is
         Annex B to this Agreement and is attached to it unchanged.`,
       `Annexes A and B form an integral part of this Agreement. If the terms of this Agreement conflict with either
         Annex, the terms of this Agreement prevail.`,
-      `The value is payable according to the payment schedule set out in Annex B, against a valid tax invoice
-        issued by the Provider for each payment.`,
+      `The value is payable in equal instalments according to the option selected below, against a valid tax
+        invoice issued by the Provider for each payment:${schedule({ quarterly: "Every 3 months", semiannual: "Every 6 months", annual: "Once a year" })}`,
     ]),
   )}
 
   ${clause(
-    "البند 4: التزامات الطرف الثاني",
-    "4. Provider Obligations",
-    `<p>يلتزم الطرف الثاني بما يلي:</p>
-    <p>أ. تنفيذ الخدمات المتفق عليها وفق الأصول المهنية المتعارف عليها في القطاع، وبما يتفق مع الأنظمة واللوائح
-      المعمول بها في المملكة.</p>
-    <p>ب. المحافظة على سريان سجله التجاري وسائر التراخيص النظامية اللازمة لمزاولة نشاطه طوال مدة العقد، وإخطار
-      الطرف الأول كتابياً وعلى الفور في حال تعليق أيٍّ منها أو إلغائه.</p>
-    <p>ج. توفير كوادر مؤهلة ومدرَّبة على اشتراطات السلامة والصحة المهنية.</p>
-    <p>د. الاستجابة لبلاغات الأعطال والحالات الطارئة على مدار الساعة، وفق ما هو محدد في نطاق الخدمات.</p>`,
-    `<p>The Provider shall:</p>
-    <p>(a) perform the agreed services to the professional standards recognized in the sector and in compliance
-      with the laws and regulations in force in the Kingdom;</p>
-    <p>(b) keep its Commercial Registration and all other statutory licences required for its activity valid
-      throughout the term, and notify the Owner in writing immediately if any of them is suspended or
-      cancelled;</p>
-    <p>(c) provide qualified staff trained in occupational health and safety requirements;</p>
-    <p>(d) respond to fault reports and emergencies 24/7, as specified in the Scope of Services.</p>`,
-  )}
-
-  ${clause(
-    "البند 5: التزامات الطرف الأول",
-    "5. Owner Obligations",
+    "البند 4: التزامات الطرف الأول",
+    "4. Owner Obligations",
     `<p>يلتزم الطرف الأول بما يلي:</p>
     <p>أ. تمكين الطرف الثاني وكوادره من الوصول إلى العقار ومرافقه في الأوقات اللازمة لأداء الخدمات.</p>
-    <p>ب. سداد المستحقات المالية في مواعيدها وفق البند 3.</p>
+    <p>ب. سداد المستحقات المالية في مواعيدها وفق البند 3: قيمة العقد وطريقة السداد.</p>
     <p>ج. إبلاغ الطرف الثاني بأي أعطال أو ملاحظات على الخدمة خلال مدة معقولة من علمه بها.</p>`,
     `<p>The Owner shall:</p>
     <p>(a) give the Provider and its staff access to the property and its facilities at the times needed to
       perform the services;</p>
-    <p>(b) pay amounts due on time in accordance with Section 3;</p>
+    <p>(b) pay amounts due on time in accordance with Section 3: Contract Value and Payment;</p>
     <p>(c) report any faults or service issues to the Provider within a reasonable time of becoming aware of
       them.</p>`,
+  )}
+
+  ${clause(
+    "البند 5: التزامات الطرف الثاني",
+    "5. Provider Obligations",
+    `<p>يلتزم الطرف الثاني بما يلي:</p>
+    <p>أ. تنفيذ الخدمات المتفق عليها والمبيَّنة في الملحق (ب): عرض السعر الفني والمالي، وفق الأصول المهنية المتعارف
+      عليها في القطاع، وبما يتفق مع الأنظمة واللوائح المعمول بها في المملكة.</p>
+    <p>ب. المحافظة على سريان سجله التجاري وسائر التراخيص النظامية اللازمة لمزاولة نشاطه طوال مدة العقد، وإخطار
+      الطرف الأول كتابياً وعلى الفور في حال تعليق أيٍّ منها أو إلغائه.</p>
+    <p>ج. توفير كوادر مؤهلة ومدرَّبة على اشتراطات السلامة والصحة المهنية.</p>
+    <p>د. الاستجابة لبلاغات الأعطال والحالات الطارئة على مدار الساعة، وفق ما هو محدد في البند 1: نطاق الخدمات.</p>
+    <p>هـ. توثيق كل عمل يُنفّذه في العقار ضمن نطاق الخدمات في سجل خاص، وتقديم تقرير دوري إلى الطرف الأول لا يقل عن
+      تقرير شهري، وتزويده بأي تقرير يطلبه عن الأعمال المنفَّذة سابقاً خلال مدة العقد.</p>`,
+    `<p>The Provider shall:</p>
+    <p>(a) perform the agreed services set out in Annex B: Technical and Financial Proposal, to the professional
+      standards recognized in the sector and in compliance with the laws and regulations in force in the
+      Kingdom;</p>
+    <p>(b) keep its Commercial Registration and all other statutory licences required for its activity valid
+      throughout the term, and notify the Owner in writing immediately if any of them is suspended or
+      cancelled;</p>
+    <p>(c) provide qualified staff trained in occupational health and safety requirements;</p>
+    <p>(d) respond to fault reports and emergencies 24/7, as specified in Section 1: Scope of Services;</p>
+    <p>(e) keep a record of every task performed at the property under the Scope of Services, give the Owner a
+      periodic report at least monthly, and provide any report the Owner requests on work previously performed
+      during the term.</p>`,
   )}
 
   ${clause(

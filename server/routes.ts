@@ -1930,6 +1930,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         providerPhone: provider?.users?.phone ?? null,
         providerEmail: provider?.email ?? null,
         contractValue: deal.contract_value ?? (offer as any)?.price_total ?? null,
+        // Not collected yet: the offer form gets a quarterly/semiannual/annual choice next, then this
+        // reads provider_offers.payment_schedule. Until then no box is ticked.
+        paymentSchedule: null,
         lineItems: (offer as any)?.line_items ?? [],
         signatureVendor: vendor,
         signatureRequestId: null,
