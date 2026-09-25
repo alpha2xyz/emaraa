@@ -14,6 +14,7 @@ import {
   Home,
   Inbox,
   Info,
+  BadgeCheck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1087,6 +1088,20 @@ export default function OwnerDashboard() {
                           <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--owner)" }} />
                           {offer.providers?.company_name}
                         </p>
+                        {offer.providers?.provider_has_fal && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold mt-1"
+                            style={{ background: "var(--ok-soft)", color: "var(--ok)", border: "1px solid var(--ok)" }}
+                            title={
+                              lang === "ar"
+                                ? "رخصة فال من الهيئة العامة للعقار"
+                                : "REGA FAL license"
+                            }
+                          >
+                            <BadgeCheck className="w-3 h-3 flex-shrink-0" />
+                            {lang === "ar" ? "لديها رخصة فال" : "Holds a FAL license"}
+                          </span>
+                        )}
                         {offer.providers?.city && (
                           <p className="text-xs text-muted-foreground mt-0.5">{offer.providers.city}</p>
                         )}
