@@ -38,6 +38,17 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { openSignedPdf } from "@/lib/storage";
 import ContractStartDatePicker, { formatContractDate } from "@/components/ContractStartDatePicker";
 
+// Mirrors shared/schema.ts PAYMENT_SCHEDULE_LABELS. Kept as a small local copy
+// rather than importing shared/schema.ts here — that file pulls in
+// drizzle-orm/pg-core, which has no reason to ship in the client bundle just
+// for this label map.
+type PaymentSchedule = "quarterly" | "semiannual" | "annual";
+const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, { ar: string; en: string }> = {
+  quarterly: { ar: "كل 3 أشهر", en: "Every 3 months" },
+  semiannual: { ar: "كل 6 أشهر", en: "Every 6 months" },
+  annual: { ar: "دفعة واحدة سنوياً", en: "Once a year" },
+};
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -1179,6 +1190,15 @@ export default function OwnerDashboard() {
                             {lang === "ar" ? "مدة العقد: " : "Contract duration: "}
                             <span className="font-semibold text-foreground">
                               {offer.duration_months} {lang === "ar" ? "شهراً" : "months"}
+                            </span>
+                          </p>
+                        )}
+                        {/* Nothing shown for old offers where this is null. */}
+                        {PAYMENT_SCHEDULE_LABELS[offer.payment_schedule as PaymentSchedule] && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {lang === "ar" ? "طريقة الدفع: " : "Payment: "}
+                            <span className="font-semibold text-foreground">
+                              {PAYMENT_SCHEDULE_LABELS[offer.payment_schedule as PaymentSchedule][lang]}
                             </span>
                           </p>
                         )}
