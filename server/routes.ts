@@ -1849,8 +1849,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         "id, request_id, offer_id, owner_id, contract_value, signature_status, signature_request_id, " +
           "signature_provider, signature_signatory_ids, signature_sent_at, signature_rejected_reason, " +
           "contract_pdf_path, signed_pdf_path, " +
-          "providers!deals_provider_fk(id, user_id, email, company_name, cr_number, fal_license_number, signatory_name), " +
-          "owner:users!deals_owner_fk(id, name, email)",
+          "providers!deals_provider_fk(id, user_id, email, company_name, cr_number, fal_license_number, signatory_name, users(phone)), " +
+          "owner:users!deals_owner_fk(id, name, email, phone)",
       )
       .eq("id", dealId)
       .maybeSingle();
@@ -1881,7 +1881,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: request } = await supabaseAdmin
         .from("requests")
-        .select("property_id, contract_start_date, properties(name, address, city, building_type, units_count)")
+        .select("property_id, contract_start_date, description, properties(name, address, city, building_type, units_count)")
         .eq("id", deal.request_id)
         .maybeSingle();
       const property = (request as any)?.properties;
@@ -1904,23 +1904,31 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { renderContractHtml } = await import("./esign/contract-template.js");
       const { renderHtmlToPdf } = await import("./esign/pdf.js");
       const { newRequestAdapter } = await import("./esign/adapter.js");
-      const { OWNER_ANCHOR_TAG, PROVIDER_ANCHOR_TAG } = await import("./esign/contract-template.js");
+      const { OWNER_ANCHOR_TAG, PROVIDER_ANCHOR_TAG, NOT_SPECIFIED_AR, contractNumberFor } = await import(
+        "./esign/contract-template.js"
+      );
 
       const { vendor, adapter } = await newRequestAdapter();
 
       const html = renderContractHtml({
+        contractNumber: contractNumberFor(deal.id, contractStart),
         contractDate,
         contractDateEn,
-        ownerName: owner?.name ?? "—",
-        propertyName: property?.name ?? "—",
-        propertyAddress: property?.address ?? "—",
-        propertyCity: property?.city ?? "—",
+        ownerName: owner?.name ?? NOT_SPECIFIED_AR,
+        ownerPhone: owner?.phone ?? null,
+        ownerEmail: owner?.email ?? null,
+        propertyName: property?.name ?? NOT_SPECIFIED_AR,
+        propertyAddress: property?.address ?? NOT_SPECIFIED_AR,
+        propertyCity: property?.city ?? NOT_SPECIFIED_AR,
         buildingType: property?.building_type === "commercial" ? "commercial" : "residential",
         unitsCount: property?.units_count ?? null,
-        providerCompanyName: provider?.company_name ?? "—",
+        ownerNotes: (request as any)?.description?.trim() || null,
+        providerCompanyName: provider?.company_name ?? NOT_SPECIFIED_AR,
         providerCrNumber: provider?.cr_number ?? null,
         providerFalLicenseNumber: provider?.fal_license_number ?? null,
         providerRepresentativeName: provider?.signatory_name ?? null,
+        providerPhone: provider?.users?.phone ?? null,
+        providerEmail: provider?.email ?? null,
         contractValue: deal.contract_value ?? (offer as any)?.price_total ?? null,
         lineItems: (offer as any)?.line_items ?? [],
         signatureVendor: vendor,

@@ -73,7 +73,12 @@ const AUTHENTICATION_TYPE = Number(process.env.SADQ_AUTHENTICATION_TYPE ?? "0");
 // (2026-09-25) that `2748` only tests the KYB Absher OTP API itself (/api/v1/kyb/absher-otp/...)
 // and is unrelated to signing; for an invitation with authenticationType 9 in the sandbox the OTP
 // is always `1234`. `1234` was also confirmed live, completing a real two-party signature.
-const SADQ_ABSHER_TEST_NATIONAL_ID = "1083595049";
+//
+// The value itself lives in the gitignored env files (.env / .env.demo), never hardcoded here —
+// it is a real test identity, not a placeholder. createSignatureRequest checks it is set before
+// calling SADQ at all when authenticationType is 9; an unset value throws with a clear message
+// rather than sending a blank nationalId.
+const SADQ_ABSHER_TEST_NATIONAL_ID = process.env.SADQ_ABSHER_TEST_NATIONAL_ID ?? "";
 
 // WhatsApp OTP (authenticationType 10) has no test fixture at all — confirmed against SADQ's own
 // Mock Data page — and needs a real `destinationPhoneNumber` per destination or the OTP has
@@ -84,9 +89,16 @@ const SADQ_ABSHER_TEST_NATIONAL_ID = "1083595049";
 // `phoneNumber` — sending the response's field name on a request is accepted but silently
 // ignored. No fixture exists, so these are real numbers Abdallah approved for testing
 // (2026-09-24) — demo-only, and real WhatsApp messages do go out to them.
+//
+// The numbers live in the gitignored env files (.env / .env.demo), never hardcoded here.
+// createSignatureRequest checks both are set before calling SADQ at all when authenticationType
+// is 10; an unset value throws with a clear message rather than sending a blank
+// destinationPhoneNumber.
+const SADQ_TEST_WHATSAPP_PHONE_OWNER = process.env.SADQ_TEST_WHATSAPP_PHONE_OWNER ?? "";
+const SADQ_TEST_WHATSAPP_PHONE_PROVIDER = process.env.SADQ_TEST_WHATSAPP_PHONE_PROVIDER ?? "";
 const SADQ_WHATSAPP_TEST_PHONES: Record<SignatoryRole, string> = {
-  owner: "+966543977679",
-  provider: "+966501315725",
+  owner: SADQ_TEST_WHATSAPP_PHONE_OWNER,
+  provider: SADQ_TEST_WHATSAPP_PHONE_PROVIDER,
 };
 
 // Shared secret SADQ echoes back on webhook deliveries (configured on the webhook itself via
@@ -245,6 +257,25 @@ export const sadqAdapter: SignatureAdapter = {
       input.pdfBuffer,
       input.signatories.map((s) => s.anchorTag),
     );
+
+    // Same reasoning: fail before initiate-base64 creates an envelope on SADQ's side, rather than
+    // discovering a missing test identity partway through and leaving an orphaned envelope behind.
+    if (AUTHENTICATION_TYPE === 9 && !SADQ_ABSHER_TEST_NATIONAL_ID) {
+      throw new Error(
+        "SADQ_ABSHER_TEST_NATIONAL_ID is not set. It is required whenever SADQ_AUTHENTICATION_TYPE is 9 (Absher OTP).",
+      );
+    }
+    if (AUTHENTICATION_TYPE === 10) {
+      for (const s of input.signatories) {
+        if (!SADQ_WHATSAPP_TEST_PHONES[s.role]) {
+          const envVarName =
+            s.role === "owner" ? "SADQ_TEST_WHATSAPP_PHONE_OWNER" : "SADQ_TEST_WHATSAPP_PHONE_PROVIDER";
+          throw new Error(
+            `${envVarName} is not set. It is required whenever SADQ_AUTHENTICATION_TYPE is 10 (WhatsApp OTP).`,
+          );
+        }
+      }
+    }
 
     // referenceNumber is our own id stamped onto the envelope. Signit had no working equivalent
     // (its custom_fields are broken), so this is a genuine gain here: the webhook payload and

@@ -14,10 +14,14 @@ import type { SignatureAdapter } from "./types.js";
 export const ESIGN_VENDORS = ["signit", "sadq"] as const;
 export type EsignVendor = (typeof ESIGN_VENDORS)[number];
 
-/** Vendor for new signature requests. Unset means signit — the behaviour before SADQ existed. */
+/**
+ * Vendor for new signature requests. Unset, or any value that is not a recognised vendor name,
+ * falls back to sadq — the chosen vendor since 2026-09-20 (Signit was dropped as the default but
+ * stays a valid explicit value; set ESIGN_VENDOR=signit to opt back into it).
+ */
 export function selectedVendor(): EsignVendor {
-  const raw = (process.env.ESIGN_VENDOR ?? "signit").trim().toLowerCase();
-  return (ESIGN_VENDORS as readonly string[]).includes(raw) ? (raw as EsignVendor) : "signit";
+  const raw = (process.env.ESIGN_VENDOR ?? "sadq").trim().toLowerCase();
+  return (ESIGN_VENDORS as readonly string[]).includes(raw) ? (raw as EsignVendor) : "sadq";
 }
 
 /**
