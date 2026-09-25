@@ -22,8 +22,19 @@ import {
 import { useLang } from "@/hooks/use-lang";
 import { scopePart1, scopePart2 } from "@shared/scope-of-work";
 import { formatContractDate } from "@/components/ContractStartDatePicker";
-
 import { useToast } from "@/hooks/use-toast";
+
+// Mirrors shared/schema.ts PAYMENT_SCHEDULES / PAYMENT_SCHEDULE_LABELS. Kept as a
+// small local copy rather than importing shared/schema.ts here — that file pulls
+// in drizzle-orm/pg-core, which has no reason to ship in the client bundle for
+// three constants (added ~21KB gzip to this bundle in testing).
+const PAYMENT_SCHEDULES = ["quarterly", "semiannual", "annual"] as const;
+type PaymentSchedule = (typeof PAYMENT_SCHEDULES)[number];
+const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, { ar: string; en: string }> = {
+  quarterly: { ar: "كل 3 أشهر", en: "Every 3 months" },
+  semiannual: { ar: "كل 6 أشهر", en: "Every 6 months" },
+  annual: { ar: "دفعة واحدة سنوياً", en: "Once a year" },
+};
 
 export default function ProviderOfferForm() {
   const { lang } = useLang();
@@ -34,6 +45,9 @@ export default function ProviderOfferForm() {
   const queryClient = useQueryClient();
 
   const [offerFile, setOfferFile] = useState<File | null>(null);
+  // Required again since 2026-09-25 — surfaces a bilingual inline error under the
+  // upload widget on top of the disabled-submit-button gate (defense in depth).
+  const [fileMissingError, setFileMissingError] = useState(false);
   const [notes, setNotes] = useState("");
   const [phoneConsent, setPhoneConsent] = useState(false);
   const [priceTotal, setPriceTotal] = useState("");
@@ -43,11 +57,15 @@ export default function ProviderOfferForm() {
     { service: "", price_per_unit: "" },
   ]);
   const [durationMonths, setDurationMonths] = useState("12");
+  // Mandatory, no default (Abdallah's decision 2026-09-26) — the owner must see
+  // how the provider expects to be paid before accepting the offer.
+  const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule | "">("");
+  const [paymentScheduleMissingError, setPaymentScheduleMissingError] = useState(false);
 
   const content = {
     ar: {
       title: "تقديم عرض",
-      subtitle: "فصّل بنود خدمتك وسعرها، وأرفق ملف العرض إن رغبت",
+      subtitle: "فصّل بنود خدمتك وسعرها، وأرفق عرضك بصيغة PDF",
       requestDetails: "تفاصيل الطلب",
       property: "العقار",
       city: "المدينة",
@@ -55,9 +73,8 @@ export default function ProviderOfferForm() {
       units: "الوحدات",
       viewMap: "عرض الموقع",
       description: "الوصف",
-      offerFile: "ملف العرض (PDF)",
-      offerFileOptional: "ملف العرض (اختياري)",
-      offerFileHint: "إن كان لديك عرض جاهز بصيغة PDF أرفقه هنا. البنود أعلاه كافية بدونه.",
+      offerFile: "ملف العرض (PDF) مطلوب",
+      offerFileHint: "أرفق عرضك الفني والمالي بصيغة PDF. يطّلع عليه المالك كاملاً عند قبول عرضك، ويُعدّ جزءاً من عرضك الرسمي.",
       lineItems: "بنود الخدمة",
       lineItemsHint: "فصّل ما يشمله عرضك. المالك يرى هذه البنود قبل القبول.",
       lineItemService: "بند الخدمة",
@@ -68,6 +85,9 @@ export default function ProviderOfferForm() {
       lineItemsSum: "مجموع البنود لكل وحدة",
       duration: "مدة العقد",
       durationMonths: "شهراً",
+      paymentSchedule: "طريقة الدفع",
+      paymentScheduleHint: "تظهر طريقة الدفع للمالك مع عرضك.",
+      errorPaymentSchedule: "اختر طريقة الدفع",
       errorLineItems: "أضف بنداً واحداً على الأقل باسم وسعر",
       chooseFile: "اختر ملف PDF",
       fileSelected: "تم اختيار الملف",
@@ -99,7 +119,7 @@ export default function ProviderOfferForm() {
     },
     en: {
       title: "Submit Offer",
-      subtitle: "Break down your services and pricing, and attach an offer file if you want to",
+      subtitle: "Break down your services and pricing, and attach your PDF proposal",
       requestDetails: "Request Details",
       property: "Property",
       city: "City",
@@ -107,9 +127,8 @@ export default function ProviderOfferForm() {
       units: "Units",
       viewMap: "View Location",
       description: "Description",
-      offerFile: "Offer File (PDF)",
-      offerFileOptional: "Offer file (optional)",
-      offerFileHint: "If you already have a PDF proposal, attach it. The line items above are enough on their own.",
+      offerFile: "Proposal PDF (required)",
+      offerFileHint: "Attach your technical and financial proposal as a PDF. The owner sees it in full when they accept your offer, and it forms part of your formal offer.",
       lineItems: "Service line items",
       lineItemsHint: "Break down what your offer covers. The owner sees these before accepting.",
       lineItemService: "Service",
@@ -120,6 +139,9 @@ export default function ProviderOfferForm() {
       lineItemsSum: "Line items total per unit",
       duration: "Contract duration",
       durationMonths: "months",
+      paymentSchedule: "Payment schedule",
+      paymentScheduleHint: "The owner sees your payment schedule with your offer.",
+      errorPaymentSchedule: "Choose a payment schedule",
       errorLineItems: "Add at least one line item with a name and a price",
       chooseFile: "Choose PDF File",
       fileSelected: "File selected",
@@ -198,6 +220,7 @@ export default function ProviderOfferForm() {
       return;
     }
     setOfferFile(file);
+    setFileMissingError(false);
   };
 
   const isNotApproved = providerData && !providerData.provider?.approved;
@@ -212,33 +235,36 @@ export default function ProviderOfferForm() {
         .filter((li) => li.service.length >= 2 && Number.isFinite(li.price_per_unit));
       if (cleanItems.length === 0) throw new Error("no_line_items");
 
+      // Mandatory, checked before the file upload so a rejected offer never leaves
+      // an uploaded PDF with no offer attached.
+      if (!paymentSchedule) throw new Error("no_payment_schedule");
+
       const token = localStorage.getItem("sessionToken");
 
-      // The PDF is optional now: the structured breakdown is what the owner reads.
-      let fileName: string | null = null;
-      if (offerFile) {
-        if (
-          !["application/pdf"].includes(offerFile.type) &&
-          !offerFile.name.toLowerCase().endsWith(".pdf")
-        ) {
-          throw new Error("invalid_file_type");
+      // The PDF is required again since 2026-09-25 — it becomes Appendix B of the
+      // e-signed contract, so an offer with no file must never reach the server.
+      if (!offerFile) throw new Error("no_file");
+      if (
+        !["application/pdf"].includes(offerFile.type) &&
+        !offerFile.name.toLowerCase().endsWith(".pdf")
+      ) {
+        throw new Error("invalid_file_type");
+      }
+      if (offerFile.size > 10 * 1024 * 1024) {
+        throw new Error("file_too_large");
+      }
+      const fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
+      const uploadRes = await fetch(
+        `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
+          body: offerFile,
         }
-        if (offerFile.size > 10 * 1024 * 1024) {
-          throw new Error("file_too_large");
-        }
-        fileName = `${providerData.provider.id}_${requestId}_${Date.now()}.pdf`;
-        const uploadRes = await fetch(
-          `/api/upload/offer-document?filename=${encodeURIComponent(fileName)}`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/pdf" },
-            body: offerFile,
-          }
-        );
-        if (!uploadRes.ok) {
-          const err = await uploadRes.json().catch(() => ({}));
-          throw new Error(err.error || "upload_failed");
-        }
+      );
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || "upload_failed");
       }
 
       const submitRes = await fetch("/api/provider/offers", {
@@ -251,10 +277,21 @@ export default function ProviderOfferForm() {
           price_total: priceTotal ? parseFloat(priceTotal) : null,
           line_items: cleanItems,
           duration_months: parseInt(durationMonths, 10),
+          payment_schedule: paymentSchedule,
         }),
       });
       if (!submitRes.ok) {
         const err = await submitRes.json().catch(() => ({}));
+        // A missing payment_schedule fails Zod validation server-side and comes
+        // back as invalid_offer with a details array, not its own error code —
+        // map it to the same message the client-side check throws.
+        if (
+          err.error === "invalid_offer" &&
+          Array.isArray(err.details) &&
+          err.details.some((d: string) => d.startsWith("payment_schedule"))
+        ) {
+          throw new Error("no_payment_schedule");
+        }
         throw new Error(err.error || "submit_failed");
       }
       return submitRes.json();
@@ -270,9 +307,14 @@ export default function ProviderOfferForm() {
     onError: (error: any) => {
       if (import.meta.env.DEV) console.error("Offer submission error:", error);
       let errorMessage = t.error;
-      if (error.message === "no_file") errorMessage = t.errorFile;
-      else if (error.message === "no_line_items") errorMessage = t.errorLineItems;
-      else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
+      if (error.message === "no_file" || error.message === "offer_file_required") {
+        errorMessage = t.errorFile;
+        setFileMissingError(true);
+      } else if (error.message === "no_line_items") errorMessage = t.errorLineItems;
+      else if (error.message === "no_payment_schedule") {
+        errorMessage = t.errorPaymentSchedule;
+        setPaymentScheduleMissingError(true);
+      } else if (error.message === "invalid_file_type") errorMessage = t.invalidFileType;
       else if (error.message === "file_too_large") errorMessage = t.fileTooLarge;
       else if (error.message === "already_submitted") errorMessage = t.alreadySubmitted;
       else if (error.message === "provider_not_found" || error.message === "profile_incomplete")
@@ -297,6 +339,19 @@ export default function ProviderOfferForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Block submit until a PDF is attached — the disabled submit button already
+    // prevents this in the normal flow; this guard covers form-level submit
+    // (e.g. Enter key) too.
+    if (!offerFile) {
+      setFileMissingError(true);
+      toast({ title: t.errorFile, variant: "destructive" });
+      return;
+    }
+    if (!paymentSchedule) {
+      setPaymentScheduleMissingError(true);
+      toast({ title: t.errorPaymentSchedule, variant: "destructive" });
+      return;
+    }
     mutation.mutate();
   };
 
@@ -536,7 +591,9 @@ export default function ProviderOfferForm() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="offer-file">{t.offerFileOptional}</Label>
+                  <Label htmlFor="offer-file">
+                    {t.offerFile} <span className="text-red-500">*</span>
+                  </Label>
                   <p className="text-xs text-muted-foreground mt-1">{t.offerFileHint}</p>
                   <div className="mt-2">
                     <input
@@ -567,7 +624,11 @@ export default function ProviderOfferForm() {
                       </div>
                     </label>
                   </div>
-
+                  {fileMissingError && !offerFile && (
+                    <p className="text-xs mt-2" style={{ color: "var(--err)" }} role="alert">
+                      {t.errorFile}
+                    </p>
+                  )}
                 </div>
 
                 {/* Structured line items. This is what the owner actually reads
@@ -669,6 +730,44 @@ export default function ProviderOfferForm() {
                 </div>
 
                 <div>
+                  <Label>
+                    {t.paymentSchedule} <span className="text-red-500">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t.paymentScheduleHint}</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {PAYMENT_SCHEDULES.map((option) => {
+                      const selected = paymentSchedule === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            setPaymentSchedule(option);
+                            setPaymentScheduleMissingError(false);
+                          }}
+                          className={
+                            "rounded-xl py-3 px-2 text-center text-sm font-medium cursor-pointer transition-colors" +
+                            (selected ? "" : " text-muted-foreground")
+                          }
+                          style={
+                            selected
+                              ? { border: "2px solid var(--provider)", background: "var(--provider-soft)", color: "var(--provider)" }
+                              : { border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }
+                          }
+                        >
+                          {PAYMENT_SCHEDULE_LABELS[option][lang]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {paymentScheduleMissingError && !paymentSchedule && (
+                    <p className="text-xs mt-2" style={{ color: "var(--err)" }} role="alert">
+                      {t.errorPaymentSchedule}
+                    </p>
+                  )}
+                </div>
+
+                <div>
                   <Label htmlFor="price-total">
                     {t.priceTotal} <span className="text-red-500">*</span>
                   </Label>
@@ -721,9 +820,11 @@ export default function ProviderOfferForm() {
                     disabled={
                       mutation.isPending ||
                       !!isNotApproved ||
+                      !offerFile ||
                       !phoneConsent ||
                       !priceTotal ||
                       !durationMonths ||
+                      !paymentSchedule ||
                       !lineItems.some(
                         (li) => li.service.trim().length >= 2 && li.price_per_unit !== ""
                       )

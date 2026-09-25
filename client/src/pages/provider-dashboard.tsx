@@ -22,6 +22,17 @@ import { openSignedPdf } from "../lib/storage";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProviderHeader } from "@/components/ProviderHeader";
 
+// Mirrors shared/schema.ts PAYMENT_SCHEDULE_LABELS. Kept as a small local copy
+// rather than importing shared/schema.ts here — that file pulls in
+// drizzle-orm/pg-core, which has no reason to ship in the client bundle just
+// for this label map.
+type PaymentSchedule = "quarterly" | "semiannual" | "annual";
+const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, { ar: string; en: string }> = {
+  quarterly: { ar: "كل 3 أشهر", en: "Every 3 months" },
+  semiannual: { ar: "كل 6 أشهر", en: "Every 6 months" },
+  annual: { ar: "دفعة واحدة سنوياً", en: "Once a year" },
+};
+
 
 // ---------------------------------------------------------------------------
 // Stat card
@@ -93,6 +104,7 @@ export default function ProviderDashboard() {
       noOffers: "لم تقدم أي عروض بعد",
       noOffersHint: "ابدأ بتصفح الطلبات وتقديم عروضك",
       viewFile: "عرض الملف",
+      payment: "طريقة الدفع:",
       overview: "نظرة عامة",
       offers: "عروضي",
       errorLoad: "حدث خطأ في تحميل البيانات",
@@ -117,6 +129,7 @@ export default function ProviderDashboard() {
       noOffers: "You haven't submitted any offers yet",
       noOffersHint: "Browse available requests and start submitting",
       viewFile: "View File",
+      payment: "Payment:",
       overview: "Overview",
       offers: "My Offers",
       errorLoad: "Failed to load data",
@@ -388,6 +401,16 @@ export default function ProviderDashboard() {
                         <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{formatDate(offer.created_at)}</span>
                       </div>
+
+                      {/* Payment schedule — nothing shown for old offers where it's null */}
+                      {PAYMENT_SCHEDULE_LABELS[offer.payment_schedule as PaymentSchedule] && (
+                        <p className="text-xs text-muted-foreground">
+                          {t.payment}{" "}
+                          <span className="font-semibold text-foreground">
+                            {PAYMENT_SCHEDULE_LABELS[offer.payment_schedule as PaymentSchedule][lang]}
+                          </span>
+                        </p>
+                      )}
 
                       {/* Notes */}
                       {offer.notes && (

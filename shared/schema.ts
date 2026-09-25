@@ -135,6 +135,11 @@ export const providerOffers = pgTable("provider_offers", {
   // [{ service: string, price_per_unit: number }]
   line_items: jsonb("line_items").$type<OfferLineItem[]>(),
   duration_months: integer("duration_months"),
+  // How often the owner pays across the contract term (Abdallah's decision
+  // 2026-09-26; migrations/015_offer_payment_schedule.sql). Mandatory for every
+  // new/revived offer from here on — nullable in the DB only so pre-existing
+  // offers stay valid. Printed as checkboxes on the e-signed contract later.
+  payment_schedule: text("payment_schedule"),
   status: text("status").default("pending"),
   created_at: timestamp("created_at").defaultNow(),
 }, (t) => ({
@@ -149,6 +154,21 @@ export const offerLineItemSchema = z.object({
   price_per_unit: z.number().nonnegative(),
 });
 
+// The only three payment schedules a provider may offer (Abdallah's decision
+// 2026-09-26). Used by the server-side insert schema below. The client pages
+// (provider-offer-form.tsx, owner-dashboard.tsx, provider-dashboard.tsx) keep
+// their own small copy of these three values and labels rather than importing
+// this file — shared/schema.ts pulls in drizzle-orm/pg-core, which has no
+// reason to ship in the client bundle.
+export const PAYMENT_SCHEDULES = ["quarterly", "semiannual", "annual"] as const;
+export type PaymentSchedule = (typeof PAYMENT_SCHEDULES)[number];
+
+export const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, { ar: string; en: string }> = {
+  quarterly: { ar: "كل 3 أشهر", en: "Every 3 months" },
+  semiannual: { ar: "كل 6 أشهر", en: "Every 6 months" },
+  annual: { ar: "دفعة واحدة سنوياً", en: "Once a year" },
+};
+
 export const insertProviderOfferSchema = z.object({
   request_id: z.string().uuid(),
   offer_file_url: z.string().max(400).nullable().optional(),
@@ -156,6 +176,9 @@ export const insertProviderOfferSchema = z.object({
   price_total: z.number().positive(),
   line_items: z.array(offerLineItemSchema).min(1).max(20),
   duration_months: z.number().int().positive().max(120),
+  // Mandatory on every new offer (2026-09-26) — the owner must see how the
+  // provider expects to be paid before accepting.
+  payment_schedule: z.enum(PAYMENT_SCHEDULES),
 });
 
 export type InsertProviderOffer = z.infer<typeof insertProviderOfferSchema>;
