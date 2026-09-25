@@ -1888,7 +1888,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: offer } = await supabaseAdmin
         .from("provider_offers")
-        .select("line_items, price_total")
+        // "*" rather than a column list: payment_schedule arrives with migration 015, which may not
+        // have run on every database yet; a named missing column would fail the whole query.
+        .select("*")
         .eq("id", deal.offer_id)
         .maybeSingle();
 
@@ -1930,9 +1932,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         providerPhone: provider?.users?.phone ?? null,
         providerEmail: provider?.email ?? null,
         contractValue: deal.contract_value ?? (offer as any)?.price_total ?? null,
-        // Not collected yet: the offer form gets a quarterly/semiannual/annual choice next, then this
-        // reads provider_offers.payment_schedule. Until then no box is ticked.
-        paymentSchedule: null,
+        // Chosen by the provider on the offer form (mandatory since 2026-09-26, migration 015). Any
+        // other value, or an older offer without one, ticks no box.
+        paymentSchedule: (["quarterly", "semiannual", "annual"] as const).includes((offer as any)?.payment_schedule)
+          ? (offer as any).payment_schedule
+          : null,
         lineItems: (offer as any)?.line_items ?? [],
         signatureVendor: vendor,
         signatureRequestId: null,
