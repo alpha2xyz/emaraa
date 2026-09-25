@@ -11,7 +11,7 @@ export default function AboutPage() {
   const isRTL = lang === "ar";
   useSeo({
     title: "من نحن | عِمارة · منصة إدارة المرافق العقارية",
-    description: "تعرّف على عِمارة: منصة سعودية تربط ملاك العقارات بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار، بعروض تنافسية وتعاقد شفاف.",
+    description: "تعرّف على عِمارة: منصة سعودية تربط ملاك العقارات بشركات إدارة مرافق موثّقة ومراجَعة يدوياً، بعروض تنافسية وتعاقد شفاف.",
     path: "/about",
   });
   useReveal([lang]);
@@ -82,11 +82,11 @@ export default function AboutPage() {
               icon: <ShieldCheck className="w-6 h-6" />,
               ar: {
                 title: "مزودون مُتحقَّق منهم فقط",
-                body: "كل شركة تمر بمراجعة يدوية: سجل تجاري، بروفايل، ورخصة فال، قبل أي تواصل مع المُلاك.",
+                body: "كل شركة تمر بمراجعة يدوية: نتحقق أن سجلها التجاري ساري ويشمل نشاط إدارة المرافق، ونراجع ملفها التعريفي ورخصة فال إن وُجدت، قبل أي تواصل مع المُلاك.",
               },
               en: {
                 title: "Verified Providers Only",
-                body: "Every company goes through manual review: commercial register, profile, and FAL license, before any contact with owners.",
+                body: "Every company goes through manual review: we check that its commercial register is active and includes facility management as an activity, and review its company profile and FAL license where held, before any contact with owners.",
               },
             },
             {
@@ -131,11 +131,11 @@ export default function AboutPage() {
                 icon: <ShieldCheck className="w-5 h-5" />,
                 ar: {
                   title: "الثقة تُبنى بالتوثيق",
-                  body: "لا نثق بالكلام. كل مزود معنا يُثبت هويته ورخصته قبل أن يصل للمُلاك.",
+                  body: "لا نثق بالكلام. كل مزود معنا يُثبت أن سجله التجاري يشمل نشاط إدارة المرافق قبل أن يصل للمُلاك.",
                 },
                 en: {
                   title: "Trust Is Built With Documentation",
-                  body: "We don't take anyone's word for it. Every provider proves their identity and license before reaching owners.",
+                  body: "We don't take anyone's word for it. Every provider proves their commercial registration covers facility management before reaching owners.",
                 },
               },
               {

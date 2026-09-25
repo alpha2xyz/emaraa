@@ -468,6 +468,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // Scope path to the authenticated user — prevents one provider overwriting another's documents
       const userId = (req as any).userId as string;
+
+      // Documents are frozen once a provider is approved (see /api/provider/profile). Uploads use
+      // upsert on a client-chosen filename, so without this check an approved provider could
+      // overwrite a reviewed file in place and keep the owner-facing FAL badge (2026-09-26).
+      const { data: uploader } = await supabaseAdmin
+        .from("providers")
+        .select("approved")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (uploader?.approved === true) {
+        return res.status(403).json({ error: "documents_locked_after_approval" });
+      }
+
       const { data, error } = await supabaseAdmin.storage
         .from("provider-documents")
         .upload(`${userId}/${folder}/${filename}`, req.body as Buffer, { contentType, upsert: true });
@@ -659,11 +672,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const { data: existing } = await supabaseAdmin
         .from("providers")
-        .select("id")
+        .select("id, approved")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (existing?.id) {
+        // Once approved, documents are frozen server-side, matching the profile page (which
+        // disables the documents section for approved providers). Every document, FAL included,
+        // was reviewed at approval; letting an approved provider swap files would put an
+        // unreviewed FAL behind the owner-facing FAL badge (2026-09-25).
+        const docsLocked = existing.approved === true;
         // Updates: if an email is supplied it must be valid; we don't wipe an existing one.
         if (email !== undefined && !emailValid) {
           return res.status(400).json({ error: "البريد الإلكتروني غير صحيح" });
@@ -674,9 +692,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             company_name: company_name.trim(),
             ...(email !== undefined && { email: emailTrimmed }),
             ...(city !== undefined && { city }),
-            ...(commercial_register_url !== undefined && { commercial_register_url }),
-            ...(company_profile_url !== undefined && { company_profile_url }),
-            ...(fal_license_url !== undefined && { fal_license_url }),
+            ...(!docsLocked && commercial_register_url !== undefined && { commercial_register_url }),
+            ...(!docsLocked && company_profile_url !== undefined && { company_profile_url }),
+            // FAL is optional (Abdallah's decision 2026-09-25): only overwrite the stored
+            // path when a real, non-empty path is supplied. An explicit `null`/"" (e.g. a
+            // provider editing their profile without re-uploading a FAL they never had)
+            // must never wipe out a FAL path uploaded in an earlier save.
+            ...(!docsLocked &&
+              typeof fal_license_url === "string" &&
+              fal_license_url.length > 0 && { fal_license_url }),
           })
           .eq("id", existing.id);
         if (error) return res.status(500).json({ error: error.message });
@@ -685,9 +709,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (!emailValid) {
           return res.status(400).json({ error: "البريد الإلكتروني مطلوب" });
         }
-        // Both documents are NOT NULL in the DB and required at first registration (mirrors the
-        // client's 3-doc requirement). Validate here so a missing doc returns a clean 400 instead
-        // of a raw 500 from the DB's NOT NULL constraint.
+        // Commercial register + company profile are NOT NULL in the DB and required at
+        // first registration (mirrors the client's 2-doc requirement — FAL is optional,
+        // Abdallah's decision 2026-09-25). Validate here so a missing doc returns a clean
+        // 400 instead of a raw 500 from the DB's NOT NULL constraint.
         if (!commercial_register_url || !company_profile_url) {
           return res.status(400).json({ error: "السجل التجاري والملف التعريفي للشركة مطلوبان" });
         }
@@ -1164,7 +1189,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const { data } = await supabaseAdmin
         .from("provider_offers")
         .select(
-          "id, offer_file_url, notes, status, price_total, line_items, duration_months, payment_schedule, created_at, providers(id, company_name, city, company_profile_url, users(phone))"
+          "id, offer_file_url, notes, status, price_total, line_items, duration_months, payment_schedule, created_at, providers(id, company_name, city, company_profile_url, fal_license_url, users(phone))"
         )
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
@@ -1176,13 +1201,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // before committing — gating the breakdown too would recreate the exact
       // "accept blind or walk away" choice that pushed the 2026-09-07 owner to
       // contract outside the platform. The attachment stays behind the gate.
-      const safe = (data ?? []).map((o: any) => ({
-        ...o,
-        offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
-        providers: o.providers
-          ? { ...o.providers, users: o.status === "accepted" ? o.providers.users : null }
-          : null,
-      }));
+      const safe = (data ?? []).map((o: any) => {
+        // fal_license_url is a storage path, never sent to the owner — only whether
+        // it's set is exposed, as a boolean badge flag (FAL is optional, 2026-09-25).
+        const { fal_license_url, ...providerRest } = o.providers ?? {};
+        return {
+          ...o,
+          offer_file_url: o.status === "accepted" ? o.offer_file_url : null,
+          providers: o.providers
+            ? {
+                ...providerRest,
+                users: o.status === "accepted" ? o.providers.users : null,
+                provider_has_fal: typeof fal_license_url === "string" && fal_license_url.length > 0,
+              }
+            : null,
+        };
+      });
       res.json(safe);
     } catch {
       res.status(500).json({ error: "Failed to fetch offers" });

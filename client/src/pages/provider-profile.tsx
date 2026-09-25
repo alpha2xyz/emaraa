@@ -57,18 +57,20 @@ export default function ProviderProfile() {
       cityPlaceholder: "مثال: الرياض",
       description: "نبذة عن الشركة",
       descriptionPlaceholder: "اكتب نبذة مختصرة عن شركتك وخدماتها...",
-      documents: "المستندات المطلوبة (إجباري)",
+      documents: "مستندات الشركة",
       commercialRegister: "السجل التجاري",
       companyProfile: "بروفايل الشركة",
       profileShared: "سيُشارَك ملفك التعريفي مع المالك عند تقديم عرضك على طلبه.",
-      falLicense: "رخصة فال",
+      falLicense: "رخصة فال (اختياري، ميزة إضافية لشركتك)",
+      falLicenseHint:
+        "إن كانت لدى شركتك رخصة فال من الهيئة العامة للعقار فأرفقها، فهي تعزّز ثقة الملاك بعرضك.",
       chooseFile: "اختر ملف",
       fileTypes: "PDF أو صورة (بحد أقصى 10MB)",
       save: "حفظ والمتابعة",
       saving: "جاري الحفظ...",
       success: "تم حفظ البيانات بنجاح!",
       error: "حدث خطأ، حاول مرة أخرى",
-      errorDocuments: "يجب رفع جميع المستندات المطلوبة (السجل التجاري، بروفايل الشركة، رخصة فال)",
+      errorDocuments: "يجب رفع جميع المستندات المطلوبة (السجل التجاري، بروفايل الشركة)",
     },
     en: {
       title: "Service Provider Registration",
@@ -86,11 +88,13 @@ export default function ProviderProfile() {
       cityPlaceholder: "Example: Riyadh",
       description: "Company Description",
       descriptionPlaceholder: "Write a brief description of your company and services...",
-      documents: "Required Documents (Mandatory)",
+      documents: "Company Documents",
       commercialRegister: "Commercial Register",
       companyProfile: "Company Profile",
       profileShared: "Your company profile is shared with the owner when you submit an offer.",
-      falLicense: "FAL License",
+      falLicense: "FAL license (optional, an advantage for your company)",
+      falLicenseHint:
+        "If your company holds a REGA FAL license, attach it; it strengthens owners' trust in your offers.",
       chooseFile: "Choose File",
       fileTypes: "PDF or Image (max 10MB)",
       save: "Save & Continue",
@@ -98,7 +102,7 @@ export default function ProviderProfile() {
       success: "Data saved successfully!",
       error: "An error occurred, please try again",
       errorDocuments:
-        "All required documents must be uploaded (Commercial Register, Company Profile, FAL License)",
+        "All required documents must be uploaded (Commercial Register, Company Profile)",
     },
   };
 
@@ -188,7 +192,7 @@ export default function ProviderProfile() {
     mutationFn: async () => {
       // التحقق من المستندات — مطلوبة فقط عند التسجيل الأول
       const isNew = !existingProvider?.provider?.id;
-      if (isNew && (!files.commercial_register || !files.company_profile || !files.fal_license)) {
+      if (isNew && (!files.commercial_register || !files.company_profile)) {
         throw new Error("documents_required");
       }
 
@@ -561,11 +565,10 @@ export default function ProviderProfile() {
                 </p>
               </div>
 
-              {/* رخصة فال */}
+              {/* رخصة فال، اختياري */}
               <div className="space-y-2">
                 <Label htmlFor="fal_license" className="flex items-center gap-2">
                   {t.falLicense}
-                  {!isApproved && <span className="text-red-500">*</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Input
@@ -601,6 +604,15 @@ export default function ProviderProfile() {
                   ) : null}
                 </div>
                 {!isApproved && <p className="text-xs text-muted-foreground">{t.fileTypes}</p>}
+                {!isApproved && (
+                  <p
+                    className="text-xs flex items-start gap-1.5 leading-relaxed"
+                    style={{ color: "var(--provider)" }}
+                  >
+                    <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>{t.falLicenseHint}</span>
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
