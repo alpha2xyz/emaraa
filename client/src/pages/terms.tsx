@@ -75,7 +75,7 @@ const arSections: Section[] = [
   {
     title: "التزامات مزود الخدمة",
     body: [
-      "تقديم مستندات صحيحة وسارية المفعول عند التسجيل (سجل تجاري، ملف الشركة بصيغة PDF، رخصة فال).",
+      "تقديم مستندات صحيحة وسارية المفعول عند التسجيل (سجل تجاري، ملف الشركة بصيغة PDF)، بالإضافة إلى رخصة فال إن وُجدت.",
       "يسري الحساب على منصة عِمارة فقط بعد الحصول على موافقة إدارية صريحة.",
       "يلتزم مزود الخدمة بتنفيذ الخدمة وفق العرض المقدَّم وفي الوقت المحدد.",
       "يُحظر على مزود الخدمة التواصل مع الملاك خارج إطار المنصة بهدف تجاوز آلية العروض الرسمية.",
@@ -220,7 +220,7 @@ const enSections: Section[] = [
   {
     title: "Provider Obligations",
     body: [
-      "Submit valid and current documents upon registration (commercial registration, company profile in PDF format, FAL license).",
+      "Submit valid and current documents upon registration (commercial registration, company profile in PDF format), plus a FAL license where held.",
       "Provider accounts are only activated after receiving explicit administrative approval.",
       "Providers are committed to delivering the service as proposed and within the agreed timeline.",
       "Providers are prohibited from contacting owners outside the platform in order to bypass the official proposal mechanism.",

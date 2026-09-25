@@ -193,7 +193,7 @@ export default function LandingPage() {
       heroTitle: "عِمــارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
-        "ابحث، قارن، وتعاقد سنوياً مع شركات مرافق مرخّصة من الهيئة العامة للعقار، في أول منصة متخصصة لعقود إدارة المرافق العقارية.",
+        "ابحث، قارن، وتعاقد سنوياً مع شركات مسجّلة بنشاط إدارة المرافق راجع فريقنا سجلها بنفسه، في أول منصة متخصصة لعقود إدارة المرافق العقارية.",
       addProperty: "أضف عقارك مجاناً",
       heroFreeNote: "مجاني بالكامل للملاك. لا رسوم، ولا التزام.",
       learnMore: "اعرف المزيد",
@@ -202,7 +202,7 @@ export default function LandingPage() {
       whoMoments: [
         {
           title: "عقدك السنوي قارب على الانتهاء؟",
-          desc: "لا تُجدد عقد إدارة المرافق قبل أن تقارن. انشر طلب عقارك مرة واحدة، واستلم عروضاً مكتوبة بأسعار واضحة من شركات مرخّصة.",
+          desc: "لا تُجدد عقد إدارة المرافق قبل أن تقارن. انشر طلب عقارك مرة واحدة، واستلم عروضاً مكتوبة بأسعار واضحة من شركات مسجّلة بنشاط إدارة المرافق.",
         },
         {
           title: "استلمت مبنى جديداً؟",
@@ -210,7 +210,7 @@ export default function LandingPage() {
         },
         {
           title: "تبحث عن شركة إدارة مرافق موثوقة؟",
-          desc: "بدل السؤال في مجموعات الواتساب.. كل شركة تصلك هنا مرخّصة وراجعها فريقنا بنفسه، ورقمك لا يظهر إلا بعد قبولك للعرض.",
+          desc: "بدل السؤال في مجموعات الواتساب.. كل شركة تصلك هنا موثّقة وراجعها فريقنا بنفسه، ورقمك لا يظهر إلا بعد قبولك للعرض.",
         },
       ],
       howItWorksTitle: "كيف تعمل المنصة",
@@ -237,9 +237,9 @@ export default function LandingPage() {
         saveBtn: "حفظ ونشر الطلب",
         offersHead: "عروض المزوّدين على طلبك",
         co1: "شركة إدارة مرافق (أ)",
-        co1sub: "مرخّصة من الهيئة",
+        co1sub: "لديها رخصة فال",
         co2: "شركة إدارة مرافق (ب)",
-        co2sub: "مرخّصة من الهيئة",
+        co2sub: "مسجّلة بنشاط المرافق",
         newBadge: "عرض جديد",
         compareHead: "قارن واختر العرض المناسب",
         totalLabel: "الإجمالي",
@@ -254,8 +254,8 @@ export default function LandingPage() {
       faqTitle: "أسئلة شائعة",
       faqSubtitle: "كل ما تحتاج معرفته قبل البدء",
       faqs: [
-        { q: "كيف أتأكد أن شركة إدارة المرافق موثوقة ومرخّصة؟", a: "كل عرض يصلك يأتي من شركة إدارة مرافق مرخّصة من الهيئة العامة للعقار (رخصة فال) ولديها سجل تجاري ساري، راجعها واعتمدها فريقنا قبل أن يصل عرضها إليك. أنت تستلم عروضاً من جهات موثوقة فقط." },
-        { q: "هل أقدر أجد شركة إدارة مرافق معتمدة في الرياض؟", a: "نعم، نبدأ بمدينة الرياض في المرحلة الأولى بشركات إدارة مرافق مرخّصة ومعتمدة، ونتوسّع تدريجياً إلى مدن أخرى." },
+        { q: "كيف أتأكد أن شركة إدارة المرافق موثوقة؟", a: "كل عرض يصلك يأتي من شركة سجلها التجاري ساري ويشمل نشاط إدارة المرافق، تحقّق منه فريقنا واعتمدها قبل أن يصل عرضها إليك. والشركات الحاصلة على رخصة فال من الهيئة العامة للعقار تظهر لك بعلامة واضحة على عرضها." },
+        { q: "هل أقدر أجد شركة إدارة مرافق معتمدة في الرياض؟", a: "نعم، نبدأ بمدينة الرياض في المرحلة الأولى بشركات إدارة مرافق موثّقة ومعتمدة، ونتوسّع تدريجياً إلى مدن أخرى." },
         { q: "متى تصلني عروض الأسعار بعد نشر طلبي؟", a: "بمجرد نشر طلبك يصل إشعار إلى شركات إدارة المرافق المعتمدة في الرياض، وتظهر العروض في حسابك فور تقديمها. عدد العروض وسرعة وصولها يختلفان حسب نطاق طلبك وجدول كل شركة." },
         { q: "هل رقمي وبياناتي تبقى خاصة؟", a: "نعم. لا يظهر رقمك لأي شركة إلا بعد قبولك لعرضها، وملف العرض الكامل لا يُفتح إلا بعد القبول." },
         { q: "كيف أقارن بين عروض شركات إدارة المرافق؟", a: "تقارن العروض جنباً إلى جنب: السعر الإجمالي والسعر لكل وحدة وملاحظات كل شركة، وتختار الأنسب لعقارك. القرار بيدك." },
@@ -282,7 +282,7 @@ export default function LandingPage() {
       heroTitle: "EMARAA,",
       heroHighlight: "Your Building, Perfectly Managed",
       heroDesc:
-        "Search, compare, and contract annually with REGA-licensed facility management companies, on the first platform specialized in property facility management contracts.",
+        "Search, compare, and contract annually with companies registered for facility management, each checked by our own team, on the first platform specialized in property facility management contracts.",
       addProperty: "Add Your Property Free",
       heroFreeNote: "Completely free for owners. No fees, no commitment.",
       learnMore: "Learn More",
@@ -292,7 +292,7 @@ export default function LandingPage() {
       whoMoments: [
         {
           title: "Contract coming up for renewal?",
-          desc: "Don't renew your facility management contract before you compare. Post your property request once and receive written offers with clear prices from licensed companies.",
+          desc: "Don't renew your facility management contract before you compare. Post your property request once and receive written offers with clear prices from companies registered for facility management.",
         },
         {
           title: "Just took over a new building?",
@@ -300,7 +300,7 @@ export default function LandingPage() {
         },
         {
           title: "Looking for a facility management company you can trust?",
-          desc: "Instead of asking around in WhatsApp groups: every company here is licensed and reviewed by our own team, and your number stays hidden until you accept an offer.",
+          desc: "Instead of asking around in WhatsApp groups: every company here is verified and reviewed by our own team, and your number stays hidden until you accept an offer.",
         },
       ],
       howItWorksTitle: "How It Works",
@@ -328,9 +328,9 @@ export default function LandingPage() {
         saveBtn: "Save & post request",
         offersHead: "Provider offers on your request",
         co1: "FM Company (A)",
-        co1sub: "REGA-licensed",
+        co1sub: "Holds a FAL license",
         co2: "FM Company (B)",
-        co2sub: "REGA-licensed",
+        co2sub: "Registered for FM",
         newBadge: "New offer",
         compareHead: "Compare & choose the right offer",
         totalLabel: "Total",
@@ -345,8 +345,8 @@ export default function LandingPage() {
       faqTitle: "Frequently Asked Questions",
       faqSubtitle: "Everything you need to know before you start",
       faqs: [
-        { q: "How can I be sure a facility management company is licensed and trustworthy?", a: "Every offer you receive comes from a facility management company holding a valid REGA (FAL) license and an active commercial registration, reviewed and approved by our team before it reaches you. You only get offers from trusted, vetted companies." },
-        { q: "Can I find an accredited facility management company in Riyadh?", a: "Yes, we're launching in Riyadh first with licensed, accredited facility management companies, and expanding to other cities gradually." },
+        { q: "How can I be sure a facility management company is trustworthy?", a: "Every offer you receive comes from a company whose active commercial registration includes facility management, checked and approved by our team before it reaches you. Companies holding a REGA FAL license are clearly marked on their offers." },
+        { q: "Can I find an accredited facility management company in Riyadh?", a: "Yes, we're launching in Riyadh first with verified, approved facility management companies, and expanding to other cities gradually." },
         { q: "When will I receive price offers after posting my request?", a: "As soon as you post your request, approved facility management companies in Riyadh are notified, and offers show up in your account the moment they're submitted. How many you get, and how fast, depends on your request's scope and each company's schedule." },
         { q: "Do my phone number and data stay private?", a: "Yes. Your number is never shown to a company until you accept their offer, and the full proposal file only opens after you accept." },
         { q: "How do I compare offers from facility management companies?", a: "You compare them side by side: total price, per-unit price, and each company's notes, and choose what suits your property. The decision is yours." },
@@ -372,9 +372,9 @@ export default function LandingPage() {
   const isRTL = lang === "ar";
 
   useSeo({
-    title: "عِمارة | منصة سعودية لربط ملاك العقارات بشركات إدارة المرافق المرخّصة",
+    title: "عِمارة | منصة سعودية لربط ملاك العقارات بشركات إدارة المرافق الموثّقة",
     description:
-      "عِمارة تربط ملاك العقارات السكنية والتجارية بشركات إدارة مرافق مرخّصة من الهيئة العامة للعقار في الرياض. انشر احتياج عقارك واستقبل عروض أسعار، قارن واختر الأفضل.",
+      "عِمارة تربط ملاك العقارات السكنية والتجارية بشركات إدارة مرافق موثّقة ومراجَعة يدوياً في الرياض. انشر احتياج عقارك واستقبل عروض أسعار، قارن واختر الأفضل.",
     path: "/",
   });
 
@@ -510,7 +510,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-2.5 md:flex md:flex-wrap md:items-center md:justify-center md:gap-10">
             <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal>
               <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: "var(--provider)" }} />
-              <span>{lang === "ar" ? "مزوّدون مرخّصون من الهيئة" : "REGA-licensed providers"}</span>
+              <span>{lang === "ar" ? "شركات موثّقة ومراجَعة يدوياً" : "Verified, manually reviewed companies"}</span>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-[13px] leading-snug font-medium text-foreground md:border-0 md:bg-transparent md:p-0 md:text-sm" data-reveal style={revealDelay(70)}>
               <Home className="w-5 h-5 flex-shrink-0" style={{ color: "#E58AA0" }} />

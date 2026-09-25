@@ -14,7 +14,7 @@ const arSections: Section[] = [
     body: [
       "رقم الجوال: يُجمع عند التسجيل ويُستخدم للتحقق عبر رمز OTP، ويُشارك مع مزود الخدمة بعد قبول عرضه لغرض التواصل المباشر.",
       "الاسم الكامل: يُجمع عند إنشاء الحساب لعرضه في واجهة المنصة.",
-      "بيانات مزود الخدمة: اسم الشركة، المدينة، البريد الإلكتروني، السجل التجاري (PDF)، ملف الشركة (PDF)، رخصة فال (PDF).",
+      "بيانات مزود الخدمة: اسم الشركة، المدينة، البريد الإلكتروني، السجل التجاري (PDF)، ملف الشركة (PDF)، ورخصة فال (PDF) إن قدّمها.",
       "بيانات العقار والطلبات: تفاصيل المبنى ونوعه وعنوانه وطلبات الخدمة التي ينشرها مالك العقار.",
       "العروض المقدَّمة: ملفات PDF للعروض التي يرفعها مزودو الخدمة.",
       "البيانات التقنية: بيانات الجلسة المُخزَّنة محلياً في المتصفح (localStorage) لإدارة الدخول والخروج.",
@@ -122,7 +122,7 @@ const enSections: Section[] = [
     body: [
       "Mobile number: collected at registration, used for OTP verification, and shared with the service provider after their offer is accepted for direct contact.",
       "Full name: collected at account creation and displayed within the platform interface.",
-      "Provider data: company name, city, email, commercial registration (PDF), company profile (PDF), FAL license (PDF).",
+      "Provider data: company name, city, email, commercial registration (PDF), company profile (PDF), and FAL license (PDF) if provided.",
       "Property and request data: building details, type, address, and service requests posted by property owners.",
       "Submitted offers: PDF files uploaded by service providers.",
       "Technical data: session data stored locally in the browser (localStorage) to manage login and logout.",

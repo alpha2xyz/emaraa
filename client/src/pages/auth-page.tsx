@@ -16,7 +16,7 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   useSeo({
     title: "تسجيل الدخول | عِمارة",
-    description: "سجّل دخولك إلى منصة عِمارة، لملاك العقارات وشركات إدارة المرافق المرخّصة.",
+    description: "سجّل دخولك إلى منصة عِمارة، لملاك العقارات وشركات إدارة المرافق.",
     path: "/auth",
   });
   const [formData, setFormData] = useState({
@@ -448,11 +448,11 @@ export default function AuthPage() {
                       {(isProvider
                         ? lang === "ar"
                           ? [
-                              "التسجيل مجاني. تحتاج إلى رفع ثلاث وثائق: السجل التجاري، والملف التعريفي للشركة، ورخصة فال.",
+                              "التسجيل مجاني. تحتاج إلى رفع وثيقتين: السجل التجاري، والملف التعريفي للشركة. ورخصة فال اختيارية، وهي ميزة إضافية لشركتك.",
                               "يراجع فريقنا ملف شركتك يدوياً قبل اعتماده، ثم تصلك طلبات الملاك على بريد شركتك.",
                             ]
                           : [
-                              "Registration is free. You will need to upload three documents: commercial register, company profile, and FAL license.",
+                              "Registration is free. You'll need to upload two documents: your commercial register and company profile. A FAL license is optional and gives your company an edge.",
                               "Our team reviews your company file manually before approval, then owner requests arrive at your company email.",
                             ]
                         : lang === "ar"
