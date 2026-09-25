@@ -468,6 +468,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // Scope path to the authenticated user — prevents one provider overwriting another's documents
       const userId = (req as any).userId as string;
+
+      // Documents are frozen once a provider is approved (see /api/provider/profile). Uploads use
+      // upsert on a client-chosen filename, so without this check an approved provider could
+      // overwrite a reviewed file in place and keep the owner-facing FAL badge (2026-09-26).
+      const { data: uploader } = await supabaseAdmin
+        .from("providers")
+        .select("approved")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (uploader?.approved === true) {
+        return res.status(403).json({ error: "documents_locked_after_approval" });
+      }
+
       const { data, error } = await supabaseAdmin.storage
         .from("provider-documents")
         .upload(`${userId}/${folder}/${filename}`, req.body as Buffer, { contentType, upsert: true });
