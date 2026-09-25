@@ -310,14 +310,14 @@ export function renderContractHtml(fields: ContractFields): string {
     "التمهيد",
     "Preamble",
     `<p>حيث إن الطرف الأول يملك العقار الموصوف أعلاه، ويرغب في التعاقد مع منشأة متخصصة لتشغيله وصيانته؛ وحيث إن
-      الطرف الثاني منشأة متخصصة في إدارة المرافق، مسجّلة نظاماً لمزاولة هذا النشاط في المملكة العربية السعودية؛ وحيث إن
+      الطرف الثاني منشأة متخصصة في إدارة المرافق، يشمل سجلها التجاري نشاط إدارة المرافق في المملكة العربية السعودية؛ وحيث إن
       الطرف الثاني تقدّم بعرض سعر قَبِله الطرف الأول عبر منصة عِمارة الإلكترونية (${ltr("emaraa.app")})، التي اقتصر
       دورها على تيسير التعارف والتواصل بين الطرفين دون أن تكون طرفاً في هذا العقد (البند 9)؛</p>
     <p>فقد اتفق الطرفان، وهما بكامل الأهلية المعتبرة شرعاً ونظاماً، على ما يلي، ويُعدّ هذا التمهيد جزءاً لا يتجزأ
       من العقد، ومكمّلاً لأحكامه ومفسّراً لها.</p>`,
     `<p>Whereas the Owner owns the property described above and wishes to engage a specialized entity to operate
-      and maintain it; whereas the Provider is a facility-management company duly registered to carry out this activity
-      in the Kingdom of Saudi Arabia; and whereas the Provider submitted a price quotation which the Owner accepted
+      and maintain it; whereas the Provider is a facility-management company whose commercial registration includes facility
+      management as an activity in the Kingdom of Saudi Arabia; and whereas the Provider submitted a price quotation which the Owner accepted
       through the Emaraa online platform (emaraa.app), whose role was limited to facilitating the introduction and
       communication between the Parties and which is not a party to this Agreement (Section 9);</p>
     <p>The Parties, having full legal capacity, have agreed as follows. This Preamble forms an integral part of
