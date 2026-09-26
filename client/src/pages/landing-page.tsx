@@ -193,7 +193,7 @@ export default function LandingPage() {
       heroTitle: "عِمــارة،",
       heroHighlight: "عمارتك، مُدارة بكفاءة",
       heroDesc:
-        "ابحث، قارن، وتعاقد سنوياً مع شركات مسجّلة بنشاط إدارة المرافق راجع فريقنا سجلها بنفسه، في أول منصة متخصصة لعقود إدارة المرافق العقارية.",
+        "المنصة السعودية الأولى لربط مُلاّك العقارات بشركات إدارة المرافق المعتمدة. قارن العروض السنوية وتعاقد بثقة.",
       addProperty: "أضف عقارك مجاناً",
       heroFreeNote: "مجاني بالكامل للملاك. لا رسوم، ولا التزام.",
       learnMore: "اعرف المزيد",
@@ -282,7 +282,7 @@ export default function LandingPage() {
       heroTitle: "EMARAA,",
       heroHighlight: "Your Building, Perfectly Managed",
       heroDesc:
-        "Search, compare, and contract annually with companies registered for facility management, each checked by our own team, on the first platform specialized in property facility management contracts.",
+        "The first Saudi platform connecting property owners with approved facility management companies. Compare annual offers and contract with confidence.",
       addProperty: "Add Your Property Free",
       heroFreeNote: "Completely free for owners. No fees, no commitment.",
       learnMore: "Learn More",
